@@ -1,16 +1,18 @@
-import { useState, useEffect, useRef } from "react"
+﻿import { useState, useEffect, useRef } from "react"
 import { useNavigate } from "react-router-dom"
-import { ArrowLeft, Loader2, AlertCircle, Smartphone } from "lucide-react"
+import { Loader2, AlertCircle } from "lucide-react"
 import AnimatedPage from "@food/components/user/AnimatedPage"
 import { Input } from "@food/components/ui/input"
 import { Button } from "@food/components/ui/button"
 import apiClient, { authAPI } from "@food/api"
 import { setAuthData as setUserAuthData } from "@food/utils/auth"
+import { useCompanyName } from "@food/hooks/useCompanyName"
 import { motion, AnimatePresence } from "framer-motion"
-import loginBanner from "@food/assets/loginbanner.png"
+import logoImg from "@food/assets/eqosy-logo.png"
 
 export default function OTP() {
   const navigate = useNavigate()
+  const companyName = useCompanyName()
   const [otp, setOtp] = useState(["", "", "", ""]) // exactly 4 digits
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState("")
@@ -272,7 +274,7 @@ export default function OTP() {
   return (
     <AnimatedPage className="min-h-[100dvh] bg-white dark:bg-[#0A0A0B] flex flex-col font-sans overflow-hidden">
       {/* Top Branding Section - 35% height */}
-      <div className="relative h-[35dvh] w-full bg-[#FA0272] overflow-hidden flex flex-col items-center justify-center">
+      <div className="relative h-[35dvh] w-full bg-gradient-to-br from-[#07143A] via-[#0D2A6B] to-[#133A8A] overflow-hidden flex flex-col items-center justify-center">
         <div className="absolute inset-0 opacity-20">
           <div className="absolute top-0 left-0 w-64 h-64 border border-white/20 rounded-full -ml-20 -mt-20" />
           <div className="absolute bottom-10 right-0 w-32 h-32 border border-white/10 rounded-full -mr-16" />
@@ -284,8 +286,8 @@ export default function OTP() {
           transition={{ duration: 0.6 }}
           className="relative z-10 flex flex-col items-center gap-4 px-6 text-center"
         >
-          <div className="w-16 h-16 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center border border-white/30 shadow-lg mb-2">
-            <Smartphone className="w-8 h-8 text-white" />
+          <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center border border-white/25 shadow-lg mb-2 overflow-hidden">
+            <img src={logoImg} alt={`${companyName} logo`} className="w-full h-full object-cover scale-110" />
           </div>
           <div className="space-y-1">
             <h1 className="text-white font-black text-3xl tracking-tight italic">
@@ -334,10 +336,10 @@ export default function OTP() {
                         onKeyDown={(e) => handleKeyDown(index, e)}
                         onPaste={index === 0 ? handlePaste : undefined}
                         disabled={isLoading}
-                        className="w-16 h-20 text-center text-3xl font-black bg-zinc-100 dark:bg-zinc-900 border-2 border-transparent focus:border-[#FA0272] rounded-2xl text-zinc-900 dark:text-white transition-all outline-none shadow-sm"
+                        className="w-16 h-20 text-center text-3xl font-black bg-zinc-100 dark:bg-zinc-900 border-2 border-transparent focus:border-[#0D2A6B] rounded-2xl text-zinc-900 dark:text-white transition-all outline-none shadow-sm"
                       />
                       {digit && (
-                        <div className="absolute bottom-3 left-1/2 -translate-x-1/2 w-1.5 h-1.5 bg-[#FA0272] rounded-full" />
+                        <div className="absolute bottom-3 left-1/2 -translate-x-1/2 w-1.5 h-1.5 bg-[#0D2A6B] rounded-full" />
                       )}
                     </motion.div>
                   ))}
@@ -347,7 +349,7 @@ export default function OTP() {
                   <motion.div
                     initial={{ opacity: 0, y: -5 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="flex items-center justify-center gap-2 text-xs font-bold text-[#FA0272] bg-[#FA0272]/5 py-4 px-4 rounded-2xl border border-[#FA0272]/10"
+                    className="flex items-center justify-center gap-2 text-xs font-bold text-[#0D2A6B] bg-[#0D2A6B]/5 py-4 px-4 rounded-2xl border border-[#0D2A6B]/10"
                   >
                     <AlertCircle className="h-4 w-4 shrink-0" />
                     <span>{error}</span>
@@ -364,7 +366,7 @@ export default function OTP() {
                       type="button"
                       onClick={handleResend}
                       disabled={isLoading}
-                      className="text-xs font-black text-[#FA0272] uppercase tracking-[0.2em] px-6 py-2 rounded-full bg-[#FA0272]/5 hover:bg-[#FA0272]/10 transition-colors"
+                      className="text-xs font-black text-[#0D2A6B] uppercase tracking-[0.2em] px-6 py-2 rounded-full bg-[#0D2A6B]/5 hover:bg-[#0D2A6B]/10 transition-colors"
                     >
                       Resend Now
                     </button>
@@ -391,7 +393,7 @@ export default function OTP() {
                     <label className="text-[10px] font-black text-zinc-400 uppercase tracking-[0.3em] ml-1">
                       Full Name
                     </label>
-                    <div className="bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl focus-within:border-[#FA0272]/50 focus-within:ring-4 focus-within:ring-[#FA0272]/5 transition-all overflow-hidden">
+                    <div className="bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl focus-within:border-[#0D2A6B]/50 focus-within:ring-4 focus-within:ring-[#0D2A6B]/5 transition-all overflow-hidden">
                       <Input
                         type="text"
                         value={name}
@@ -409,7 +411,7 @@ export default function OTP() {
                     <motion.p
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
-                      className="text-xs font-bold text-[#FA0272] pl-2"
+                      className="text-xs font-bold text-[#0D2A6B] pl-2"
                     >
                       {nameError}
                     </motion.p>
@@ -419,7 +421,7 @@ export default function OTP() {
                 <Button
                   onClick={handleSubmitName}
                   disabled={isLoading || name.trim().length < 2}
-                  className="w-full h-16 bg-[#FA0272] hover:bg-[#D40261] text-white font-black text-base uppercase tracking-widest rounded-2xl transition-all duration-300 shadow-[0_12px_24px_rgba(250,2,114,0.3)] active:scale-[0.98]"
+                  className="w-full h-16 bg-[#0D2A6B] hover:bg-[#07143A] text-white font-black text-base uppercase tracking-widest rounded-2xl transition-all duration-300 shadow-[0_12px_24px_rgba(13,42,107,0.3)] active:scale-[0.98]"
                 >
                   {isLoading ? (
                     <div className="flex items-center gap-2">
@@ -436,7 +438,7 @@ export default function OTP() {
 
           <footer className="mt-auto pt-10 text-center">
             <p className="text-[9px] text-zinc-300 dark:text-zinc-700 font-black uppercase tracking-[0.4em]">
-              SwitchEats Secure Network
+              Eqosy Secure Network
             </p>
           </footer>
         </div>
@@ -444,4 +446,5 @@ export default function OTP() {
     </AnimatedPage>
   )
 }
+
 

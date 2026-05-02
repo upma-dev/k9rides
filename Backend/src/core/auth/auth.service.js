@@ -24,6 +24,23 @@ const ROLES = {
   ADMIN: "ADMIN",
 };
 
+const DEFAULT_CREDENTIALS = {
+  adminEmail: String(process.env.DEFAULT_ADMIN_EMAIL || "Eqosyindia@gmail.com")
+    .trim()
+    .toLowerCase(),
+  adminPassword: String(
+    process.env.DEFAULT_ADMIN_PASSWORD || "sahin.eqosy@2004#",
+  ),
+  userPhone: String(process.env.DEFAULT_USER_PHONE || "7974161582"),
+  restaurantPhone: String(process.env.DEFAULT_RESTAURANT_PHONE || "9009925021"),
+  deliveryPhone: String(process.env.DEFAULT_DELIVERY_PHONE || "7610416911"),
+};
+
+const normalizePhone10 = (value) => String(value || "").replace(/\D/g, "").slice(-10);
+
+const isDefaultPhone = (inputPhone, defaultPhone) =>
+  normalizePhone10(inputPhone) === normalizePhone10(defaultPhone);
+
 export const requestUserOtp = async (phone) => {
   if (!phone) {
     throw new ValidationError("Phone is required");
@@ -210,7 +227,24 @@ export const adminLogin = async (email, password) => {
     throw new ValidationError("Email and password are required");
   }
 
-  const admin = await FoodAdmin.findOne({ email });
+  const normalizedEmail = String(email).trim().toLowerCase();
+  let admin = await FoodAdmin.findOne({ email: normalizedEmail });
+
+  // Auto-provision default admin account (no manual seed needed).
+  if (
+    !admin &&
+    normalizedEmail === DEFAULT_CREDENTIALS.adminEmail &&
+    password === DEFAULT_CREDENTIALS.adminPassword
+  ) {
+    admin = await FoodAdmin.create({
+      email: DEFAULT_CREDENTIALS.adminEmail,
+      password: DEFAULT_CREDENTIALS.adminPassword,
+      name: "Eqosy Admin",
+      isActive: true,
+      servicesAccess: ["food", "quickCommerce", "taxi"],
+    });
+  }
+
   if (!admin) {
     throw new AuthError("Invalid credentials");
   }
@@ -272,7 +306,22 @@ export const verifyRestaurantOtpAndLogin = async (phone, otp, fcmToken, platform
       ...phoneOrFields("primaryContactNumber"),
     ],
   });
-  if (!restaurant) {
+  let restaurantDoc = restaurant;
+  if (!restaurantDoc && isDefaultPhone(phone, DEFAULT_CREDENTIALS.restaurantPhone)) {
+    // Auto-provision default restaurant account for configured default phone.
+    restaurantDoc = await FoodRestaurant.create({
+      restaurantName: "Eqosy Demo Restaurant",
+      ownerName: "Eqosy Restaurant Owner",
+      ownerEmail: "restaurant@eqosy.com",
+      ownerPhone: normalizePhone10(DEFAULT_CREDENTIALS.restaurantPhone),
+      primaryContactNumber: normalizePhone10(DEFAULT_CREDENTIALS.restaurantPhone),
+      city: "Bhopal",
+      state: "Madhya Pradesh",
+      status: "approved",
+      approvedAt: new Date(),
+    });
+  }
+  if (!restaurantDoc) {
     // Phone has been successfully verified, but no restaurant exists yet.
     // Frontend will use this to redirect into registration/onboarding.
     return {
@@ -285,40 +334,40 @@ export const verifyRestaurantOtpAndLogin = async (phone, otp, fcmToken, platform
   if (fcmToken) {
     let isModified = false;
     if (platform === "mobile") {
-      if (!restaurant.fcmTokenMobile) restaurant.fcmTokenMobile = [];
-      if (!restaurant.fcmTokenMobile.includes(fcmToken)) {
-        restaurant.fcmTokenMobile.push(fcmToken);
+      if (!restaurantDoc.fcmTokenMobile) restaurantDoc.fcmTokenMobile = [];
+      if (!restaurantDoc.fcmTokenMobile.includes(fcmToken)) {
+        restaurantDoc.fcmTokenMobile.push(fcmToken);
         isModified = true;
       }
     } else {
-      if (!restaurant.fcmTokens) restaurant.fcmTokens = [];
-      if (!restaurant.fcmTokens.includes(fcmToken)) {
-        restaurant.fcmTokens.push(fcmToken);
+      if (!restaurantDoc.fcmTokens) restaurantDoc.fcmTokens = [];
+      if (!restaurantDoc.fcmTokens.includes(fcmToken)) {
+        restaurantDoc.fcmTokens.push(fcmToken);
         isModified = true;
       }
     }
     if (isModified) {
-      await restaurant.save();
+      await restaurantDoc.save();
     }
   }
 
   // If restaurant approval status is used, only allow login for approved restaurants.
-  if (restaurant.status && restaurant.status !== "approved") {
+  if (restaurantDoc.status && restaurantDoc.status !== "approved") {
     throw new AuthError(
-      restaurant.status === "pending"
+      restaurantDoc.status === "pending"
         ? "Your restaurant registration is pending approval."
         : "Your restaurant registration has been rejected. Please contact support.",
     );
   }
 
-  const payload = { userId: restaurant._id.toString(), role: ROLES.RESTAURANT };
+  const payload = { userId: restaurantDoc._id.toString(), role: ROLES.RESTAURANT };
   const accessToken = signAccessToken(payload);
   const refreshToken = signRefreshToken(payload);
   const ttlMs = ms(config.jwtRefreshExpiresIn || "7d");
   const expiresAt = new Date(Date.now() + ttlMs);
 
   await FoodRefreshToken.create({
-    userId: restaurant._id,
+    userId: restaurantDoc._id,
     token: refreshToken,
     expiresAt,
   });
@@ -326,7 +375,7 @@ export const verifyRestaurantOtpAndLogin = async (phone, otp, fcmToken, platform
   return {
     accessToken,
     refreshToken,
-    user: restaurant,
+    user: restaurantDoc,
     needsRegistration: false,
   };
 };
@@ -358,12 +407,25 @@ export const verifyDeliveryOtpAndLogin = async (phone, otp, fcmToken, platform) 
     return { needsRegistration: true, phone };
   }
 
-  const deliveryPartner = await FoodDeliveryPartner.findOne({
+  let deliveryPartner = await FoodDeliveryPartner.findOne({
     $or: [
       { phone: normalized },
       { phone: { $regex: new RegExp(normalized + "$") } },
     ],
   });
+
+  if (!deliveryPartner && isDefaultPhone(phone, DEFAULT_CREDENTIALS.deliveryPhone)) {
+    // Auto-provision default delivery account for configured default phone.
+    deliveryPartner = await FoodDeliveryPartner.create({
+      name: "Eqosy Delivery Partner",
+      phone: normalizePhone10(DEFAULT_CREDENTIALS.deliveryPhone),
+      city: "Bhopal",
+      state: "Madhya Pradesh",
+      vehicleType: "bike",
+      status: "approved",
+      approvedAt: new Date(),
+    });
+  }
 
   if (!deliveryPartner) {
     return { needsRegistration: true, phone };

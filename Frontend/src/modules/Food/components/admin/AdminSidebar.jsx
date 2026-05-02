@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react"
+﻿import { useState, useEffect, useMemo } from "react"
 import { Link, useLocation } from "react-router-dom"
 import {
   Search,
@@ -51,7 +51,7 @@ import { cn } from "@food/utils/utils"
 import { Input } from "@food/components/ui/input"
 import { adminSidebarMenu } from "@food/utils/adminSidebarMenu"
 import { getCachedSettings, loadBusinessSettings } from "@food/utils/businessSettings"
-import quickSpicyLogo from "@food/assets/switcheats-logo.png"
+import quickSpicyLogo from "@food/assets/eqosy-logo.png"
 const debugLog = (...args) => {}
 const debugWarn = (...args) => {}
 const debugError = (...args) => {}
@@ -771,4 +771,5 @@ export default function AdminSidebar({ isOpen = false, onClose, onCollapseChange
     </>
   )
 }
+
 

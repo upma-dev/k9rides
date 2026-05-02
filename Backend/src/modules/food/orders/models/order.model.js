@@ -42,6 +42,7 @@ const pricingSchema = new mongoose.Schema(
         packagingFee: { type: Number, default: 0, min: 0 },
         deliveryFee: { type: Number, default: 0, min: 0 },
         platformFee: { type: Number, default: 0, min: 0 },
+        surgeAmount: { type: Number, default: 0, min: 0 },
         restaurantCommission: { type: Number, default: 0, min: 0 },
         discount: { type: Number, default: 0, min: 0 },
         total: { type: Number, required: true, min: 0 },
@@ -279,6 +280,9 @@ const orderSchema = new mongoose.Schema(
         sendCutlery: { type: Boolean, default: true },
         deliveryFleet: { type: String, default: 'standard', trim: true },
         scheduledAt: { type: Date, default: null },
+        riderBasePay: { type: Number, default: 0, min: 0 },
+        riderSurgePay: { type: Number, default: 0, min: 0 },
+        riderTotalPayout: { type: Number, default: 0, min: 0 },
         riderEarning: { type: Number, default: 0, min: 0 },
         platformProfit: { type: Number, default: 0, min: 0 },
         /** Plain 4-digit OTP for handover; cleared after successful verify (never expose to partner in API responses). */

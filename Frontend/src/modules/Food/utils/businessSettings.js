@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Business Settings Utility
  * Handles loading and updating business settings (favicon, title, logo)
  */
@@ -8,6 +8,13 @@ import { API_ENDPOINTS } from "@food/api/config";
 import { publicGetOnce } from "@food/api";
 
 const SETTINGS_KEY = 'food_business_settings';
+
+export const normalizeCompanyName = (value) => {
+  const raw = typeof value === "string" ? value.trim() : "";
+  if (!raw) return "Eqosy";
+  if (raw.toLowerCase() === "appzeto") return "Eqosy";
+  return raw;
+};
 
 // Initialize from localStorage immediately so it's available for components on mount
 let cachedSettings = (() => {
@@ -23,7 +30,7 @@ let cachedSettings = (() => {
 if (cachedSettings) {
   setTimeout(() => {
     updateFavicon(cachedSettings.favicon?.url);
-    updateTitle(cachedSettings.companyName);
+    updateTitle(normalizeCompanyName(cachedSettings.companyName));
   }, 0);
 }
 
@@ -52,14 +59,18 @@ export const loadBusinessSettings = async () => {
       const settings = response?.data?.data || response?.data;
 
       if (settings) {
-        cachedSettings = settings;
+        const normalizedSettings = {
+          ...settings,
+          companyName: normalizeCompanyName(settings.companyName),
+        };
+        cachedSettings = normalizedSettings;
         try {
-          localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+          localStorage.setItem(SETTINGS_KEY, JSON.stringify(normalizedSettings));
         } catch (e) {}
         
-        updateFavicon(settings.favicon?.url);
-        updateTitle(settings.companyName);
-        return settings;
+        updateFavicon(normalizedSettings.favicon?.url);
+        updateTitle(normalizedSettings.companyName);
+        return normalizedSettings;
       }
       return cachedSettings;
     })();
@@ -97,8 +108,8 @@ export const updateFavicon = (url) => {
  * Update page title
  */
 export const updateTitle = (companyName) => {
-  if (companyName && typeof document !== 'undefined') {
-    document.title = companyName;
+  if (typeof document !== 'undefined') {
+    document.title = normalizeCompanyName(companyName);
   }
 };
 
@@ -107,13 +118,17 @@ export const updateTitle = (companyName) => {
  */
 export const setCachedSettings = (settings) => {
   if (settings) {
-    cachedSettings = settings;
+    const normalizedSettings = {
+      ...settings,
+      companyName: normalizeCompanyName(settings.companyName),
+    };
+    cachedSettings = normalizedSettings;
     try {
-      localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+      localStorage.setItem(SETTINGS_KEY, JSON.stringify(normalizedSettings));
     } catch (e) {}
     
-    updateFavicon(settings.favicon?.url);
-    updateTitle(settings.companyName);
+    updateFavicon(normalizedSettings.favicon?.url);
+    updateTitle(normalizedSettings.companyName);
   }
 };
 
@@ -136,22 +151,23 @@ export const getCachedSettings = () => {
 
 /**
  * Get company name from business settings with fallback
- * @returns {string} Company name or default "SwitchEats Food"
+ * @returns {string} Company name or default "Eqosy Food"
  */
 export const getCompanyName = () => {
   const settings = getCachedSettings();
-  return settings?.companyName || "SwitchEats";
+  return normalizeCompanyName(settings?.companyName);
 };
 
 /**
  * Get company name asynchronously (loads if not cached)
- * @returns {Promise<string>} Company name or default "SwitchEats Food"
+ * @returns {Promise<string>} Company name or default "Eqosy Food"
  */
 export const getCompanyNameAsync = async () => {
   try {
     const settings = await loadBusinessSettings();
-    return settings?.companyName || "SwitchEats";
+    return normalizeCompanyName(settings?.companyName);
   } catch (error) {
-    return "SwitchEats";
+    return "Eqosy";
   }
 };
+

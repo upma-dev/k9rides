@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo } from "react";
+﻿import { useState, useEffect, useRef, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Menu,
@@ -40,7 +40,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@food/components/ui/popover";
-import quickSpicyLogo from "@food/assets/switcheats-logo.png";
+import quickSpicyLogo from "@food/assets/eqosy-logo.png";
 import { adminAPI } from "@food/api";
 import { clearModuleAuth } from "@food/utils/auth";
 import { getCachedSettings, loadBusinessSettings } from "@food/utils/businessSettings";
@@ -622,4 +622,5 @@ export default function AdminNavbar({ onMenuClick }) {
     </>
   );
 }
+
 

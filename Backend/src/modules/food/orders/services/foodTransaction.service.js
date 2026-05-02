@@ -105,10 +105,14 @@ export async function createInitialTransaction(order) {
     const packagingFee = Number(order.pricing?.packagingFee) || 0;
     const platformFee = Number(order.pricing?.platformFee) || 0;
     const deliveryFee = Number(order.pricing?.deliveryFee) || 0;
+    const surgeAmount = Number(order.pricing?.surgeAmount) || 0;
     const tax = Number(order.pricing?.tax) || 0;
+    const riderBasePay = Number(order.riderBasePay) || Math.max(0, riderShare - surgeAmount);
+    const riderSurgePay = Number(order.riderSurgePay) || surgeAmount;
+    const riderTotalPayout = Number(order.riderTotalPayout) || riderShare;
 
     let restaurantNet = subtotal + packagingFee - restaurantCommission;
-    let platformNetProfit = platformFee + deliveryFee + restaurantCommission - riderShare;
+    let platformNetProfit = platformFee + deliveryFee + surgeAmount + restaurantCommission - riderShare;
 
     // Handle discount attribution
     const couponCode = order.pricing?.couponCode;
@@ -164,6 +168,7 @@ export async function createInitialTransaction(order) {
             packagingFee: packagingFee,
             deliveryFee: deliveryFee,
             platformFee: platformFee,
+            surgeAmount: surgeAmount,
             restaurantCommission: restaurantCommission,
             discount: discount,
             total: totalCustomerPaid,
@@ -174,6 +179,9 @@ export async function createInitialTransaction(order) {
             restaurantShare: Math.max(0, restaurantNet),
             restaurantCommission: restaurantCommission,
             riderShare: riderShare,
+            riderBasePay: riderBasePay,
+            riderSurgePay: riderSurgePay,
+            riderTotalPayout: riderTotalPayout,
             platformNetProfit: platformNetProfit,
             taxAmount: tax
         },

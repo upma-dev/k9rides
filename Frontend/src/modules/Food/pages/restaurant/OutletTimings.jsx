@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react"
+﻿import { useState, useEffect, useRef } from "react"
 import { useNavigate } from "react-router-dom"
 import { motion, AnimatePresence } from "framer-motion"
 import Lenis from "lenis"
@@ -215,7 +215,7 @@ export default function OutletTimings() {
 
         {/* Main Content */}
         <div className="px-4 py-6">
-          {/* SwitchEats delivery Section Header */}
+          {/* Eqosy delivery Section Header */}
           <div className="mb-6">
             <div className="text-center mb-2">
               <h2 className="text-base font-semibold text-blue-600">{companyName} delivery</h2>
@@ -420,4 +420,5 @@ export default function OutletTimings() {
     </LocalizationProvider>
   )
 }
+
 

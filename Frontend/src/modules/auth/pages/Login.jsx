@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from "react"
+﻿import React, { useEffect, useState, useRef } from "react"
 import { motion } from "framer-motion"
 import { Routes, Route, Navigate, Link, useNavigate } from "react-router-dom"
 import { Phone, Lock, ArrowRight, ShieldCheck, Loader2 } from "lucide-react"
@@ -196,7 +196,7 @@ export default function UnifiedOTPFastLogin() {
             animate={{ opacity: 1, y: 0 }}
             className="text-2xl md:text-5xl font-black tracking-tight mb-1"
           >
-            SwitchEats <span className="text-white/80 font-normal">Master</span>
+            Eqosy <span className="text-white/80 font-normal">Master</span>
           </motion.h1>
           <p className="text-xs md:text-base font-bold text-white/90 tracking-[0.2em] uppercase">
             Taste the best, forget the rest
@@ -348,3 +348,4 @@ export default function UnifiedOTPFastLogin() {
     </div>
   )
 }
+

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo, Fragment } from "react"
+﻿import { useState, useEffect, useRef, useMemo, Fragment } from "react"
 import { createPortal } from "react-dom"
 import { Link, useNavigate } from "react-router-dom"
 import { Plus, Minus, ArrowLeft, ChevronRight, Clock, MapPin, Phone, FileText, Utensils, Tag, Percent, Share2, ChevronUp, ChevronDown, X, Check, Settings, CreditCard, Wallet, Building2, Sparkles, Banknote, Zap, CheckCircle2, MessageCircle, Send, Mail, Copy } from "lucide-react"
@@ -1018,10 +1018,11 @@ export default function Cart() {
     ? `Distance ${Number(deliveryFeeBreakdown.distanceKm).toFixed(1)} km: ${RUPEE_SYMBOL}${Number(deliveryFeeBreakdown.basePayout || 0).toFixed(0)} base + ${Number(deliveryFeeBreakdown.extraDistanceKm || 0).toFixed(1)} km x ${RUPEE_SYMBOL}${Number(deliveryFeeBreakdown.commissionPerKm || 0).toFixed(0)}`
     : null
   const platformFee = pricing?.platformFee || feeSettings.platformFee
+  const surgeAmount = Number(pricing?.surgeAmount || 0)
   const gstCharges = pricing?.tax || Math.round(subtotal * (feeSettings.gstRate / 100))
   const discount = pricing?.discount || (appliedCoupon ? Math.min(appliedCoupon.discount, subtotal * 0.5) : 0)
-  const totalBeforeDiscount = subtotal + (deliveryFee === 0 ? (feeSettings.deliveryFee ?? 25) : deliveryFee) + platformFee + gstCharges
-  const total = pricing?.total || (subtotal + deliveryFee + platformFee + gstCharges - (pricing?.discount || discount))
+  const totalBeforeDiscount = subtotal + (deliveryFee === 0 ? (feeSettings.deliveryFee ?? 25) : deliveryFee) + platformFee + gstCharges + surgeAmount
+  const total = pricing?.total || (subtotal + deliveryFee + platformFee + gstCharges + surgeAmount - (pricing?.discount || discount))
   const savings = pricing?.savings ?? Math.max(0, totalBeforeDiscount - total)
   const selectedPaymentLabel =
     selectedPaymentMethod === "wallet"
@@ -1838,7 +1839,7 @@ export default function Cart() {
           `2. Backend is accessible at ${backendUrl}\n` +
           `3. Check browser console (F12) for more details\n\n` +
           `If backend is not running, start it with:\n` +
-          `cd switcheats/backend && npm start`
+          `cd eqosy/backend && npm start`
 
         debugError("?? Network Error Details:", {
           code: error.code,
@@ -2553,6 +2554,12 @@ export default function Cart() {
                       <span className="text-gray-600 dark:text-gray-400">Platform Fee</span>
                       <span className="text-gray-800 dark:text-gray-200 font-medium">{RUPEE_SYMBOL}{platformFee.toFixed(2)}</span>
                     </div>
+                    {surgeAmount > 0 && (
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-600 dark:text-gray-400">Surge Amount</span>
+                        <span className="text-gray-800 dark:text-gray-200 font-medium">{RUPEE_SYMBOL}{surgeAmount.toFixed(2)}</span>
+                      </div>
+                    )}
                     <div className="flex justify-between text-sm">
                       <span className="text-gray-600 dark:text-gray-400">GST and Restaurant Charges</span>
                       <span className="text-gray-800 dark:text-gray-200 font-medium">{RUPEE_SYMBOL}{gstCharges.toFixed(2)}</span>
@@ -3166,3 +3173,4 @@ export default function Cart() {
     </div>
   )
 }      
+

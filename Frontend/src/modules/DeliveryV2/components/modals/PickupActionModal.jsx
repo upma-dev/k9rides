@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+﻿import React, { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   ChefHat, MapPin, Phone, 
@@ -42,7 +42,7 @@ export const PickupActionModal = ({
 
     setIsUploadingBill(true);
     try {
-      const res = await uploadAPI.uploadMedia(file, { folder: 'switcheats/delivery/bills' });
+      const res = await uploadAPI.uploadMedia(file, { folder: 'eqosy/delivery/bills' });
       if (res?.data?.success && res?.data?.data) {
         setBillImageUrl(res.data.data.url || res.data.data.secure_url);
         setBillImageUploaded(true);
@@ -116,12 +116,12 @@ export const PickupActionModal = ({
                   <div className="flex items-center gap-2">
                     {isAtPickup ? (
                       <div className="bg-emerald-50 px-3 py-1 rounded-full border border-emerald-100">
-                        <span className="text-emerald-600 text-[10px] font-black uppercase tracking-widest">At Restaurant √</span>
+                        <span className="text-emerald-600 text-[10px] font-black uppercase tracking-widest">At Restaurant âˆš</span>
                       </div>
                     ) : (
                       <div className="bg-orange-50 px-3 py-1 rounded-full border border-orange-100">
                         <span className="text-orange-600 text-[10px] font-black uppercase tracking-widest">
-                          {(distanceToTarget / 1000).toFixed(1)} km • {eta || '--'} min
+                          {(distanceToTarget / 1000).toFixed(1)} km â€¢ {eta || '--'} min
                         </span>
                       </div>
                     )}
@@ -255,7 +255,7 @@ export const PickupActionModal = ({
                  {billImageUploaded && (
                     <div className="w-full flex items-center justify-center gap-3 py-5 rounded-[1.5rem] bg-emerald-50 text-emerald-700 border border-emerald-100 font-black text-[11px] uppercase tracking-widest shadow-inner">
                        <CheckCircle2 className="w-5 h-5" />
-                       <span>Bill Verified ✓</span>
+                       <span>Bill Verified âœ“</span>
                     </div>
                  )}
 
@@ -291,3 +291,4 @@ export const PickupActionModal = ({
 };
 
 export default PickupActionModal;
+

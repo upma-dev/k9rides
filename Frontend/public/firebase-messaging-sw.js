@@ -1,4 +1,4 @@
-/* eslint-disable no-undef */
+﻿/* eslint-disable no-undef */
 importScripts("https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js");
 importScripts("https://www.gstatic.com/firebasejs/10.13.2/firebase-messaging-compat.js");
 
@@ -142,7 +142,7 @@ async function loadFirebaseWebConfig() {
   
       self.registration.showNotification(title, {
         body,
-        icon: "/favicon.ico",
+        icon: "/eqosy-logo.png",
         image,
         tag: notificationKey,
         renotify: false,
@@ -194,3 +194,4 @@ self.addEventListener("notificationclick", (event) => {
     }),
   );
 });
+

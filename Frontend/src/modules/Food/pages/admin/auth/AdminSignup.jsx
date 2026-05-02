@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react"
+﻿import { useState, useRef, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
 import { Button } from "@food/components/ui/button"
 import {
@@ -12,7 +12,7 @@ import {
 import { Input } from "@food/components/ui/input"
 import { Label } from "@food/components/ui/label"
 import { Mail, User, Lock, Eye, EyeOff, ArrowLeft, Shield } from "lucide-react"
-import quickSpicyLogo from "@food/assets/switcheats-logo.png"
+import quickSpicyLogo from "@food/assets/eqosy-logo.png"
 import { authAPI, adminAPI } from "@food/api"
 import { setAuthData } from "@food/utils/auth"
 import { loadBusinessSettings } from "@food/utils/businessSettings"
@@ -245,11 +245,11 @@ export default function AdminSignup() {
         <Card className="w-full max-w-lg bg-white/90 backdrop-blur border-neutral-200 shadow-2xl">
           <CardHeader className="pb-4">
             <div className="flex w-full items-center gap-4 sm:gap-5">
-              <div className="flex h-14 w-28 shrink-0 items-center justify-center rounded-xl bg-gray-900/5 ring-1 ring-neutral-200">
+              <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-white ring-1 ring-neutral-200 overflow-hidden">
                 <img
                   src={logoUrl || quickSpicyLogo}
                   alt="Logo"
-                  className="h-10 w-24 object-contain"
+                  className="h-full w-full object-cover scale-110"
                   loading="lazy"
                   onError={(e) => {
                     // Fallback to default logo if business logo fails to load
@@ -492,5 +492,6 @@ export default function AdminSignup() {
     </div>
   )
 }
+
 
 

@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Razorpay Payment Integration Utility
  * Handles Razorpay payment initialization and verification
  */
@@ -80,9 +80,9 @@ export const initRazorpayPayment = async (options) => {
       amount: options.amount,
       currency: options.currency || 'INR',
       order_id: options.order_id,
-      name: options.name || 'Switcheats',
+      name: options.name || 'Eqosy',
       description: options.description || 'Order Payment',
-      image: options.image || '/switcheats-logo.png',
+      image: options.image || '/eqosy-logo.png',
       prefill: {
         name: options.prefill?.name || '',
         email: options.prefill?.email || '',
@@ -135,7 +135,7 @@ export const initRazorpayPayment = async (options) => {
     // Open Razorpay modal
     razorpay.open();
     
-    console.log('✅ Razorpay checkout opened successfully');
+    console.log('âœ… Razorpay checkout opened successfully');
     console.log('Razorpay options:', {
       key: razorpayOptions.key ? 'Present' : 'Missing',
       amount: razorpayOptions.amount,
@@ -158,6 +158,7 @@ export const initRazorpayPayment = async (options) => {
  * @returns {String} Formatted amount string
  */
 export const formatAmount = (amount) => {
-  return `₹${(amount / 100).toFixed(2)}`;
+  return `â‚¹${(amount / 100).toFixed(2)}`;
 };
+
 

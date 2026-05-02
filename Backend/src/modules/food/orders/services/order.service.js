@@ -1,4 +1,4 @@
-import mongoose from 'mongoose';
+﻿import mongoose from 'mongoose';
 import { FoodOrder, FoodSettings } from '../models/order.model.js';
 // import { paymentSnapshotFromOrder } from './foodOrderPayment.service.js';
 import { logger } from '../../../../utils/logger.js';
@@ -12,6 +12,7 @@ import { buildPaginationOptions, buildPaginatedResult } from '../../../../utils/
 import { FoodOffer } from '../../admin/models/offer.model.js';
 import { FoodOfferUsage } from '../../admin/models/offerUsage.model.js';
 import { FoodDeliveryCommissionRule } from '../../admin/models/deliveryCommissionRule.model.js';
+import { FoodDeliverySurgeZone } from '../../admin/models/deliverySurgeZone.model.js';
 import { FoodRestaurantCommission } from '../../admin/models/restaurantCommission.model.js';
 import { FoodTransaction } from '../models/foodTransaction.model.js';
 import { FoodSupportTicket } from '../../user/models/supportTicket.model.js';
@@ -74,7 +75,7 @@ async function getActiveCommissionRules() {
   return commissionRulesCache;
 }
 
-// 🗑️ Moved to foodTransaction.service.js to centralize finance logic.
+// ðŸ—‘ï¸ Moved to foodTransaction.service.js to centralize finance logic.
 
 
 async function getRiderEarning(distanceKm) {
@@ -108,8 +109,16 @@ async function getRiderEarning(distanceKm) {
   return Math.round(earning);
 }
 
+async function getZoneSurgeSnapshot(zoneId) {
+  if (!zoneId) return { surgeAmount: 0, isEnabled: false };
+  const config = await FoodDeliverySurgeZone.findOne({ zoneId }).lean();
+  if (!config?.isEnabled) return { surgeAmount: 0, isEnabled: false };
+  const surgeAmount = Math.round((Number(config?.surgeAmount || 0) * 100)) / 100;
+  return { surgeAmount: surgeAmount > 0 ? surgeAmount : 0, isEnabled: true };
+}
+
 /** Append-only food_order_payments row; never blocks main flow on failure */
-// 🗑️ Deprecated in favor of FoodTransaction system.
+// ðŸ—‘ï¸ Deprecated in favor of FoodTransaction system.
 
 // ----- Settings -----
 export async function getDispatchSettings() {
@@ -185,11 +194,30 @@ export async function createOrder(userId, dto) {
       tax: Number(dto.pricing?.tax ?? 0) || 0,
       packagingFee: Number(dto.pricing?.packagingFee ?? 0) || 0,
       deliveryFee: Number(dto.pricing?.deliveryFee ?? 0) || 0,
+      deliveryFeeBreakdown: dto.pricing?.deliveryFeeBreakdown || null,
       platformFee: Number(dto.pricing?.platformFee ?? 0) || 0,
+      surgeAmount: Number(dto.pricing?.surgeAmount ?? 0) || 0,
       discount: Number(dto.pricing?.discount ?? 0) || 0,
       total: Number(dto.pricing?.total ?? 0) || 0,
       currency: String(dto.pricing?.currency || "INR"),
     };
+
+    const activeFeeSettings = await FoodFeeSettings.findOne({ isActive: true }).sort({ createdAt: -1 }).lean();
+    const deliveryFeeMode = String(activeFeeSettings?.deliveryFeeComputationMode || 'order_value_range');
+    if (deliveryFeeMode === 'distance_order_value') {
+      const pricingResult = await calculateOrderPricing(userId, dto);
+      if (pricingResult?.pricing) {
+        normalizedPricing.deliveryFee = Number(pricingResult.pricing.deliveryFee || 0);
+        normalizedPricing.deliveryFeeBreakdown = pricingResult.pricing.deliveryFeeBreakdown || null;
+        normalizedPricing.tax = Number(pricingResult.pricing.tax || normalizedPricing.tax || 0);
+        normalizedPricing.platformFee = Number(pricingResult.pricing.platformFee || normalizedPricing.platformFee || 0);
+        normalizedPricing.discount = Number(pricingResult.pricing.discount || normalizedPricing.discount || 0);
+      }
+    }
+
+    const orderZoneId = dto.zoneId ? toObjectId(dto.zoneId, 'Zone ID') : toObjectId(restaurant.zoneId, 'Restaurant Zone ID');
+    const surgeSnapshot = await getZoneSurgeSnapshot(orderZoneId);
+    normalizedPricing.surgeAmount = surgeSnapshot.surgeAmount;
 
     const computedTotal = Math.max(
       0,
@@ -197,15 +225,12 @@ export async function createOrder(userId, dto) {
         (Number.isFinite(normalizedPricing.tax) ? normalizedPricing.tax : 0) +
         (Number.isFinite(normalizedPricing.packagingFee) ? normalizedPricing.packagingFee : 0) +
         (Number.isFinite(normalizedPricing.deliveryFee) ? normalizedPricing.deliveryFee : 0) +
-        (Number.isFinite(normalizedPricing.platformFee) ? normalizedPricing.platformFee : 0) -
+        (Number.isFinite(normalizedPricing.platformFee) ? normalizedPricing.platformFee : 0) +
+        (Number.isFinite(normalizedPricing.surgeAmount) ? normalizedPricing.surgeAmount : 0) -
         (Number.isFinite(normalizedPricing.discount) ? normalizedPricing.discount : 0),
     );
 
-    if (!Number.isFinite(normalizedPricing.total) || normalizedPricing.total <= 0) {
-      normalizedPricing.total = Math.round(computedTotal * 100) / 100;
-    } else {
-      normalizedPricing.total = Math.round(normalizedPricing.total * 100) / 100;
-    }
+    normalizedPricing.total = Math.round(computedTotal * 100) / 100;
 
     const payment = {
       method: paymentMethod,
@@ -226,7 +251,10 @@ export async function createOrder(userId, dto) {
       distanceKm = Number.isFinite(d) ? d : null;
     }
 
-    const riderEarning = await getRiderEarning(distanceKm) || 0;
+    const riderBasePay = await getRiderEarning(distanceKm) || 0;
+    const riderSurgePay = Number(normalizedPricing.surgeAmount) || 0;
+    const riderTotalPayout = Math.round((riderBasePay + riderSurgePay) * 100) / 100;
+    const riderEarning = riderTotalPayout;
     
     // Calculate restaurant commission from subtotal
     let restaurantCommission = 0;
@@ -246,8 +274,9 @@ export async function createOrder(userId, dto) {
       0,
       (Number.isFinite(normalizedPricing.deliveryFee) ? normalizedPricing.deliveryFee : 0) +
         (Number.isFinite(normalizedPricing.platformFee) ? normalizedPricing.platformFee : 0) +
+        (Number.isFinite(normalizedPricing.surgeAmount) ? normalizedPricing.surgeAmount : 0) +
         restaurantCommission -
-        riderEarning,
+        riderTotalPayout,
     );
 
     const initialStatus = (paymentMethod === "razorpay" || paymentMethod === "card") ? "pending_payment" : "created";
@@ -255,7 +284,7 @@ export async function createOrder(userId, dto) {
     const order = new FoodOrder({
       userId: toObjectId(userId, 'User ID'),
       restaurantId: restaurantId,
-      zoneId: dto.zoneId ? toObjectId(dto.zoneId, 'Zone ID') : toObjectId(restaurant.zoneId, 'Restaurant Zone ID'),
+      zoneId: orderZoneId,
       items: (dto.items || []).map(item => ({
         ...item,
         itemId: toObjectId(item.itemId, 'Item ID')
@@ -280,6 +309,9 @@ export async function createOrder(userId, dto) {
       sendCutlery: dto.sendCutlery !== false,
       deliveryFleet: String(dto.deliveryFleet || "standard"),
       scheduledAt: dto.scheduledAt ? new Date(dto.scheduledAt) : null,
+      riderBasePay: Number(riderBasePay) || 0,
+      riderSurgePay: Number(riderSurgePay) || 0,
+      riderTotalPayout: Number(riderTotalPayout) || 0,
       riderEarning: Number(riderEarning) || 0,
       platformProfit: Number(platformProfit) || 0,
     });
@@ -336,11 +368,11 @@ export async function createOrder(userId, dto) {
       await notifyOwnersSafely([{ ownerType: "USER", ownerId: userId }], {
         title: isAwaitingOnlinePayment
           ? "Complete Payment to Confirm Order"
-          : "Order Confirmed! 🍔",
+          : "Order Confirmed! ðŸ”",
         body: isAwaitingOnlinePayment
           ? `Order #${order.order_id || order._id} is created. Please complete payment to send it to ${restaurant.restaurantName || "the restaurant"}.`
           : `Your order #${order.order_id || order._id} from ${restaurant.restaurantName || "the restaurant"} has been placed successfully.`,
-        image: "https://i.ibb.co/5GzXz7r/Switcheats-Brand-Image.png",
+        image: "https://i.ibb.co/5GzXz7r/Eqosy-Brand-Image.png",
         data: {
           type: isAwaitingOnlinePayment ? "order_created_pending_payment" : "order_created",
           orderId: String(order._id),
@@ -434,9 +466,9 @@ export async function verifyPayment(userId, dto) {
 
   // Notify Customer about payment success
   await notifyOwnersSafely([{ ownerType: "USER", ownerId: userId }], {
-    title: "Payment Successful! ✅",
-    body: `We have received your payment of ₹${order.payment.amountDue} for Order #${order._id.toString()}.`,
-    image: "https://i.ibb.co/5GzXz7r/Switcheats-Brand-Image.png",
+    title: "Payment Successful! âœ…",
+    body: `We have received your payment of â‚¹${order.payment.amountDue} for Order #${order._id.toString()}.`,
+    image: "https://i.ibb.co/5GzXz7r/Eqosy-Brand-Image.png",
     data: {
       type: "payment_success",
       orderId: String(order._id.toString()),
@@ -689,7 +721,7 @@ export async function cancelOrder(orderId, userId, reason) {
   const hasRefundProcessed =
     String(order.payment?.refund?.status || "none").toLowerCase() === "processed";
 
-  // ✅ NEW: Automated Razorpay Refund on User Cancel
+  // âœ… NEW: Automated Razorpay Refund on User Cancel
   if (
     paymentStatus === "paid" &&
     paymentMethod === "razorpay" &&
@@ -772,7 +804,7 @@ export async function cancelOrder(orderId, userId, reason) {
   const isOnlinePaid =
     finalPaymentMethod === "razorpay" &&
     (finalPaymentStatus === "paid" || finalPaymentStatus === "refunded");
-  const refundDetail = isOnlinePaid ? ` Your refund of ₹${order.pricing.total} is being processed and will be credited to your original payment method within 5-7 working days.` : "";
+  const refundDetail = isOnlinePaid ? ` Your refund of â‚¹${order.pricing.total} is being processed and will be credited to your original payment method within 5-7 working days.` : "";
   
   await notifyOwnersSafely(
     [
@@ -780,9 +812,9 @@ export async function cancelOrder(orderId, userId, reason) {
       { ownerType: "RESTAURANT", ownerId: order.restaurantId },
     ],
     {
-      title: "Order Cancelled ❌",
+      title: "Order Cancelled âŒ",
       body: `Order #${order.order_id || order._id} has been cancelled successfully.${refundDetail}`,
-      image: "https://i.ibb.co/5GzXz7r/Switcheats-Brand-Image.png",
+      image: "https://i.ibb.co/5GzXz7r/Eqosy-Brand-Image.png",
       data: {
         type: "order_cancelled",
         orderId: String(order._id.toString()),
@@ -960,19 +992,19 @@ export async function updateOrderStatusRestaurant(
   let body = `Status changed to ${String(orderStatus).replace(/_/g, " ")}`;
 
   if (orderStatus === "confirmed") {
-    title = "Order Accepted! 🧑‍🍳";
+    title = "Order Accepted! ðŸ§‘â€ðŸ³";
     body = "The restaurant has accepted your order and is starting to prepare it.";
   } else if (orderStatus === "preparing") {
-    title = "Food is being prepared! 🍳";
+    title = "Food is being prepared! ðŸ³";
     body = "Your food is currently being prepared by the restaurant.";
   } else if (orderStatus === "ready_for_pickup") {
-    title = "Food is ready! 🛍️";
+    title = "Food is ready! ðŸ›ï¸";
     body = "Your order is ready and waiting to be picked up.";
   } else if (String(orderStatus).includes("cancel")) {
     const isOnlinePaid = order.payment.method === "razorpay" && (order.payment.status === "paid" || order.payment.status === "refunded");
-    const refundDetail = isOnlinePaid ? ` Your refund of ₹${order.pricing.total} is being processed and will be credited to your original payment method within 5-7 working days.` : "";
+    const refundDetail = isOnlinePaid ? ` Your refund of â‚¹${order.pricing.total} is being processed and will be credited to your original payment method within 5-7 working days.` : "";
     
-    title = "Order Cancelled ❌";
+    title = "Order Cancelled âŒ";
     body = (note && String(note).trim()) ? note : `Unfortunately, your order has been cancelled by the restaurant.${refundDetail}`;
   }
 
@@ -1022,7 +1054,7 @@ export async function updateOrderStatusRestaurant(
     let riderBody = `The order status is now ${String(orderStatus).replace(/_/g, " ")}.`;
 
     if (String(orderStatus).includes("cancel")) {
-      riderTitle = "Order Cancelled ❌";
+      riderTitle = "Order Cancelled âŒ";
       riderBody = `Order #${order.order_id || order._id} has been cancelled. Please stop your current task.`;
       
       // Sync transaction status
@@ -1044,7 +1076,7 @@ export async function updateOrderStatusRestaurant(
       {
         title: title,
         body: body,
-        image: "https://i.ibb.co/5GzXz7r/Switcheats-Brand-Image.png",
+        image: "https://i.ibb.co/5GzXz7r/Eqosy-Brand-Image.png",
         data: {
           type: "order_status_update",
           orderId: order._id.toString(),
@@ -1109,7 +1141,7 @@ export async function updateOrderStatusRestaurant(
         to: orderStatus
     });
 
-    // ✅ NEW: Automated Razorpay Refund on Restaurant Cancel
+    // âœ… NEW: Automated Razorpay Refund on Restaurant Cancel
     // Triggers if the restaurant sets status to a cancelled state (e.g., cancelled_by_restaurant)
     if (
       String(orderStatus).includes("cancel") &&
@@ -1457,4 +1489,5 @@ export async function deleteOrderAdmin(orderId, adminId) {
     orderMongoId: String(order._id),
   };
 }
+
 

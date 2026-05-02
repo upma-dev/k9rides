@@ -1,1 +1,2 @@
-# SwitcheatsV2
+﻿# EqosyV2
+

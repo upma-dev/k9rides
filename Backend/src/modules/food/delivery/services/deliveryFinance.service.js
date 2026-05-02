@@ -100,7 +100,7 @@ export const getDeliveryPartnerWalletEnhanced = async (deliveryPartnerId) => {
     const [ordersTx] = await Promise.all([
         FoodOrder.find({ 'dispatch.deliveryPartnerId': partnerId, orderStatus: 'delivered' })
             .sort({ createdAt: -1 })
-            .select('orderId riderEarning payment orderStatus createdAt')
+            .select('orderId riderEarning riderBasePay riderSurgePay riderTotalPayout payment orderStatus createdAt')
             .limit(20)
             .lean(),
     ]);
@@ -110,6 +110,9 @@ export const getDeliveryPartnerWalletEnhanced = async (deliveryPartnerId) => {
             id: o._id,
             type: 'payment',
             amount: o.riderEarning || 0,
+            riderBasePay: Number(o.riderBasePay || 0),
+            riderSurgePay: Number(o.riderSurgePay || 0),
+            riderTotalPayout: Number(o.riderTotalPayout || o.riderEarning || 0),
             status: 'Completed',
             date: o.createdAt,
             description: o.payment?.method === 'cash' ? 'COD delivery earning' : 'Online delivery earning',

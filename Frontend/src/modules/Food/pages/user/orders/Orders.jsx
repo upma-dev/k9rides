@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react"
+﻿import { useState, useEffect } from "react"
 import { Link, useNavigate } from "react-router-dom"
 import { ArrowLeft, Search, MoreVertical, ChevronRight, Star, RotateCcw, AlertCircle, Loader2, Clock, X, Share2, MessageCircle, Send, Copy, Mail, MessagesSquare, Link2 } from "lucide-react"
 import { orderAPI } from "@food/api"
@@ -298,6 +298,7 @@ export default function Orders() {
               total: order.pricing?.total || order.total || 0,
               subtotal: order.pricing?.subtotal || 0,
               deliveryFee: order.pricing?.deliveryFee || 0,
+              surgeAmount: order.pricing?.surgeAmount || 0,
               tax: order.pricing?.tax || 0,
               pricing: order.pricing || {}, // Keep full pricing object for discounts, coupons
               payment: order.payment || {},
@@ -890,6 +891,12 @@ Order again from this restaurant in the ${companyName} app.`
                         <span className="text-gray-800 dark:text-gray-200 font-medium">{"\u20B9"}{order.tax.toFixed(2)}</span>
                       </div>
                     )}
+                    {order.surgeAmount > 0 && (
+                      <div className="flex justify-between text-xs">
+                        <span className="text-gray-600 dark:text-gray-400">Surge Amount</span>
+                        <span className="text-gray-800 dark:text-gray-200 font-medium">{"\u20B9"}{order.surgeAmount.toFixed(2)}</span>
+                      </div>
+                    )}
                     {order.pricing?.discount > 0 && (
                       <div className="flex justify-between text-xs">
                         <span className="text-green-600 dark:text-green-400">Discount</span>
@@ -1040,7 +1047,7 @@ Order again from this restaurant in the ${companyName} app.`
 
       {/* Footer Branding */}
       <div className="flex justify-center mt-8 mb-4">
-        <h1 className="text-4xl font-black text-gray-200 dark:text-zinc-900 tracking-tighter italic capitalize">Switcheats</h1>
+        <h1 className="text-4xl font-black text-gray-200 dark:text-zinc-900 tracking-tighter italic capitalize">Eqosy</h1>
       </div>
 
       {/* Rating & Feedback Modal */}
@@ -1271,3 +1278,4 @@ Order again from this restaurant in the ${companyName} app.`
     </div>
   )
 }
+

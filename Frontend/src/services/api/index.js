@@ -788,6 +788,20 @@ export const adminAPI = {
       { status: Boolean(status) },
       { contextModule: "admin" },
     ),
+  getZoneSurgeConfigs: () =>
+    apiClient.get("/food/admin/delivery/zone-surge", {
+      contextModule: "admin",
+    }),
+  upsertZoneSurgeConfig: (body) =>
+    apiClient.put("/food/admin/delivery/zone-surge", body ?? {}, {
+      contextModule: "admin",
+    }),
+  toggleZoneSurgeStatus: (zoneId, status) =>
+    apiClient.patch(
+      `/food/admin/delivery/zone-surge/${String(zoneId)}/status`,
+      { status: Boolean(status) },
+      { contextModule: "admin" },
+    ),
 
   /** Fee Settings (admin) */
   getFeeSettings: () =>

@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+﻿import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useDeliveryStore } from '@/modules/DeliveryV2/store/useDeliveryStore';
 import { useProximityCheck } from '@/modules/DeliveryV2/hooks/useProximityCheck';
@@ -156,7 +156,7 @@ export default function DeliveryHomeV2({ tab = 'feed' }) {
   useEffect(() => {
     let interval;
     if (isSimMode && simPath.length > 1 && simIndex < simPath.length - 1) {
-      console.log('[SimAuto] Glide Active √');
+      console.log('[SimAuto] Glide Active âˆš');
       
       interval = setInterval(() => {
         setSimProgress(prev => {
@@ -573,7 +573,7 @@ export default function DeliveryHomeV2({ tab = 'feed' }) {
 
   return (
     <div className="relative h-screen w-full bg-white text-gray-900 overflow-hidden flex flex-col">
-      {/* ─── 1. TOP HEADER (Premium Dark Gray) ─── */}
+      {/* â”€â”€â”€ 1. TOP HEADER (Premium Dark Gray) â”€â”€â”€ */}
       {currentTab !== 'history' && (
       <div className="absolute top-0 inset-x-0 bg-[#121212]/95 backdrop-blur-2xl shadow-2xl z-[200] safe-top pb-2 border-b border-white/10">
         <div className="flex items-center justify-between px-4 py-2">
@@ -582,7 +582,7 @@ export default function DeliveryHomeV2({ tab = 'feed' }) {
                 onClick={() => navigate('/food/delivery/profile')}
                 className="w-10 h-10 rounded-full border border-white/20 p-0.5 shadow-xl overflow-hidden bg-white/5 cursor-pointer active:scale-95 transition-all"
              >
-                <img src={profileImage || "https://i.ibb.co/3m2Yh7r/SwitchEats-Brand-Image.png"} alt="Profile" className="w-full h-full object-cover rounded-full" />
+                <img src={profileImage || "https://i.ibb.co/3m2Yh7r/Eqosy-Brand-Image.png"} alt="Profile" className="w-full h-full object-cover rounded-full" />
              </div>
              <button 
                onClick={async () => {
@@ -613,7 +613,7 @@ export default function DeliveryHomeV2({ tab = 'feed' }) {
           </div>
         </div>
 
-        {/* ─── LIVE STATUS / PROGRESS BADGE (MATCHED PRO) ─── */}
+        {/* â”€â”€â”€ LIVE STATUS / PROGRESS BADGE (MATCHED PRO) â”€â”€â”€ */}
         <AnimatePresence>
           {currentTab === 'feed' && (
             <motion.div 
@@ -675,7 +675,7 @@ export default function DeliveryHomeV2({ tab = 'feed' }) {
       </div>
       )}
 
-      {/* ─── 2. MAIN CONTENT ─── */}
+      {/* â”€â”€â”€ 2. MAIN CONTENT â”€â”€â”€ */}
       <div className={`flex-1 relative overflow-y-auto ${currentTab === 'history' ? 'pt-0' : 'pt-[120px]'} no-scrollbar`}>
          {currentTab === 'feed' ? (
            <div className="absolute inset-0 top-[-120px]">
@@ -832,7 +832,7 @@ export default function DeliveryHomeV2({ tab = 'feed' }) {
                                  <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full border ${isWithinRange ? 'bg-emerald-50 border-emerald-100' : 'bg-orange-50 border-orange-100'}`}>
                                    <div className={`w-1.5 h-1.5 rounded-full ${isWithinRange ? 'bg-emerald-500 animate-pulse' : 'bg-orange-500'}`} />
                                    <span className={`text-[10px] font-black uppercase tracking-widest ${isWithinRange ? 'text-emerald-600' : 'text-orange-500'}`}>
-                                     {isWithinRange ? 'Ready to Arrive' : `${(distanceToTarget / 1000).toFixed(1)} km • ${eta || '--'} min`}
+                                     {isWithinRange ? 'Ready to Arrive' : `${(distanceToTarget / 1000).toFixed(1)} km â€¢ ${eta || '--'} min`}
                                    </span>
                                  </div>
                               </div>
@@ -860,7 +860,7 @@ export default function DeliveryHomeV2({ tab = 'feed' }) {
                           <div className="pt-6">
                             <ActionSlider 
                               label="Slide to Arrive" 
-                              successLabel="Arrived ✓" 
+                              successLabel="Arrived âœ“" 
                               disabled={!isWithinRange} 
                               onConfirm={reachDrop} 
                               color="bg-emerald-600" 
@@ -898,7 +898,7 @@ export default function DeliveryHomeV2({ tab = 'feed' }) {
         </AnimatePresence>
       )}
 
-      {/* ─── MODALS RESTORED FROM OLD UI ─── */}
+      {/* â”€â”€â”€ MODALS RESTORED FROM OLD UI â”€â”€â”€ */}
       <BottomPopup isOpen={showEmergencyPopup} title="Emergency Help" onClose={() => setShowEmergencyPopup(false)}>
          <div className="grid gap-4 py-2">
            {emergencyOptions.map((opt, i) => (
@@ -943,7 +943,7 @@ export default function DeliveryHomeV2({ tab = 'feed' }) {
         </motion.div>
       )}
 
-      {/* ─── 3. BOTTOM NAV (Fixed - Compact Pro) ─── */}
+      {/* â”€â”€â”€ 3. BOTTOM NAV (Fixed - Compact Pro) â”€â”€â”€ */}
       <div className="bg-white border-t border-gray-100 px-8 py-3 pb-6 flex justify-between items-center z-[200] shadow-[0_-5px_20px_rgba(0,0,0,0.05)]">
          <button onClick={() => navigate('/food/delivery/feed')} className={`flex flex-col items-center gap-1 transition-all ${currentTab === 'feed' ? 'text-gray-950 scale-110' : 'text-gray-400 opacity-70'}`}>
             <LayoutGrid className="w-6 h-6" /><span className="text-[11px] font-medium font-sans">Feed</span>
@@ -961,3 +961,4 @@ export default function DeliveryHomeV2({ tab = 'feed' }) {
     </div>
   );
 }
+

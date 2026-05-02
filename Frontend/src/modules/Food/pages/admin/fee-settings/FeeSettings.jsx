@@ -1,210 +1,230 @@
 import { useState, useEffect } from "react"
-import { Save, Loader2, DollarSign, Plus, Trash2, Edit, Check, X } from "lucide-react"
+import { Save, Loader2, DollarSign, Plus, Trash2, Pencil, Check, X } from "lucide-react"
 import { Button } from "@food/components/ui/button"
 import { adminAPI } from "@food/api"
 import { toast } from "sonner"
-const debugLog = (...args) => {}
-const debugWarn = (...args) => {}
-const debugError = (...args) => {}
 
+const debugError = (..._args) => {}
 
-// Fee Settings Component - Range-based delivery fee configuration
 export default function FeeSettings() {
   const [feeSettings, setFeeSettings] = useState({
     deliveryFee: "",
     deliveryFeeRanges: [],
+    deliveryFeeComputationMode: "distance_order_value",
+    distanceOrderDeliveryFeeRules: [],
     freeDeliveryThreshold: "",
     platformFee: "",
     gstRate: "",
   })
+  const [distanceRules, setDistanceRules] = useState([])
+  const [newPriceSlabByRule, setNewPriceSlabByRule] = useState({})
+  const [editingPriceSlabByRule, setEditingPriceSlabByRule] = useState({})
   const [loadingFeeSettings, setLoadingFeeSettings] = useState(false)
   const [savingFeeSettings, setSavingFeeSettings] = useState(false)
-  const [editingRangeIndex, setEditingRangeIndex] = useState(null)
-  const [newRange, setNewRange] = useState({ min: '', max: '', fee: '' })
 
-  // Fetch fee settings
+  const getDistanceRuleConfig = (ruleId) =>
+    feeSettings.distanceOrderDeliveryFeeRules.find((r) => String(r.distanceRuleId) === String(ruleId)) || null
+
+  const setDistanceRuleConfig = (ruleId, updater) => {
+    const prev = feeSettings.distanceOrderDeliveryFeeRules
+    const idx = prev.findIndex((r) => String(r.distanceRuleId) === String(ruleId))
+    const next = [...prev]
+    if (idx === -1) {
+      next.push(updater({ distanceRuleId: String(ruleId), priceSlabs: [] }))
+    } else {
+      next[idx] = updater(next[idx])
+    }
+    setFeeSettings({ ...feeSettings, distanceOrderDeliveryFeeRules: next })
+  }
+
   const fetchFeeSettings = async () => {
     try {
       setLoadingFeeSettings(true)
       const response = await adminAPI.getFeeSettings()
-      if (response.data.success && response.data.data.feeSettings) {
+      const saved = response?.data?.data?.feeSettings
+      if (response?.data?.success && saved) {
         setFeeSettings({
-          deliveryFee: response.data.data.feeSettings.deliveryFee ?? "",
-          deliveryFeeRanges: response.data.data.feeSettings.deliveryFeeRanges || [],
-          freeDeliveryThreshold: response.data.data.feeSettings.freeDeliveryThreshold ?? "",
-          platformFee: response.data.data.feeSettings.platformFee ?? "",
-          gstRate: response.data.data.feeSettings.gstRate ?? "",
+          deliveryFee: saved.deliveryFee ?? "",
+          deliveryFeeRanges: saved.deliveryFeeRanges || [],
+          deliveryFeeComputationMode: saved.deliveryFeeComputationMode || "distance_order_value",
+          distanceOrderDeliveryFeeRules: saved.distanceOrderDeliveryFeeRules || [],
+          freeDeliveryThreshold: saved.freeDeliveryThreshold ?? "",
+          platformFee: saved.platformFee ?? "",
+          gstRate: saved.gstRate ?? "",
         })
-      } else if (response.data.success && response.data.data.feeSettings === null) {
-        // Not configured yet - keep empty fields (no defaults).
+      }
+      if (response?.data?.success && saved === null) {
         setFeeSettings({
           deliveryFee: "",
           deliveryFeeRanges: [],
+          deliveryFeeComputationMode: "distance_order_value",
+          distanceOrderDeliveryFeeRules: [],
           freeDeliveryThreshold: "",
           platformFee: "",
           gstRate: "",
         })
       }
     } catch (error) {
-      debugError('Error fetching fee settings:', error)
-      toast.error('Failed to load fee settings')
+      debugError(error)
+      toast.error("Failed to load fee settings")
     } finally {
       setLoadingFeeSettings(false)
     }
   }
 
-  // Fetch fee settings on mount
+  const fetchDistanceRules = async () => {
+    try {
+      const response = await adminAPI.getCommissionRules()
+      const rows = response?.data?.data?.commissions || []
+      setDistanceRules(Array.isArray(rows) ? rows : [])
+    } catch (error) {
+      debugError(error)
+      setDistanceRules([])
+      toast.error("Failed to load distance slabs from Delivery Boy Commission")
+    }
+  }
+
   useEffect(() => {
     fetchFeeSettings()
+    fetchDistanceRules()
   }, [])
 
-  // Save fee settings
   const handleSaveFeeSettings = async () => {
     try {
       setSavingFeeSettings(true)
       const response = await adminAPI.createOrUpdateFeeSettings({
         deliveryFee: feeSettings.deliveryFee === "" ? undefined : Number(feeSettings.deliveryFee),
         deliveryFeeRanges: feeSettings.deliveryFeeRanges,
+        deliveryFeeComputationMode: "distance_order_value",
+        distanceOrderDeliveryFeeRules: feeSettings.distanceOrderDeliveryFeeRules,
         freeDeliveryThreshold: feeSettings.freeDeliveryThreshold === "" ? undefined : Number(feeSettings.freeDeliveryThreshold),
         platformFee: feeSettings.platformFee === "" ? undefined : Number(feeSettings.platformFee),
         gstRate: feeSettings.gstRate === "" ? undefined : Number(feeSettings.gstRate),
         isActive: true,
       })
-
-      if (response.data.success) {
-        toast.success('Fee settings saved successfully')
-        // Avoid an extra API call; update local state from response
-        const saved = response?.data?.data?.feeSettings
-        if (saved) {
-          setFeeSettings({
-            deliveryFee: saved.deliveryFee ?? "",
-            deliveryFeeRanges: saved.deliveryFeeRanges ?? [],
-            freeDeliveryThreshold: saved.freeDeliveryThreshold ?? "",
-            platformFee: saved.platformFee ?? "",
-            gstRate: saved.gstRate ?? "",
-          })
-        }
+      if (response?.data?.success) {
+        toast.success("Fee settings saved successfully")
+        await fetchFeeSettings()
       } else {
-        toast.error(response.data.message || 'Failed to save fee settings')
+        toast.error(response?.data?.message || "Failed to save fee settings")
       }
     } catch (error) {
-      debugError('Error saving fee settings:', error)
-      toast.error(error.response?.data?.message || 'Failed to save fee settings')
+      debugError(error)
+      toast.error(error?.response?.data?.message || "Failed to save fee settings")
     } finally {
       setSavingFeeSettings(false)
     }
   }
 
-  // Add new delivery fee range
-  const handleAddRange = () => {
-    if (newRange.min === '' || newRange.max === '' || newRange.fee === '') {
-      toast.error('Please fill all fields (Min, Max, Fee)')
+  const handleAddPriceSlab = (ruleId) => {
+    const form = newPriceSlabByRule[String(ruleId)] || {}
+    const minOrderValue = Number(form.minOrderValue)
+    const maxOrderValue = Number(form.maxOrderValue)
+    const deliveryFee = Number(form.deliveryFee)
+    if (!Number.isFinite(minOrderValue) || !Number.isFinite(maxOrderValue) || !Number.isFinite(deliveryFee)) {
+      toast.error("Fill all slab fields")
       return
     }
-
-    const min = Number(newRange.min)
-    const max = Number(newRange.max)
-    const fee = Number(newRange.fee)
-
-    if (min < 0 || max < 0 || fee < 0) {
-      toast.error('All values must be positive numbers')
+    if (minOrderValue < 0 || maxOrderValue < 0 || deliveryFee < 0) {
+      toast.error("Values must be 0 or greater")
       return
     }
-
-    if (min >= max) {
-      toast.error('Min value must be less than Max value')
+    if (minOrderValue >= maxOrderValue) {
+      toast.error("Min order value must be less than max order value")
       return
     }
-
-    // Check for overlapping ranges
-    const ranges = [...feeSettings.deliveryFeeRanges]
-    for (const range of ranges) {
-      if ((min >= range.min && min < range.max) || (max > range.min && max <= range.max) || (min <= range.min && max >= range.max)) {
-        toast.error('This range overlaps with an existing range')
-        return
-      }
+    const existing = getDistanceRuleConfig(ruleId)?.priceSlabs || []
+    const overlap = existing.some((s) =>
+      (minOrderValue >= s.minOrderValue && minOrderValue < s.maxOrderValue) ||
+      (maxOrderValue > s.minOrderValue && maxOrderValue <= s.maxOrderValue) ||
+      (minOrderValue <= s.minOrderValue && maxOrderValue >= s.maxOrderValue)
+    )
+    if (overlap) {
+      toast.error("This price slab overlaps with an existing slab")
+      return
     }
+    setDistanceRuleConfig(ruleId, (cfg) => ({
+      ...cfg,
+      priceSlabs: [...(cfg.priceSlabs || []), { minOrderValue, maxOrderValue, deliveryFee, isActive: true }]
+        .sort((a, b) => a.minOrderValue - b.minOrderValue),
+    }))
+    setNewPriceSlabByRule((prev) => ({
+      ...prev,
+      [String(ruleId)]: { minOrderValue: "", maxOrderValue: "", deliveryFee: "" },
+    }))
+  }
 
-    setFeeSettings({
-      ...feeSettings,
-      deliveryFeeRanges: [...ranges, { min, max, fee }].sort((a, b) => a.min - b.min)
+  const handleDeletePriceSlab = (ruleId, index) => {
+    setDistanceRuleConfig(ruleId, (cfg) => ({
+      ...cfg,
+      priceSlabs: (cfg.priceSlabs || []).filter((_, i) => i !== index),
+    }))
+  }
+
+  const handleStartEditPriceSlab = (ruleId, index, slab) => {
+    setEditingPriceSlabByRule((prev) => ({
+      ...prev,
+      [String(ruleId)]: {
+        index,
+        minOrderValue: String(slab.minOrderValue),
+        maxOrderValue: String(slab.maxOrderValue),
+        deliveryFee: String(slab.deliveryFee),
+      },
+    }))
+  }
+
+  const handleCancelEditPriceSlab = (ruleId) => {
+    setEditingPriceSlabByRule((prev) => {
+      const next = { ...prev }
+      delete next[String(ruleId)]
+      return next
     })
-    setNewRange({ min: '', max: '', fee: '' })
-    toast.success('Range added successfully')
   }
 
-  // Delete delivery fee range
-  const handleDeleteRange = (index) => {
-    const newRanges = feeSettings.deliveryFeeRanges.filter((_, i) => i !== index)
-    setFeeSettings({
-      ...feeSettings,
-      deliveryFeeRanges: newRanges
+  const handleSaveEditPriceSlab = (ruleId) => {
+    const edit = editingPriceSlabByRule[String(ruleId)]
+    if (!edit) return
+
+    const minOrderValue = Number(edit.minOrderValue)
+    const maxOrderValue = Number(edit.maxOrderValue)
+    const deliveryFee = Number(edit.deliveryFee)
+    if (!Number.isFinite(minOrderValue) || !Number.isFinite(maxOrderValue) || !Number.isFinite(deliveryFee)) {
+      toast.error("Fill all slab fields")
+      return
+    }
+    if (minOrderValue < 0 || maxOrderValue < 0 || deliveryFee < 0) {
+      toast.error("Values must be 0 or greater")
+      return
+    }
+    if (minOrderValue >= maxOrderValue) {
+      toast.error("Min order value must be less than max order value")
+      return
+    }
+
+    const existing = getDistanceRuleConfig(ruleId)?.priceSlabs || []
+    const overlap = existing.some((s, i) => {
+      if (i === edit.index) return false
+      return (
+        (minOrderValue >= s.minOrderValue && minOrderValue < s.maxOrderValue) ||
+        (maxOrderValue > s.minOrderValue && maxOrderValue <= s.maxOrderValue) ||
+        (minOrderValue <= s.minOrderValue && maxOrderValue >= s.maxOrderValue)
+      )
     })
-    toast.success('Range deleted successfully')
-  }
-
-  // Edit delivery fee range
-  const handleEditRange = (index) => {
-    const range = feeSettings.deliveryFeeRanges[index]
-    setNewRange({ min: range.min, max: range.max, fee: range.fee })
-    setEditingRangeIndex(index)
-  }
-
-  // Save edited range
-  const handleSaveEditRange = () => {
-    if (newRange.min === '' || newRange.max === '' || newRange.fee === '') {
-      toast.error('Please fill all fields')
+    if (overlap) {
+      toast.error("This price slab overlaps with an existing slab")
       return
     }
 
-    const min = Number(newRange.min)
-    const max = Number(newRange.max)
-    const fee = Number(newRange.fee)
-
-    if (min < 0 || max < 0 || fee < 0) {
-      toast.error('All values must be positive numbers')
-      return
-    }
-
-    if (min >= max) {
-      toast.error('Min value must be less than Max value')
-      return
-    }
-
-    const ranges = [...feeSettings.deliveryFeeRanges]
-    // Remove the range being edited
-    ranges.splice(editingRangeIndex, 1)
-
-    // Check for overlapping ranges
-    for (const range of ranges) {
-      if ((min >= range.min && min < range.max) || (max > range.min && max <= range.max) || (min <= range.min && max >= range.max)) {
-        toast.error('This range overlaps with an existing range')
-        return
-      }
-    }
-
-    // Add updated range
-    ranges.push({ min, max, fee })
-    ranges.sort((a, b) => a.min - b.min)
-
-    setFeeSettings({
-      ...feeSettings,
-      deliveryFeeRanges: ranges
+    setDistanceRuleConfig(ruleId, (cfg) => {
+      const slabs = [...(cfg.priceSlabs || [])]
+      slabs[edit.index] = { minOrderValue, maxOrderValue, deliveryFee, isActive: true }
+      return { ...cfg, priceSlabs: slabs.sort((a, b) => a.minOrderValue - b.minOrderValue) }
     })
-    setNewRange({ min: '', max: '', fee: '' })
-    setEditingRangeIndex(null)
-    toast.success('Range updated successfully')
-  }
-
-  // Cancel edit
-  const handleCancelEdit = () => {
-    setNewRange({ min: '', max: '', fee: '' })
-    setEditingRangeIndex(null)
+    handleCancelEditPriceSlab(ruleId)
   }
 
   return (
     <div className="p-4 lg:p-6 bg-slate-50 min-h-screen">
-      {/* Header Section */}
       <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 mb-6">
         <div className="flex items-center gap-3 mb-4">
           <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center">
@@ -212,313 +232,186 @@ export default function FeeSettings() {
           </div>
           <h1 className="text-2xl font-bold text-slate-900">Delivery & Platform Fee</h1>
         </div>
-        <p className="text-sm text-slate-600">
-          Configure delivery fee, platform fee, and GST settings for orders
-        </p>
+        <p className="text-sm text-slate-600">Configure delivery fee, platform fee, and GST settings for orders</p>
       </div>
 
-      {/* Fee Settings Panel */}
       <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
         <div className="p-6">
           <div className="flex items-center justify-between mb-6">
             <div>
               <h2 className="text-xl font-bold text-slate-900">Fee Configuration</h2>
-              <p className="text-sm text-slate-500 mt-1">
-                Set the fees and charges that will be applied to all orders
-              </p>
+              <p className="text-sm text-slate-500 mt-1">Distance slab + order-value slab based delivery fee configuration</p>
             </div>
-            <Button
-              onClick={handleSaveFeeSettings}
-              disabled={savingFeeSettings || loadingFeeSettings}
-              className="bg-green-600 hover:bg-green-700 text-white flex items-center gap-2"
-            >
-              {savingFeeSettings ? (
-                <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  Saving...
-                </>
-              ) : (
-                <>
-                  <Save className="w-4 h-4" />
-                  Save Settings
-                </>
-              )}
+            <Button onClick={handleSaveFeeSettings} disabled={savingFeeSettings || loadingFeeSettings} className="bg-green-600 hover:bg-green-700 text-white flex items-center gap-2">
+              {savingFeeSettings ? <><Loader2 className="w-4 h-4 animate-spin" />Saving...</> : <><Save className="w-4 h-4" />Save Settings</>}
             </Button>
           </div>
 
           {loadingFeeSettings ? (
-            <div className="flex items-center justify-center py-12">
-              <Loader2 className="w-6 h-6 animate-spin text-green-600" />
-            </div>
+            <div className="flex items-center justify-center py-12"><Loader2 className="w-6 h-6 animate-spin text-green-600" /></div>
           ) : (
             <>
-              {/* Delivery Fee Ranges Section */}
               <div className="mb-8">
-                <div className="flex items-center justify-between mb-4">
-                  <div>
-                    <h3 className="text-lg font-semibold text-slate-900">Delivery Fee by Order Value Range</h3>
-                    <p className="text-sm text-slate-500 mt-1">
-                      Set different delivery fees based on order value ranges
-                    </p>
-                  </div>
+                <h3 className="text-lg font-semibold text-slate-900 mb-1">Delivery Fee by Distance + Order Value</h3>
+                <p className="text-sm text-slate-500 mb-4">Distance slabs are reflected from Delivery Boy Commission page.</p>
+                <div className="space-y-4">
+                  {distanceRules.map((rule) => {
+                    const ruleCfg = getDistanceRuleConfig(rule._id)
+                    const slabs = Array.isArray(ruleCfg?.priceSlabs) ? ruleCfg.priceSlabs : []
+                    const form = newPriceSlabByRule[String(rule._id)] || { minOrderValue: "", maxOrderValue: "", deliveryFee: "" }
+                    const label = rule.maxDistance == null ? `${rule.minDistance}+ km` : `${rule.minDistance}-${rule.maxDistance} km`
+                    return (
+                      <div key={rule._id} className="border border-slate-200 rounded-lg p-4">
+                        <div className="flex items-center justify-between mb-3">
+                          <h4 className="text-sm font-semibold text-slate-800">{rule.name || "Distance Slab"} • {label}</h4>
+                        </div>
+
+                        {slabs.length > 0 && (
+                          <div className="mb-3 overflow-x-auto">
+                            <table className="w-full border border-slate-200 rounded-lg">
+                              <thead className="bg-slate-50">
+                                <tr>
+                                  <th className="px-3 py-2 text-left text-xs font-semibold text-slate-700 border-b">Min Order (₹)</th>
+                                  <th className="px-3 py-2 text-left text-xs font-semibold text-slate-700 border-b">Max Order (₹)</th>
+                                  <th className="px-3 py-2 text-left text-xs font-semibold text-slate-700 border-b">Per Km Rate (₹)</th>
+                                  <th className="px-3 py-2 text-center text-xs font-semibold text-slate-700 border-b">Action</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {slabs.map((s, idx) => (
+                                  <tr key={`${rule._id}-${idx}`} className="hover:bg-slate-50">
+                                    <td className="px-3 py-2 text-sm border-b">
+                                      {editingPriceSlabByRule[String(rule._id)]?.index === idx ? (
+                                        <input
+                                          type="number"
+                                          min="0"
+                                          step="0.01"
+                                          value={editingPriceSlabByRule[String(rule._id)]?.minOrderValue ?? ""}
+                                          onChange={(e) =>
+                                            setEditingPriceSlabByRule((prev) => ({
+                                              ...prev,
+                                              [String(rule._id)]: {
+                                                ...prev[String(rule._id)],
+                                                minOrderValue: e.target.value,
+                                              },
+                                            }))
+                                          }
+                                          className="w-full px-2 py-1 border border-slate-300 rounded"
+                                        />
+                                      ) : (
+                                        <>₹{s.minOrderValue}</>
+                                      )}
+                                    </td>
+                                    <td className="px-3 py-2 text-sm border-b">
+                                      {editingPriceSlabByRule[String(rule._id)]?.index === idx ? (
+                                        <input
+                                          type="number"
+                                          min="0"
+                                          step="0.01"
+                                          value={editingPriceSlabByRule[String(rule._id)]?.maxOrderValue ?? ""}
+                                          onChange={(e) =>
+                                            setEditingPriceSlabByRule((prev) => ({
+                                              ...prev,
+                                              [String(rule._id)]: {
+                                                ...prev[String(rule._id)],
+                                                maxOrderValue: e.target.value,
+                                              },
+                                            }))
+                                          }
+                                          className="w-full px-2 py-1 border border-slate-300 rounded"
+                                        />
+                                      ) : (
+                                        <>₹{s.maxOrderValue}</>
+                                      )}
+                                    </td>
+                                    <td className="px-3 py-2 text-sm font-medium text-green-700 border-b">
+                                      {editingPriceSlabByRule[String(rule._id)]?.index === idx ? (
+                                        <input
+                                          type="number"
+                                          min="0"
+                                          step="0.01"
+                                          value={editingPriceSlabByRule[String(rule._id)]?.deliveryFee ?? ""}
+                                          onChange={(e) =>
+                                            setEditingPriceSlabByRule((prev) => ({
+                                              ...prev,
+                                              [String(rule._id)]: {
+                                                ...prev[String(rule._id)],
+                                                deliveryFee: e.target.value,
+                                              },
+                                            }))
+                                          }
+                                          className="w-full px-2 py-1 border border-slate-300 rounded text-slate-900 font-normal"
+                                        />
+                                      ) : (
+                                        <>₹{s.deliveryFee}</>
+                                      )}
+                                    </td>
+                                    <td className="px-3 py-2 text-center border-b">
+                                      <div className="flex items-center justify-center gap-2">
+                                        {editingPriceSlabByRule[String(rule._id)]?.index === idx ? (
+                                          <>
+                                            <button onClick={() => handleSaveEditPriceSlab(rule._id)} className="p-1.5 text-green-700 hover:bg-green-50 rounded transition-colors" title="Save">
+                                              <Check className="w-4 h-4" />
+                                            </button>
+                                            <button onClick={() => handleCancelEditPriceSlab(rule._id)} className="p-1.5 text-slate-600 hover:bg-slate-100 rounded transition-colors" title="Cancel">
+                                              <X className="w-4 h-4" />
+                                            </button>
+                                          </>
+                                        ) : (
+                                          <>
+                                            <button onClick={() => handleStartEditPriceSlab(rule._id, idx, s)} className="p-1.5 text-blue-600 hover:bg-blue-50 rounded transition-colors" title="Edit">
+                                              <Pencil className="w-4 h-4" />
+                                            </button>
+                                            <button onClick={() => handleDeletePriceSlab(rule._id, idx)} className="p-1.5 text-red-600 hover:bg-red-50 rounded transition-colors" title="Delete">
+                                              <Trash2 className="w-4 h-4" />
+                                            </button>
+                                          </>
+                                        )}
+                                      </div>
+                                    </td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        )}
+
+                        <div className="bg-slate-50 p-3 rounded-lg border border-slate-200">
+                          <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+                            <input type="number" min="0" step="0.01" value={form.minOrderValue} onChange={(e) => setNewPriceSlabByRule((prev) => ({ ...prev, [String(rule._id)]: { ...form, minOrderValue: e.target.value } }))} className="px-3 py-2 text-sm border border-slate-300 rounded-lg" placeholder="Min Order (₹)" />
+                            <input type="number" min="0" step="0.01" value={form.maxOrderValue} onChange={(e) => setNewPriceSlabByRule((prev) => ({ ...prev, [String(rule._id)]: { ...form, maxOrderValue: e.target.value } }))} className="px-3 py-2 text-sm border border-slate-300 rounded-lg" placeholder="Max Order (₹)" />
+                            <input type="number" min="0" step="0.01" value={form.deliveryFee} onChange={(e) => setNewPriceSlabByRule((prev) => ({ ...prev, [String(rule._id)]: { ...form, deliveryFee: e.target.value } }))} className="px-3 py-2 text-sm border border-slate-300 rounded-lg" placeholder="Per Km Rate (₹)" />
+                            <Button onClick={() => handleAddPriceSlab(rule._id)} className="bg-green-600 hover:bg-green-700 text-white text-sm w-full flex items-center justify-center gap-2">
+                              <Plus className="w-4 h-4" />Add Slab
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  })}
+                  {distanceRules.length === 0 && (
+                    <div className="text-sm text-slate-500 border border-dashed border-slate-300 rounded-lg p-4">
+                      No distance slabs found. Please configure Delivery Boy Commission first.
+                    </div>
+                  )}
                 </div>
-
-                {/* Ranges Table */}
-                {feeSettings.deliveryFeeRanges.length > 0 && (
-                  <div className="mb-4 overflow-x-auto">
-                    <table className="w-full border border-slate-200 rounded-lg">
-                      <thead className="bg-slate-50">
-                        <tr>
-                          <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 border-b border-slate-200">Min (₹)</th>
-                          <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 border-b border-slate-200">Max (₹)</th>
-                          <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 border-b border-slate-200">Delivery Fee (₹)</th>
-                          <th className="px-4 py-3 text-center text-sm font-semibold text-slate-700 border-b border-slate-200">Actions</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {feeSettings.deliveryFeeRanges
-                          .map((range, originalIndex) => ({ range, originalIndex }))
-                          .sort((a, b) => a.range.min - b.range.min)
-                          .map(({ range, originalIndex }) => {
-                            const isEditing = editingRangeIndex === originalIndex;
-                            return (
-                              <tr key={originalIndex} className={`${isEditing ? 'bg-blue-50' : 'hover:bg-slate-50'} transition-colors`}>
-                                <td className="px-4 py-3 text-sm text-slate-900 border-b border-slate-100">
-                                  {isEditing ? (
-                                    <div className="flex items-center gap-1">
-                                      <span className="text-slate-400">₹</span>
-                                      <input
-                                        type="number"
-                                        value={newRange.min}
-                                        onChange={(e) => setNewRange({ ...newRange, min: e.target.value })}
-                                        className="w-24 px-2 py-1 border border-blue-300 rounded focus:ring-2 focus:ring-blue-500 outline-none"
-                                      />
-                                    </div>
-                                  ) : (
-                                    <>₹{range.min}</>
-                                  )}
-                                </td>
-                                <td className="px-4 py-3 text-sm text-slate-900 border-b border-slate-100">
-                                  {isEditing ? (
-                                    <div className="flex items-center gap-1">
-                                      <span className="text-slate-400">₹</span>
-                                      <input
-                                        type="number"
-                                        value={newRange.max}
-                                        onChange={(e) => setNewRange({ ...newRange, max: e.target.value })}
-                                        className="w-24 px-2 py-1 border border-blue-300 rounded focus:ring-2 focus:ring-blue-500 outline-none"
-                                      />
-                                    </div>
-                                  ) : (
-                                    <>₹{range.max}</>
-                                  )}
-                                </td>
-                                <td className="px-4 py-3 text-sm font-medium text-green-600 border-b border-slate-100">
-                                  {isEditing ? (
-                                    <div className="flex items-center gap-1">
-                                      <span className="text-slate-400">₹</span>
-                                      <input
-                                        type="number"
-                                        value={newRange.fee}
-                                        onChange={(e) => setNewRange({ ...newRange, fee: e.target.value })}
-                                        className="w-24 px-2 py-1 border border-blue-300 rounded focus:ring-2 focus:ring-blue-500 outline-none text-green-600 font-medium"
-                                      />
-                                    </div>
-                                  ) : (
-                                    <>₹{range.fee}</>
-                                  )}
-                                </td>
-                                <td className="px-4 py-3 text-center border-b border-slate-100">
-                                  <div className="flex items-center justify-center gap-2">
-                                    {isEditing ? (
-                                      <>
-                                        <button
-                                          onClick={handleSaveEditRange}
-                                          className="p-1.5 text-green-600 hover:bg-green-100 rounded transition-colors"
-                                          title="Save"
-                                        >
-                                          <Check className="w-4 h-4" />
-                                        </button>
-                                        <button
-                                          onClick={handleCancelEdit}
-                                          className="p-1.5 text-red-600 hover:bg-red-100 rounded transition-colors"
-                                          title="Cancel"
-                                        >
-                                          <X className="w-4 h-4" />
-                                        </button>
-                                      </>
-                                    ) : (
-                                      <>
-                                        <button
-                                          onClick={() => handleEditRange(originalIndex)}
-                                          className="p-1.5 text-blue-600 hover:bg-blue-50 rounded transition-colors"
-                                          title="Edit"
-                                        >
-                                          <Edit className="w-4 h-4" />
-                                        </button>
-                                        <button
-                                          onClick={() => handleDeleteRange(originalIndex)}
-                                          className="p-1.5 text-red-600 hover:bg-red-50 rounded transition-colors"
-                                          title="Delete"
-                                        >
-                                          <Trash2 className="w-4 h-4" />
-                                        </button>
-                                      </>
-                                    )}
-                                  </div>
-                                </td>
-                              </tr>
-                            );
-                          })}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
-
-                {/* Add New Range Form - Only show when NOT editing */}
-                {editingRangeIndex === null && (
-                  <div className="bg-slate-50 p-4 rounded-lg border border-slate-200">
-                    <div className="flex items-center gap-2 mb-3">
-                      <Plus className="w-4 h-4 text-green-600" />
-                      <h4 className="text-sm font-semibold text-slate-700">Add New Range</h4>
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                      <div>
-                        <label className="block text-xs font-medium text-slate-600 mb-1">Min Value (₹)</label>
-                        <input
-                          type="number"
-                          value={newRange.min}
-                          onChange={(e) => setNewRange({ ...newRange, min: e.target.value })}
-                          min="0"
-                          step="1"
-                          className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition-all"
-                          placeholder="0"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-xs font-medium text-slate-600 mb-1">Max Value (₹)</label>
-                        <input
-                          type="number"
-                          value={newRange.max}
-                          onChange={(e) => setNewRange({ ...newRange, max: e.target.value })}
-                          min="0"
-                          step="1"
-                          className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition-all"
-                          placeholder="1000"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-xs font-medium text-slate-600 mb-1">Delivery Fee (₹)</label>
-                        <input
-                          type="number"
-                          value={newRange.fee}
-                          onChange={(e) => setNewRange({ ...newRange, fee: e.target.value })}
-                          min="0"
-                          step="1"
-                          className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition-all"
-                          placeholder="50"
-                        />
-                      </div>
-                      <div className="flex items-end">
-                        <Button
-                          onClick={handleAddRange}
-                          className="bg-green-600 hover:bg-green-700 text-white text-sm w-full flex items-center justify-center gap-2"
-                        >
-                          <Plus className="w-4 h-4" />
-                          Add Range
-                        </Button>
-                      </div>
-                    </div>
-                    <p className="text-xs text-slate-500 mt-2 italic">
-                      Example: Orders between ₹0 and ₹1000 will have ₹50 delivery fee.
-                    </p>
-                  </div>
-                )}
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 border-t border-slate-200 pt-6 mt-6">
-
-                {/* Default Delivery Fee (Fallback) */}
                 <div className="space-y-2">
-                  <label className="block text-sm font-semibold text-slate-700">
-                    Default Delivery Fee (₹) <span className="text-slate-400 font-normal">(Optional)</span>
-                  </label>
-                  <input
-                    type="number"
-                    value={feeSettings.deliveryFee}
-                    onChange={(e) => setFeeSettings({ ...feeSettings, deliveryFee: e.target.value })}
-                    min="0"
-                    step="1"
-                    className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition-all"
-                    placeholder="Leave empty to disable fallback"
-                  />
-                  <p className="text-xs text-slate-500">
-                    Used only when no delivery fee range matches and free delivery threshold is not met
-                  </p>
+                  <label className="block text-sm font-semibold text-slate-700">Platform Fee (₹)</label>
+                  <input type="number" value={feeSettings.platformFee} onChange={(e) => setFeeSettings({ ...feeSettings, platformFee: e.target.value })} min="0" step="1" className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition-all" placeholder="5" />
                 </div>
-
-                {/* Free Delivery Threshold */}
                 <div className="space-y-2">
-                  <label className="block text-sm font-semibold text-slate-700">
-                    Free Delivery Threshold (₹)
-                  </label>
-                  <input
-                    type="number"
-                    value={feeSettings.freeDeliveryThreshold}
-                    onChange={(e) => setFeeSettings({ ...feeSettings, freeDeliveryThreshold: e.target.value })}
-                    min="0"
-                    step="1"
-                    className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition-all"
-                    placeholder="149"
-                  />
-                  <p className="text-xs text-slate-500">
-                    Orders at or above this amount get free delivery
-                  </p>
-                </div>
-
-                {/* Platform Fee */}
-                <div className="space-y-2">
-                  <label className="block text-sm font-semibold text-slate-700">
-                    Platform Fee (₹)
-                  </label>
-                  <input
-                    type="number"
-                    value={feeSettings.platformFee}
-                    onChange={(e) => setFeeSettings({ ...feeSettings, platformFee: e.target.value })}
-                    min="0"
-                    step="1"
-                    className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition-all"
-                    placeholder="5"
-                  />
-                  <p className="text-xs text-slate-500">
-                    Platform service fee per order
-                  </p>
-                </div>
-
-                {/* GST Rate */}
-                <div className="space-y-2">
-                  <label className="block text-sm font-semibold text-slate-700">
-                    GST Rate (%)
-                  </label>
-                  <input
-                    type="number"
-                    value={feeSettings.gstRate}
-                    onChange={(e) => setFeeSettings({ ...feeSettings, gstRate: e.target.value })}
-                    min="0"
-                    max="100"
-                    step="0.1"
-                    className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition-all"
-                    placeholder="5"
-                  />
-                  <p className="text-xs text-slate-500">
-                    GST percentage applied on order subtotal
-                  </p>
+                  <label className="block text-sm font-semibold text-slate-700">GST Rate (%)</label>
+                  <input type="number" value={feeSettings.gstRate} onChange={(e) => setFeeSettings({ ...feeSettings, gstRate: e.target.value })} min="0" max="100" step="0.1" className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition-all" placeholder="5" />
                 </div>
               </div>
-          </>
+            </>
           )}
         </div>
       </div>
     </div>
   )
 }
+

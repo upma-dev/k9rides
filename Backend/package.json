@@ -1,8 +1,8 @@
-{
-  "name": "switcheats-backend",
+﻿{
+  "name": "eqosy-backend",
   "version": "1.0.0",
   "type": "module",
-  "description": "Switcheats Product Backend",
+  "description": "Eqosy Product Backend",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
@@ -13,6 +13,7 @@
     "worker:tracking": "node src/queues/workers/tracking.worker.js",
     "worker:payment": "node src/queues/workers/payment.worker.js",
     "worker:maintenance": "node src/queues/workers/maintenance.worker.js",
+    "seed:default-credentials": "node scripts/seed-default-credentials.js",
     "migrate:fcm-tokens": "node scripts/migrate-fcm-tokens-to-profile-models.js",
     "migrate:order-payments": "node scripts/migrate-orders-to-transactions.js",
     "cleanup:legacy-collections": "node scripts/cleanup-legacy-collections.js",
@@ -51,3 +52,4 @@
     "nodemon": "^3.1.2"
   }
 }
+

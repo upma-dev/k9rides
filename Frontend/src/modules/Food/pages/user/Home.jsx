@@ -1,4 +1,4 @@
-import { useSearchParams, Link, useNavigate } from "react-router-dom";
+﻿import { useSearchParams, Link, useNavigate } from "react-router-dom";
 import React, {
   useRef,
   useEffect,
@@ -87,7 +87,7 @@ import {
 } from "@food/components/ui/dropdown-menu";
 import { useLocation } from "@food/hooks/useLocation";
 import { useZone } from "@food/hooks/useZone";
-import quickSpicyLogo from "@food/assets/switcheats-logo.png";
+import quickSpicyLogo from "@food/assets/eqosy-logo.png";
 import offerImage from "@food/assets/offerimage.png";
 import api, { publicGetOnce, restaurantAPI, adminAPI } from "@food/api";
 import { API_BASE_URL } from "@food/api/config";
@@ -1083,7 +1083,7 @@ export default function Home() {
   const [activeFilterTab, setActiveFilterTab] = useState("sort");
   const categoryScrollRef = useRef(null);
   const gsapAnimationsRef = useRef([]);
-  // Show skeletons immediately while loading — delayed toggles caused visible layout swap (CLS).
+  // Show skeletons immediately while loading â€” delayed toggles caused visible layout swap (CLS).
   const showBannerSkeleton = loadingBanners;
   const showCategorySkeleton = loadingRealCategories || loadingMenuCategories;
   const showExploreSkeleton = loadingLandingConfig;
@@ -2559,7 +2559,7 @@ export default function Home() {
 
         {CategoryRailHeader}
 
-        {/* Category sticky anchor sentinel — must be immediately before the category rail */}
+        {/* Category sticky anchor sentinel â€” must be immediately before the category rail */}
         <div ref={categoryAnchorRef} aria-hidden="true" />
 
         {/* Single unified glassmorphism backdrop behind BOTH search bar + categories.
@@ -2572,7 +2572,7 @@ export default function Home() {
           />
         )}
 
-        {/* Category Rail — permanently sticky using native CSS for 0 latency. */}
+        {/* Category Rail â€” permanently sticky using native CSS for 0 latency. */}
         <div className="sticky top-[72px] z-[50]">
           {CategoryRailSection}
         </div>
@@ -2768,7 +2768,7 @@ export default function Home() {
                               {/* Featured Dish Badge - Top Left */}
                               <div className="absolute top-4 left-4 flex items-center z-10 transform transition-transform duration-300 group-hover:scale-105">
                                 <div className="bg-black/70 backdrop-blur-lg text-white px-4 py-1.5 rounded-full text-[11px] font-medium tracking-tight flex items-center shadow-2xl border border-white/20">
-                                  {restaurant.featuredDish} • ₹
+                                  {restaurant.featuredDish} â€¢ â‚¹
                                   {restaurant.featuredPrice}
                                 </div>
                               </div>
@@ -3186,7 +3186,7 @@ export default function Home() {
                           }`}>
                           <span
                             className={`text-sm font-medium ${activeFilters.has("price-under-200") ? "text-[#EB590E]" : "text-gray-700 dark:text-gray-300"}`}>
-                            Under ₹200
+                            Under â‚¹200
                           </span>
                         </button>
                         <button
@@ -3198,7 +3198,7 @@ export default function Home() {
                           }`}>
                           <span
                             className={`text-sm font-medium ${activeFilters.has("price-under-500") ? "text-[#EB590E]" : "text-gray-700 dark:text-gray-300"}`}>
-                            Under ₹500
+                            Under â‚¹500
                           </span>
                         </button>
                       </div>
@@ -3989,3 +3989,4 @@ export default function Home() {
     </div>
   );
 }
+

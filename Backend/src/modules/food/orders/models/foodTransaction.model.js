@@ -29,6 +29,7 @@ const foodTransactionSchema = new mongoose.Schema({
         packagingFee: { type: Number, default: 0, min: 0 },
         deliveryFee: { type: Number, default: 0, min: 0 },
         platformFee: { type: Number, default: 0, min: 0 },
+        surgeAmount: { type: Number, default: 0, min: 0 },
         restaurantCommission: { type: Number, default: 0, min: 0 },
         discount: { type: Number, default: 0, min: 0 },
         total: { type: Number, default: 0, min: 0 },
@@ -61,6 +62,9 @@ const foodTransactionSchema = new mongoose.Schema({
         restaurantShare: { type: Number, required: true, min: 0 },
         restaurantCommission: { type: Number, required: true, min: 0 },
         riderShare: { type: Number, required: true, min: 0 },
+        riderBasePay: { type: Number, default: 0, min: 0 },
+        riderSurgePay: { type: Number, default: 0, min: 0 },
+        riderTotalPayout: { type: Number, default: 0, min: 0 },
         platformNetProfit: { type: Number, required: true, min: 0 },
         taxAmount: { type: Number, default: 0, min: 0 }
     },

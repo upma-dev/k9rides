@@ -1,10 +1,10 @@
-import mongoose from 'mongoose';
+﻿import mongoose from 'mongoose';
 import * as adminService from '../services/admin.service.js';
 import { validateCategoryListQuery, validateCategoryRejectDto, validateCategoryUpsertDto } from '../validators/category.validator.js';
 import { validateCreateOfferDto, validateUpdateOfferCartVisibilityDto } from '../validators/offer.validator.js';
 import { validateAddDeliveryBonusDto } from '../validators/deliveryBonus.validator.js';
 import { validateCheckCompletionsDto, validateEarningAddonHistoryActionDto, validateEarningAddonUpsertDto, validateToggleEarningAddonStatusDto } from '../validators/earningAddon.validator.js';
-import { validateDeliveryCommissionRuleDto, validateOptionalStatusDto, validateRestaurantCommissionUpsertDto } from '../validators/commission.validator.js';
+import { validateDeliveryCommissionRuleDto, validateOptionalStatusDto, validateRestaurantCommissionUpsertDto, validateZoneSurgeUpsertDto } from '../validators/commission.validator.js';
 import { validateFeeSettingsUpsertDto } from '../validators/feeSettings.validator.js';
 import { validateDeliveryEmergencyHelpUpsertDto } from '../validators/deliveryEmergencyHelp.validator.js';
 import { validateReferralSettingsUpsertDto } from '../validators/referralSettings.validator.js';
@@ -1331,9 +1331,9 @@ export async function processRefund(req, res, next) {
             await notifyOwnersSafely(
                 [{ ownerType: 'USER', ownerId: order.userId }],
                 {
-                    title: 'Refund Processed! 💸',
-                    body: `Your refund of ₹${refundAmount || order.totalAmount || order.total || 0} for Order #${order.orderId} has been processed successfully.`,
-                    image: 'https://i.ibb.co/5GzXz7r/Switcheats-Brand-Image.png',
+                    title: 'Refund Processed! ðŸ’¸',
+                    body: `Your refund of â‚¹${refundAmount || order.totalAmount || order.total || 0} for Order #${order.orderId} has been processed successfully.`,
+                    image: 'https://i.ibb.co/5GzXz7r/Eqosy-Brand-Image.png',
                     data: {
                         type: 'refund_processed',
                         orderId: String(order.orderId),
@@ -1413,6 +1413,44 @@ export async function getSidebarBadges(req, res, next) {
     }
 }
 
+export async function getDeliveryZoneSurgeConfigs(req, res, next) {
+    try {
+        const data = await adminService.getDeliveryZoneSurgeConfigs();
+        res.status(200).json({ success: true, message: 'Zone surge configs fetched successfully', data });
+    } catch (error) {
+        next(error);
+    }
+}
+
+export async function upsertDeliveryZoneSurgeConfig(req, res, next) {
+    try {
+        const body = validateZoneSurgeUpsertDto(req.body || {});
+        const adminId = req.user?.id || req.user?._id || null;
+        const surgeConfig = await adminService.upsertDeliveryZoneSurgeConfig(body, adminId);
+        res.status(200).json({ success: true, message: 'Zone surge config saved successfully', data: { surgeConfig } });
+    } catch (error) {
+        next(error);
+    }
+}
+
+export async function toggleDeliveryZoneSurgeStatus(req, res, next) {
+    try {
+        const { zoneId } = req.params;
+        if (!zoneId || !mongoose.Types.ObjectId.isValid(zoneId)) {
+            return res.status(400).json({ success: false, message: 'Invalid zone id' });
+        }
+        const { status } = validateOptionalStatusDto(req.body || {});
+        if (typeof status !== 'boolean') {
+            return res.status(400).json({ success: false, message: 'status is required' });
+        }
+        const adminId = req.user?.id || req.user?._id || null;
+        const surgeConfig = await adminService.toggleDeliveryZoneSurgeStatus(zoneId, status, adminId);
+        res.status(200).json({ success: true, message: 'Zone surge status updated successfully', data: { surgeConfig } });
+    } catch (error) {
+        next(error);
+    }
+}
+
 export async function getExpiredFssaiNotifications(req, res, next) {
     try {
         const { listExpiredFssaiRestaurants } = await import('../../restaurant/services/fssaiExpiry.service.js');
@@ -1439,3 +1477,4 @@ export async function bulkApproveFoodItems(req, res, next) {
         next(error);
     }
 }
+

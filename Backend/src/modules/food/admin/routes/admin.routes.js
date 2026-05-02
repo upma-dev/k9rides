@@ -158,6 +158,9 @@ router.post('/delivery/commission-rules', adminController.createDeliveryCommissi
 router.patch('/delivery/commission-rules/:id', adminController.updateDeliveryCommissionRule);
 router.delete('/delivery/commission-rules/:id', adminController.deleteDeliveryCommissionRule);
 router.patch('/delivery/commission-rules/:id/status', adminController.toggleDeliveryCommissionRuleStatus);
+router.get('/delivery/zone-surge', adminController.getDeliveryZoneSurgeConfigs);
+router.put('/delivery/zone-surge', adminController.upsertDeliveryZoneSurgeConfig);
+router.patch('/delivery/zone-surge/:zoneId/status', adminController.toggleDeliveryZoneSurgeStatus);
 router.get('/delivery/reviews', adminController.getDeliverymanReviews);
 router.get('/contact-messages', adminController.getContactMessages);
 router.get('/delivery/earning-addons', adminController.getEarningAddons);

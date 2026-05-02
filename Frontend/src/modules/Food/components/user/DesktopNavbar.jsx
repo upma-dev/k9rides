@@ -1,4 +1,4 @@
-import { Link, useLocation, useNavigate } from "react-router-dom"
+﻿import { Link, useLocation, useNavigate } from "react-router-dom"
 import { useEffect, useState, useRef } from "react"
 import { ChevronDown, ShoppingCart, Wallet, Search, Mic } from "lucide-react"
 import { Button } from "@food/components/ui/button"
@@ -10,7 +10,7 @@ import { useLocationSelector, useSearchOverlay } from "./UserLayout"
 import { useProfile } from "@food/context/ProfileContext"
 import { FaLocationDot } from "react-icons/fa6"
 import { AnimatePresence, motion } from "framer-motion"
-import quickSpicyLogo from "@food/assets/switcheats-logo.png"
+import quickSpicyLogo from "@food/assets/eqosy-logo.png"
 import { getCachedSettings, loadBusinessSettings } from "@food/utils/businessSettings"
 const debugLog = (...args) => {}
 const debugWarn = (...args) => {}
@@ -239,7 +239,7 @@ export default function DesktopNavbar({ showLogo = true }) {
                                                 onClick={() => setHeroSearch("")}
                                             >
                                                 <span className="sr-only">Clear</span>
-                                                <span aria-hidden="true">�</span>
+                                                <span aria-hidden="true">ï¿½</span>
                                             </Button>
                                         )}
                                     </div>
@@ -385,5 +385,6 @@ export default function DesktopNavbar({ showLogo = true }) {
         </nav>
     )
 }
+
 
 

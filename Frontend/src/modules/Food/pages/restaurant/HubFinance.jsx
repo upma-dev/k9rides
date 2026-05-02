@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef, useEffect } from "react"
+﻿import { useState, useMemo, useRef, useEffect } from "react"
 import { useNavigate, useSearchParams } from "react-router-dom"
 import { motion, AnimatePresence } from "framer-motion"
 import { Bell, Menu, ChevronDown, Calendar, Download, ArrowRight, FileText, Wallet, X, Info } from "lucide-react"
@@ -57,7 +57,7 @@ export default function HubFinance() {
         amount: order.amount * 100, 
         currency: order.currency || 'INR',
         order_id: order.orderId,
-        name: 'Switcheats',
+        name: 'Eqosy',
         description: 'Subscription Due Settlement',
         prefill: {
           name: order.restaurant?.name || '',
@@ -446,7 +446,7 @@ export default function HubFinance() {
         end: currentCycleDates.end,
         month: currentCycleDates.month,
         year: currentCycleDates.year,
-        estimatedPayout: `₹${(currentCycle.estimatedPayout || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+        estimatedPayout: `â‚¹${(currentCycle.estimatedPayout || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
         orders: currentCycle.totalOrders || 0,
         payoutDate: currentCycle.payoutDate ? new Date(currentCycle.payoutDate).toLocaleDateString('en-IN') : "-"
       },
@@ -618,8 +618,8 @@ export default function HubFinance() {
                       <td>${orderDate}</td>
                       <td>${foodItems}</td>
                       <td>${itemQuantities}</td>
-                      <td>₹${orderAmount.toFixed(2)}</td>
-                      <td>₹${earning.toFixed(2)}</td>
+                      <td>â‚¹${orderAmount.toFixed(2)}</td>
+                      <td>â‚¹${earning.toFixed(2)}</td>
                     </tr>
                   `
                 }).join('')}
@@ -627,7 +627,7 @@ export default function HubFinance() {
               <tfoot>
                 <tr style="background-color: #e8f5e9; font-weight: bold;">
                   <td colspan="5" style="text-align: right;">Total Earnings:</td>
-                  <td colspan="2">₹${reportData.allOrders.reduce((sum, order) => sum + (order.payout || order.restaurantEarning || 0), 0).toFixed(2)}</td>
+                  <td colspan="2">â‚¹${reportData.allOrders.reduce((sum, order) => sum + (order.payout || order.restaurantEarning || 0), 0).toFixed(2)}</td>
                 </tr>
               </tfoot>
             </table>
@@ -641,7 +641,7 @@ export default function HubFinance() {
 
         <div class="footer">
           <p>This is an auto-generated report. For detailed information, please visit the Finance section.</p>
-          <p>Total Orders: ${reportData.allOrders?.length || 0} | Total Earnings: ₹${reportData.allOrders?.reduce((sum, order) => sum + (order.payout || order.restaurantEarning || 0), 0).toFixed(2) || '0.00'}</p>
+          <p>Total Orders: ${reportData.allOrders?.length || 0} | Total Earnings: â‚¹${reportData.allOrders?.reduce((sum, order) => sum + (order.payout || order.restaurantEarning || 0), 0).toFixed(2) || '0.00'}</p>
         </div>
       </body>
       </html>
@@ -807,7 +807,7 @@ export default function HubFinance() {
                 
                 <h3 className="text-xl font-bold text-gray-900 mb-2">Withdrawal Restricted</h3>
                 <p className="text-sm text-gray-600 leading-relaxed mb-8">
-                  To ensure financial compliance, withdrawals are temporarily restricted while you have an outstanding subscription balance of <span className="font-bold text-gray-900">₹{(financeData?.restaurant?.subscriptionDueAmount || restaurantData?.subscriptionDueAmount || 0).toLocaleString('en-IN')}</span>. 
+                  To ensure financial compliance, withdrawals are temporarily restricted while you have an outstanding subscription balance of <span className="font-bold text-gray-900">â‚¹{(financeData?.restaurant?.subscriptionDueAmount || restaurantData?.subscriptionDueAmount || 0).toLocaleString('en-IN')}</span>. 
                 </p>
 
                 <div className="w-full space-y-3">
@@ -864,7 +864,7 @@ export default function HubFinance() {
                     const shortAddress = address.length > 40 ? address.substring(0, 40) + '...' : address
                     parts.push(shortAddress)
                   }
-                  return parts.length > 0 ? parts.join(' • ') : 'Loading...'
+                  return parts.length > 0 ? parts.join(' â€¢ ') : 'Loading...'
                 })()}
               </p>
             </div>
@@ -936,7 +936,7 @@ export default function HubFinance() {
                 <div className="flex-1">
                   <h3 className="text-sm font-bold text-amber-900">Subscription Dues Pending</h3>
                   <p className="text-[11px] text-amber-800 mt-1 leading-relaxed font-medium">
-                    You have an outstanding balance of <span className="text-sm font-bold">₹{financeData.restaurant.subscriptionDueAmount.toLocaleString('en-IN')}</span>. 
+                    You have an outstanding balance of <span className="text-sm font-bold">â‚¹{financeData.restaurant.subscriptionDueAmount.toLocaleString('en-IN')}</span>. 
                     Withdrawals are partially restricted until this is settled.
                   </p>
                 </div>
@@ -952,7 +952,7 @@ export default function HubFinance() {
                 ) : (
                   <>
                     <p className="text-4xl font-bold text-gray-900 mb-2">
-                      ₹{(financeData?.currentCycle?.estimatedPayout || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      â‚¹{(financeData?.currentCycle?.estimatedPayout || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                     </p>
                     <p className="text-sm text-gray-600 mb-4">
                       {financeData?.currentCycle?.totalOrders || 0} {financeData?.currentCycle?.totalOrders === 1 ? 'order' : 'orders'}
@@ -992,7 +992,7 @@ export default function HubFinance() {
                           </div>
                           <div className="text-right">
                             <p className="text-sm font-bold text-gray-900">
-                              ₹{(financeData?.restaurant?.subscriptionDueAmount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                              â‚¹{(financeData?.restaurant?.subscriptionDueAmount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                             </p>
                             <p className="text-[10px] text-gray-400 uppercase tracking-tight">Due Amount</p>
                           </div>
@@ -1045,7 +1045,7 @@ export default function HubFinance() {
                           <div className="flex items-start justify-between gap-3">
                             <div>
                               <p className="text-sm font-semibold text-gray-900">
-                                ₹{Number(request?.amount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                â‚¹{Number(request?.amount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                               </p>
                               <p className="text-xs text-gray-500 mt-1">
                                 Requested: {formatDateTime(request?.createdAt || request?.requestedAt)}
@@ -1288,7 +1288,7 @@ export default function HubFinance() {
                               </div>
                               <div className="text-right ml-4">
                                 <p className="text-sm font-bold text-gray-900">
-                                  ₹{(order.payout || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                  â‚¹{(order.payout || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                 </p>
                                 <p className="text-xs text-gray-500">
                                   Earning
@@ -1320,7 +1320,7 @@ export default function HubFinance() {
                               </div>
                               <div className="text-right ml-4">
                                 <p className="text-sm font-bold text-gray-900">
-                                  ₹{(order.payout || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                  â‚¹{(order.payout || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                 </p>
                                 <p className="text-xs text-gray-500">
                                   Earning
@@ -1358,15 +1358,15 @@ export default function HubFinance() {
                 </div>
                 <div className="rounded-md bg-gray-50 p-3">
                   <p className="text-xs text-gray-600">Earnings</p>
-                  <p className="text-base font-semibold text-gray-900">₹{invoiceSummary.earnings.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                  <p className="text-base font-semibold text-gray-900">â‚¹{invoiceSummary.earnings.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
                 </div>
                 <div className="rounded-md bg-gray-50 p-3">
                   <p className="text-xs text-gray-600">Commission</p>
-                  <p className="text-base font-semibold text-gray-900">₹{invoiceSummary.commission.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                  <p className="text-base font-semibold text-gray-900">â‚¹{invoiceSummary.commission.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
                 </div>
                 <div className="rounded-md bg-gray-50 p-3">
                   <p className="text-xs text-gray-600">Gross amount</p>
-                  <p className="text-base font-semibold text-gray-900">₹{invoiceSummary.gross.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                  <p className="text-base font-semibold text-gray-900">â‚¹{invoiceSummary.gross.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
                 </div>
               </div>
             </div>
@@ -1390,7 +1390,7 @@ export default function HubFinance() {
                         </div>
                         <div className="text-right">
                           <p className="text-sm font-semibold text-gray-900">
-                            ₹{(order.totalAmount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            â‚¹{(order.totalAmount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                           </p>
                           <p className="text-xs text-gray-500">Total</p>
                         </div>
@@ -1439,17 +1439,17 @@ export default function HubFinance() {
                 <div className="mb-4">
                   <div className="flex flex-col gap-1 mb-3">
                     <p className="text-sm text-gray-500">
-                      Total Earnings: <span className="font-medium text-gray-700">₹{(financeData?.currentCycle?.estimatedPayout || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                      Total Earnings: <span className="font-medium text-gray-700">â‚¹{(financeData?.currentCycle?.estimatedPayout || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                     </p>
                     <p className="text-sm text-gray-900 font-bold">
-                      Available to Withdraw: ₹{(financeData?.currentCycle?.netAvailable ?? (financeData?.currentCycle?.estimatedPayout || 0)).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      Available to Withdraw: â‚¹{(financeData?.currentCycle?.netAvailable ?? (financeData?.currentCycle?.estimatedPayout || 0)).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                     </p>
                   </div>
 
                   {financeData?.restaurant?.subscriptionDueAmount > 0 && (
                     <div className="px-3 py-2.5 bg-amber-50/50 border border-amber-100 rounded-xl mb-4">
                       <p className="text-[10px] text-amber-800 leading-relaxed font-medium">
-                        <span className="font-bold">Compliance Note:</span> You can withdraw your earnings after reserving ₹{financeData.restaurant.subscriptionDueAmount.toLocaleString('en-IN')} for your outstanding subscription dues.
+                        <span className="font-bold">Compliance Note:</span> You can withdraw your earnings after reserving â‚¹{financeData.restaurant.subscriptionDueAmount.toLocaleString('en-IN')} for your outstanding subscription dues.
                       </p>
                     </div>
                   )}
@@ -1556,4 +1556,5 @@ export default function HubFinance() {
     </div>
   )
 }
+
 

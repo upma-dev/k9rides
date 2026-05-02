@@ -1,4 +1,4 @@
-import { toast } from "sonner";
+﻿import { toast } from "sonner";
 import { userAPI, restaurantAPI, deliveryAPI, adminAPI } from "@food/api";
 import { initializeApp, getApp, getApps } from "firebase/app";
 import fallbackNotificationSound from "@food/assets/audio/alert.mp3";
@@ -527,7 +527,7 @@ function showForegroundNotification(payload = {}) {
           if (registration) {
             registration.showNotification(title, {
               body,
-              icon: "/favicon.ico",
+              icon: "/eqosy-logo.png",
               image,
               tag: notificationKey || undefined,
               data: payload?.data || {},
@@ -537,7 +537,7 @@ function showForegroundNotification(payload = {}) {
           } else {
             new Notification(title, {
               body,
-              icon: "/favicon.ico",
+              icon: "/eqosy-logo.png",
               image,
               tag: notificationKey || undefined,
               requireInteraction: true
@@ -546,7 +546,7 @@ function showForegroundNotification(payload = {}) {
         }).catch(() => {
           new Notification(title, {
             body,
-            icon: "/favicon.ico",
+            icon: "/eqosy-logo.png",
             image,
             tag: notificationKey || undefined,
           });
@@ -554,7 +554,7 @@ function showForegroundNotification(payload = {}) {
       } else {
         new Notification(title, {
           body,
-          icon: "/favicon.ico",
+          icon: "/eqosy-logo.png",
           image,
           tag: notificationKey || undefined,
         });
@@ -763,3 +763,4 @@ export async function registerWebPushForCurrentModule(pathname = window.location
   await registerNativeWebViewFcmToken(moduleName);
   return null;
 }
+

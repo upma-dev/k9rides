@@ -10,6 +10,9 @@ export const config = {
 
     // Database
     mongodbUri: process.env.MONGO_URI || process.env.MONGODB_URI,
+    mongodbDnsServers: process.env.MONGODB_DNS_SERVERS || '8.8.8.8,1.1.1.1',
+    mongodbServerSelectionTimeoutMs: Number(process.env.MONGODB_SERVER_SELECTION_TIMEOUT_MS || 30000),
+    mongodbConnectTimeoutMs: Number(process.env.MONGODB_CONNECT_TIMEOUT_MS || 30000),
 
     // JWT
     jwtAccessSecret: process.env.JWT_ACCESS_SECRET || process.env.JWT_SECRET,

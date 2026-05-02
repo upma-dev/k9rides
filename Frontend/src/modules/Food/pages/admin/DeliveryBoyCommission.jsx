@@ -37,6 +37,11 @@ export default function DeliveryBoyCommission() {
     status: true,
     actions: true,
   })
+  const [zoneSurges, setZoneSurges] = useState([])
+  const [savingZoneId, setSavingZoneId] = useState("")
+  const [zoneSearchQuery, setZoneSearchQuery] = useState("")
+  const [zonePage, setZonePage] = useState(1)
+  const zonePageSize = 5
 
   const filteredCommissions = useMemo(() => {
     if (!searchQuery.trim()) {
@@ -50,6 +55,19 @@ export default function DeliveryBoyCommission() {
       (commission.maxDistance !== null && `${commission.minDistance}-${commission.maxDistance} km`.toLowerCase().includes(query))
     )
   }, [commissions, searchQuery])
+
+  const filteredZoneSurges = useMemo(() => {
+    const query = String(zoneSearchQuery || "").trim().toLowerCase()
+    if (!query) return zoneSurges
+    return zoneSurges.filter((z) => String(z.zoneName || "").toLowerCase().includes(query))
+  }, [zoneSurges, zoneSearchQuery])
+
+  const zoneTotalPages = Math.max(1, Math.ceil(filteredZoneSurges.length / zonePageSize))
+  const paginatedZoneSurges = useMemo(() => {
+    const safePage = Math.min(zonePage, zoneTotalPages)
+    const start = (safePage - 1) * zonePageSize
+    return filteredZoneSurges.slice(start, start + zonePageSize)
+  }, [filteredZoneSurges, zonePage, zoneTotalPages])
 
   const getDistanceSlabLabel = (commission) => {
     const min = Number(commission.minDistance) || 0
@@ -84,7 +102,38 @@ export default function DeliveryBoyCommission() {
   // Fetch commission rules on component mount
   useEffect(() => {
     fetchCommissionRules()
+    fetchZoneSurges()
   }, [])
+
+  const fetchZoneSurges = async () => {
+    try {
+      const response = await adminAPI.getZoneSurgeConfigs()
+      const rows = response?.data?.data?.surgeConfigs
+      setZoneSurges(Array.isArray(rows) ? rows : [])
+      setZonePage(1)
+    } catch (error) {
+      debugError("Error fetching zone surges:", error)
+      setZoneSurges([])
+      setZonePage(1)
+    }
+  }
+
+  const updateZoneSurge = async (zoneId, next) => {
+    try {
+      setSavingZoneId(String(zoneId))
+      await adminAPI.upsertZoneSurgeConfig({
+        zoneId,
+        surgeAmount: Number(next.surgeAmount || 0),
+        isEnabled: Boolean(next.isEnabled),
+      })
+      await fetchZoneSurges()
+      toast.success("Zone surge updated")
+    } catch (error) {
+      toast.error(error?.response?.data?.message || "Failed to update zone surge")
+    } finally {
+      setSavingZoneId("")
+    }
+  }
 
   const fetchCommissionRules = async () => {
     try {
@@ -388,6 +437,16 @@ export default function DeliveryBoyCommission() {
   )
   const formulaMinDistance = Number.isFinite(configuredMinDistance) ? configuredMinDistance : 0
 
+  useEffect(() => {
+    setZonePage(1)
+  }, [zoneSearchQuery])
+
+  useEffect(() => {
+    if (zonePage > zoneTotalPages) {
+      setZonePage(zoneTotalPages)
+    }
+  }, [zonePage, zoneTotalPages])
+
   return (
     <div className="p-4 lg:p-6 bg-slate-50 min-h-screen">
       <div className="max-w-7xl mx-auto">
@@ -566,6 +625,85 @@ export default function DeliveryBoyCommission() {
               </tbody>
             </table>
           </div>
+
+          <div className="mt-8 border-t border-slate-200 pt-6">
+            <h2 className="text-lg font-semibold text-slate-900 mb-3">Zone-wise Surge Amount</h2>
+            <div className="mb-4">
+              <div className="relative w-full sm:max-w-sm">
+                <input
+                  type="text"
+                  placeholder="Search zone..."
+                  value={zoneSearchQuery}
+                  onChange={(e) => setZoneSearchQuery(e.target.value)}
+                  className="pl-10 pr-4 py-2.5 w-full text-sm rounded-lg border border-slate-300 bg-white focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-slate-400"
+                />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+              </div>
+            </div>
+            <div className="space-y-3">
+              {paginatedZoneSurges.map((z) => (
+                <div key={z.zoneId} className="grid grid-cols-12 gap-3 items-center p-3 border border-slate-200 rounded-lg">
+                  <div className="col-span-12 sm:col-span-5 text-sm font-medium text-slate-800">{z.zoneName || "Unnamed Zone"}</div>
+                  <div className="col-span-6 sm:col-span-3">
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={z.surgeAmount ?? 0}
+                      onChange={(e) => {
+                        const value = e.target.value
+                        setZoneSurges((prev) => prev.map((r) => r.zoneId === z.zoneId ? { ...r, surgeAmount: value } : r))
+                      }}
+                      className="w-full px-3 py-2 border border-slate-300 rounded-md text-sm"
+                    />
+                  </div>
+                  <div className="col-span-3 sm:col-span-2">
+                    <button
+                      onClick={() => updateZoneSurge(z.zoneId, { ...z, isEnabled: !z.isEnabled })}
+                      className={`px-3 py-2 rounded-md text-xs font-semibold ${z.isEnabled ? "bg-emerald-100 text-emerald-700" : "bg-slate-100 text-slate-600"}`}
+                    >
+                      {z.isEnabled ? "Enabled" : "Disabled"}
+                    </button>
+                  </div>
+                  <div className="col-span-3 sm:col-span-2 text-right">
+                    <button
+                      onClick={() => updateZoneSurge(z.zoneId, z)}
+                      disabled={savingZoneId === String(z.zoneId)}
+                      className="px-3 py-2 rounded-md bg-blue-600 text-white text-xs font-semibold disabled:opacity-60"
+                    >
+                      {savingZoneId === String(z.zoneId) ? "Saving..." : "Save"}
+                    </button>
+                  </div>
+                </div>
+              ))}
+              {filteredZoneSurges.length === 0 && <p className="text-sm text-slate-500">No zones found.</p>}
+            </div>
+            <div className="mt-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              <p className="text-xs text-slate-500">
+                Showing {(filteredZoneSurges.length === 0) ? 0 : ((zonePage - 1) * zonePageSize + 1)}-
+                {Math.min(zonePage * zonePageSize, filteredZoneSurges.length)} of {filteredZoneSurges.length}
+              </p>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setZonePage((prev) => Math.max(1, prev - 1))}
+                  disabled={zonePage <= 1}
+                  className="px-3 py-1.5 rounded-md border border-slate-300 text-sm text-slate-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Previous
+                </button>
+                <span className="text-sm text-slate-700">
+                  Page {zonePage} / {zoneTotalPages}
+                </span>
+                <button
+                  onClick={() => setZonePage((prev) => Math.min(zoneTotalPages, prev + 1))}
+                  disabled={zonePage >= zoneTotalPages}
+                  className="px-3 py-1.5 rounded-md border border-slate-300 text-sm text-slate-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          </div>
           
         </div>
       </div>
@@ -662,7 +800,7 @@ export default function DeliveryBoyCommission() {
             </div>
             <div>
               <label className="block text-sm font-semibold text-slate-700 mb-2">
-                Extra Per Kilometer after {formulaMinDistance} km (₹) <span className="text-red-500">*</span>
+                Per Kilometer Charge (₹) <span className="text-red-500">*</span>
               </label>
               <input
                 type="number"
@@ -679,7 +817,7 @@ export default function DeliveryBoyCommission() {
             </div>
             <div>
               <label className="block text-sm font-semibold text-slate-700 mb-2">
-                Fixed Payout for 0-{formulaMinDistance} km (₹) <span className="text-red-500">*</span>
+                Fixed Payout (₹) <span className="text-red-500">*</span>
               </label>
               <input
                 type="number"
@@ -694,7 +832,7 @@ export default function DeliveryBoyCommission() {
               />
               {formErrors.basePayout && <p className="text-xs text-red-500 mt-1">{formErrors.basePayout}</p>}
               <p className="text-xs text-slate-500 mt-1">
-                Formula: Base payout + (max(0, distance - {formulaMinDistance}) * extra per km)
+                Formula: Fixed payout + (max(0, distance - {formulaMinDistance}) * per km charge)
               </p>
             </div>
           </div>

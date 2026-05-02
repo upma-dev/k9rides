@@ -4,11 +4,49 @@ import { FoodRestaurant } from '../../restaurant/models/restaurant.model.js';
 import { FoodFeeSettings } from '../../admin/models/feeSettings.model.js';
 import { FoodOffer } from '../../admin/models/offer.model.js';
 import { FoodOfferUsage } from '../../admin/models/offerUsage.model.js';
+import { FoodDeliverySurgeZone } from '../../admin/models/deliverySurgeZone.model.js';
+import { FoodDeliveryCommissionRule } from '../../admin/models/deliveryCommissionRule.model.js';
 import { ValidationError } from '../../../../core/auth/errors.js';
+import { haversineKm } from './order.helpers.js';
+
+function extractCoords(addressLike) {
+  const coords = addressLike?.location?.coordinates;
+  if (!Array.isArray(coords) || coords.length !== 2) return null;
+  const [lng, lat] = coords;
+  if (!Number.isFinite(Number(lat)) || !Number.isFinite(Number(lng))) return null;
+  return [Number(lng), Number(lat)];
+}
+
+async function resolveDistanceRule(distanceKm) {
+  if (!Number.isFinite(Number(distanceKm)) || Number(distanceKm) < 0) return null;
+  const rules = await FoodDeliveryCommissionRule.find({ status: { $ne: false } }).lean();
+  if (!rules.length) return null;
+  const d = Number(distanceKm);
+  const matched = rules.find((r) => {
+    const min = Number(r.minDistance || 0);
+    const max = r.maxDistance == null ? null : Number(r.maxDistance);
+    return d >= min && (max == null || d < max);
+  });
+  return matched || null;
+}
+
+function resolvePriceSlabByOrderValue(priceSlabs, orderValue) {
+  if (!Array.isArray(priceSlabs)) return null;
+  const subtotal = Number(orderValue || 0);
+  return (
+    priceSlabs.find((s) => {
+      if (s?.isActive === false) return false;
+      const min = Number(s.minOrderValue);
+      const max = Number(s.maxOrderValue);
+      if (!Number.isFinite(min) || !Number.isFinite(max)) return false;
+      return subtotal >= min && subtotal < max;
+    }) || null
+  );
+}
 
 export async function calculateOrderPricing(userId, dto) {
   const restaurant = await FoodRestaurant.findById(dto.restaurantId)
-    .select("status")
+    .select("status zoneId")
     .lean();
   if (!restaurant) throw new ValidationError("Restaurant not found");
   if (restaurant.status !== "approved")
@@ -34,47 +72,107 @@ export async function calculateOrderPricing(userId, dto) {
   const packagingFee = 0;
   const platformFee = Number(feeSettings.platformFee || 0);
 
-  const freeThreshold = Number(feeSettings.freeDeliveryThreshold || 0);
+  const mode = String(feeSettings.deliveryFeeComputationMode || 'order_value_range');
   let deliveryFee = 0;
-  if (
-    Number.isFinite(freeThreshold) &&
-    freeThreshold > 0 &&
-    subtotal >= freeThreshold
-  ) {
-    deliveryFee = 0;
-  } else {
-    const ranges = Array.isArray(feeSettings.deliveryFeeRanges)
-      ? [...feeSettings.deliveryFeeRanges]
+  let deliveryFeeBreakdown = null;
+  if (mode === 'distance_order_value') {
+    const restCoords = extractCoords(restaurant);
+    const customerCoords = extractCoords(dto?.address || dto?.deliveryAddress);
+    if (!restCoords || !customerCoords) {
+      throw new ValidationError('Customer location is required for distance-based delivery fee calculation');
+    }
+    const [rLng, rLat] = restCoords;
+    const [cLng, cLat] = customerCoords;
+    const distanceKm = haversineKm(rLat, rLng, cLat, cLng);
+    const distanceRule = await resolveDistanceRule(distanceKm);
+    if (!distanceRule) {
+      throw new ValidationError('No active distance slab found for this delivery distance');
+    }
+    const mappedRules = Array.isArray(feeSettings.distanceOrderDeliveryFeeRules)
+      ? feeSettings.distanceOrderDeliveryFeeRules
       : [];
-    if (ranges.length > 0) {
-      ranges.sort((a, b) => Number(a.min) - Number(b.min));
-      let matched = null;
-      for (let i = 0; i < ranges.length; i += 1) {
-        const r = ranges[i] || {};
-        const min = Number(r.min);
-        const max = Number(r.max);
-        const fee = Number(r.fee);
-        if (
-          !Number.isFinite(min) ||
-          !Number.isFinite(max) ||
-          !Number.isFinite(fee)
-        ) {
-          continue;
-        }
-        const isLast = i === ranges.length - 1;
-        const inRange = isLast
-          ? subtotal >= min && subtotal <= max
-          : subtotal >= min && subtotal < max;
-        if (inRange) {
-          matched = fee;
-          break;
-        }
-      }
-      deliveryFee = Number.isFinite(matched)
-        ? matched
-        : Number(feeSettings.deliveryFee || 0);
+    const nested = mappedRules.find((r) => String(r.distanceRuleId) === String(distanceRule._id));
+    const matchedPriceSlab = resolvePriceSlabByOrderValue(nested?.priceSlabs || [], subtotal);
+    if (!matchedPriceSlab) {
+      deliveryFee = 0;
+      deliveryFeeBreakdown = {
+        source: 'distance_order_value',
+        distanceKm: Math.round(Number(distanceKm || 0) * 100) / 100,
+        distanceRuleId: String(distanceRule._id),
+        distanceRange: {
+          minDistance: Number(distanceRule.minDistance || 0),
+          maxDistance: distanceRule.maxDistance == null ? null : Number(distanceRule.maxDistance)
+        },
+        orderValue: subtotal,
+        matchedPriceSlab: null,
+        appliedDeliveryFee: 0,
+        noPriceSlabMatch: true
+      };
     } else {
-      deliveryFee = Number(feeSettings.deliveryFee || 0);
+      const perKmRate = Number(matchedPriceSlab.deliveryFee || 0);
+      const chargeableDistanceKm = Number(distanceKm || 0);
+      deliveryFee = Math.round(Math.max(0, perKmRate * chargeableDistanceKm) * 100) / 100;
+      deliveryFeeBreakdown = {
+        source: 'distance_order_value',
+        distanceKm: Math.round(Number(distanceKm || 0) * 100) / 100,
+        distanceRuleId: String(distanceRule._id),
+        distanceRange: {
+          minDistance: Number(distanceRule.minDistance || 0),
+          maxDistance: distanceRule.maxDistance == null ? null : Number(distanceRule.maxDistance)
+        },
+        orderValue: subtotal,
+        matchedPriceSlab: {
+          minOrderValue: Number(matchedPriceSlab.minOrderValue || 0),
+          maxOrderValue: Number(matchedPriceSlab.maxOrderValue || 0),
+          perKmRate: Number(perKmRate || 0)
+        },
+        appliedDeliveryFee: Number(deliveryFee || 0),
+        feeComputation: 'per_km_x_distance',
+        noPriceSlabMatch: false
+      };
+    }
+  } else {
+    const freeThreshold = Number(feeSettings.freeDeliveryThreshold || 0);
+    if (
+      Number.isFinite(freeThreshold) &&
+      freeThreshold > 0 &&
+      subtotal >= freeThreshold
+    ) {
+      deliveryFee = 0;
+    } else {
+      const ranges = Array.isArray(feeSettings.deliveryFeeRanges)
+        ? [...feeSettings.deliveryFeeRanges]
+        : [];
+      if (ranges.length > 0) {
+        ranges.sort((a, b) => Number(a.min) - Number(b.min));
+        let matched = null;
+        for (let i = 0; i < ranges.length; i += 1) {
+          const r = ranges[i] || {};
+          const min = Number(r.min);
+          const max = Number(r.max);
+          const fee = Number(r.fee);
+          if (
+            !Number.isFinite(min) ||
+            !Number.isFinite(max) ||
+            !Number.isFinite(fee)
+          ) {
+            continue;
+          }
+          const isLast = i === ranges.length - 1;
+          const inRange = isLast
+            ? subtotal >= min && subtotal <= max
+            : subtotal >= min && subtotal < max;
+          if (inRange) {
+            matched = fee;
+            break;
+          }
+        }
+        deliveryFee = Number.isFinite(matched)
+          ? matched
+          : Number(feeSettings.deliveryFee || 0);
+      } else {
+        deliveryFee = Number(feeSettings.deliveryFee || 0);
+      }
     }
   }
 
@@ -162,9 +260,20 @@ export async function calculateOrderPricing(userId, dto) {
     }
   }
 
+  const zoneIdForSurge = dto?.zoneId && mongoose.Types.ObjectId.isValid(dto.zoneId)
+    ? String(dto.zoneId)
+    : (restaurant?.zoneId ? String(restaurant.zoneId) : null);
+  let surgeAmount = 0;
+  if (zoneIdForSurge) {
+    const surgeConfig = await FoodDeliverySurgeZone.findOne({ zoneId: zoneIdForSurge }).lean();
+    if (surgeConfig?.isEnabled) {
+      surgeAmount = Math.round((Number(surgeConfig.surgeAmount || 0) * 100)) / 100;
+    }
+  }
+
   const total = Math.max(
     0,
-    subtotal + packagingFee + deliveryFee + platformFee + tax - discount,
+    subtotal + packagingFee + deliveryFee + platformFee + tax + surgeAmount - discount,
   );
 
   return {
@@ -173,7 +282,9 @@ export async function calculateOrderPricing(userId, dto) {
       tax,
       packagingFee,
       deliveryFee,
+      deliveryFeeBreakdown,
       platformFee,
+      surgeAmount,
       discount,
       total,
       currency: "INR",

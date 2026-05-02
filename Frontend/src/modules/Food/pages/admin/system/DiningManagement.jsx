@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react"
+﻿import { useState, useEffect, useRef } from "react"
 import { Upload, Trash2, Image as ImageIcon, Loader2, AlertCircle, CheckCircle2, ArrowUp, ArrowDown, Layout, Tag, UtensilsCrossed, Edit, X } from "lucide-react"
 import api, { adminAPI, uploadAPI } from "@food/api"
 import { getModuleToken } from "@food/utils/auth"
@@ -102,7 +102,7 @@ export default function DiningManagement() {
             let imageUrl = editingCategoryImageUrl
 
             if (categoryFile) {
-                const uploadResponse = await uploadAPI.uploadMedia(categoryFile, { folder: "switcheats/dining/categories" })
+                const uploadResponse = await uploadAPI.uploadMedia(categoryFile, { folder: "eqosy/dining/categories" })
                 imageUrl = uploadResponse?.data?.data?.url || ""
             }
 
@@ -373,4 +373,5 @@ export default function DiningManagement() {
         </div>
     )
 }
+
 

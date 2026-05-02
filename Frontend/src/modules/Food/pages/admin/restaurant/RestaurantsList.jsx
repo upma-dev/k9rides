@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useRef } from "react"
+﻿import { useState, useMemo, useEffect, useRef } from "react"
 import { useNavigate, useSearchParams } from "react-router-dom"
 import { Search, Download, ChevronDown, Eye, Settings, ArrowUpDown, Loader2, X, MapPin, Phone, Mail, Clock, Star, Building2, User, FileText, CreditCard, Calendar, Image as ImageIcon, ExternalLink, ShieldX, AlertTriangle, Trash2, Plus } from "lucide-react"
 import { adminAPI, restaurantAPI, uploadAPI } from "@food/api"
@@ -792,7 +792,7 @@ export default function RestaurantsList() {
       let profileImage = undefined
       if (profileImageFile) {
         const uploadRes = await uploadAPI.uploadMedia(profileImageFile, {
-          folder: "switcheats/restaurant/profile",
+          folder: "eqosy/restaurant/profile",
         })
         const media = uploadRes?.data?.data?.file || uploadRes?.data?.data || uploadRes?.data?.file
         if (media?.url) {
@@ -1666,7 +1666,7 @@ export default function RestaurantsList() {
                             <div>
                               <p className="text-xs text-slate-500">Opening / Closing</p>
                               <p className="text-sm font-medium text-slate-900">
-                                {formatTime12Hour(openingTimeVal)} – {formatTime12Hour(closingTimeVal)}
+                                {formatTime12Hour(openingTimeVal)} â€“ {formatTime12Hour(closingTimeVal)}
                               </p>
                             </div>
                           </div>
@@ -1850,7 +1850,7 @@ export default function RestaurantsList() {
                     <div className="pt-6 border-t border-slate-200">
                       <h4 className="text-lg font-semibold text-slate-900 mb-4">Registration Documents</h4>
                       <div className="space-y-6">
-                        {/* PAN – flat or onboarding.step3 */}
+                        {/* PAN â€“ flat or onboarding.step3 */}
                         {hasPanSection && (
                           <div className="bg-slate-50 rounded-lg p-4">
                             <h5 className="font-semibold text-slate-900 mb-3 flex items-center gap-2">
@@ -1884,7 +1884,7 @@ export default function RestaurantsList() {
                           </div>
                         )}
 
-                        {/* GST – flat or onboarding.step3 */}
+                        {/* GST â€“ flat or onboarding.step3 */}
                         {hasGstSection && (
                           <div className="bg-slate-50 rounded-lg p-4">
                             <h5 className="font-semibold text-slate-900 mb-3 flex items-center gap-2">
@@ -1932,7 +1932,7 @@ export default function RestaurantsList() {
                           </div>
                         )}
 
-                        {/* FSSAI – flat or onboarding.step3 */}
+                        {/* FSSAI â€“ flat or onboarding.step3 */}
                         {hasFssaiSection && (
                           <div className="bg-slate-50 rounded-lg p-4">
                             <h5 className="font-semibold text-slate-900 mb-3 flex items-center gap-2">
@@ -1968,7 +1968,7 @@ export default function RestaurantsList() {
                           </div>
                         )}
 
-                        {/* Bank – flat or onboarding.step3 */}
+                        {/* Bank â€“ flat or onboarding.step3 */}
                         {hasBankSection && (
                           <div className="bg-slate-50 rounded-lg p-4">
                             <h5 className="font-semibold text-slate-900 mb-3 flex items-center gap-2">
@@ -2431,5 +2431,6 @@ export default function RestaurantsList() {
     </div>
   )
 }
+
 
 

@@ -1,4 +1,4 @@
-import { FoodBusinessSettings } from '../models/businessSettings.model.js';
+﻿import { FoodBusinessSettings } from '../models/businessSettings.model.js';
 import { sendResponse } from '../../../../utils/response.js';
 import { uploadImageBufferDetailed } from '../../../../services/cloudinary.service.js';
 
@@ -8,8 +8,8 @@ export async function getBusinessSettings(req, res, next) {
         if (!settings) {
             // Create default settings if none exist
             settings = await FoodBusinessSettings.create({
-                companyName: 'Switcheats',
-                email: 'admin@switcheats.com'
+                companyName: 'Eqosy',
+                email: 'admin@eqosy.com'
             });
         }
         return sendResponse(res, 200, 'Business settings fetched successfully', settings);
@@ -85,3 +85,4 @@ export async function updateBusinessSettings(req, res, next) {
         next(error);
     }
 }
+

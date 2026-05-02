@@ -165,6 +165,7 @@ export async function createCollectQr(
         packagingFee: order.pricing?.packagingFee || 0,
         deliveryFee: order.pricing?.deliveryFee || 0,
         platformFee: order.pricing?.platformFee || 0,
+        surgeAmount: order.pricing?.surgeAmount || 0,
         restaurantCommission: order.pricing?.restaurantCommission || 0,
         discount: order.pricing?.discount || 0,
         total: order.pricing?.total || 0,
@@ -172,7 +173,7 @@ export async function createCollectQr(
       },
       amounts: {
         totalCustomerPaid: order.pricing?.total || 0,
-        restaurantShare: 0, riderShare: 0, restaurantCommission: 0, platformNetProfit: 0,
+        restaurantShare: 0, riderShare: 0, riderBasePay: 0, riderSurgePay: 0, riderTotalPayout: 0, restaurantCommission: 0, platformNetProfit: 0,
       },
       history: [{ kind: 'created', amount: amountDue, note: 'Transaction auto-created at QR generation' }],
     },

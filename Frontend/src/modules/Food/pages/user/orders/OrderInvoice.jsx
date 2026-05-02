@@ -161,6 +161,8 @@ export default function OrderInvoice() {
   const handleDownloadPDF = () => {
     handlePrint()
   }
+  const pricing = order.pricing || {}
+  const surgeAmount = Number(pricing.surgeAmount || order.surgeAmount || 0)
 
   return (
     <AnimatedPage className="min-h-screen bg-gradient-to-b from-yellow-50/30 via-white to-orange-50/20 dark:from-[#0a0a0a] dark:via-[#1a1a1a] dark:to-[#0a0a0a] p-3 sm:p-4 md:p-6 lg:p-8">
@@ -297,6 +299,12 @@ export default function OrderInvoice() {
                   <span>Tax:</span>
                   <span>${order.tax.toFixed(2)}</span>
                 </div>
+                {surgeAmount > 0 && (
+                  <div className="total-row flex justify-between text-xs sm:text-sm sm:text-base py-1 sm:py-2">
+                    <span>Surge Amount:</span>
+                    <span>${surgeAmount.toFixed(2)}</span>
+                  </div>
+                )}
                 <div className="grand-total flex justify-between text-base sm:text-lg md:text-xl md:text-2xl pt-2 sm:pt-3 mt-2 sm:mt-3 border-t-2 border-[#EB590E]">
                   <span>Total:</span>
                   <span>${order.total.toFixed(2)}</span>

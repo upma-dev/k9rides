@@ -299,9 +299,17 @@ export default function UserOrderDetails() {
 
       // Total
       doc.setFontSize(12)
+      let amountLineY = finalY + 10
+      const surgeAmount = Number(pricing.surgeAmount || 0)
+      if (surgeAmount > 0) {
+        doc.setFont('helvetica', 'normal')
+        doc.text('Surge Amount:', 145, amountLineY, { align: 'right' })
+        doc.text(`?${surgeAmount.toFixed(2)}`, 195, amountLineY, { align: 'right' })
+        amountLineY += 8
+      }
       doc.setFont('helvetica', 'bold')
-      doc.text('Total:', 145, finalY + 10, { align: 'right' })
-      doc.text(`?${Number(pricing.total || 0).toFixed(2)}`, 195, finalY + 10, { align: 'right' })
+      doc.text('Total:', 145, amountLineY, { align: 'right' })
+      doc.text(`?${Number(pricing.total || 0).toFixed(2)}`, 195, amountLineY, { align: 'right' })
 
       // Save PDF instantly
       const fileName = `Order_Summary_${orderIdDisplay}_${Date.now()}.pdf`
@@ -520,6 +528,14 @@ export default function UserOrderDetails() {
                 ₹{Number(pricing.platformFee || 0).toFixed(2)}
               </span>
             </div>
+            {Number(pricing.surgeAmount || 0) > 0 && (
+              <div className="flex justify-between">
+                <span className="text-gray-500 dark:text-gray-400">Surge Amount</span>
+                <span className="text-gray-800 dark:text-gray-200">
+                  ₹{Number(pricing.surgeAmount || 0).toFixed(2)}
+                </span>
+              </div>
+            )}
             <div className="flex justify-between">
               <span className="text-gray-500 dark:text-gray-400">Subscription / other fees</span>
               <span className="text-gray-800 dark:text-gray-200">
