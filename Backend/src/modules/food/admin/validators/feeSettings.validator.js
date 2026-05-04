@@ -19,11 +19,18 @@ const distanceOrderRuleSchema = z.object({
     priceSlabs: z.array(distanceOrderPriceSlabSchema).optional()
 });
 
+const distanceSlabAdminDeliveryCommissionSchema = z.object({
+    distanceRuleId: z.string().min(1),
+    isEnabled: z.boolean().optional(),
+    adminDeliveryCommissionPercent: z.number().min(0).max(100).optional()
+});
+
 const feeSettingsUpsertSchema = z.object({
     deliveryFee: z.number().min(0).nullable().optional(),
     deliveryFeeRanges: z.array(rangeSchema).optional(),
     deliveryFeeComputationMode: z.enum(['order_value_range', 'distance_order_value']).optional(),
     distanceOrderDeliveryFeeRules: z.array(distanceOrderRuleSchema).optional(),
+    distanceSlabAdminDeliveryCommission: z.array(distanceSlabAdminDeliveryCommissionSchema).optional(),
     freeDeliveryThreshold: z.number().min(0).nullable().optional(),
     platformFee: z.number().min(0).nullable().optional(),
     gstRate: z.number().min(0).max(100).nullable().optional(),
@@ -60,6 +67,16 @@ export const validateFeeSettingsUpsertDto = (body) => {
                         isActive: s?.isActive !== undefined ? Boolean(s.isActive) : true
                     }))
                     : []
+            }))
+            : undefined,
+        distanceSlabAdminDeliveryCommission: Array.isArray(body?.distanceSlabAdminDeliveryCommission)
+            ? body.distanceSlabAdminDeliveryCommission.map((row) => ({
+                distanceRuleId: String(row?.distanceRuleId || ''),
+                isEnabled: row?.isEnabled !== undefined ? Boolean(row.isEnabled) : false,
+                adminDeliveryCommissionPercent:
+                    row?.adminDeliveryCommissionPercent !== undefined
+                        ? Number(row.adminDeliveryCommissionPercent)
+                        : 0
             }))
             : undefined,
         freeDeliveryThreshold:
@@ -128,6 +145,22 @@ export const validateFeeSettingsUpsertDto = (body) => {
                 deliveryFee: Math.round(s.deliveryFee * 100) / 100
             }));
         }
+    }
+
+    if (Array.isArray(result.data.distanceSlabAdminDeliveryCommission)) {
+        const dedupe = new Set();
+        result.data.distanceSlabAdminDeliveryCommission = result.data.distanceSlabAdminDeliveryCommission.map((row) => {
+            if (dedupe.has(row.distanceRuleId)) {
+                throw new ValidationError('Duplicate distanceRuleId found in admin delivery commission config');
+            }
+            dedupe.add(row.distanceRuleId);
+            const pct = Math.round((Number(row.adminDeliveryCommissionPercent || 0) * 100)) / 100;
+            return {
+                distanceRuleId: row.distanceRuleId,
+                isEnabled: row.isEnabled === true,
+                adminDeliveryCommissionPercent: pct
+            };
+        });
     }
 
     return result.data;

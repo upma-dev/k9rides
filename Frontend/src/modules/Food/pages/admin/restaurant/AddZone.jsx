@@ -37,7 +37,13 @@ export default function AddZone() {
   const [existingZones, setExistingZones] = useState([])
   const autocompleteInputRef = useRef(null)
   const autocompleteRef = useRef(null)
+  const autocompleteServiceRef = useRef(null)
+  const placesServiceRef = useRef(null)
+  const suggestionsDebounceRef = useRef(null)
   const existingZonesPolygonsRef = useRef([])
+  const mapsScriptLoadedRef = useRef(false)
+  const [searchSuggestions, setSearchSuggestions] = useState([])
+  const [showSuggestions, setShowSuggestions] = useState(false)
 
   useEffect(() => {
     fetchExistingZones()
@@ -47,6 +53,15 @@ export default function AddZone() {
     }
   }, [id, isEditMode])
 
+  useEffect(() => {
+    return () => {
+      if (suggestionsDebounceRef.current) {
+        clearTimeout(suggestionsDebounceRef.current)
+        suggestionsDebounceRef.current = null
+      }
+    }
+  }, [])
+
   // Center map on India when country is selected
   useEffect(() => {
     if (formData.country === "India" && mapInstanceRef.current) {
@@ -55,30 +70,166 @@ export default function AddZone() {
       mapInstanceRef.current.setZoom(5)
     }
   }, [formData.country])
+  const ensurePlacesSdkLoaded = useCallback(async () => {
+    if (window.google?.maps?.places?.Autocomplete) {
+      mapsScriptLoadedRef.current = true
+      return true
+    }
+
+    const apiKey = await getGoogleMapsApiKey()
+    if (!apiKey) return false
+
+    window.gm_authFailure = () => {}
+
+    const scripts = Array.from(document.getElementsByTagName("script"))
+    const mapsScript = scripts.find((s) => s.src?.includes("maps.googleapis.com/maps/api/js"))
+
+    if (mapsScript && !mapsScript.src.includes("libraries=places")) {
+      mapsScript.remove()
+    } else if (mapsScript && mapsScript.src.includes("libraries=places")) {
+      for (let i = 0; i < 60; i++) {
+        if (window.google?.maps?.places?.Autocomplete) return true
+        await new Promise((r) => setTimeout(r, 100))
+      }
+    }
+
+    return new Promise((resolve) => {
+      const oldScript = document.getElementById("google-maps-sdk")
+      if (oldScript) oldScript.remove()
+
+      const script = document.createElement("script")
+      script.id = "google-maps-sdk"
+      script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places,drawing,geometry&v=weekly`
+      script.async = true
+      script.defer = true
+      script.onload = () => {
+        setTimeout(() => {
+          const ok = !!window.google?.maps?.places?.Autocomplete
+          mapsScriptLoadedRef.current = ok
+          resolve(ok)
+        }, 250)
+      }
+      script.onerror = () => resolve(false)
+      document.head.appendChild(script)
+    })
+  }, [])
 
   // Initialize Places Autocomplete when map is loaded
   useEffect(() => {
-    if (!mapLoading && mapInstanceRef.current && autocompleteInputRef.current && window.google?.maps?.places && !autocompleteRef.current) {
+    let cancelled = false
+
+    const initAutocomplete = async () => {
+      if (mapLoading || !mapInstanceRef.current || !autocompleteInputRef.current || autocompleteRef.current) return
+
+      const loaded = await ensurePlacesSdkLoaded()
+      if (!loaded || cancelled || !window.google?.maps?.places?.Autocomplete || !autocompleteInputRef.current) return
+
       const autocomplete = new window.google.maps.places.Autocomplete(autocompleteInputRef.current, {
-        // No `geocode` type — it routes predictions through Geocoding-style endpoints.
-        componentRestrictions: { country: 'in' } // Restrict to India
+        types: ["geocode", "establishment"],
+        componentRestrictions: { country: "in" }
       })
-      
-      autocomplete.addListener('place_changed', () => {
+
+      if (window.google?.maps?.places?.AutocompleteService) {
+        autocompleteServiceRef.current = new window.google.maps.places.AutocompleteService()
+      }
+      if (window.google?.maps?.places?.PlacesService) {
+        const host = mapInstanceRef.current || document.createElement("div")
+        placesServiceRef.current = new window.google.maps.places.PlacesService(host)
+      }
+
+      autocomplete.addListener("place_changed", () => {
         const place = autocomplete.getPlace()
         if (place.geometry && place.geometry.location && mapInstanceRef.current) {
           const location = place.geometry.location
           mapInstanceRef.current.setCenter(location)
-          mapInstanceRef.current.setZoom(15) // Zoom in when location is selected
-          
-          // Set the search input value
+          mapInstanceRef.current.setZoom(15)
           setLocationSearch(place.formatted_address || place.name || "")
+          setShowSuggestions(false)
+          setSearchSuggestions([])
         }
       })
-      
+
       autocompleteRef.current = autocomplete
+
+      const pacContainerFix = () => {
+        const applyFix = () => {
+          const containers = document.querySelectorAll(".pac-container")
+          containers.forEach((container) => {
+            container.style.zIndex = "999999"
+            container.style.pointerEvents = "auto"
+            container.style.visibility = "visible"
+            container.style.display = "block"
+          })
+        }
+        applyFix()
+        setTimeout(applyFix, 120)
+        setTimeout(applyFix, 300)
+      }
+
+      autocompleteInputRef.current.addEventListener("focus", pacContainerFix)
+      autocompleteInputRef.current.addEventListener("input", pacContainerFix)
     }
-  }, [mapLoading])
+
+    initAutocomplete()
+    return () => {
+      cancelled = true
+    }
+  }, [mapLoading, ensurePlacesSdkLoaded])
+
+  const fetchSearchSuggestions = useCallback((query) => {
+    const q = String(query || "").trim()
+    if (!q || !autocompleteServiceRef.current || !window.google?.maps?.places?.PlacesServiceStatus) {
+      setSearchSuggestions([])
+      return
+    }
+    autocompleteServiceRef.current.getPlacePredictions(
+      {
+        input: q,
+        componentRestrictions: { country: "in" },
+        types: ["geocode"]
+      },
+      (predictions = [], status) => {
+        const ok = status === window.google.maps.places.PlacesServiceStatus.OK
+        setSearchSuggestions(ok ? predictions.slice(0, 6) : [])
+      }
+    )
+  }, [])
+
+  const handleLocationSearchChange = (value) => {
+    setLocationSearch(value)
+    setShowSuggestions(true)
+    if (suggestionsDebounceRef.current) {
+      clearTimeout(suggestionsDebounceRef.current)
+      suggestionsDebounceRef.current = null
+    }
+    suggestionsDebounceRef.current = setTimeout(() => {
+      fetchSearchSuggestions(value)
+    }, 180)
+  }
+
+  const handleSuggestionSelect = (suggestion) => {
+    if (!suggestion?.place_id || !placesServiceRef.current) return
+    placesServiceRef.current.getDetails(
+      {
+        placeId: suggestion.place_id,
+        fields: ["geometry", "formatted_address", "name"]
+      },
+      (place, status) => {
+        if (
+          status === window.google?.maps?.places?.PlacesServiceStatus?.OK &&
+          place?.geometry?.location &&
+          mapInstanceRef.current
+        ) {
+          const location = place.geometry.location
+          mapInstanceRef.current.setCenter(location)
+          mapInstanceRef.current.setZoom(15)
+          setLocationSearch(place.formatted_address || place.name || "")
+          setShowSuggestions(false)
+          setSearchSuggestions([])
+        }
+      }
+    )
+  }
 
   // Draw existing polygon when in edit mode and coordinates are loaded
   useEffect(() => {
@@ -821,9 +972,26 @@ export default function AddZone() {
                     type="text"
                     placeholder="Search location on map..."
                     value={locationSearch}
-                    onChange={(e) => setLocationSearch(e.target.value)}
+                    onChange={(e) => handleLocationSearchChange(e.target.value)}
+                    onFocus={() => setShowSuggestions(true)}
+                    onBlur={() => setTimeout(() => setShowSuggestions(false), 120)}
                     className="w-full pl-10 pr-4 py-2.5 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
+                  {showSuggestions && searchSuggestions.length > 0 && (
+                    <div className="absolute left-0 right-0 top-full mt-1 max-h-60 overflow-auto rounded-lg border border-slate-200 bg-white shadow-lg z-[999999]">
+                      {searchSuggestions.map((suggestion) => (
+                        <button
+                          key={suggestion.place_id}
+                          type="button"
+                          onMouseDown={(e) => e.preventDefault()}
+                          onClick={() => handleSuggestionSelect(suggestion)}
+                          className="block w-full px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-100"
+                        >
+                          {suggestion.description}
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
                 {coordinates.length > 0 && (
                   <p className="text-xs text-slate-600 mt-2">
@@ -891,5 +1059,6 @@ export default function AddZone() {
     </div>
   )
 }
+
 
 

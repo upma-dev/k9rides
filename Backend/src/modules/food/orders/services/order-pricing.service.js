@@ -75,6 +75,10 @@ export async function calculateOrderPricing(userId, dto) {
   const mode = String(feeSettings.deliveryFeeComputationMode || 'order_value_range');
   let deliveryFee = 0;
   let deliveryFeeBreakdown = null;
+  let adminDeliveryCommissionPercent = 0;
+  let adminDeliveryCommissionAmount = 0;
+  let riderDeliveryEarningAfterAdminCommission = 0;
+  let adminDeliveryCommissionEnabled = false;
   if (mode === 'distance_order_value') {
     const restCoords = extractCoords(restaurant);
     const customerCoords = extractCoords(dto?.address || dto?.deliveryAddress);
@@ -91,10 +95,21 @@ export async function calculateOrderPricing(userId, dto) {
     const mappedRules = Array.isArray(feeSettings.distanceOrderDeliveryFeeRules)
       ? feeSettings.distanceOrderDeliveryFeeRules
       : [];
+    const commissionRows = Array.isArray(feeSettings.distanceSlabAdminDeliveryCommission)
+      ? feeSettings.distanceSlabAdminDeliveryCommission
+      : [];
     const nested = mappedRules.find((r) => String(r.distanceRuleId) === String(distanceRule._id));
+    const adminCommissionRow = commissionRows.find((r) => String(r.distanceRuleId) === String(distanceRule._id));
     const matchedPriceSlab = resolvePriceSlabByOrderValue(nested?.priceSlabs || [], subtotal);
     if (!matchedPriceSlab) {
-      deliveryFee = 0;
+      const fallbackFixedPayout = Math.round((Number(distanceRule?.basePayout || 0) * 100)) / 100;
+      deliveryFee = fallbackFixedPayout > 0 ? fallbackFixedPayout : 0;
+      adminDeliveryCommissionEnabled = adminCommissionRow?.isEnabled === true;
+      adminDeliveryCommissionPercent = adminDeliveryCommissionEnabled
+        ? Math.round((Number(adminCommissionRow?.adminDeliveryCommissionPercent || 0) * 100)) / 100
+        : 0;
+      adminDeliveryCommissionAmount = Math.round((deliveryFee * (adminDeliveryCommissionPercent / 100)) * 100) / 100;
+      riderDeliveryEarningAfterAdminCommission = Math.round(Math.max(0, deliveryFee - adminDeliveryCommissionAmount) * 100) / 100;
       deliveryFeeBreakdown = {
         source: 'distance_order_value',
         distanceKm: Math.round(Number(distanceKm || 0) * 100) / 100,
@@ -105,13 +120,24 @@ export async function calculateOrderPricing(userId, dto) {
         },
         orderValue: subtotal,
         matchedPriceSlab: null,
-        appliedDeliveryFee: 0,
-        noPriceSlabMatch: true
+        fixedPayoutFallback: fallbackFixedPayout,
+        appliedDeliveryFee: Number(deliveryFee || 0),
+        adminDeliveryCommissionPercent,
+        adminDeliveryCommissionAmount,
+        riderDeliveryEarningAfterAdminCommission,
+        noPriceSlabMatch: true,
+        feeSource: fallbackFixedPayout > 0 ? 'distance_fixed_payout_fallback' : 'free_no_slab_no_fixed'
       };
     } else {
       const perKmRate = Number(matchedPriceSlab.deliveryFee || 0);
       const chargeableDistanceKm = Number(distanceKm || 0);
       deliveryFee = Math.round(Math.max(0, perKmRate * chargeableDistanceKm) * 100) / 100;
+      adminDeliveryCommissionEnabled = adminCommissionRow?.isEnabled === true;
+      adminDeliveryCommissionPercent = adminDeliveryCommissionEnabled
+        ? Math.round((Number(adminCommissionRow?.adminDeliveryCommissionPercent || 0) * 100)) / 100
+        : 0;
+      adminDeliveryCommissionAmount = Math.round((deliveryFee * (adminDeliveryCommissionPercent / 100)) * 100) / 100;
+      riderDeliveryEarningAfterAdminCommission = Math.round(Math.max(0, deliveryFee - adminDeliveryCommissionAmount) * 100) / 100;
       deliveryFeeBreakdown = {
         source: 'distance_order_value',
         distanceKm: Math.round(Number(distanceKm || 0) * 100) / 100,
@@ -128,7 +154,11 @@ export async function calculateOrderPricing(userId, dto) {
         },
         appliedDeliveryFee: Number(deliveryFee || 0),
         feeComputation: 'per_km_x_distance',
-        noPriceSlabMatch: false
+        adminDeliveryCommissionPercent,
+        adminDeliveryCommissionAmount,
+        riderDeliveryEarningAfterAdminCommission,
+        noPriceSlabMatch: false,
+        feeSource: 'order_value_slab_per_km'
       };
     }
   } else {
@@ -174,6 +204,12 @@ export async function calculateOrderPricing(userId, dto) {
         deliveryFee = Number(feeSettings.deliveryFee || 0);
       }
     }
+  }
+  if (mode !== 'distance_order_value') {
+    adminDeliveryCommissionPercent = 0;
+    adminDeliveryCommissionAmount = 0;
+    riderDeliveryEarningAfterAdminCommission = Math.round(Math.max(0, deliveryFee) * 100) / 100;
+    adminDeliveryCommissionEnabled = false;
   }
 
   const gstRate = Number(feeSettings.gstRate || 0);
@@ -283,6 +319,10 @@ export async function calculateOrderPricing(userId, dto) {
       packagingFee,
       deliveryFee,
       deliveryFeeBreakdown,
+      adminDeliveryCommissionEnabled,
+      adminDeliveryCommissionPercent,
+      adminDeliveryCommissionAmount,
+      riderDeliveryEarningAfterAdminCommission,
       platformFee,
       surgeAmount,
       discount,

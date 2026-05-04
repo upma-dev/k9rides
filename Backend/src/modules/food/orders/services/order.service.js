@@ -195,6 +195,10 @@ export async function createOrder(userId, dto) {
       packagingFee: Number(dto.pricing?.packagingFee ?? 0) || 0,
       deliveryFee: Number(dto.pricing?.deliveryFee ?? 0) || 0,
       deliveryFeeBreakdown: dto.pricing?.deliveryFeeBreakdown || null,
+      adminDeliveryCommissionEnabled: Boolean(dto.pricing?.adminDeliveryCommissionEnabled || false),
+      adminDeliveryCommissionPercent: Number(dto.pricing?.adminDeliveryCommissionPercent ?? 0) || 0,
+      adminDeliveryCommissionAmount: Number(dto.pricing?.adminDeliveryCommissionAmount ?? 0) || 0,
+      riderDeliveryEarningAfterAdminCommission: Number(dto.pricing?.riderDeliveryEarningAfterAdminCommission ?? dto.pricing?.deliveryFee ?? 0) || 0,
       platformFee: Number(dto.pricing?.platformFee ?? 0) || 0,
       surgeAmount: Number(dto.pricing?.surgeAmount ?? 0) || 0,
       discount: Number(dto.pricing?.discount ?? 0) || 0,
@@ -209,6 +213,10 @@ export async function createOrder(userId, dto) {
       if (pricingResult?.pricing) {
         normalizedPricing.deliveryFee = Number(pricingResult.pricing.deliveryFee || 0);
         normalizedPricing.deliveryFeeBreakdown = pricingResult.pricing.deliveryFeeBreakdown || null;
+        normalizedPricing.adminDeliveryCommissionEnabled = Boolean(pricingResult.pricing.adminDeliveryCommissionEnabled || false);
+        normalizedPricing.adminDeliveryCommissionPercent = Number(pricingResult.pricing.adminDeliveryCommissionPercent || 0);
+        normalizedPricing.adminDeliveryCommissionAmount = Number(pricingResult.pricing.adminDeliveryCommissionAmount || 0);
+        normalizedPricing.riderDeliveryEarningAfterAdminCommission = Number(pricingResult.pricing.riderDeliveryEarningAfterAdminCommission || normalizedPricing.deliveryFee || 0);
         normalizedPricing.tax = Number(pricingResult.pricing.tax || normalizedPricing.tax || 0);
         normalizedPricing.platformFee = Number(pricingResult.pricing.platformFee || normalizedPricing.platformFee || 0);
         normalizedPricing.discount = Number(pricingResult.pricing.discount || normalizedPricing.discount || 0);
@@ -252,8 +260,9 @@ export async function createOrder(userId, dto) {
     }
 
     const riderBasePay = await getRiderEarning(distanceKm) || 0;
+    const riderDeliveryFeeShare = Math.round((Number(normalizedPricing.riderDeliveryEarningAfterAdminCommission || 0) * 100)) / 100;
     const riderSurgePay = Number(normalizedPricing.surgeAmount) || 0;
-    const riderTotalPayout = Math.round((riderBasePay + riderSurgePay) * 100) / 100;
+    const riderTotalPayout = Math.round((riderBasePay + riderSurgePay + riderDeliveryFeeShare) * 100) / 100;
     const riderEarning = riderTotalPayout;
     
     // Calculate restaurant commission from subtotal
@@ -311,6 +320,7 @@ export async function createOrder(userId, dto) {
       scheduledAt: dto.scheduledAt ? new Date(dto.scheduledAt) : null,
       riderBasePay: Number(riderBasePay) || 0,
       riderSurgePay: Number(riderSurgePay) || 0,
+      riderDeliveryFeeShare: Number(riderDeliveryFeeShare) || 0,
       riderTotalPayout: Number(riderTotalPayout) || 0,
       riderEarning: Number(riderEarning) || 0,
       platformProfit: Number(platformProfit) || 0,

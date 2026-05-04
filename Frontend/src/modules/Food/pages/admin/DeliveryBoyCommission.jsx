@@ -24,7 +24,7 @@ export default function DeliveryBoyCommission() {
     minDistance: "",
     maxDistance: "",
     maxDistanceUnlimited: false,
-    commissionPerKm: "",
+    commissionPerKm: "0",
     basePayout: "",
   })
   const [formErrors, setFormErrors] = useState({})
@@ -32,7 +32,7 @@ export default function DeliveryBoyCommission() {
     si: true,
     name: true,
     distanceSlab: true,
-    commissionPerKm: true,
+    commissionPerKm: false,
     basePayout: true,
     status: true,
     actions: true,
@@ -76,28 +76,7 @@ export default function DeliveryBoyCommission() {
     return `${min}-${max} km`
   }
 
-  // Calculate total commission for a given distance
-  const calculateTotalCommission = (commission, distance) => {
-    // Check if distance falls within this commission tier
-    if (distance < commission.minDistance) return 0
-    if (commission.maxDistance !== null && distance > commission.maxDistance) return 0
-    
-    // For 0-x slab we usually want per-km on full distance; for other slabs apply per-km after minDistance
-    const min = Number(commission.minDistance) || 0
-    const extraDistance = Math.max(0, distance - min)
-    const kmForRate = min === 0 ? distance : extraDistance
-    return commission.basePayout + (kmForRate * commission.commissionPerKm)
-  }
-
-  // Calculate example commission for display (using mid-point of range)
-  const getExampleCommission = (commission) => {
-    if (commission.maxDistance === null) {
-      const exampleDistance = commission.minDistance + 5 // Example: 10km for 10+ km tier
-      return calculateTotalCommission(commission, exampleDistance)
-    }
-    const midDistance = (commission.minDistance + commission.maxDistance) / 2
-    return calculateTotalCommission(commission, midDistance)
-  }
+  // Per-km pricing has been moved to Delivery & Platform Fee page.
 
   // Fetch commission rules on component mount
   useEffect(() => {
@@ -209,7 +188,7 @@ export default function DeliveryBoyCommission() {
 
   const handleAdd = () => {
     setSelectedCommission(null)
-    setFormData({ name: "", minDistance: "0", maxDistance: "", maxDistanceUnlimited: false, commissionPerKm: "", basePayout: "" })
+    setFormData({ name: "", minDistance: "0", maxDistance: "", maxDistanceUnlimited: false, commissionPerKm: "0", basePayout: "" })
     setFormErrors({})
     setIsAddEditOpen(true)
   }
@@ -222,7 +201,7 @@ export default function DeliveryBoyCommission() {
       minDistance: commission.minDistance?.toString?.() || "",
       maxDistance: isUnlimited ? "" : String(commission.maxDistance),
       maxDistanceUnlimited: isUnlimited,
-      commissionPerKm: commission.commissionPerKm.toString(),
+      commissionPerKm: "0",
       basePayout: commission.basePayout.toString(),
     })
     setFormErrors({})
@@ -260,9 +239,6 @@ export default function DeliveryBoyCommission() {
     if (!formData.maxDistanceUnlimited && formData.maxDistance !== "" && parseFloat(formData.maxDistance) < parseFloat(formData.minDistance || "0")) {
       errors.maxDistance = "Max distance must be greater than or equal to min distance"
     }
-    if (!formData.commissionPerKm.trim() || parseFloat(formData.commissionPerKm) < 0) {
-      errors.commissionPerKm = "Commission per km must be 0 or greater"
-    }
     if (!formData.basePayout.trim() || parseFloat(formData.basePayout) < 0) {
       errors.basePayout = "Base payout must be 0 or greater"
     }
@@ -282,7 +258,7 @@ export default function DeliveryBoyCommission() {
         name: formData.name.trim() || `Base (0-${minDistance} km)`,
         minDistance,
         maxDistance,
-        commissionPerKm: parseFloat(formData.commissionPerKm),
+        commissionPerKm: 0,
         basePayout: parseFloat(formData.basePayout),
         status: selectedCommission ? selectedCommission.status : true,
       }
@@ -331,7 +307,7 @@ export default function DeliveryBoyCommission() {
       }
       
       setIsAddEditOpen(false)
-      setFormData({ name: "", minDistance: "0", maxDistance: "", commissionPerKm: "", basePayout: "" })
+      setFormData({ name: "", minDistance: "0", maxDistance: "", commissionPerKm: "0", basePayout: "" })
       setSelectedCommission(null)
     } catch (error) {
       debugError('Error saving commission rule:', error)
@@ -414,7 +390,7 @@ export default function DeliveryBoyCommission() {
       si: true,
       name: true,
       distanceSlab: true,
-      commissionPerKm: true,
+      commissionPerKm: false,
       basePayout: true,
       totalCommission: true,
       status: true,
@@ -426,8 +402,7 @@ export default function DeliveryBoyCommission() {
     si: "Serial Number",
     name: "Name",
     distanceSlab: "Distance Slab (km)",
-    commissionPerKm: "Commission/Km",
-    basePayout: "Base Payout",
+        basePayout: "Base Payout",
     status: "Status",
     actions: "Actions",
   }
@@ -483,13 +458,12 @@ export default function DeliveryBoyCommission() {
             <div className="flex items-start gap-3">
               <MapPin className="w-5 h-5 text-blue-600 mt-0.5" />
               <div className="text-sm text-slate-700">
-                <p className="font-semibold text-blue-900 mb-1">Fixed + Extra Distance Commission</p>
+                <p className="font-semibold text-blue-900 mb-1">Distance Slab Payout</p>
                 <p className="text-slate-600">
-                  Commission is calculated as: <strong>Base payout for 0-{formulaMinDistance} km + Extra per km after {formulaMinDistance} km</strong>.
-                  Example: if base is ₹25 and extra is ₹5/km, then 6 km earns ₹25 + (2 x ₹5) = ₹35.
+                  This page now controls only rider base payout per distance slab.
                 </p>
                 <p className="text-slate-600 mt-1">
-                  Only the slab with <strong>min distance = 0</strong> can have a base payout. All other slabs should keep base payout set to 0 and use only amount per km.
+                  Customer delivery charges are configured from <strong>Delivery & Platform Fee</strong> page using distance + order value slabs.
                 </p>
               </div>
             </div>
@@ -800,24 +774,7 @@ export default function DeliveryBoyCommission() {
             </div>
             <div>
               <label className="block text-sm font-semibold text-slate-700 mb-2">
-                Per Kilometer Charge (₹) <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="number"
-                step="0.01"
-                min="0"
-                value={formData.commissionPerKm}
-                onChange={(e) => setFormData({ ...formData, commissionPerKm: e.target.value })}
-                className={`w-full px-4 py-2.5 border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm ${
-                  formErrors.commissionPerKm ? "border-red-500" : "border-slate-300"
-                }`}
-                placeholder="e.g., 5"
-              />
-              {formErrors.commissionPerKm && <p className="text-xs text-red-500 mt-1">{formErrors.commissionPerKm}</p>}
-            </div>
-            <div>
-              <label className="block text-sm font-semibold text-slate-700 mb-2">
-                Fixed Payout (₹) <span className="text-red-500">*</span>
+                Fixed Payout (?) <span className="text-red-500">*</span>
               </label>
               <input
                 type="number"
@@ -832,7 +789,7 @@ export default function DeliveryBoyCommission() {
               />
               {formErrors.basePayout && <p className="text-xs text-red-500 mt-1">{formErrors.basePayout}</p>}
               <p className="text-xs text-slate-500 mt-1">
-                Formula: Fixed payout + (max(0, distance - {formulaMinDistance}) * per km charge)
+                This value is used as rider fixed payout for this distance slab.
               </p>
             </div>
           </div>
@@ -940,5 +897,7 @@ export default function DeliveryBoyCommission() {
     </div>
   )
 }
+
+
 
 

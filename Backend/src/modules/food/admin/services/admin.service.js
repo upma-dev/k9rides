@@ -1600,11 +1600,7 @@ export async function getDeliveryCommissionRules() {
 function validateCommissionRuleSet(rules) {
     const active = (rules || []).filter((r) => r && r.status !== false);
     if (!active.length) {
-        throw new ValidationError('A base slab with minDistance = 0 is required');
-    }
-    const baseRules = active.filter((r) => Number(r.minDistance || 0) === 0);
-    if (baseRules.length !== 1) {
-        throw new ValidationError('A base slab with minDistance = 0 is required');
+        throw new ValidationError('At least one active distance slab is required');
     }
     const sorted = [...active].sort((a, b) => Number(a.minDistance || 0) - Number(b.minDistance || 0));
     for (let i = 0; i < sorted.length; i += 1) {
@@ -1718,6 +1714,15 @@ export async function upsertFeeSettings(body) {
             throw new ValidationError(`Distance slab rule not found: ${missing}`);
         }
     }
+    if (Array.isArray(body.distanceSlabAdminDeliveryCommission) && body.distanceSlabAdminDeliveryCommission.length) {
+        const ids = body.distanceSlabAdminDeliveryCommission.map((r) => r.distanceRuleId);
+        const existingRules = await FoodDeliveryCommissionRule.find({ _id: { $in: ids } }).select('_id').lean();
+        const found = new Set(existingRules.map((r) => String(r._id)));
+        const missing = ids.find((id) => !found.has(String(id)));
+        if (missing) {
+            throw new ValidationError(`Distance slab rule not found for admin delivery commission: ${missing}`);
+        }
+    }
     // Single active doc pattern: keep only one active record.
     const existing = await FoodFeeSettings.findOne({ isActive: true }).sort({ createdAt: -1 });
     if (existing) {
@@ -1730,6 +1735,7 @@ export async function upsertFeeSettings(body) {
         if (body.deliveryFeeRanges !== undefined) $set.deliveryFeeRanges = body.deliveryFeeRanges;
         if (body.deliveryFeeComputationMode !== undefined) $set.deliveryFeeComputationMode = body.deliveryFeeComputationMode;
         if (body.distanceOrderDeliveryFeeRules !== undefined) $set.distanceOrderDeliveryFeeRules = body.distanceOrderDeliveryFeeRules;
+        if (body.distanceSlabAdminDeliveryCommission !== undefined) $set.distanceSlabAdminDeliveryCommission = body.distanceSlabAdminDeliveryCommission;
 
         if (body.freeDeliveryThreshold === null) $unset.freeDeliveryThreshold = 1;
         else if (body.freeDeliveryThreshold !== undefined) $set.freeDeliveryThreshold = body.freeDeliveryThreshold;
@@ -1755,6 +1761,7 @@ export async function upsertFeeSettings(body) {
         deliveryFeeRanges: body.deliveryFeeRanges ?? [],
         deliveryFeeComputationMode: body.deliveryFeeComputationMode || 'order_value_range',
         distanceOrderDeliveryFeeRules: body.distanceOrderDeliveryFeeRules ?? [],
+        distanceSlabAdminDeliveryCommission: body.distanceSlabAdminDeliveryCommission ?? [],
         isActive: body.isActive !== false
     };
     if (body.deliveryFee !== undefined && body.deliveryFee !== null) payload.deliveryFee = body.deliveryFee;

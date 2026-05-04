@@ -12,6 +12,7 @@ export default function FeeSettings() {
     deliveryFeeRanges: [],
     deliveryFeeComputationMode: "distance_order_value",
     distanceOrderDeliveryFeeRules: [],
+    distanceSlabAdminDeliveryCommission: [],
     freeDeliveryThreshold: "",
     platformFee: "",
     gstRate: "",
@@ -25,6 +26,9 @@ export default function FeeSettings() {
   const getDistanceRuleConfig = (ruleId) =>
     feeSettings.distanceOrderDeliveryFeeRules.find((r) => String(r.distanceRuleId) === String(ruleId)) || null
 
+  const getDistanceRuleAdminCommissionConfig = (ruleId) =>
+    feeSettings.distanceSlabAdminDeliveryCommission.find((r) => String(r.distanceRuleId) === String(ruleId)) || null
+
   const setDistanceRuleConfig = (ruleId, updater) => {
     const prev = feeSettings.distanceOrderDeliveryFeeRules
     const idx = prev.findIndex((r) => String(r.distanceRuleId) === String(ruleId))
@@ -35,6 +39,18 @@ export default function FeeSettings() {
       next[idx] = updater(next[idx])
     }
     setFeeSettings({ ...feeSettings, distanceOrderDeliveryFeeRules: next })
+  }
+
+  const setDistanceRuleAdminCommissionConfig = (ruleId, updater) => {
+    const prev = feeSettings.distanceSlabAdminDeliveryCommission
+    const idx = prev.findIndex((r) => String(r.distanceRuleId) === String(ruleId))
+    const next = [...prev]
+    if (idx === -1) {
+      next.push(updater({ distanceRuleId: String(ruleId), isEnabled: false, adminDeliveryCommissionPercent: 0 }))
+    } else {
+      next[idx] = updater(next[idx])
+    }
+    setFeeSettings({ ...feeSettings, distanceSlabAdminDeliveryCommission: next })
   }
 
   const fetchFeeSettings = async () => {
@@ -48,6 +64,7 @@ export default function FeeSettings() {
           deliveryFeeRanges: saved.deliveryFeeRanges || [],
           deliveryFeeComputationMode: saved.deliveryFeeComputationMode || "distance_order_value",
           distanceOrderDeliveryFeeRules: saved.distanceOrderDeliveryFeeRules || [],
+          distanceSlabAdminDeliveryCommission: saved.distanceSlabAdminDeliveryCommission || [],
           freeDeliveryThreshold: saved.freeDeliveryThreshold ?? "",
           platformFee: saved.platformFee ?? "",
           gstRate: saved.gstRate ?? "",
@@ -59,6 +76,7 @@ export default function FeeSettings() {
           deliveryFeeRanges: [],
           deliveryFeeComputationMode: "distance_order_value",
           distanceOrderDeliveryFeeRules: [],
+          distanceSlabAdminDeliveryCommission: [],
           freeDeliveryThreshold: "",
           platformFee: "",
           gstRate: "",
@@ -91,12 +109,23 @@ export default function FeeSettings() {
 
   const handleSaveFeeSettings = async () => {
     try {
+      const invalidCommission = (feeSettings.distanceSlabAdminDeliveryCommission || []).find((row) =>
+        row?.isEnabled === true &&
+        (!Number.isFinite(Number(row?.adminDeliveryCommissionPercent)) ||
+          Number(row?.adminDeliveryCommissionPercent) < 0 ||
+          Number(row?.adminDeliveryCommissionPercent) > 100)
+      )
+      if (invalidCommission) {
+        toast.error("Admin delivery commission must be between 0 and 100")
+        return
+      }
       setSavingFeeSettings(true)
       const response = await adminAPI.createOrUpdateFeeSettings({
         deliveryFee: feeSettings.deliveryFee === "" ? undefined : Number(feeSettings.deliveryFee),
         deliveryFeeRanges: feeSettings.deliveryFeeRanges,
         deliveryFeeComputationMode: "distance_order_value",
         distanceOrderDeliveryFeeRules: feeSettings.distanceOrderDeliveryFeeRules,
+        distanceSlabAdminDeliveryCommission: feeSettings.distanceSlabAdminDeliveryCommission,
         freeDeliveryThreshold: feeSettings.freeDeliveryThreshold === "" ? undefined : Number(feeSettings.freeDeliveryThreshold),
         platformFee: feeSettings.platformFee === "" ? undefined : Number(feeSettings.platformFee),
         gstRate: feeSettings.gstRate === "" ? undefined : Number(feeSettings.gstRate),
@@ -257,6 +286,7 @@ export default function FeeSettings() {
                 <div className="space-y-4">
                   {distanceRules.map((rule) => {
                     const ruleCfg = getDistanceRuleConfig(rule._id)
+                    const adminCommissionCfg = getDistanceRuleAdminCommissionConfig(rule._id) || { isEnabled: false, adminDeliveryCommissionPercent: 0 }
                     const slabs = Array.isArray(ruleCfg?.priceSlabs) ? ruleCfg.priceSlabs : []
                     const form = newPriceSlabByRule[String(rule._id)] || { minOrderValue: "", maxOrderValue: "", deliveryFee: "" }
                     const label = rule.maxDistance == null ? `${rule.minDistance}+ km` : `${rule.minDistance}-${rule.maxDistance} km`
@@ -271,9 +301,9 @@ export default function FeeSettings() {
                             <table className="w-full border border-slate-200 rounded-lg">
                               <thead className="bg-slate-50">
                                 <tr>
-                                  <th className="px-3 py-2 text-left text-xs font-semibold text-slate-700 border-b">Min Order (₹)</th>
-                                  <th className="px-3 py-2 text-left text-xs font-semibold text-slate-700 border-b">Max Order (₹)</th>
-                                  <th className="px-3 py-2 text-left text-xs font-semibold text-slate-700 border-b">Per Km Rate (₹)</th>
+                                  <th className="px-3 py-2 text-left text-xs font-semibold text-slate-700 border-b">Min Order (Rs)</th>
+                                  <th className="px-3 py-2 text-left text-xs font-semibold text-slate-700 border-b">Max Order (Rs)</th>
+                                  <th className="px-3 py-2 text-left text-xs font-semibold text-slate-700 border-b">Per Km Rate (Rs)</th>
                                   <th className="px-3 py-2 text-center text-xs font-semibold text-slate-700 border-b">Action</th>
                                 </tr>
                               </thead>
@@ -299,7 +329,7 @@ export default function FeeSettings() {
                                           className="w-full px-2 py-1 border border-slate-300 rounded"
                                         />
                                       ) : (
-                                        <>₹{s.minOrderValue}</>
+                                        <>Rs {s.minOrderValue}</>
                                       )}
                                     </td>
                                     <td className="px-3 py-2 text-sm border-b">
@@ -321,7 +351,7 @@ export default function FeeSettings() {
                                           className="w-full px-2 py-1 border border-slate-300 rounded"
                                         />
                                       ) : (
-                                        <>₹{s.maxOrderValue}</>
+                                        <>Rs {s.maxOrderValue}</>
                                       )}
                                     </td>
                                     <td className="px-3 py-2 text-sm font-medium text-green-700 border-b">
@@ -343,7 +373,7 @@ export default function FeeSettings() {
                                           className="w-full px-2 py-1 border border-slate-300 rounded text-slate-900 font-normal"
                                         />
                                       ) : (
-                                        <>₹{s.deliveryFee}</>
+                                        <>Rs {s.deliveryFee}</>
                                       )}
                                     </td>
                                     <td className="px-3 py-2 text-center border-b">
@@ -378,12 +408,49 @@ export default function FeeSettings() {
 
                         <div className="bg-slate-50 p-3 rounded-lg border border-slate-200">
                           <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-                            <input type="number" min="0" step="0.01" value={form.minOrderValue} onChange={(e) => setNewPriceSlabByRule((prev) => ({ ...prev, [String(rule._id)]: { ...form, minOrderValue: e.target.value } }))} className="px-3 py-2 text-sm border border-slate-300 rounded-lg" placeholder="Min Order (₹)" />
-                            <input type="number" min="0" step="0.01" value={form.maxOrderValue} onChange={(e) => setNewPriceSlabByRule((prev) => ({ ...prev, [String(rule._id)]: { ...form, maxOrderValue: e.target.value } }))} className="px-3 py-2 text-sm border border-slate-300 rounded-lg" placeholder="Max Order (₹)" />
-                            <input type="number" min="0" step="0.01" value={form.deliveryFee} onChange={(e) => setNewPriceSlabByRule((prev) => ({ ...prev, [String(rule._id)]: { ...form, deliveryFee: e.target.value } }))} className="px-3 py-2 text-sm border border-slate-300 rounded-lg" placeholder="Per Km Rate (₹)" />
+                            <input type="number" min="0" step="0.01" value={form.minOrderValue} onChange={(e) => setNewPriceSlabByRule((prev) => ({ ...prev, [String(rule._id)]: { ...form, minOrderValue: e.target.value } }))} className="px-3 py-2 text-sm border border-slate-300 rounded-lg" placeholder="Min Order (Rs)" />
+                            <input type="number" min="0" step="0.01" value={form.maxOrderValue} onChange={(e) => setNewPriceSlabByRule((prev) => ({ ...prev, [String(rule._id)]: { ...form, maxOrderValue: e.target.value } }))} className="px-3 py-2 text-sm border border-slate-300 rounded-lg" placeholder="Max Order (Rs)" />
+                            <input type="number" min="0" step="0.01" value={form.deliveryFee} onChange={(e) => setNewPriceSlabByRule((prev) => ({ ...prev, [String(rule._id)]: { ...form, deliveryFee: e.target.value } }))} className="px-3 py-2 text-sm border border-slate-300 rounded-lg" placeholder="Per Km Rate (Rs)" />
                             <Button onClick={() => handleAddPriceSlab(rule._id)} className="bg-green-600 hover:bg-green-700 text-white text-sm w-full flex items-center justify-center gap-2">
                               <Plus className="w-4 h-4" />Add Slab
                             </Button>
+                          </div>
+                        </div>
+
+                        <div className="mt-3 bg-blue-50 p-3 rounded-lg border border-blue-200">
+                          <div className="flex items-center justify-between gap-3 flex-wrap">
+                            <p className="text-sm font-semibold text-slate-800">Admin Delivery Commission</p>
+                            <label className="inline-flex items-center gap-2 text-sm text-slate-700">
+                              <input
+                                type="checkbox"
+                                checked={adminCommissionCfg.isEnabled === true}
+                                onChange={(e) =>
+                                  setDistanceRuleAdminCommissionConfig(rule._id, (cfg) => ({
+                                    ...cfg,
+                                    isEnabled: e.target.checked,
+                                  }))
+                                }
+                              />
+                              Enabled
+                            </label>
+                          </div>
+                          <div className="mt-2">
+                            <input
+                              type="number"
+                              min="0"
+                              max="100"
+                              step="0.01"
+                              value={adminCommissionCfg.adminDeliveryCommissionPercent ?? 0}
+                              onChange={(e) =>
+                                setDistanceRuleAdminCommissionConfig(rule._id, (cfg) => ({
+                                  ...cfg,
+                                  adminDeliveryCommissionPercent: e.target.value,
+                                }))
+                              }
+                              className="w-full md:w-64 px-3 py-2 text-sm border border-slate-300 rounded-lg"
+                              placeholder="Admin Delivery Commission (%)"
+                            />
+                            <p className="text-xs text-slate-500 mt-1">When enabled, this percent is cut from customer delivery fee for this distance slab.</p>
                           </div>
                         </div>
                       </div>
@@ -399,7 +466,7 @@ export default function FeeSettings() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 border-t border-slate-200 pt-6 mt-6">
                 <div className="space-y-2">
-                  <label className="block text-sm font-semibold text-slate-700">Platform Fee (₹)</label>
+                  <label className="block text-sm font-semibold text-slate-700">Platform Fee (Rs)</label>
                   <input type="number" value={feeSettings.platformFee} onChange={(e) => setFeeSettings({ ...feeSettings, platformFee: e.target.value })} min="0" step="1" className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition-all" placeholder="5" />
                 </div>
                 <div className="space-y-2">
@@ -414,4 +481,3 @@ export default function FeeSettings() {
     </div>
   )
 }
-

@@ -44,6 +44,19 @@ const feeSettingsSchema = new mongoose.Schema(
             ],
             default: []
         },
+        distanceSlabAdminDeliveryCommission: {
+            type: [
+                new mongoose.Schema(
+                    {
+                        distanceRuleId: { type: mongoose.Schema.Types.ObjectId, ref: 'FoodDeliveryCommissionRule', required: true },
+                        isEnabled: { type: Boolean, default: false },
+                        adminDeliveryCommissionPercent: { type: Number, min: 0, max: 100, default: 0 }
+                    },
+                    { _id: false }
+                )
+            ],
+            default: []
+        },
         freeDeliveryThreshold: { type: Number, min: 0 },
         platformFee: { type: Number, min: 0 },
         gstRate: { type: Number, min: 0, max: 100 },

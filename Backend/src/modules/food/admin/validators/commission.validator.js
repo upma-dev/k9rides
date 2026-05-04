@@ -72,11 +72,6 @@ export const validateDeliveryCommissionRuleDto = (body) => {
     if (!result.success) {
         throw new ValidationError(result.error.errors[0].message);
     }
-    const min = result.data.minDistance;
-    const base = result.data.basePayout;
-    if (min !== 0 && base > 0) {
-        throw new ValidationError('Only base slab can have base payout');
-    }
     return {
         name: result.data.name ? result.data.name.trim() : '',
         minDistance: result.data.minDistance,

@@ -105,6 +105,10 @@ export async function createInitialTransaction(order) {
     const packagingFee = Number(order.pricing?.packagingFee) || 0;
     const platformFee = Number(order.pricing?.platformFee) || 0;
     const deliveryFee = Number(order.pricing?.deliveryFee) || 0;
+    const adminDeliveryCommissionEnabled = order.pricing?.adminDeliveryCommissionEnabled === true;
+    const adminDeliveryCommissionPercent = Number(order.pricing?.adminDeliveryCommissionPercent) || 0;
+    const adminDeliveryCommissionAmount = Number(order.pricing?.adminDeliveryCommissionAmount) || 0;
+    const riderDeliveryEarningAfterAdminCommission = Number(order.pricing?.riderDeliveryEarningAfterAdminCommission) || deliveryFee;
     const surgeAmount = Number(order.pricing?.surgeAmount) || 0;
     const tax = Number(order.pricing?.tax) || 0;
     const riderBasePay = Number(order.riderBasePay) || Math.max(0, riderShare - surgeAmount);
@@ -167,6 +171,10 @@ export async function createInitialTransaction(order) {
             tax: tax,
             packagingFee: packagingFee,
             deliveryFee: deliveryFee,
+            adminDeliveryCommissionEnabled,
+            adminDeliveryCommissionPercent,
+            adminDeliveryCommissionAmount,
+            riderDeliveryEarningAfterAdminCommission,
             platformFee: platformFee,
             surgeAmount: surgeAmount,
             restaurantCommission: restaurantCommission,
@@ -179,6 +187,8 @@ export async function createInitialTransaction(order) {
             restaurantShare: Math.max(0, restaurantNet),
             restaurantCommission: restaurantCommission,
             riderShare: riderShare,
+            riderDeliveryFeeShare: Number(order.riderDeliveryFeeShare) || riderDeliveryEarningAfterAdminCommission,
+            adminDeliveryCommissionAmount: adminDeliveryCommissionAmount,
             riderBasePay: riderBasePay,
             riderSurgePay: riderSurgePay,
             riderTotalPayout: riderTotalPayout,

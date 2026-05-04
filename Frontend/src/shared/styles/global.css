@@ -166,3 +166,8 @@
   z-index: 999999 !important;
   pointer-events: auto !important;
 }
+
+/* Hide "powered by Google" strip below Places dropdown (UI only) */
+.pac-container::after {
+  display: none !important;
+}
