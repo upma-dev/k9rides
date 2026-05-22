@@ -30,7 +30,7 @@ const collectAudienceTargets = async ({ sendTo, serviceLocationId }) => {
       isActive: { $ne: false },
       active: { $ne: false },
     })
-      .select('_id fcmTokenWeb fcmTokenMobile')
+      .select('_id fcmTokens fcmTokenMobile')
       .lean();
 
     users.forEach((user) => {
@@ -76,7 +76,7 @@ const removeInvalidTokens = async (invalidTargets = []) => {
     return 0;
   }
 
-  const userIdsByField = { fcmTokenWeb: new Set(), fcmTokenMobile: new Set() };
+  const userIdsByField = { fcmTokens: new Set(), fcmTokenMobile: new Set() };
   const driverIdsByField = { fcmTokenWeb: new Set(), fcmTokenMobile: new Set() };
 
   invalidTargets.forEach((target) => {
@@ -96,7 +96,7 @@ const removeInvalidTokens = async (invalidTargets = []) => {
       operations.push(
         User.updateMany(
           { _id: { $in: Array.from(ids) } },
-          { $set: { [field]: '' } },
+          { $pull: { [field]: { $in: invalidTargets.filter((t) => t.role === 'user' && t.field === field).map((t) => t.token) } } },
         ),
       );
     }
@@ -216,7 +216,7 @@ const collectDirectTargets = async ({ userIds = [], driverIds = [] }) => {
 
   if (normalizedUserIds.length) {
     const users = await User.find({ _id: { $in: normalizedUserIds } })
-      .select('_id fcmTokenWeb fcmTokenMobile')
+      .select('_id fcmTokens fcmTokenMobile')
       .lean();
 
     users.forEach((user) => {

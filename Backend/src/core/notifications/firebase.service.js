@@ -5,7 +5,6 @@ import { FoodUser } from '../users/user.model.js';
 import { FoodRestaurant } from '../../modules/food/restaurant/models/restaurant.model.js';
 import { FoodDeliveryPartner } from '../../modules/food/delivery/models/deliveryPartner.model.js';
 import { FoodAdmin } from '../admin/admin.model.js';
-import { User as TaxiUser } from '../../modules/taxi/user/models/User.js';
 import { Driver as TaxiDriver } from '../../modules/taxi/driver/models/Driver.js';
 import { BusDriver as TaxiBusDriver } from '../../modules/taxi/driver/models/BusDriver.js';
 import { Owner as TaxiOwner } from '../../modules/taxi/admin/models/Owner.js';
@@ -23,7 +22,6 @@ const OWNER_MODELS = {
     RESTAURANT: FoodRestaurant,
     DELIVERY_PARTNER: FoodDeliveryPartner,
     ADMIN: FoodAdmin,
-    TAXI_USER: TaxiUser,
     DRIVER: TaxiDriver,
     BUS_DRIVER: TaxiBusDriver,
     OWNER: TaxiOwner,
@@ -35,7 +33,7 @@ const OWNER_ROLE_ALIASES = {
     RESTAURANT: 'RESTAURANT',
     DELIVERY_PARTNER: 'DELIVERY_PARTNER',
     ADMIN: 'ADMIN',
-    TAXI_USER: 'TAXI_USER',
+    TAXI_USER: 'USER',
     DRIVER: 'DRIVER',
     BUS_DRIVER: 'BUS_DRIVER',
     OWNER: 'OWNER',
@@ -47,7 +45,6 @@ const OWNER_TOKEN_FIELD_CONFIG = {
     RESTAURANT: { web: 'fcmTokens', mobile: 'fcmTokenMobile' },
     DELIVERY_PARTNER: { web: 'fcmTokens', mobile: 'fcmTokenMobile' },
     ADMIN: { web: 'fcmTokens', mobile: 'fcmTokenMobile' },
-    TAXI_USER: { web: 'fcmTokens', mobile: 'fcmTokenMobile' },
     DRIVER: { web: 'fcmTokenWeb', mobile: 'fcmTokenMobile' },
     BUS_DRIVER: { web: 'fcmTokenWeb', mobile: 'fcmTokenMobile' },
     OWNER: { web: 'fcmTokenWeb', mobile: 'fcmTokenMobile' },
@@ -270,7 +267,8 @@ const writeTokenFieldFromList = (doc, fieldName, tokens) => {
         doc[fieldName] = normalizedTokens;
         return;
     }
-    doc[fieldName] = normalizedTokens[0] || '';
+    // Scalar token fields (e.g. TaxiDriver.fcmTokenMobile) should keep the latest token.
+    doc[fieldName] = normalizedTokens[normalizedTokens.length - 1] || '';
 };
 
 const readTokensFromDoc = (doc, platform) => {

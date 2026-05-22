@@ -17,7 +17,7 @@ const ROLE_TO_OWNER_TYPE = {
     RESTAURANT: 'RESTAURANT',
     DELIVERY_PARTNER: 'DELIVERY_PARTNER',
     ADMIN: 'ADMIN',
-    user: 'TAXI_USER',
+    user: 'USER',
     driver: 'DRIVER',
     owner: 'OWNER',
     bus_driver: 'BUS_DRIVER',
