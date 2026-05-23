@@ -308,9 +308,17 @@ export const upsertFirebaseDeviceToken = async ({ ownerType, ownerId, token, pla
         throw new Error(`Unsupported owner type: ${ownerType}`);
     }
 
+    const resolvedDbName = String(model?.db?.name || 'unknown_db');
+    const resolvedCollectionName = String(model?.collection?.name || 'unknown_collection');
+    console.log(
+        `[FCM-DEBUG] upsert - Lookup context: ownerType=${ownerType}, ownerId=${ownerId}, model=${model.modelName}, db=${resolvedDbName}, collection=${resolvedCollectionName}`
+    );
+
     const doc = await model.findById(ownerId);
     if (!doc) {
-        console.error(`[FCM-DEBUG] upsert - Owner profile not found for id ${ownerId}`);
+        console.error(
+            `[FCM-DEBUG] upsert - Owner profile not found for id ${ownerId} in model=${model.modelName} db=${resolvedDbName} collection=${resolvedCollectionName}`
+        );
         throw new AuthError('Session is stale or invalid for this account. Please login again.');
     }
 
