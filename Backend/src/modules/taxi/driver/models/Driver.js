@@ -406,6 +406,7 @@ const driverSchema = new mongoose.Schema(
     },
   },
   { 
+    collection: 'taxidrivers',
     timestamps: true,
   },
 );
