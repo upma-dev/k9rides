@@ -259,20 +259,21 @@ const OTPVerification = () => {
 
     return (
         <div 
-            className="min-h-screen relative bg-slate-50 select-none overflow-x-hidden font-['Inter']"
+            className="min-h-[100dvh] relative bg-slate-50 select-none overflow-x-hidden font-sans"
         >
-            <div className="fixed inset-0 z-0">
-                <div className="absolute inset-0 bg-gradient-to-b from-white/80 via-white/40 to-white/90" />
+            <div className="fixed inset-0 z-0 bg-slate-50">
+                <div className="absolute top-0 inset-x-0 h-64 bg-gradient-to-b from-white via-white/80 to-transparent pointer-events-none" />
+                <div className="absolute -top-24 -right-24 w-96 h-96 bg-[#F38F24]/5 rounded-full blur-[80px] pointer-events-none" />
             </div>
 
-            <main className="relative z-10 mx-auto max-w-sm px-6 pt-16 pb-36">
+            <main className="relative z-10 mx-auto max-w-sm px-6 pt-8 pb-20 flex flex-col min-h-[100dvh] justify-center">
                 <motion.header 
                     variants={containerVariants}
                     initial="hidden"
                     animate="visible"
-                    className="space-y-6 mb-12"
+                    className="space-y-4 mb-8"
                 >
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-between mb-4">
                         <motion.button
                             variants={itemVariants}
                             whileTap={{ scale: 0.9 }}
@@ -281,37 +282,31 @@ const OTPVerification = () => {
                                     state: session,
                                 })
                             }
-                            className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white border border-slate-100 text-slate-900 shadow-sm transition-all"
+                            className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white border border-slate-100 text-slate-900 shadow-sm transition-all hover:bg-slate-50"
                         >
                             <ArrowLeft size={18} strokeWidth={2.5} />
                         </motion.button>
-                        <motion.div 
-                            variants={itemVariants}
-                            className="rounded-full bg-slate-900/5 px-4 py-1.5 text-[10px] font-black uppercase tracking-[0.15em] text-slate-500 border border-slate-900/5"
-                        >
-                            Security Check
-                        </motion.div>
                     </div>
 
                     <motion.section 
                         variants={itemVariants}
-                        className="space-y-3"
+                        className="space-y-2"
                     >
-                        <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-2.5">
                              <div 
-                                className="flex h-11 w-11 items-center justify-center rounded-[1.25rem] bg-slate-900 text-white shadow-xl shadow-slate-900/10"
+                                className="flex h-8 w-8 items-center justify-center rounded-xl bg-[#F38F24]/10 text-[#F38F24] shadow-sm border border-[#F38F24]/20"
                             >
-                                <ShieldCheck size={22} strokeWidth={2.5} />
+                                <ShieldCheck size={16} strokeWidth={2.5} />
                             </div>
-                            <span className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-400 opacity-60">
+                            <span className="text-[11px] font-bold uppercase tracking-[0.15em] text-[#F38F24]">
                                 Dynamic Verification
                             </span>
                         </div>
-                        <h1 className="font-['Outfit'] text-[48px] font-black leading-[1] tracking-[-0.04em] text-slate-900">
-                            Verify <span className="text-slate-400">Phone</span>
+                        <h1 className="font-sans text-[32px] font-black leading-tight tracking-tight text-slate-900 mt-1">
+                            Verify <span className="text-[#F38F24]">Phone</span>
                         </h1>
-                        <p className="text-[15px] leading-relaxed text-slate-500 font-bold opacity-80 max-w-[28ch]">
-                            Enter the 4-digit code sent to <span className="whitespace-nowrap text-slate-900 underline underline-offset-4 decoration-2 decoration-slate-900/10">+91 {phone}</span>
+                        <p className="text-[13px] leading-relaxed text-slate-500 font-medium max-w-[28ch]">
+                            Enter the 4-digit code sent to <span className="whitespace-nowrap text-slate-900 font-bold underline underline-offset-4 decoration-2 decoration-slate-200">+91 {phone}</span>
                         </p>
                     </motion.section>
                 </motion.header>
@@ -321,7 +316,7 @@ const OTPVerification = () => {
                     initial="hidden"
                     animate="visible"
                     ref={otpCardRef}
-                    className="bg-white rounded-[2.5rem] p-6 shadow-[0_10px_40px_rgba(0,0,0,0.04)] border border-slate-100 relative overflow-hidden space-y-8"
+                    className="bg-white p-6 rounded-[1.5rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100 relative z-20 space-y-6"
                     style={{ scrollMarginTop: '24vh' }}
                 >
                     <div className="flex justify-between gap-3">
@@ -339,10 +334,10 @@ const OTPVerification = () => {
                                 onChange={e => handleChange(index, e.target.value)}
                                 onKeyDown={e => handleKeyDown(index, e)}
                                 onFocus={() => otpCardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })}
-                                className={`h-16 w-full rounded-[1.25rem] border-2 text-center text-2xl font-black transition-all outline-none ${
+                                className={`h-16 w-full rounded-[1rem] border-2 text-center text-2xl font-bold transition-all outline-none ${
                                     digit 
-                                        ? 'border-slate-900 bg-white shadow-[0_10px_20px_rgba(0,0,0,0.05)]' 
-                                        : 'border-slate-50 bg-slate-50 focus:border-slate-900/10 focus:bg-white'
+                                        ? 'border-slate-900 bg-white shadow-sm text-slate-900' 
+                                        : 'border-slate-100 bg-slate-50 text-slate-900 focus:border-[#F38F24] focus:bg-white focus:ring-4 focus:ring-[#F38F24]/10'
                                 }`}
                             />
                         ))}
@@ -355,29 +350,29 @@ const OTPVerification = () => {
                                     initial={{ opacity: 0, height: 0 }}
                                     animate={{ opacity: 1, height: 'auto' }}
                                     exit={{ opacity: 0, height: 0 }}
-                                    className={`rounded-2xl border px-4 py-3 text-[12px] font-bold flex items-center gap-2 ${
+                                    className={`rounded-xl border px-4 py-3 text-[12px] font-medium flex items-center gap-3 ${
                                         error.includes('Successfully') 
                                             ? 'border-emerald-100 bg-emerald-50 text-emerald-600'
-                                            : 'border-rose-100 bg-rose-50 text-rose-600'
+                                            : 'border-red-100 bg-red-50 text-red-600'
                                     }`}
                                 >
-                                    <div className={`w-1.5 h-1.5 rounded-full animate-pulse ${error.includes('Successfully') ? 'bg-emerald-500' : 'bg-rose-500'}`} />
+                                    <div className={`w-1.5 h-1.5 rounded-full animate-pulse shrink-0 ${error.includes('Successfully') ? 'bg-emerald-500' : 'bg-red-500'}`} />
                                     {error}
                                 </motion.div>
                             )}
                         </AnimatePresence>
 
                         <div className="flex flex-col items-center gap-3 py-2">
-                            <p className="text-[12px] font-black uppercase tracking-[0.1em] text-slate-400 opacity-60">
+                            <p className="text-[11px] font-bold uppercase tracking-widest text-slate-400">
                                 Didn't receive the code?
                             </p>
                             <button
                                 onClick={handleResend}
                                 disabled={timer > 0 || loading}
-                                className={`flex items-center gap-2 text-[13px] font-black uppercase tracking-widest transition-all ${
+                                className={`flex items-center gap-2 text-sm font-bold uppercase tracking-wide transition-all ${
                                     timer > 0 
                                         ? 'text-slate-300' 
-                                        : 'text-slate-900 hover:opacity-70 border-b-2 border-slate-900/10 pb-0.5'
+                                        : 'text-slate-900 hover:text-[#F38F24]'
                                 }`}
                             >
                                 <MessageSquare size={14} className={timer > 0 ? 'opacity-30' : 'opacity-100'} />
@@ -387,17 +382,17 @@ const OTPVerification = () => {
                     </div>
                 </motion.section>
 
-                <div className="fixed bottom-0 left-0 right-0 p-8 bg-gradient-to-t from-slate-50 via-slate-50 to-transparent">
+                <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/90 backdrop-blur-xl border-t border-slate-100 z-50">
                     <div className="mx-auto max-w-sm">
                         <motion.button
-                            whileHover={{ scale: 1.02, y: -2 }}
+                            whileHover={{ scale: 1.01 }}
                             whileTap={{ scale: 0.98 }}
                             onClick={handleVerify}
                             disabled={loading || otp.join('').length !== 4}
-                            className={`group flex h-16 w-full items-center justify-center gap-3 rounded-[1.8rem] text-[15px] font-black tracking-tight transition-all relative overflow-hidden ${
+                            className={`group flex h-12 w-full items-center justify-center gap-2 rounded-[0.85rem] text-[14px] font-bold transition-all relative overflow-hidden ${
                                 otp.join('').length === 4
-                                    ? 'bg-slate-900 text-white shadow-[0_20px_40px_rgba(0,0,0,0.2)] active:bg-black'
-                                    : 'pointer-events-none bg-slate-200 text-slate-400 shadow-none'
+                                    ? 'bg-[#1A1A1A] text-white shadow-[0_4px_14px_rgba(26,26,26,0.15)] active:bg-black'
+                                    : 'bg-slate-100 text-slate-400'
                             }`}
                         >
                             {loading ? (

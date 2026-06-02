@@ -56,7 +56,7 @@ const RegistrationDashboard = () => {
                 >
                     <div className="flex items-center gap-2 mb-1">
                         <span className="bg-emerald-500/10 text-emerald-600 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border border-emerald-500/10 flex items-center gap-1.5">
-                            <ShieldCheck size={12} strokeWidth={3} /> Verified Partner Program
+                            <ShieldCheck size={12} strokeWidth={3} /> Verified Captain Program
                         </span>
                     </div>
                     <h1 className="text-3xl font-black text-taxi-text tracking-tighter leading-none uppercase">

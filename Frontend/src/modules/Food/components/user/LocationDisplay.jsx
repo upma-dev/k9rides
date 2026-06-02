@@ -9,7 +9,7 @@ const debugError = (...args) => {}
 /**
  * LocationDisplay Component
  * 
- * Zomato-style location display showing "Delivering to [Area Name]"
+ * Eqosy-style location display showing "Delivering to [Area Name]"
  * 
  * Features:
  * - Shows area/subLocality name (e.g., "New Palasia")

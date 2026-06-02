@@ -1,4 +1,4 @@
-﻿import { useState, useRef, useEffect } from "react"
+import { useState, useRef, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
 import { motion, AnimatePresence } from "framer-motion"
 import { Button } from "@food/components/ui/button"
@@ -289,7 +289,7 @@ export default function RestaurantWelcome() {
         {/* Login Button */}
         <Button
           onClick={handleLogin}
-          className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-6 md:py-7 text-base md:text-lg rounded-lg transition-colors shadow-lg"
+          className="w-full h-14 bg-[#1A1A1A] hover:bg-black text-white font-bold text-base rounded-xl transition-all hover:shadow-lg"
         >
           Login
         </Button>

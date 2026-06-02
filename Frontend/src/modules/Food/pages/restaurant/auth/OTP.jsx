@@ -222,10 +222,10 @@ export default function RestaurantOTP() {
   return (
     <div className="min-h-[100dvh] bg-white dark:bg-[#0A0A0B] flex flex-col font-sans overflow-hidden">
       {/* Top Branding Section - 35% height */}
-      <div className="relative h-[35dvh] w-full bg-gradient-to-br from-[#07143A] via-[#0D2A6B] to-[#FF9F1C] overflow-hidden flex flex-col items-center justify-center">
-        <div className="absolute inset-0 opacity-20">
-          <div className="absolute top-0 left-0 w-64 h-64 border border-white/20 rounded-full -ml-20 -mt-20" />
-          <div className="absolute bottom-10 right-0 w-32 h-32 border border-white/10 rounded-full -mr-16" />
+      <div className="relative h-[35dvh] w-full bg-[#1A1A1A] overflow-hidden flex flex-col items-center justify-center">
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+            <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-[#F38F24]/5 rounded-full blur-[80px] translate-x-1/3 -translate-y-1/3"></div>
+            <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-white/5 rounded-full blur-[60px] -translate-x-1/3 translate-y-1/3"></div>
         </div>
 
         <motion.div
@@ -253,7 +253,7 @@ export default function RestaurantOTP() {
         initial={{ y: "100%" }}
         animate={{ y: 0 }}
         transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
-        className="flex-1 bg-white dark:bg-[#0A0A0B] rounded-t-[40px] -mt-10 relative z-20 shadow-[0_-20px_40px_rgba(0,0,0,0.05)] px-6 pt-12 pb-6 flex flex-col"
+        className="flex-1 bg-white dark:bg-[#0A0A0B] rounded-t-[2.5rem] -mt-10 relative z-20 shadow-[0_-20px_40px_rgba(0,0,0,0.05)] px-6 pt-12 pb-6 flex flex-col"
         style={{ marginBottom: keyboardOffset > 0 ? `${keyboardOffset}px` : 0 }}
       >
         <div className="max-w-md mx-auto w-full flex flex-col h-full">
@@ -279,12 +279,12 @@ export default function RestaurantOTP() {
                     onFocus={() => setFocusedIndex(index)}
                     onBlur={() => setFocusedIndex(null)}
                     disabled={isLoading}
-                    className={`w-16 h-20 text-center text-3xl font-black bg-zinc-100 dark:bg-zinc-900 border-2 rounded-2xl text-zinc-900 dark:text-white transition-all outline-none shadow-sm ${
-                      focusedIndex === index ? "border-[#0D2A6B] shadow-[#0D2A6B]/10" : "border-transparent"
+                    className={`w-16 h-16 text-center text-3xl font-black bg-[#F8F9FA] dark:bg-zinc-900 border rounded-xl text-[#1A1A1A] dark:text-white transition-all outline-none shadow-sm ${
+                      focusedIndex === index ? "border-[#F38F24] ring-1 ring-[#F38F24] shadow-[#F38F24]/10" : "border-gray-200"
                     }`}
                   />
                   {digit && (
-                    <div className="absolute bottom-3 left-1/2 -translate-x-1/2 w-1.5 h-1.5 bg-[#0D2A6B] rounded-full" />
+                    <div className="absolute bottom-3 left-1/2 -translate-x-1/2 w-1.5 h-1.5 bg-[#F38F24] rounded-full" />
                   )}
                 </motion.div>
               ))}
@@ -294,7 +294,7 @@ export default function RestaurantOTP() {
               <motion.div
                 initial={{ opacity: 0, y: -5 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="flex items-center justify-center gap-2 text-xs font-bold text-[#0D2A6B] bg-[#0D2A6B]/5 py-4 px-4 rounded-2xl border border-[#0D2A6B]/10"
+                className="flex items-center justify-center gap-2 text-xs font-bold text-red-500 bg-red-50 py-4 px-4 rounded-xl border border-red-100"
               >
                 <AlertCircle className="h-4 w-4 shrink-0" />
                 <span>{error}</span>
@@ -305,11 +305,11 @@ export default function RestaurantOTP() {
               <Button
                 onClick={() => handleVerify()}
                 disabled={isLoading || otp.some(d => !d)}
-                className="w-full h-16 bg-[#0D2A6B] hover:bg-[#07143A] text-white font-black text-base uppercase tracking-widest rounded-2xl transition-all duration-300 shadow-[0_12px_24px_rgba(13,42,107,0.3)] active:scale-[0.98] disabled:opacity-50 disabled:grayscale"
+                className="w-full h-14 bg-[#1A1A1A] hover:bg-black text-white font-bold text-base rounded-xl transition-all hover:shadow-lg disabled:opacity-50 disabled:bg-gray-200 disabled:text-gray-400"
               >
                 {isLoading ? (
                   <div className="flex items-center gap-2">
-                    <RefreshCw className="h-5 w-5 animate-spin" />
+                    <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
                     <span>Validating...</span>
                   </div>
                 ) : (
@@ -319,15 +319,15 @@ export default function RestaurantOTP() {
 
               <div className="flex justify-center flex-col items-center gap-4">
                 {resendTimer > 0 ? (
-                  <p className="text-xs font-bold text-zinc-400 uppercase tracking-widest">
-                    Request new code in <span className="text-[#0D2A6B]">{resendTimer}s</span>
+                  <p className="text-sm font-medium text-gray-400">
+                    Request new code in <span className="text-[#F38F24] font-semibold">{resendTimer}s</span>
                   </p>
                 ) : (
                   <button
                     type="button"
                     onClick={handleResend}
                     disabled={isLoading}
-                    className="text-xs font-black text-[#0D2A6B] uppercase tracking-[0.2em] px-6 py-2 rounded-full bg-[#0D2A6B]/5 hover:bg-[#0D2A6B]/10 transition-colors"
+                    className="text-sm font-semibold text-[#F38F24] hover:text-[#d97716] transition-colors"
                   >
                     Resend OTP
                   </button>
@@ -336,7 +336,7 @@ export default function RestaurantOTP() {
                 <Button
                   onClick={() => navigate("/food/restaurant/login")}
                   variant="ghost"
-                  className="text-zinc-400 dark:text-zinc-600 font-bold text-[10px] uppercase tracking-widest hover:bg-transparent hover:text-zinc-900"
+                  className="text-gray-400 font-medium text-xs hover:bg-transparent hover:text-[#1A1A1A]"
                 >
                   Change Account
                 </Button>
@@ -345,8 +345,8 @@ export default function RestaurantOTP() {
           </div>
 
           <footer className="mt-auto pt-10 text-center">
-            <p className="text-[9px] text-zinc-300 dark:text-zinc-700 font-black uppercase tracking-[0.4em]">
-              Partner Security Network &bull; {companyName.toUpperCase()}
+            <p className="text-xs text-gray-400 font-medium leading-relaxed">
+              Partner Security Network &bull; <span className="text-[#1A1A1A] font-bold">{companyName.toUpperCase()}</span>
             </p>
           </footer>
         </div>

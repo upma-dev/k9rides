@@ -95,11 +95,11 @@ export default function DeliverySignIn() {
   return (
     <div className="min-h-[100dvh] bg-white dark:bg-[#0A0A0B] flex flex-col font-sans overflow-hidden">
       {/* Top Branding Section - 40% height */}
-      <div className="relative h-[40dvh] w-full bg-gradient-to-br from-[#07143A] via-[#0D2A6B] to-[#6FAF00] overflow-hidden flex flex-col items-center justify-center">
-        {/* Subtle Decorative Elements (No Blur) */}
-        <div className="absolute inset-0 opacity-20">
-          <div className="absolute top-0 right-0 w-64 h-64 border-word border-white/20 rounded-full -mr-20 -mt-20" />
-          <div className="absolute bottom-0 left-0 w-48 h-48 border border-white/10 rounded-full -ml-16 -mb-16" />
+      <div className="relative h-[40dvh] w-full bg-[#1A1A1A] overflow-hidden flex flex-col items-center justify-center">
+        {/* Subtle Decorative Elements */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+            <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-[#F38F24]/5 rounded-full blur-[80px] translate-x-1/3 -translate-y-1/3"></div>
+            <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-white/5 rounded-full blur-[60px] -translate-x-1/3 translate-y-1/3"></div>
         </div>
 
         <motion.div
@@ -113,9 +113,9 @@ export default function DeliverySignIn() {
           </div>
           <div className="text-center text-white">
             <h1 className="font-black text-3xl tracking-tighter leading-none mb-1 italic">
-              {companyName.toUpperCase()} <span className="opacity-60">CAPTAIN</span>
+              {companyName.toUpperCase()} <span className="opacity-60">PARTNER</span>
             </h1>
-                <div className="bg-[#6FAF00]/90 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest">
+                <div className="bg-[#F38F24] px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest inline-block mt-1">
                   Delivery Partner
                 </div>
           </div>
@@ -127,7 +127,7 @@ export default function DeliverySignIn() {
         initial={{ y: "100%" }}
         animate={{ y: 0 }}
         transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
-        className="flex-1 bg-white dark:bg-[#0A0A0B] rounded-t-[40px] -mt-10 relative z-20 shadow-[0_-20px_40px_rgba(0,0,0,0.05)] px-6 pt-10 pb-6 flex flex-col"
+        className="flex-1 bg-white dark:bg-[#0A0A0B] rounded-t-[2.5rem] -mt-10 relative z-20 shadow-[0_-20px_40px_rgba(0,0,0,0.05)] px-6 pt-10 pb-6 flex flex-col"
         style={{ marginBottom: keyboardInset ? `${keyboardInset}px` : 0 }}
       >
         <div className="max-w-md mx-auto w-full flex flex-col h-full">
@@ -136,7 +136,7 @@ export default function DeliverySignIn() {
               Start your shift
             </h2>
             <p className="text-sm font-medium text-zinc-500 dark:text-zinc-400">
-              Enter your mobile number to sign in as a captain.
+              Enter your mobile number to sign in as a partner.
             </p>
           </div>
 
@@ -146,8 +146,8 @@ export default function DeliverySignIn() {
                 Linked Identity
               </label>
 
-              <div className="flex items-center gap-0 bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl focus-within:border-[#0D2A6B]/50 focus-within:ring-4 focus-within:ring-[#0D2A6B]/5 transition-all overflow-hidden h-16">
-                <div className="px-5 border-r border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-800/50 text-zinc-900 dark:text-white font-black text-lg h-full flex items-center">
+              <div className="flex items-center gap-0 bg-[#F8F9FA] dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-xl focus-within:border-[#F38F24] focus-within:ring-1 focus-within:ring-[#F38F24] transition-all overflow-hidden h-14">
+                <div className="px-5 border-r border-gray-200 dark:border-zinc-800 bg-transparent text-[#1A1A1A] dark:text-white font-black text-lg h-full flex items-center">
                   +91
                 </div>
                 <input
@@ -158,7 +158,7 @@ export default function DeliverySignIn() {
                   placeholder="Mobile Number"
                   value={formData.phone}
                   onChange={handlePhoneChange}
-                  className="flex-1 bg-transparent border-0 outline-none ring-0 placeholder:text-zinc-300 dark:placeholder:text-zinc-700 text-lg font-black tracking-widest px-5 text-zinc-900 dark:text-white h-full"
+                  className="flex-1 bg-transparent border-0 outline-none ring-0 placeholder:text-gray-400 text-lg font-black tracking-widest px-5 text-[#1A1A1A] dark:text-white h-full"
                 />
               </div>
 
@@ -168,7 +168,7 @@ export default function DeliverySignIn() {
                     initial={{ opacity: 0, x: -10 }}
                     animate={{ opacity: 1, x: 0 }}
                     exit={{ opacity: 0, x: 10 }}
-                    className="flex items-center gap-1.5 text-xs font-bold text-[#0D2A6B] pl-2"
+                    className="flex items-center gap-1.5 text-xs font-bold text-red-500 bg-red-50 py-3 px-4 rounded-xl border border-red-100 mt-2"
                   >
                     <AlertCircle className="h-4 w-4" />
                     <span>{error}</span>
@@ -180,11 +180,11 @@ export default function DeliverySignIn() {
             <Button
               onClick={handleSendOTP}
               disabled={isSending || formData.phone.length !== 10}
-              className="w-full h-16 rounded-2xl font-black text-base tracking-widest uppercase transition-all duration-300 bg-[#0D2A6B] hover:bg-[#07143A] text-white shadow-[0_12px_24px_rgba(13,42,107,0.3)] active:scale-[0.98] disabled:opacity-50 disabled:grayscale"
+              className="w-full h-14 rounded-xl font-bold text-base transition-all bg-[#1A1A1A] hover:bg-black text-white hover:shadow-lg disabled:opacity-50 disabled:bg-gray-200 disabled:text-gray-400"
             >
               {isSending ? (
                 <div className="flex items-center gap-2">
-                  <Loader2 className="h-5 w-5 animate-spin" />
+                  <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
                   <span>Checking...</span>
                 </div>
               ) : (
@@ -194,9 +194,9 @@ export default function DeliverySignIn() {
           </div>
 
           <footer className="mt-auto pt-10 text-center">
-            <p className="text-[10px] text-zinc-400 dark:text-zinc-600 font-medium tracking-wide uppercase">
+            <p className="text-xs text-gray-400 font-medium leading-relaxed">
               By continuing you agree to the<br />
-              <Link to="/food/delivery/terms" className="text-[#0D2A6B] font-black">Delivery Charter</Link>
+              <Link to="/food/delivery/terms" className="text-[#1A1A1A] font-bold">Delivery Charter</Link>
             </p>
           </footer>
         </div>

@@ -195,32 +195,32 @@ const VerifyOTP = () => {
 
   const isFilled = otp.every((digit) => digit !== '');
 
-  return (
     <AuthLayout
       title=""
       subtitle=""
     >
-      <div className="mb-6">
-        <div className="flex items-start gap-4">
+      <div className="mb-8">
+        <div className="flex flex-col gap-6">
           <button
             onClick={() => navigate(-1)}
-            className="shrink-0 inline-flex h-10 w-10 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-900 shadow-sm transition-all hover:bg-gray-50"
+            className="w-10 h-10 flex items-center justify-center rounded-xl bg-[#F8F9FA] border border-gray-200 hover:bg-gray-100 transition-colors"
           >
-            <ArrowLeft size={20} className="text-gray-900" />
+            <ArrowLeft size={20} className="text-[#1A1A1A]" />
           </button>
+          
           <div className="text-left">
-            <h1 className="text-2xl md:text-3xl font-black text-gray-900 leading-tight tracking-tight">
-              Verify your number
+            <h1 className="text-3xl font-black text-[#1A1A1A] tracking-tight mb-2">
+              Security Code
             </h1>
-            <p className="mt-2 text-[15px] font-medium leading-snug text-gray-500">
-              Enter the 4-digit code sent to <span className="text-black font-bold whitespace-nowrap">+91 {maskedPhone || phone}</span>
+            <p className="text-gray-500 text-sm">
+              Enter the 4-digit code sent to <span className="text-[#1A1A1A] font-bold">+91 {maskedPhone || phone}</span>
             </p>
           </div>
         </div>
       </div>
 
-      <div className="space-y-10">
-        <div className="flex justify-between gap-1 md:gap-3 py-4">
+      <div className="space-y-8">
+        <div className="flex justify-between gap-3">
           {otp.map((digit, index) => (
             <motion.input
               key={index}
@@ -238,24 +238,26 @@ const VerifyOTP = () => {
               onPaste={handlePaste}
               animate={error ? { x: [0, -10, 10, -10, 10, 0] } : {}}
               transition={{ duration: 0.4 }}
-              className={`w-full h-12 md:h-14 bg-[#F6F6F6] rounded-2xl text-center text-xl md:text-2xl font-bold transition-all border-2 outline-none focus:bg-white
-                ${error ? 'border-red-500 text-red-500 ring-2 ring-red-50' : 'border-transparent focus:border-black/10 focus:ring-4 focus:ring-black/5 text-gray-900'}
+              className={`w-full aspect-square text-center text-2xl font-bold bg-[#F8F9FA] rounded-xl outline-none transition-all text-[#1A1A1A] border 
+                ${error ? 'border-red-500 text-red-500 ring-1 ring-red-500' : 'border-gray-200 focus:border-[#F38F24] focus:ring-1 focus:ring-[#F38F24]'}
               `}
+              placeholder="-"
             />
           ))}
         </div>
 
-        <div className="text-center">
+        <div className="flex items-center justify-between">
+          <span className="text-sm text-gray-500">Didn't receive it?</span>
           {timer > 0 ? (
-            <p className="text-gray-400 text-xs font-bold uppercase tracking-widest">
-              Resend OTP in <span className="text-black">{timer}s</span>
-            </p>
+            <span className="text-sm font-medium text-gray-400">
+              Resend in {timer}s
+            </span>
           ) : (
             <button
               onClick={handleResend}
-              className="text-black text-xs font-bold hover:opacity-70 underline underline-offset-4 decoration-2 tracking-widest uppercase transition-all"
+              className="text-sm font-semibold text-[#F38F24] hover:text-[#d97716] transition-colors"
             >
-              Resend OTP
+              Resend Code
             </button>
           )}
         </div>
@@ -266,7 +268,7 @@ const VerifyOTP = () => {
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0 }}
-              className="text-red-500 text-center font-bold text-sm"
+              className="text-red-500 text-left font-semibold text-xs bg-red-50 py-3 px-4 rounded-lg border border-red-100"
             >
               {errorMessage || 'The OTP you entered is incorrect. Please try again.'}
             </motion.p>
@@ -277,20 +279,23 @@ const VerifyOTP = () => {
           whileTap={{ scale: 0.98 }}
           onClick={handleVerify}
           disabled={!isFilled || loading || success}
-          className={`w-full py-4 rounded-xl text-lg font-bold shadow-xl transition-all flex items-center justify-center gap-3 ${
+          className={`w-full py-4 rounded-xl text-base font-bold transition-all flex items-center justify-center gap-2 ${
             isFilled && !loading && !success
-              ? 'bg-black text-white shadow-black/10'
+              ? 'bg-[#1A1A1A] text-white hover:bg-black hover:shadow-lg'
               : success
-                ? 'bg-green-600 text-white shadow-green-100'
-                : 'bg-gray-100 text-gray-400 cursor-not-allowed shadow-none'
+                ? 'bg-[#89C741] text-white shadow-lg'
+                : 'bg-gray-200 text-gray-400 cursor-not-allowed'
           }`}
         >
           {loading ? (
-            <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+            <div className="flex items-center gap-3">
+              <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+              <span>Verifying...</span>
+            </div>
           ) : success ? (
             <div className="flex items-center gap-2">
-              <CheckCircle2 size={24} />
-              <span>Verified Successfully</span>
+              <CheckCircle2 size={20} />
+              <span>Verified</span>
             </div>
           ) : (
             <span>Verify & Proceed</span>

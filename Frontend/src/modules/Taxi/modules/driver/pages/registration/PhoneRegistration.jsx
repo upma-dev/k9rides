@@ -55,7 +55,7 @@ const PhoneRegistration = () => {
     const routePrefix = location.pathname.startsWith('/taxi/owner') ? '/taxi/owner' : '/taxi/driver';
     const isLoginPage = location.pathname === `${routePrefix}/login` || location.pathname === `${routePrefix}/login/`;
     const appName = settings.general?.app_name || 'App';
-    
+
     const roleOptions = isLoginPage
         ? [
             { id: 'driver', label: 'Driver', Icon: UserRound },
@@ -68,7 +68,7 @@ const PhoneRegistration = () => {
             { id: 'driver', label: 'Driver', Icon: UserRound },
             { id: 'owner', label: 'Owner', Icon: Briefcase },
         ];
-    
+
     const modeConfig = useMemo(() => {
         const isOwner = role === 'owner';
         const isBusDriver = role === 'bus_driver';
@@ -76,7 +76,7 @@ const PhoneRegistration = () => {
         const isServiceCenterStaff = role === 'service_center_staff';
 
         return {
-            badge: isOwner ? 'Enterprise' : isBusDriver ? 'Transit' : isServiceCenter ? 'Operations' : isServiceCenterStaff ? 'Team' : 'Partner',
+            badge: isOwner ? 'Enterprise' : isBusDriver ? 'Transit' : isServiceCenter ? 'Operations' : isServiceCenterStaff ? 'Team' : 'Captain',
             title: isLoginPage
                 ? `${isOwner ? 'Owner' : isBusDriver ? 'Bus Driver' : isServiceCenter ? 'Service Center' : isServiceCenterStaff ? 'Service Staff' : 'Driver'} Login`
                 : `Join ${appName}`,
@@ -170,11 +170,11 @@ const PhoneRegistration = () => {
 
     const containerVariants = {
         hidden: { opacity: 0, y: 20 },
-        visible: { 
-            opacity: 1, 
+        visible: {
+            opacity: 1,
             y: 0,
-            transition: { 
-                duration: 0.6, 
+            transition: {
+                duration: 0.6,
                 ease: [0.22, 1, 0.36, 1],
                 staggerChildren: 0.1
             }
@@ -187,85 +187,69 @@ const PhoneRegistration = () => {
     };
 
     return (
-        <div 
-            className="min-h-screen relative bg-white select-none overflow-x-hidden font-['Inter']"
+        <div
+            className="min-h-[100dvh] relative bg-slate-50 select-none overflow-x-hidden font-sans"
         >
-            <div className="fixed inset-0 z-0">
-                <img 
-                    src={loginBg} 
-                    alt="" 
-                    className="w-full h-full object-cover opacity-20 blur-[1px]"
-                />
-                {/* Vibrant Bright Gradient */}
-                <div className="absolute inset-0 bg-gradient-to-br from-amber-50/90 via-white to-blue-50/80" />
-                <div className="absolute top-0 left-0 w-full h-64 bg-gradient-to-b from-[#FFB300]/10 to-transparent" />
+            <div className="fixed inset-0 z-0 bg-slate-50">
+                <div className="absolute top-0 inset-x-0 h-64 bg-gradient-to-b from-white via-white/80 to-transparent pointer-events-none" />
+                <div className="absolute -top-24 -right-24 w-96 h-96 bg-[#F38F24]/5 rounded-full blur-[80px] pointer-events-none" />
             </div>
 
-            <main className="relative z-10 mx-auto max-w-sm px-5 pt-10 pb-24">
-                <motion.header 
+            <main className="relative z-10 mx-auto max-w-sm px-6 pt-8 pb-20 flex flex-col min-h-[100dvh] justify-center">
+                <motion.header
                     variants={containerVariants}
                     initial="hidden"
                     animate="visible"
-                    className="space-y-6 mb-8 flex flex-col items-center text-center"
+                    className="space-y-4 mb-6 flex flex-col items-center text-center"
                 >
-                    <div className="flex flex-col items-center gap-4">
+                    <div className="flex flex-col items-center gap-3">
                         {settings.general?.logo || settings.customization?.logo ? (
-                            <div className="p-3 bg-white rounded-2xl shadow-xl shadow-amber-200/40 border border-amber-100">
-                                <img 
-                                    src={settings.general?.logo || settings.customization?.logo} 
-                                    alt={appName} 
-                                    className="h-10 w-auto object-contain"
+                            <div className="w-14 h-14 bg-white rounded-[1.25rem] flex items-center justify-center shadow-sm border border-slate-100 overflow-hidden">
+                                <img
+                                    src={settings.general?.logo || settings.customization?.logo}
+                                    alt={appName}
+                                    className="w-full h-full object-cover scale-110"
                                 />
                             </div>
                         ) : (
-                            <div className="rounded-2xl bg-[#FFB300] px-4 py-2 text-sm font-black tracking-tighter text-slate-900 shadow-xl shadow-amber-400/30">
+                            <div className="rounded-xl bg-[#1A1A1A] px-4 py-2 text-sm font-black tracking-tight text-white shadow-sm">
                                 {appName}
                             </div>
                         )}
-                        <motion.div 
-                            variants={itemVariants}
-                            className="rounded-full bg-amber-100 px-4 py-1 text-[10px] font-black uppercase tracking-[0.2em] text-[#B48400] border border-amber-200/50 w-fit"
-                        >
-                            {isLoginPage ? 'Secure Access' : 'Partner Program'}
-                        </motion.div>
                     </div>
 
-                    <motion.section 
+                    <motion.section
                         variants={itemVariants}
-                        className="space-y-3 flex flex-col items-center"
+                        className="space-y-2 flex flex-col items-center"
                     >
-                        <div className="flex items-center gap-3">
-                             <div 
-                                className="flex h-10 w-10 items-center justify-center rounded-2xl text-white shadow-xl"
-                                style={{ 
-                                    backgroundColor: modeConfig.accentColor,
-                                    boxShadow: `0 10px 20px ${modeConfig.accentColor}33`
-                                }}
+                        <div className="flex items-center gap-2.5">
+                            <div
+                                className="flex h-8 w-8 items-center justify-center rounded-xl bg-[#F38F24]/10 text-[#F38F24] shadow-sm border border-[#F38F24]/20"
                             >
-                                <modeConfig.Icon size={20} strokeWidth={2.5} />
+                                <modeConfig.Icon size={16} strokeWidth={2.5} />
                             </div>
-                            <span className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-500">
+                            <span className="text-[11px] font-bold uppercase tracking-[0.15em] text-[#F38F24]">
                                 {modeConfig.badge}
                             </span>
                         </div>
-                        <h1 className="font-['Outfit'] text-[36px] font-black leading-[1] tracking-[-0.04em] text-slate-900">
-                            {modeConfig.title.split(' ')[0]} <span className="text-[#FFB300]">{modeConfig.title.split(' ').slice(1).join(' ')}</span>
+                        <h1 className="font-sans text-[32px] font-black leading-tight tracking-tight text-slate-900 mt-1">
+                            {modeConfig.title.split(' ')[0]} <span className="text-[#F38F24]">{modeConfig.title.split(' ').slice(1).join(' ')}</span>
                         </h1>
-                        <p className="text-[15px] leading-relaxed text-slate-600 font-bold opacity-90 max-w-[28ch]">
+                        <p className="text-[13px] leading-relaxed text-slate-500 font-medium max-w-[28ch]">
                             {modeConfig.subtitle}
                         </p>
                     </motion.section>
                 </motion.header>
 
-                <motion.div 
+                <motion.div
                     variants={containerVariants}
                     initial="hidden"
                     animate="visible"
-                    className="space-y-6"
+                    className="space-y-5 relative z-20"
                 >
-                    <motion.div 
+                    <motion.div
                         variants={itemVariants}
-                        className="flex items-center gap-2 mb-4 bg-white/60 backdrop-blur-md p-2 rounded-2xl border border-white/80 shadow-sm overflow-x-auto no-scrollbar scroll-smooth w-full"
+                        className="flex items-center gap-1.5 mb-6 bg-[#F38F24]/5 p-1.5 rounded-[1rem] overflow-x-auto scroll-smooth w-full border border-[#F38F24]/10 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']"
                     >
                         {roleOptions.map((option) => {
                             const active = role === option.id;
@@ -275,69 +259,65 @@ const PhoneRegistration = () => {
                                     layout
                                     whileTap={{ scale: 0.97 }}
                                     onClick={() => setRole(option.id)}
-                                    className={`flex-none flex items-center justify-center gap-2.5 py-3 px-4 rounded-xl transition-all whitespace-nowrap ${
-                                        active
-                                            ? 'bg-[#FFB300] text-slate-900 shadow-lg shadow-amber-400/20 border border-amber-300'
-                                            : 'text-slate-400 hover:text-slate-600'
-                                    }`}
+                                    className={`flex-1 min-w-max flex items-center justify-center gap-2 py-2 px-3 rounded-xl transition-all whitespace-nowrap ${active
+                                            ? 'bg-white text-[#F38F24] shadow-sm border border-[#F38F24]/20'
+                                            : 'text-slate-500 hover:text-slate-700'
+                                        }`}
                                 >
-                                    <option.Icon size={16} strokeWidth={active ? 3 : 2} />
-                                    <span className="text-[11px] font-black uppercase tracking-wider">{option.label}</span>
+                                    <option.Icon size={14} strokeWidth={active ? 2.5 : 2} className={active ? 'text-[#F38F24]' : ''} />
+                                    <span className="text-[11px] font-bold uppercase tracking-wide">{option.label}</span>
                                 </motion.button>
                             );
                         })}
                     </motion.div>
 
-                    <motion.section 
+                    <motion.section
                         variants={itemVariants}
                         ref={phoneCardRef}
-                        className="bg-white rounded-[32px] p-6 shadow-[0_20px_50px_rgba(255,179,0,0.08)] border border-amber-50 relative overflow-hidden"
+                        className="w-full relative bg-white p-5 rounded-[1.5rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100"
                         style={{ scrollMarginTop: '20vh' }}
                     >
-                        <div className="space-y-6">
-                            <div className={`group rounded-2xl border-2 transition-all p-5 ${error ? 'border-rose-200 bg-rose-50/30' : 'border-amber-50 bg-amber-50/20 focus-within:border-[#FFB300] focus-within:bg-white focus-within:shadow-2xl focus-within:shadow-amber-400/10'}`}>
-                                <div className="flex items-center gap-5">
-                                    <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl transition-all ${error ? 'bg-rose-100 text-rose-500' : 'bg-white text-amber-500 group-focus-within:bg-[#FFB300] group-focus-within:text-slate-900 shadow-sm'}`}>
-                                        <Phone size={22} strokeWidth={2.5} />
+                        <div className="space-y-6 w-full">
+                            <div className="space-y-3">
+                                <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest ml-1">
+                                    Mobile Number
+                                </label>
+                                <div className={`flex items-center gap-0 bg-slate-50 border ${error ? 'border-red-300 ring-4 ring-red-50' : 'border-slate-200'} rounded-[1rem] focus-within:border-[#F38F24] focus-within:bg-white focus-within:ring-4 focus-within:ring-[#F38F24]/10 transition-all overflow-hidden h-14`}>
+                                    <div className="px-4 border-r border-slate-200 bg-transparent text-slate-900 font-bold text-lg h-full flex items-center">
+                                        +91
                                     </div>
-                                    <div className="min-w-0 flex-1">
-                                        <label className="block text-[10px] font-black uppercase tracking-[0.15em] text-amber-600/60 mb-1.5">Mobile Number</label>
-                                        <div className="flex min-w-0 items-center gap-2.5 sm:gap-3">
-                                            <span className="shrink-0 text-[20px] font-black text-slate-400">+91</span>
-                                            <input 
-                                                ref={phoneInputRef}
-                                                type="tel" 
-                                                inputMode="numeric"
-                                                pattern="[0-9]*"
-                                                autoFocus
-                                                maxLength={10}
-                                                value={phone}
-                                                onChange={(e) => {
-                                                    const val = e.target.value.replace(/\D/g, '');
-                                                    setPhone(val);
-                                                    if (error) setError('');
-                                                }}
-                                                onFocus={() => phoneCardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })}
-                                                placeholder="00000 00000"
-                                                className="min-w-0 flex-1 border-none bg-transparent p-0 text-[18px] font-black text-slate-900 outline-none focus:ring-0 placeholder:text-[17px] placeholder:text-slate-200 tracking-[0.02em] sm:text-[20px] sm:placeholder:text-[20px] sm:tracking-[0.05em]"
-                                            />
-                                        </div>
-                                    </div>
+                                    <input
+                                        ref={phoneInputRef}
+                                        type="tel"
+                                        inputMode="numeric"
+                                        pattern="[0-9]*"
+                                        autoFocus
+                                        maxLength={10}
+                                        value={phone}
+                                        onChange={(e) => {
+                                            const val = e.target.value.replace(/\D/g, '');
+                                            setPhone(val);
+                                            if (error) setError('');
+                                        }}
+                                        onFocus={() => phoneCardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })}
+                                        placeholder="00000 00000"
+                                        className="flex-1 bg-transparent border-0 outline-none ring-0 placeholder:text-slate-300 text-lg font-bold tracking-widest px-4 text-slate-900 h-full w-full"
+                                    />
                                 </div>
                             </div>
 
-                            <div className="flex gap-4 px-1 items-start">
-                                <div className="relative flex items-center shrink-0 mt-1">
-                                    <input 
-                                        type="checkbox" 
+                            <div className="flex gap-2.5 px-1 items-start mt-1">
+                                <div className="relative flex items-center shrink-0 mt-0.5">
+                                    <input
+                                        type="checkbox"
                                         id="terms"
                                         checked={agreed}
                                         onChange={() => setAgreed(!agreed)}
-                                        className="peer h-5 w-5 cursor-pointer appearance-none rounded-lg border-2 border-amber-100 bg-white transition-all checked:bg-[#FFB300] checked:border-[#FFB300]"
+                                        className="peer h-[16px] w-[16px] cursor-pointer appearance-none rounded-[4px] border-[1.5px] border-slate-300 bg-white transition-all checked:bg-[#F38F24] checked:border-[#F38F24]"
                                     />
-                                    <CheckCircle2 className="pointer-events-none absolute inset-0 m-auto h-3.5 w-3.5 text-slate-900 opacity-0 transition-opacity peer-checked:opacity-100" strokeWidth={3.5} />
+                                    <CheckCircle2 className="pointer-events-none absolute inset-0 m-auto h-3 w-3 text-white opacity-0 transition-opacity peer-checked:opacity-100" strokeWidth={3} />
                                 </div>
-                                <label htmlFor="terms" className="text-[11px] font-bold text-slate-400 leading-relaxed cursor-pointer select-none">
+                                <label htmlFor="terms" className="text-[11px] font-medium text-slate-500 leading-relaxed cursor-pointer select-none">
                                     I agree to the{' '}
                                     <button
                                         type="button"
@@ -348,7 +328,7 @@ const PhoneRegistration = () => {
                                             });
                                             navigate('/terms', { state: { role, returnTo: location.pathname } });
                                         }}
-                                        className="text-[#FFB300] font-black hover:underline underline-offset-2"
+                                        className="text-[#F38F24] font-bold hover:text-orange-600"
                                     >
                                         Terms
                                     </button>
@@ -362,7 +342,7 @@ const PhoneRegistration = () => {
                                             });
                                             navigate('/privacy', { state: { role, returnTo: location.pathname } });
                                         }}
-                                        className="text-[#FFB300] font-black hover:underline underline-offset-2"
+                                        className="text-[#F38F24] font-bold hover:text-orange-600"
                                     >
                                         Privacy Policy
                                     </button>.
@@ -371,13 +351,13 @@ const PhoneRegistration = () => {
 
                             <AnimatePresence>
                                 {error && (
-                                    <motion.div 
+                                    <motion.div
                                         initial={{ opacity: 0, height: 0 }}
                                         animate={{ opacity: 1, height: 'auto' }}
                                         exit={{ opacity: 0, height: 0 }}
-                                        className="rounded-2xl bg-rose-50 border border-rose-100 px-4 py-3 text-[12px] font-bold text-rose-600 flex items-center gap-3"
+                                        className="rounded-xl bg-red-50 border border-red-100 px-4 py-2.5 text-[11px] font-medium text-red-600 flex items-center gap-2"
                                     >
-                                        <div className="w-2 h-2 rounded-full bg-rose-500 animate-pulse" />
+                                        <div className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse shrink-0" />
                                         {error}
                                     </motion.div>
                                 )}
@@ -385,46 +365,45 @@ const PhoneRegistration = () => {
                         </div>
                     </motion.section>
 
-                    <motion.div variants={itemVariants} className="space-y-6">
-                        <div className="flex items-center justify-center gap-3 py-2 bg-white rounded-2xl border border-amber-100 w-max mx-auto px-5 shadow-sm">
-                            <Sparkles size={14} className="text-[#FFB300] fill-[#FFB300]" />
-                            <span className="text-[11px] font-black tracking-tight text-slate-900 uppercase opacity-70">{modeConfig.highlight}</span>
+                    <motion.div variants={itemVariants} className="space-y-4 pt-2">
+                        <div className="flex items-center justify-center gap-2 py-1 w-full flex-wrap mx-auto px-2 text-slate-500 text-center">
+                            <Sparkles size={12} className="text-[#F38F24] shrink-0" />
+                            <span className="text-[9px] font-bold tracking-widest uppercase text-slate-400 leading-tight">{modeConfig.highlight}</span>
                         </div>
 
-                        <motion.button 
+                        <motion.button
                             variants={itemVariants}
                             whileHover={{ y: -1 }}
                             onClick={() => navigate(isLoginPage ? `${routePrefix}/reg-phone` : `${routePrefix}/login`)}
-                            className="w-full text-[13px] font-black text-slate-400 transition-all py-1 uppercase tracking-widest"
+                            className="w-full text-[12px] font-medium text-slate-500 transition-all pb-4"
                         >
                             {isLoginPage ? (
-                                <>Don't have an account? <span className="text-[#FFB300] border-b-2 border-amber-400/30 pb-0.5">Join Now</span></>
+                                <>Don't have an account? <span className="text-[#F38F24] font-bold hover:text-orange-600">Join Now</span></>
                             ) : (
-                                <>Already a partner? <span className="text-[#FFB300] border-b-2 border-amber-400/30 pb-0.5">Sign in</span></>
+                                <>Already a captain? <span className="text-[#F38F24] font-bold hover:text-orange-600">Sign in</span></>
                             )}
                         </motion.button>
                     </motion.div>
                 </motion.div>
 
-                <div className="fixed bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-white via-white/95 to-transparent">
+                <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/90 backdrop-blur-xl border-t border-slate-100 z-50">
                     <div className="mx-auto max-w-sm">
-                        <motion.button 
-                            whileHover={{ scale: 1.02, y: -2 }}
+                        <motion.button
+                            whileHover={{ scale: 1.01 }}
                             whileTap={{ scale: 0.98 }}
                             onClick={handleSendOTP}
                             disabled={loading || !agreed || phone.length !== 10}
-                            className={`group flex h-16 w-full items-center justify-center gap-3 rounded-[24px] text-[16px] font-black tracking-tight transition-all relative overflow-hidden ${
-                                agreed && phone.length === 10 
-                                    ? 'bg-slate-900 text-white shadow-[0_20px_40px_rgba(0,0,0,0.2)] active:bg-black' 
-                                    : 'pointer-events-none bg-slate-100 text-slate-300 shadow-none'
-                            }`}
+                            className={`group flex h-12 w-full items-center justify-center gap-2 rounded-[0.85rem] text-[14px] font-bold transition-all relative overflow-hidden ${agreed && phone.length === 10
+                                    ? 'bg-[#1A1A1A] text-white shadow-[0_4px_14px_rgba(26,26,26,0.15)] active:bg-black'
+                                    : 'bg-slate-100 text-slate-400'
+                                }`}
                         >
                             {loading ? (
-                                <div className="h-6 w-6 border-3 border-white/30 border-t-white rounded-full animate-spin" />
+                                <div className="h-5 w-5 border-[2.5px] border-white/30 border-t-white rounded-full animate-spin" />
                             ) : (
                                 <>
                                     <span className="relative z-10 uppercase tracking-[0.1em]">Send OTP Code</span>
-                                    <ChevronRight size={20} strokeWidth={3.5} className="relative z-10 group-hover:translate-x-1.5 transition-transform" />
+                                    <ChevronRight size={18} strokeWidth={3} className="relative z-10 group-hover:translate-x-1 transition-transform" />
                                 </>
                             )}
                         </motion.button>

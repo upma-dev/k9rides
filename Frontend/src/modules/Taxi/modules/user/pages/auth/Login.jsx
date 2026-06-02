@@ -53,55 +53,50 @@ const Login = () => {
 
   return (
     <AuthLayout 
-      title="Enter your mobile number" 
-      subtitle={`Join ${appName} for fast, safe, and premium rides across the city.`}
+      title="Welcome back" 
+      subtitle={`Enter your mobile number to continue with ${appName} Taxi.`}
     >
       <form onSubmit={handleLogin} className="space-y-8">
         <div className="space-y-4">
-          <label htmlFor="phone" className="text-[11px] font-black text-gray-400 uppercase tracking-[0.2em] ml-1">
+          <label htmlFor="phone" className="text-xs font-bold text-gray-700 uppercase tracking-wider">
             Mobile Number
           </label>
-          <div className="group relative">
-            <div className="absolute -inset-0.5 bg-gradient-to-r from-yellow-400 via-orange-500 to-magenta-500 rounded-2xl blur opacity-20 group-focus-within:opacity-40 transition duration-1000 group-focus-within:duration-200"></div>
-            <div className="relative flex items-center gap-3 bg-white rounded-2xl p-4 transition-all border-2 border-gray-50 focus-within:border-yellow-400/50 shadow-sm">
-              <div className="flex items-center gap-2 pr-3 border-r-2 border-gray-100">
-                <img src="https://flagcdn.com/w40/in.png" alt="India" className="w-5 h-3.5 object-cover rounded-sm" />
-                <span className="text-[15px] font-bold text-gray-800 tracking-tight">+91</span>
-              </div>
-              <div className="flex-1 flex items-center gap-2">
-                <Phone size={18} className="text-gray-400 group-focus-within:text-yellow-500 transition-colors" />
-                <input 
-                  type="tel" 
-                  id="phone"
-                  autoFocus
-                  maxLength={10}
-                  placeholder="00000 00000"
-                  className="w-full bg-transparent border-none text-[17px] font-bold text-gray-900 placeholder:text-gray-200 focus:outline-none tracking-[0.1em]"
-                  value={phoneNumber}
-                  onChange={(e) => setPhoneNumber(e.target.value.replace(/\D/g, ''))}
-                />
-              </div>
+          <div className="relative group flex items-center transition-all">
+            <div className="absolute left-4 flex items-center pointer-events-none text-gray-500">
+               <span className="font-semibold">+91</span>
             </div>
+            <input
+              type="tel"
+              id="phone"
+              required
+              autoFocus
+              maxLength={10}
+              className="w-full pl-16 pr-4 py-4 bg-[#F8F9FA] border border-gray-200 rounded-xl text-[#1A1A1A] focus:border-[#F38F24] focus:ring-1 focus:ring-[#F38F24] outline-none transition-all placeholder:text-gray-400 font-semibold text-lg"
+              placeholder="00000 00000"
+              value={phoneNumber}
+              onChange={(e) => setPhoneNumber(e.target.value.replace(/\D/g, ''))}
+            />
+            <Phone size={20} className="absolute right-4 text-gray-400 group-focus-within:text-[#F38F24] transition-colors" />
           </div>
         </div>
 
         <motion.button 
-          whileHover={{ scale: 1.02, filter: "brightness(1.1)" }}
+          whileHover={{ scale: 1.01, y: -2 }}
           whileTap={{ scale: 0.98 }}
           disabled={!isValidPhone || loading}
-          className={`w-full py-5 rounded-2xl text-[14px] font-black transition-all flex items-center justify-center gap-3 shadow-2xl ${
+          className={`w-full py-4 rounded-xl text-base font-bold transition-all flex items-center justify-center gap-2 ${
             isValidPhone && !loading
-            ? 'bg-gradient-to-r from-yellow-400 via-orange-500 to-magenta-500 text-white shadow-orange-500/30' 
-            : 'bg-gray-100 text-gray-400 cursor-not-allowed shadow-none'
+            ? 'bg-[#1A1A1A] text-white hover:bg-black hover:shadow-lg' 
+            : 'bg-gray-200 text-gray-400 cursor-not-allowed'
           }`}
         >
           {loading ? (
             <div className="flex items-center gap-3">
-              <span className="w-5 h-5 border-3 border-white/30 border-t-white rounded-full animate-spin"></span>
-              <span className="tracking-tight uppercase">Sending...</span>
+              <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+              <span>Sending...</span>
             </div>
           ) : (
-            <span className="uppercase tracking-[0.15em]">Get Verification Code</span>
+            <span>Continue</span>
           )}
         </motion.button>
 
@@ -109,37 +104,35 @@ const Login = () => {
           <motion.p 
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="text-xs font-bold text-red-500 text-center bg-red-50 py-3 rounded-xl border border-red-100"
+            className="text-xs font-semibold text-red-500 text-center bg-red-50 py-3 rounded-lg border border-red-100"
           >
             {error}
           </motion.p>
         )}
 
-        <div className="relative py-2">
+        <div className="relative py-2 mt-4">
           <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-gray-100"></div>
+            <div className="w-full border-t border-gray-200"></div>
           </div>
-          <div className="relative flex justify-center text-[10px] uppercase tracking-[0.3em] font-black">
-            <span className="bg-white px-6 text-gray-300">Secure Login</span>
+          <div className="relative flex justify-center text-xs uppercase tracking-wider font-bold">
+            <span className="bg-white px-4 text-gray-400">Or continue with</span>
           </div>
         </div>
 
         <div className="space-y-4">
           <button 
             type="button" 
-            className="w-full py-4 rounded-2xl border-2 border-gray-50 flex items-center justify-center gap-4 hover:bg-gray-50 hover:border-blue-100 transition-all group shadow-sm bg-white"
+            className="w-full py-3.5 rounded-xl border border-gray-200 flex items-center justify-center gap-3 hover:bg-gray-50 transition-all text-sm font-semibold text-gray-700 bg-white"
           >
-            <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center shadow-sm border border-gray-100 group-hover:scale-110 transition-transform">
-              <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" className="w-4 h-4" />
-            </div>
-            <span className="text-[13px] font-black text-gray-500 group-hover:text-black uppercase tracking-wider">Continue with Google</span>
+            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" className="w-5 h-5" />
+            <span>Google</span>
           </button>
         </div>
 
-        <p className="text-[11px] text-gray-400 font-bold text-center leading-relaxed px-4 mt-8">
+        <p className="text-xs text-gray-400 font-medium text-center leading-relaxed mt-8">
            By continuing, you agree to our 
-           <Link to="/terms" className="text-black hover:text-orange-500 transition-colors mx-1 underline decoration-2 decoration-yellow-400 underline-offset-4">Terms</Link> & 
-           <Link to="/privacy" className="text-black hover:text-orange-500 transition-colors mx-1 underline decoration-2 decoration-yellow-400 underline-offset-4">Privacy Policy</Link>
+           <Link to="/terms" className="text-[#1A1A1A] hover:text-[#F38F24] transition-colors mx-1 font-semibold">Terms</Link> & 
+           <Link to="/privacy" className="text-[#1A1A1A] hover:text-[#F38F24] transition-colors mx-1 font-semibold">Privacy Policy</Link>
         </p>
       </form>
     </AuthLayout>

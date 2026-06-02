@@ -29,7 +29,7 @@ const DriverWelcome = () => {
     const perks = [
         { icon: <Wallet size={18} />, title: 'Weekly Payouts', sub: 'Receive your earnings directly every week.' },
         { icon: <Clock size={18} />, title: 'Set Your Schedule', sub: 'Ultimate flexibility to drive whenever you want.' },
-        { icon: <ShieldCheck size={18} />, title: 'Premium Support', sub: 'Dedicated 24/7 assistance for our partners.' },
+        { icon: <ShieldCheck size={18} />, title: 'Premium Support', sub: 'Dedicated 24/7 assistance for our captains.' },
         { icon: <TrendingUp size={18} />, title: 'Growth Incentives', sub: 'Earn bonuses for high performance and trips.' }
     ];
 
@@ -67,13 +67,13 @@ const DriverWelcome = () => {
                         className="space-y-4"
                     >
                         <div className="inline-flex items-center gap-2 rounded-full bg-white/10 backdrop-blur-md px-4 py-1.5 text-[10px] font-black uppercase tracking-[0.15em] text-amber-400 border border-white/10">
-                             <Sparkles size={12} strokeWidth={3} /> Partner Program
+                             <Sparkles size={12} strokeWidth={3} /> Captain Program
                         </div>
                         <h1 className="font-['Outfit'] text-[48px] font-black leading-[0.95] tracking-[-0.05em]">
                             Drive & <span className="text-amber-400">Earn Daily</span>
                         </h1>
                         <p className="max-w-[24ch] text-[15px] font-bold text-white/70 leading-relaxed opacity-90">
-                            Join the professional network of {appName} partners and take control of your time.
+                            Join the professional network of {appName} captains and take control of your time.
                         </p>
                     </motion.div>
                 </div>
@@ -85,7 +85,7 @@ const DriverWelcome = () => {
                     <div className="flex items-center justify-between px-1">
                         <div className="space-y-1">
                             <h3 className="text-lg font-black tracking-tight text-slate-900">
-                                Partner Benefits
+                                Captain Benefits
                             </h3>
                             <p className="text-[12px] font-black text-slate-400 uppercase tracking-widest opacity-60">Why thousands choose {appName}</p>
                         </div>
@@ -136,7 +136,7 @@ const DriverWelcome = () => {
                              </p>
                              <div className="space-y-0.5">
                                  <h5 className="text-[15px] font-semibold text-slate-900">Arjun Shinde</h5>
-                                 <p className="text-[11px] font-bold text-emerald-600 uppercase tracking-widest">Verified Partner • 5.0 Rating</p>
+                                 <p className="text-[11px] font-bold text-emerald-600 uppercase tracking-widest">Verified Captain • 5.0 Rating</p>
                              </div>
                         </div>
                     </div>
@@ -161,4 +161,3 @@ const DriverWelcome = () => {
 };
 
 export default DriverWelcome;
-

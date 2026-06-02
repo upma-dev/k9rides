@@ -157,7 +157,7 @@ export default function DeliveryWelcome() {
                // Navigate directly to delivery home page (map with hotspots)
                navigate("/food/delivery", { replace: true })
              }}
-             className="w-full bg-[#00B761] hover:bg-[#00A055] text-white font-bold py-4 rounded-lg mt-4 flex items-center justify-center gap-2 transition-colors"
+             className="w-full bg-[#F38F24] hover:bg-[#F38F24]/90 text-white font-bold py-4 rounded-xl mt-4 flex items-center justify-center gap-2 transition-all shadow-md hover:shadow-lg"
            >
             <span>Start earning</span>
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -275,7 +275,7 @@ export default function DeliveryWelcome() {
           <div className="relative mb-6 z-10">
             {/* Outer ring animation */}
             <motion.div
-              className="absolute inset-0 w-32 h-32 rounded-full border-4 border-green-500"
+              className="absolute inset-0 w-32 h-32 rounded-full border-4 border-[#F38F24]"
               initial={{ scale: 0.8, opacity: 0 }}
               animate={{ scale: 1.2, opacity: 0 }}
               transition={{
@@ -287,7 +287,7 @@ export default function DeliveryWelcome() {
             
             {/* Main circle with checkmark */}
             <motion.div
-              className="w-32 h-32 bg-gradient-to-br from-green-500 to-green-600 rounded-full flex items-center justify-center shadow-2xl relative overflow-hidden"
+              className="w-32 h-32 bg-gradient-to-br from-[#F38F24] to-orange-600 rounded-full flex items-center justify-center shadow-2xl relative overflow-hidden"
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
               transition={{
@@ -424,7 +424,7 @@ export default function DeliveryWelcome() {
           {/* Proceed Button */}
           <motion.button
             onClick={handleProceed}
-            className="w-full bg-black text-white font-bold py-4 rounded-lg hover:bg-gray-800 transition-colors z-10 relative"
+            className="w-full bg-[#1A1A1A] text-white font-bold py-4 rounded-xl shadow-md hover:shadow-lg hover:bg-black transition-all z-10 relative"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.9, duration: 0.5 }}

@@ -87,11 +87,11 @@ export default function RestaurantLogin() {
   return (
     <div className="min-h-[100dvh] bg-white dark:bg-[#0A0A0B] flex flex-col font-sans overflow-hidden">
       {/* Top Branding Section - 40% height */}
-      <div className="relative h-[40dvh] w-full bg-gradient-to-br from-[#07143A] via-[#0D2A6B] to-[#FF9F1C] overflow-hidden flex flex-col items-center justify-center">
-        {/* Subtle Decorative Elements (No Blur) */}
-        <div className="absolute inset-0 opacity-20">
-          <div className="absolute -top-10 -right-10 w-64 h-64 border-8 border-white/10 rounded-full" />
-          <div className="absolute bottom-10 -left-10 w-48 h-48 border-4 border-white/5 rounded-full" />
+      <div className="relative h-[40dvh] w-full bg-[#1A1A1A] overflow-hidden flex flex-col items-center justify-center">
+        {/* Subtle Decorative Elements */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+            <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-[#F38F24]/5 rounded-full blur-[80px] translate-x-1/3 -translate-y-1/3"></div>
+            <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-white/5 rounded-full blur-[60px] -translate-x-1/3 translate-y-1/3"></div>
         </div>
 
         <motion.div
@@ -117,27 +117,27 @@ export default function RestaurantLogin() {
         initial={{ y: "100%" }}
         animate={{ y: 0 }}
         transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
-        className="flex-1 bg-white dark:bg-[#0A0A0B] rounded-t-[40px] -mt-12 relative z-20 shadow-[0_-20px_40px_rgba(0,0,0,0.05)] px-6 pt-12 pb-6 flex flex-col"
+        className="flex-1 bg-white dark:bg-[#0A0A0B] rounded-t-[2.5rem] -mt-12 relative z-20 shadow-[0_-20px_40px_rgba(0,0,0,0.05)] px-6 pt-10 pb-6 flex flex-col"
         style={{ marginBottom: keyboardInset ? `${keyboardInset}px` : 0 }}
       >
         <div className="max-w-md mx-auto w-full flex flex-col h-full">
           <div className="space-y-2 mb-10">
-            <h2 className="text-2xl font-black text-zinc-900 dark:text-white tracking-tight">
+            <h2 className="text-3xl font-black text-[#1A1A1A] dark:text-white tracking-tight">
               Restaurant Portal
             </h2>
-            <p className="text-sm font-medium text-zinc-500 dark:text-zinc-500">
+            <p className="text-sm font-medium text-gray-500">
               Signin with your registered mobile to manage your outlet.
             </p>
           </div>
 
           <div className="space-y-8">
             <div className="space-y-4">
-              <label className="text-[10px] font-black text-zinc-400 dark:text-zinc-600 uppercase tracking-[0.3em] ml-1">
+              <label className="text-xs font-bold text-gray-700 uppercase tracking-wider ml-1">
                 Owner Contact Number
               </label>
               
-              <div className="flex items-center gap-0 bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl focus-within:border-[#0D2A6B]/50 focus-within:ring-4 focus-within:ring-[#0D2A6B]/5 transition-all overflow-hidden">
-                <div className="flex items-center px-4 h-16 bg-zinc-50 dark:bg-zinc-800/50 text-zinc-900 dark:text-white font-black text-xl border-r border-zinc-200 dark:border-zinc-800">
+              <div className="flex items-center gap-0 bg-[#F8F9FA] dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-xl focus-within:border-[#F38F24] focus-within:ring-1 focus-within:ring-[#F38F24] transition-all overflow-hidden group">
+                <div className="flex items-center px-4 h-14 bg-transparent text-gray-500 font-semibold text-lg border-r border-gray-200 dark:border-zinc-800">
                   <span>+91</span>
                 </div>
                 <input
@@ -148,7 +148,7 @@ export default function RestaurantLogin() {
                   placeholder="00000 00000"
                   value={formData.phone}
                   onChange={handlePhoneChange}
-                  className="flex-1 h-16 bg-transparent border-0 outline-none ring-0 placeholder:text-zinc-300 dark:placeholder:text-zinc-700 text-lg font-black tracking-widest px-5 text-zinc-900 dark:text-white"
+                  className="flex-1 h-14 bg-transparent border-0 outline-none ring-0 placeholder:text-gray-400 text-lg font-semibold tracking-widest px-4 text-[#1A1A1A] dark:text-white"
                 />
               </div>
 
@@ -170,11 +170,11 @@ export default function RestaurantLogin() {
             <Button
               onClick={handleSendOTP}
               disabled={isSending || formData.phone.length !== 10}
-              className="w-full h-16 rounded-2xl font-black text-base tracking-widest uppercase transition-all duration-300 bg-[#0D2A6B] hover:bg-[#07143A] text-white shadow-[0_12px_24px_rgba(13,42,107,0.3)] active:scale-[0.98] disabled:opacity-50 disabled:grayscale"
+              className="w-full h-14 rounded-xl font-bold text-base transition-all bg-[#1A1A1A] hover:bg-black text-white hover:shadow-lg disabled:opacity-50 disabled:bg-gray-200 disabled:text-gray-400"
             >
               {isSending ? (
                 <div className="flex items-center gap-2">
-                  <Loader2 className="h-5 w-5 animate-spin" />
+                  <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
                   <span>Authorizing...</span>
                 </div>
               ) : (
@@ -184,9 +184,9 @@ export default function RestaurantLogin() {
           </div>
 
           <footer className="mt-auto pt-10 text-center">
-            <p className="text-[10px] text-zinc-400 dark:text-zinc-600 font-medium leading-relaxed uppercase tracking-wide">
+            <p className="text-xs text-gray-400 font-medium leading-relaxed">
               Secure partner login powered by<br />
-              <span className="text-[#0D2A6B] font-black">{companyName} Network</span>
+              <span className="text-[#1A1A1A] font-bold">{companyName} Network</span>
             </p>
           </footer>
         </div>

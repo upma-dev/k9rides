@@ -324,7 +324,7 @@ const getStatusColor = (status) => {
                         <Mail size={24} />
                     </div>
                     <div className="min-w-0 flex-1">
-                        <h4 className="text-base font-black tracking-tight text-slate-900 truncate">{driver.name || 'Partner'}</h4>
+                        <h4 className="text-base font-black tracking-tight text-slate-900 truncate">{driver.name || 'Captain'}</h4>
                         <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest opacity-60 truncate">
                             +91 {driver.phone}
                         </p>
@@ -408,4 +408,3 @@ const getStatusColor = (status) => {
   );
 };
 export default RegistrationStatus;
-

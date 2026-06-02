@@ -202,10 +202,11 @@ export default function DeliveryOTP() {
   return (
     <div className="min-h-[100dvh] bg-white dark:bg-[#0A0A0B] flex flex-col font-sans overflow-hidden">
       {/* Top Branding Section - 35% height */}
-      <div className="relative h-[35dvh] w-full bg-gradient-to-br from-[#07143A] via-[#0D2A6B] to-[#6FAF00] overflow-hidden flex flex-col items-center justify-center text-white">
-        <div className="absolute inset-0 opacity-20">
-          <div className="absolute top-0 right-0 w-64 h-64 border border-white/20 rounded-full -mr-20 -mt-20" />
-          <div className="absolute bottom-10 left-0 w-32 h-32 border border-white/10 rounded-full -ml-16" />
+      <div className="relative h-[35dvh] w-full bg-[#1A1A1A] overflow-hidden flex flex-col items-center justify-center text-white">
+        {/* Subtle Decorative Elements */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+            <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-[#F38F24]/5 rounded-full blur-[80px] translate-x-1/3 -translate-y-1/3"></div>
+            <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-white/5 rounded-full blur-[60px] -translate-x-1/3 translate-y-1/3"></div>
         </div>
 
         <motion.div
@@ -214,14 +215,14 @@ export default function DeliveryOTP() {
           transition={{ duration: 0.6 }}
           className="relative z-10 flex flex-col items-center gap-4 px-6 text-center"
         >
-          <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center border border-white/25 shadow-lg mb-2 overflow-hidden">
+          <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center border-2 border-white/25 shadow-xl mb-2 overflow-hidden">
             <img src={logoImg} alt={`${companyName} logo`} className="w-full h-full object-cover scale-110" />
           </div>
-          <div className="space-y-1">
-            <h1 className="font-black text-3xl tracking-tight italic uppercase">
-              {isRejected ? "DENIED" : pendingMessage ? "PENDING" : showNameInput ? "CAPTAIN SETUP" : "CAPTAIN VERIFY"}
+          <div className="space-y-1 text-center">
+            <h1 className="font-black text-2xl tracking-tight uppercase leading-none mb-1">
+              {isRejected ? "DENIED" : pendingMessage ? "PENDING" : showNameInput ? "PARTNER SETUP" : "PARTNER VERIFY"}
             </h1>
-            <p className="opacity-70 text-xs font-bold uppercase tracking-[0.2em]">
+            <p className="text-white/70 text-xs font-bold uppercase tracking-wider">
               {pendingMessage ? "Verification Required" : showNameInput ? "Complete your profile" : `Sent to ${authData?.phone}`}
             </p>
           </div>
@@ -233,7 +234,7 @@ export default function DeliveryOTP() {
         initial={{ y: "100%" }}
         animate={{ y: 0 }}
         transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
-        className="flex-1 bg-white dark:bg-[#0A0A0B] rounded-t-[40px] -mt-10 relative z-20 shadow-[0_-20px_40px_rgba(0,0,0,0.05)] px-6 pt-12 pb-6 flex flex-col"
+        className="flex-1 bg-white dark:bg-[#0A0A0B] rounded-t-[2.5rem] -mt-8 relative z-20 shadow-[0_-20px_40px_rgba(0,0,0,0.05)] px-6 pt-12 pb-6 flex flex-col"
         style={{ marginBottom: keyboardOffset > 0 ? `${keyboardOffset}px` : 0 }}
       >
         <div className="max-w-md mx-auto w-full flex flex-col h-full">
@@ -259,12 +260,12 @@ export default function DeliveryOTP() {
                             onFocus={() => setFocusedIndex(index)}
                             onBlur={() => setFocusedIndex(null)}
                             disabled={isLoading}
-                            className={`w-16 h-20 text-center text-3xl font-black bg-zinc-100 dark:bg-zinc-900 border-2 rounded-2xl text-zinc-900 dark:text-white transition-all outline-none shadow-sm ${
-                              focusedIndex === index ? "border-[#0D2A6B]" : "border-transparent"
+                            className={`w-14 h-16 sm:w-16 sm:h-20 text-center text-3xl font-black bg-[#F8F9FA] dark:bg-zinc-900 border-2 rounded-2xl text-[#1A1A1A] dark:text-white transition-all outline-none shadow-sm ${
+                              focusedIndex === index ? "border-[#F38F24] ring-2 ring-[#F38F24]/20" : "border-gray-200 dark:border-zinc-800"
                             }`}
                           />
                           {digit && (
-                            <div className="absolute bottom-3 left-1/2 -translate-x-1/2 w-1.5 h-1.5 bg-[#0D2A6B] rounded-full" />
+                            <div className="absolute bottom-3 left-1/2 -translate-x-1/2 w-1.5 h-1.5 bg-[#F38F24] rounded-full" />
                           )}
                         </div>
                       ))}
@@ -272,15 +273,15 @@ export default function DeliveryOTP() {
 
                     <div className="space-y-6 pt-4 text-center">
                       {resendTimer > 0 ? (
-                        <p className="text-xs font-bold text-zinc-400 uppercase tracking-widest">
-                          Re-pulse in <span className="text-[#0D2A6B]">{resendTimer}s</span>
+                        <p className="text-xs font-bold text-gray-500 uppercase tracking-widest">
+                          Re-pulse in <span className="text-[#F38F24]">{resendTimer}s</span>
                         </p>
                       ) : (
                         <button
                           type="button"
                           onClick={handleResend}
                           disabled={isLoading}
-                          className="text-xs font-black text-[#0D2A6B] uppercase tracking-[0.2em] px-6 py-2 rounded-full bg-[#0D2A6B]/5 hover:bg-[#0D2A6B]/10 transition-colors"
+                          className="text-xs font-black text-[#F38F24] uppercase tracking-[0.2em] px-6 py-2 rounded-full bg-[#F38F24]/10 hover:bg-[#F38F24]/20 transition-colors"
                         >
                           Resend Pin
                         </button>
@@ -299,28 +300,28 @@ export default function DeliveryOTP() {
                   <div className="space-y-8">
                     <div className="space-y-4">
                       <div className="space-y-2">
-                        <label className="text-[10px] font-black text-zinc-400 uppercase tracking-[0.3em] ml-1">
+                        <label className="text-xs font-bold text-gray-700 uppercase tracking-wider ml-1">
                           Official Full Name
                         </label>
-                        <div className="bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl focus-within:border-[#0D2A6B]/50 focus-within:ring-4 focus-within:ring-[#0D2A6B]/5 transition-all overflow-hidden">
+                        <div className="bg-[#F8F9FA] dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-xl focus-within:border-[#F38F24] focus-within:ring-1 focus-within:ring-[#F38F24] transition-all overflow-hidden">
                           <Input
                             type="text" value={name} onChange={(e) => { setName(e.target.value); setNameError(""); }}
                             placeholder="e.g. Aman Kuril"
-                            className="h-16 bg-transparent border-0 ring-0 focus-visible:ring-0 focus-visible:ring-offset-0 text-xl font-black placeholder:text-zinc-300 dark:placeholder:text-zinc-700 px-6"
+                            className="h-14 bg-transparent border-0 ring-0 focus-visible:ring-0 focus-visible:ring-offset-0 text-lg font-bold placeholder:text-gray-400 px-4"
                           />
                         </div>
                       </div>
-                      {nameError && <p className="text-xs font-bold text-[#0D2A6B] pl-2">{nameError}</p>}
+                      {nameError && <p className="text-xs font-bold text-red-500 pl-2">{nameError}</p>}
                     </div>
 
                     <Button
                       onClick={handleSubmitName}
                       disabled={isLoading || name.trim().length < 2}
-                      className="w-full h-16 bg-[#0D2A6B] hover:bg-[#07143A] text-white font-black text-base uppercase tracking-widest rounded-2xl transition-all duration-300 shadow-[0_12px_24px_rgba(13,42,107,0.3)] active:scale-[0.98]"
+                      className="w-full h-14 bg-[#1A1A1A] hover:bg-black text-white font-bold text-base rounded-xl transition-all hover:shadow-lg disabled:opacity-50 disabled:bg-gray-200 disabled:text-gray-400"
                     >
                       {isLoading ? (
                         <div className="flex items-center gap-2">
-                          <Loader2 className="h-5 w-5 animate-spin" />
+                          <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
                           <span>Initializing...</span>
                         </div>
                       ) : (
@@ -337,23 +338,23 @@ export default function DeliveryOTP() {
                 animate={{ opacity: 1, scale: 1 }}
                 className="text-center space-y-8"
               >
-                <div className={`w-20 h-20 mx-auto rounded-3xl flex items-center justify-center shadow-xl transform rotate-12 ${isRejected ? "bg-red-50 text-red-600 border border-red-100" : "bg-zinc-50 dark:bg-zinc-900 text-[#0D2A6B] border border-zinc-100 dark:border-zinc-800"}`}>
+                <div className={`w-20 h-20 mx-auto rounded-3xl flex items-center justify-center shadow-xl transform rotate-12 ${isRejected ? "bg-red-50 text-red-600 border border-red-100" : "bg-[#F8F9FA] dark:bg-zinc-900 text-[#1A1A1A] border border-gray-200 dark:border-zinc-800"}`}>
                    {isRejected ? <AlertCircle size={40} className="-rotate-12" /> : <ShieldCheck size={40} className="-rotate-12" />}
                 </div>
 
                 <div className="space-y-3">
-                  <h3 className={`text-xl font-black italic uppercase tracking-tight ${isRejected ? "text-red-600" : "text-[#0D2A6B]"}`}>
+                  <h3 className={`text-2xl font-black tracking-tight ${isRejected ? "text-red-600" : "text-[#1A1A1A]"}`}>
                      {isRejected ? "Onboarding Denied" : "Pending Approval"}
                   </h3>
-                  <p className="text-sm font-medium text-zinc-500 dark:text-zinc-400 leading-relaxed">
+                  <p className="text-sm font-medium text-gray-500 dark:text-zinc-400 leading-relaxed">
                      {pendingMessage}
                   </p>
                 </div>
 
                 {isRejected && rejectionReason && (
                    <div className="bg-red-50 dark:bg-red-900/10 p-5 rounded-2xl border border-red-100 dark:border-red-900/10">
-                      <p className="text-[10px] font-black text-red-400 uppercase tracking-widest mb-1 italic">Fleet Feedback</p>
-                      <p className="text-sm text-red-700 dark:text-red-400 font-medium italic">"{rejectionReason}"</p>
+                      <p className="text-xs font-bold text-red-500 uppercase tracking-wider mb-1">Fleet Feedback</p>
+                      <p className="text-sm text-red-700 dark:text-red-400 font-medium">"{rejectionReason}"</p>
                    </div>
                 )}
 
@@ -361,14 +362,14 @@ export default function DeliveryOTP() {
                    {isRejected && (
                       <Button
                         onClick={() => navigate("/food/delivery/signup/details")}
-                        className="w-full h-16 rounded-2xl font-black bg-red-600 hover:bg-red-700 text-white shadow-lg"
+                        className="w-full h-14 rounded-xl font-bold bg-red-600 hover:bg-red-700 text-white shadow-lg"
                       >
                         RE-APPLY NOW
                       </Button>
                    )}
                    <button 
                     onClick={() => navigate("/food/delivery/login")} 
-                    className="text-[10px] font-black text-zinc-400 uppercase tracking-[0.4em] hover:text-[#0D2A6B] transition-all"
+                    className="text-xs font-bold text-gray-500 uppercase tracking-widest hover:text-[#1A1A1A] transition-all"
                    >
                     BACK TO BASE
                    </button>
@@ -381,16 +382,16 @@ export default function DeliveryOTP() {
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="mt-6 flex items-center justify-center gap-2 text-xs font-bold text-[#0D2A6B] bg-[#0D2A6B]/5 py-4 px-4 rounded-2xl border border-[#0D2A6B]/10"
+              className="mt-6 flex items-center justify-center gap-2 text-xs font-bold text-red-500 bg-red-50 py-3 px-4 rounded-xl border border-red-100"
             >
               <AlertCircle size={14} />
               <span>{error}</span>
             </motion.div>
           )}
 
-          <footer className="mt-auto pt-10 text-center">
-            <p className="text-[9px] text-zinc-300 dark:text-zinc-700 font-black uppercase tracking-[0.4em]">
-              Fleet Security Network &bull; {companyName.toUpperCase()}
+          <footer className="mt-auto pt-10 text-center pb-2">
+            <p className="text-xs text-gray-400 font-medium leading-relaxed">
+              Delivery Network &bull; {companyName}
             </p>
           </footer>
         </div>
@@ -398,5 +399,4 @@ export default function DeliveryOTP() {
     </div>
   )
 }
-
 
