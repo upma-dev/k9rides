@@ -2,7 +2,6 @@ import { FoodRestaurant } from '../models/restaurant.model.js';
 import { uploadImageBuffer } from '../../../../services/cloudinary.service.js';
 import { ValidationError, NotFoundError } from '../../../../core/auth/errors.js';
 import mongoose from 'mongoose';
-import { createRazorpayOrder, getRazorpayKeyId, isRazorpayConfigured, verifyPaymentSignature } from '../../orders/helpers/razorpay.helper.js';
 import { FoodZone } from '../../admin/models/zone.model.js';
 import { FoodOffer } from '../../admin/models/offer.model.js';
 
@@ -18,40 +17,6 @@ const normalizePhone = (value) => {
     return {
         digits: digits || '',
         last10: digits ? digits.slice(-10) : ''
-    };
-};
-
-export const createRestaurantOnboardingOrder = async (payload = {}) => {
-    const amount = Number(payload?.amount);
-    if (!Number.isFinite(amount) || amount <= 0) {
-        throw new ValidationError('Invalid payment amount');
-    }
-    if (amount > 100000) {
-        throw new ValidationError('Payment amount exceeds maximum allowed value');
-    }
-
-    const amountPaise = Math.round(amount * 100);
-    const receipt = `restaurant_onboarding_${Date.now()}`;
-
-    if (!isRazorpayConfigured()) {
-        return {
-            razorpay: {
-                key: getRazorpayKeyId() || 'rzp_test_dummy',
-                orderId: `order_dev_${Date.now()}`,
-                amount: amountPaise,
-                currency: 'INR'
-            }
-        };
-    }
-
-    const order = await createRazorpayOrder(amountPaise, 'INR', receipt);
-    return {
-        razorpay: {
-            key: getRazorpayKeyId(),
-            orderId: String(order.id),
-            amount: Number(order.amount) || amountPaise,
-            currency: order.currency || 'INR'
-        }
     };
 };
 
@@ -216,17 +181,6 @@ const toRestaurantProfile = (doc) => {
             diningType: String(doc.diningSettings?.diningType || 'family-dining').trim() || 'family-dining'
         },
         isAcceptingOrders: doc.isAcceptingOrders !== false,
-        subscriptionPlan: doc.subscriptionPlan || '',
-        subscriptionAmount: Number.isFinite(Number(doc.subscriptionAmount)) ? Number(doc.subscriptionAmount) : 0,
-        subscriptionPaidAmount: Number.isFinite(Number(doc.subscriptionPaidAmount)) ? Number(doc.subscriptionPaidAmount) : 0,
-        subscriptionDueAmount: Number.isFinite(Number(doc.subscriptionDueAmount)) ? Number(doc.subscriptionDueAmount) : 0,
-        subscriptionStatus: doc.subscriptionStatus || 'due',
-        onboardingFeePaid: Boolean(doc.onboardingFeePaid),
-        onboardingFeePaidAt: doc.onboardingFeePaidAt || null,
-        onboardingFeePaymentMethod: doc.onboardingFeePaymentMethod || '',
-        onboardingFeePaymentOrderId: doc.onboardingFeePaymentOrderId || '',
-        onboardingFeePaymentId: doc.onboardingFeePaymentId || '',
-        onboardingFeePaymentSignature: doc.onboardingFeePaymentSignature || '',
         status: doc.status || null,
         createdAt: doc.createdAt,
         updatedAt: doc.updatedAt,
@@ -350,16 +304,6 @@ export const registerRestaurant = async (payload, files) => {
         ifscCode,
         accountHolderName,
         accountType,
-        subscriptionPlan,
-        subscriptionAmount,
-        subscriptionPaidAmount,
-        subscriptionDueAmount,
-        onboardingFeeAmount,
-        onboardingFeePaid,
-        paymentType,
-        razorpayOrderId,
-        razorpayPaymentId,
-        razorpaySignature,
         // Pre-uploaded image URLs from background uploads
         profileImage: preUploadedProfileImage,
         panImage: preUploadedPanImage,
@@ -370,62 +314,6 @@ export const registerRestaurant = async (payload, files) => {
 
     if (!ownerPhone) {
         throw new ValidationError('Owner phone is required to register a restaurant');
-    }
-
-    const GST_RATE = 0.18;
-    const onboardingFeeBase = 799;
-    const onboardingGST = Math.round(onboardingFeeBase * GST_RATE);
-    const onboardingFeeExpected = onboardingFeeBase + onboardingGST;
-
-    const onboardingFeeActual = Number(onboardingFeeAmount || 0);
-    const subscriptionTotal = Number(subscriptionAmount || 0); // Should be plan + GST
-    const subscriptionPaid = Number(subscriptionPaidAmount || 0); // Should be paid + GST
-    const dueAmount = Math.max(0, subscriptionTotal - subscriptionPaid);
-
-    if (!onboardingFeePaid) {
-        throw new ValidationError('Onboarding fee payment is required');
-    }
-    // Allow for a bit of rounding margin or just check against expected total
-    if (onboardingFeeActual < onboardingFeeExpected) {
-        throw new ValidationError(`Onboarding fee must be at least ₹${onboardingFeeExpected} (including GST)`);
-    }
-    let planBase = 0;
-    if (subscriptionPlan === 'elite' || subscriptionPlan === '4999') {
-        planBase = 4999;
-    } else if (subscriptionPlan === 'pro' || subscriptionPlan === '9999') {
-        planBase = 9999;
-    } else {
-        throw new ValidationError('Subscription plan selection is required');
-    }
-
-    const planGST = Math.round(planBase * GST_RATE);
-    const planTotalExpected = planBase + planGST;
-
-    if (subscriptionTotal < planTotalExpected) {
-        throw new ValidationError(`Subscription amount for plan ${subscriptionPlan} must be ₹${planTotalExpected} (including GST)`);
-    }
-    if (subscriptionPaid < 0 || subscriptionPaid > subscriptionTotal) {
-        throw new ValidationError('Invalid subscription payment amount');
-    }
-    if (!String(razorpayOrderId || '').trim()) {
-        throw new ValidationError('Payment order id is required');
-    }
-    if (!String(razorpayPaymentId || '').trim()) {
-        throw new ValidationError('Payment id is required');
-    }
-    if (!String(razorpaySignature || '').trim()) {
-        throw new ValidationError('Payment signature is required');
-    }
-
-    if (isRazorpayConfigured()) {
-        const validSignature = verifyPaymentSignature(
-            String(razorpayOrderId),
-            String(razorpayPaymentId),
-            String(razorpaySignature),
-        );
-        if (!validSignature) {
-            throw new ValidationError('Payment verification failed');
-        }
     }
 
     const { digits: ownerPhoneDigits, last10: ownerPhoneLast10 } = normalizePhone(ownerPhone);
@@ -561,18 +449,6 @@ export const registerRestaurant = async (payload, files) => {
             accountHolderName,
             accountType,
             menuImages,
-            onboardingFeePaid: true,
-            onboardingFeePaidAt: new Date(),
-            onboardingFeePaymentMethod: 'razorpay',
-            onboardingFeePaymentOrderId: String(razorpayOrderId || ''),
-            onboardingFeePaymentId: String(razorpayPaymentId || ''),
-            onboardingFeePaymentSignature: String(razorpaySignature || ''),
-            subscriptionPlan: String(subscriptionPlan || ''),
-            subscriptionAmount: subscriptionTotal,
-            subscriptionPaidAmount: subscriptionPaid,
-            subscriptionDueAmount: dueAmount,
-            subscriptionStatus: dueAmount > 0 ? 'due' : 'paid',
-            subscriptionValidTill: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // Valid for 30 days
             ...images
         });
 
@@ -599,92 +475,6 @@ export const registerRestaurant = async (payload, files) => {
         }
         throw err;
     }
-};
-
-export const payRestaurantDues = async (restaurantId, paymentDetails = {}) => {
-    if (!restaurantId) throw new Error('Restaurant ID is required');
-
-    const restaurant = await FoodRestaurant.findById(restaurantId);
-    if (!restaurant) throw new Error('Restaurant not found');
-
-    const dueAmount = Number(restaurant.subscriptionDueAmount || 0);
-    if (dueAmount <= 0) {
-        throw new Error('No outstanding dues found');
-    }
-
-    // In a real flow, we would verify the paymentDetails.razorpayPaymentId here.
-    // For this end-to-end "direct" implementation, we'll mark it as paid.
-    
-    restaurant.subscriptionPaidAmount = (Number(restaurant.subscriptionPaidAmount) || 0) + dueAmount;
-    restaurant.subscriptionDueAmount = 0;
-    restaurant.subscriptionStatus = 'paid';
-    
-    // Log payment metadata if provided
-    if (paymentDetails.razorpayPaymentId) {
-        restaurant.subscriptionPaymentId = paymentDetails.razorpayPaymentId;
-        restaurant.subscriptionPaymentOrderId = paymentDetails.razorpayOrderId;
-        restaurant.subscriptionPaymentMethod = 'razorpay';
-    }
-
-    await restaurant.save();
-    return restaurant.toObject();
-};
-
-/**
- * Creates a Razorpay order for outstanding subscription dues.
- */
-export const createDuesPaymentOrder = async (restaurantId) => {
-    if (!restaurantId) throw new Error('Restaurant ID is required');
-
-    const restaurant = await FoodRestaurant.findById(restaurantId);
-    if (!restaurant) throw new Error('Restaurant not found');
-
-    const dueAmount = Number(restaurant.subscriptionDueAmount || 0);
-    if (dueAmount <= 0) {
-        throw new Error('No outstanding dues found');
-    }
-
-    const { createRazorpayOrder, isRazorpayConfigured } = await import('../../orders/helpers/razorpay.helper.js');
-    if (!isRazorpayConfigured()) {
-        throw new Error('Payment gateway not configured');
-    }
-
-    // Convert to paise (e.g., ₹100 -> 10000 paise)
-    const amountPaise = Math.round(dueAmount * 100);
-
-    // Razorpay receipt limit is 40 characters.
-    const receiptId = `dues_${String(restaurantId).slice(-10)}_${Date.now()}`;
-    const order = await createRazorpayOrder(amountPaise, 'INR', receiptId);
-
-    return {
-        orderId: order.id,
-        amount: dueAmount,
-        currency: 'INR',
-        keyId: (await import('../../orders/helpers/razorpay.helper.js')).getRazorpayKeyId(),
-        restaurant: {
-            name: restaurant.restaurantName,
-            phone: restaurant.ownerPhone
-        }
-    };
-};
-
-/**
- * Verifies Razorpay payment signature and settles dues.
- */
-export const verifyDuesPayment = async (restaurantId, paymentData = {}) => {
-    const { razorpayOrderId, razorpayPaymentId, razorpaySignature } = paymentData;
-    if (!razorpayOrderId || !razorpayPaymentId || !razorpaySignature) {
-        throw new Error('Missing payment verification details');
-    }
-
-    const { verifyPaymentSignature } = await import('../../orders/helpers/razorpay.helper.js');
-    const isValid = verifyPaymentSignature(razorpayOrderId, razorpayPaymentId, razorpaySignature);
-    if (!isValid) {
-        throw new Error('Invalid payment signature');
-    }
-
-    // Reuse the settle logic
-    return await payRestaurantDues(restaurantId, { razorpayOrderId, razorpayPaymentId });
 };
 
 export const getCurrentRestaurantProfile = async (restaurantId) => {
@@ -723,17 +513,6 @@ export const getCurrentRestaurantProfile = async (restaurantId) => {
                 'estimatedDeliveryTimeMinutes',
                 'diningSettings',
                 'isAcceptingOrders',
-                'subscriptionPlan',
-                'subscriptionAmount',
-                'subscriptionPaidAmount',
-                'subscriptionDueAmount',
-                'subscriptionStatus',
-                'onboardingFeePaid',
-                'onboardingFeePaidAt',
-                'onboardingFeePaymentMethod',
-                'onboardingFeePaymentOrderId',
-                'onboardingFeePaymentId',
-                'onboardingFeePaymentSignature',
                 'status',
                 'createdAt',
                 'updatedAt'

@@ -13,17 +13,10 @@ export const createWithdrawalRequestController = async (req, res, next) => {
 
         // Check if restaurant has enough balance
         const finance = await getRestaurantFinance(restaurantId);
-        const restaurant = await FoodRestaurant.findById(restaurantId).select('subscriptionStatus subscriptionDueAmount');
+        const totalEarnings = Number(finance?.currentCycle?.netAvailable ?? finance?.currentCycle?.estimatedPayout ?? 0);
 
-        const subscriptionDue = Number(restaurant?.subscriptionDueAmount || 0);
-        const totalEarnings = finance?.currentCycle?.estimatedPayout || 0;
-        const netAvailable = Math.max(0, totalEarnings - subscriptionDue);
-
-        if (amount > netAvailable) {
-            if (subscriptionDue > 0) {
-                return sendError(res, 400, `Withdrawal restricted. You can withdraw a maximum of ₹${netAvailable.toLocaleString('en-IN')} after reserving ₹${subscriptionDue.toLocaleString('en-IN')} for your outstanding subscription dues.`);
-            }
-            return sendError(res, 400, `Insufficient balance. Available to withdraw: ₹${netAvailable.toLocaleString('en-IN')}`);
+        if (amount > totalEarnings) {
+            return sendError(res, 400, `Insufficient balance. Available to withdraw: ₹${totalEarnings.toLocaleString('en-IN')}`);
         }
 
         // Create the withdrawal request

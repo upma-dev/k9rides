@@ -954,10 +954,6 @@ export const restaurantAPI = {
       contextModule: "restaurant"
     }),
   /** List withdrawal history for current restaurant. */
-  payDues: (body = {}) => apiClient.post("/food/restaurant/pay-dues", body, { contextModule: "restaurant" }),
-  /** Razorpay dues settlement. */
-  createDuesOrder: () => apiClient.post("/food/restaurant/pay-dues/order", {}, { contextModule: "restaurant" }),
-  verifyDuesPayment: (body = {}) => apiClient.post("/food/restaurant/pay-dues/verify", body, { contextModule: "restaurant" }),
   getWithdrawalHistory: () =>
     apiClient.get("/food/restaurant/withdrawals", {
       contextModule: "restaurant"
@@ -1373,13 +1369,6 @@ export const restaurantAPI = {
     }
     return apiClient.post("/food/restaurant/upload-attachment", formData);
   },
-  /** Create onboarding payment order (Razorpay) */
-  createOnboardingPaymentOrder: (amount, subscriptionPlan, paymentType = 'full') =>
-    apiClient.post("/food/restaurant/payment/onboarding-order", {
-      amount: Number(amount) || 0,
-      subscriptionPlan: String(subscriptionPlan || ''),
-      paymentType: String(paymentType || 'full')
-    }),
   /** Public: list approved restaurants for user app */
   getRestaurants: (params = {}, config = {}) =>
     getPublicRestaurantsOnce(params, config),

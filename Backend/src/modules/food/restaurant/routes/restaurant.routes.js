@@ -2,7 +2,6 @@ import express from 'express';
 import { upload } from '../../../../middleware/upload.js';
 import {
     registerRestaurantController,
-    createRestaurantOnboardingOrderController,
     listApprovedRestaurantsController,
     getApprovedRestaurantController,
     listPublicOffersController,
@@ -17,9 +16,6 @@ import {
     getRestaurantComplaintsController,
     uploadRestaurantAttachmentController,
     deleteCurrentRestaurantAccountController,
-    payRestaurantDuesController,
-    createDuesOrderController,
-    verifyDuesPaymentController
 } from '../controllers/restaurant.controller.js';
 import {
     createRestaurantOfferController,
@@ -87,7 +83,6 @@ const uploadFields = upload.fields([
     { name: 'menuImages', maxCount: 10 }
 ]);
 
-router.post('/payment/onboarding-order', createRestaurantOnboardingOrderController);
 router.post('/register', uploadFields, registerRestaurantController);
 router.post('/upload-attachment', upload.single('file'), uploadRestaurantAttachmentController);
 
@@ -121,9 +116,6 @@ router.put('/outlet-timings', authMiddleware, requireRestaurant, upsertCurrentRe
 router.get('/finance', authMiddleware, requireRestaurant, getRestaurantFinanceController);
 router.post('/withdraw', authMiddleware, requireRestaurant, createWithdrawalRequestController);
 router.get('/withdrawals', authMiddleware, requireRestaurant, listMyWithdrawalsController);
-router.post('/pay-dues', authMiddleware, requireRestaurant, payRestaurantDuesController);
-router.post('/pay-dues/order', authMiddleware, requireRestaurant, createDuesOrderController);
-router.post('/pay-dues/verify', authMiddleware, requireRestaurant, verifyDuesPaymentController);
 router.post(
     '/profile/profile-image',
     authMiddleware,
@@ -227,5 +219,4 @@ router.patch('/my-offers/:id/status', authMiddleware, requireRestaurant, updateR
 router.delete('/my-offers/:id', authMiddleware, requireRestaurant, deleteRestaurantOfferController);
 
 export default router;
-
 

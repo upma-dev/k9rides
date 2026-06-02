@@ -101,49 +101,6 @@ const restaurantRegisterSchema = z.object({
     ifscCode: z.string().optional(),
     accountHolderName: z.string().optional(),
     accountType: z.string().optional(),
-    subscriptionPlan: z
-        .string()
-        .optional()
-        .refine((val) => !val || ['elite', 'pro', '4999', '9999'].includes(val), 'Invalid subscription plan'),
-    subscriptionAmount: z
-        .string()
-        .optional()
-        .transform((val) => {
-            const n = Number(String(val || '').trim());
-            return Number.isFinite(n) ? n : 0;
-        }),
-    subscriptionPaidAmount: z
-        .string()
-        .optional()
-        .transform((val) => {
-            const n = Number(String(val || '').trim());
-            return Number.isFinite(n) ? n : 0;
-        }),
-    subscriptionDueAmount: z
-        .string()
-        .optional()
-        .transform((val) => {
-            const n = Number(String(val || '').trim());
-            return Number.isFinite(n) ? n : 0;
-        }),
-    onboardingFeeAmount: z
-        .string()
-        .optional()
-        .transform((val) => {
-            const n = Number(String(val || '').trim());
-            return Number.isFinite(n) ? n : 0;
-        }),
-    onboardingFeePaid: z
-        .string()
-        .optional()
-        .transform((val) => {
-            const normalized = String(val || '').trim().toLowerCase();
-            return normalized === 'true' || normalized === '1';
-        }),
-    paymentType: z.string().optional(),
-    razorpayOrderId: z.string().optional(),
-    razorpayPaymentId: z.string().optional(),
-    razorpaySignature: z.string().optional(),
     // Allow pre-uploaded image URLs for background upload flow
     profileImage: z.string().optional(),
     panImage: z.string().optional(),
@@ -174,4 +131,3 @@ export const validateRestaurantRegisterDto = (body) => {
         gstRegistered: data.gstRegistered ?? false
     };
 };
-

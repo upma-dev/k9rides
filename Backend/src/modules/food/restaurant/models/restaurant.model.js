@@ -253,53 +253,6 @@ const restaurantSchema = new mongoose.Schema(
       type: String,
       trim: true,
     },
-    onboardingFeePaid: {
-      type: Boolean,
-      default: false,
-    },
-    onboardingFeePaidAt: {
-      type: Date,
-    },
-    onboardingFeePaymentMethod: {
-      type: String,
-      trim: true,
-    },
-    onboardingFeePaymentOrderId: {
-      type: String,
-      trim: true,
-    },
-    onboardingFeePaymentId: {
-      type: String,
-      trim: true,
-    },
-    onboardingFeePaymentSignature: {
-      type: String,
-      trim: true,
-    },
-    subscriptionPlan: {
-      type: String,
-      enum: ['4999', '9999', 'elite', 'pro'],
-    },
-    subscriptionAmount: {
-      type: Number,
-      default: 0,
-    },
-    subscriptionPaidAmount: {
-      type: Number,
-      default: 0,
-    },
-    subscriptionDueAmount: {
-      type: Number,
-      default: 0,
-    },
-    subscriptionStatus: {
-      type: String,
-      enum: ['due', 'paid'],
-      default: 'due',
-    },
-    subscriptionValidTill: {
-      type: Date,
-    },
   },
   {
     collection: "food_restaurants",

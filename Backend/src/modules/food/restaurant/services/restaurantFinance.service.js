@@ -68,7 +68,7 @@ export async function getRestaurantFinance(restaurantId, query = {}) {
 
     // Fetch restaurant profile for header display.
     const restaurant = await FoodRestaurant.findById(rid)
-        .select('restaurantName addressLine1 addressLine2 area city state pincode location subscriptionDueAmount subscriptionStatus')
+        .select('restaurantName addressLine1 addressLine2 area city state pincode location')
         .lean();
 
     const address =
@@ -143,10 +143,6 @@ export async function getRestaurantFinance(restaurantId, query = {}) {
         { $group: { _id: null, total: { $sum: '$amount' } } }
     ]);
     const totalPendingWithdrawals = Number(pendingWithdrawalsAgg?.[0]?.total || 0);
-    const subscriptionDue = Math.max(0, Number(restaurant?.subscriptionDueAmount || 0));
-    // Calculate final balance for withdrawal.
-    // NOTE: We no longer automatically deduct subscriptionDue here per user request ("direct deduct na ho").
-    // We will instead block the withdrawal in the controller if subscriptionDue > 0.
     const availableBalance = Math.max(0, globalEstimatedPayout - totalPendingWithdrawals);
 
     const currentCycle = {
@@ -154,8 +150,8 @@ export async function getRestaurantFinance(restaurantId, query = {}) {
         end: { ...nowWindow.endMeta },
         totalEarnings: currentCycleEstimatedPayout, // We still show current cycle earnings label
         totalWithdrawn: totalPendingWithdrawals,
-        estimatedPayout: availableBalance, // This is what UI shows as "Total Earnings"
-        netAvailable: Math.max(0, availableBalance - subscriptionDue), // Net amount that is ACTUALLY withdrawable
+        estimatedPayout: availableBalance,
+        netAvailable: availableBalance,
         totalOrders: currentCycleOrders.length,
         payoutDate: null,
         orders: currentCycleOrders
@@ -218,14 +214,11 @@ export async function getRestaurantFinance(restaurantId, query = {}) {
         restaurant: {
             name: restaurant?.restaurantName || '',
             restaurantId: restaurant?._id ? `REST${restaurant._id.toString().slice(-6).padStart(6, '0')}` : 'N/A',
-            address,
-            subscriptionDueAmount: Number(restaurant?.subscriptionDueAmount || 0),
-            subscriptionStatus: restaurant?.subscriptionStatus || 'paid'
+            address
         },
         currentCycle,
         invoiceSummary,
         pastCycles: pastCyclesResult
     };
 }
-
 
