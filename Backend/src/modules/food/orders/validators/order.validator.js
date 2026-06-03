@@ -68,6 +68,8 @@ export function validateCalculateOrderDto(body) {
     const schema = z.object({
         items: z.array(orderItemSchema).min(1, 'At least one item required'),
         restaurantId: z.string().min(1, 'Restaurant id required'),
+        address: addressSchema.optional(),
+        deliveryAddress: addressSchema.optional(),
         deliveryAddressId: z.string().optional(),
         deliveryAddress: calculateAddressSchema.optional(),
         address: calculateAddressSchema.optional(),
@@ -82,7 +84,14 @@ export function validateCalculateOrderDto(body) {
         const msg = path ? `${path}: ${first?.message || 'Validation failed'}` : first?.message || 'Validation failed';
         throw new ValidationError(msg);
     }
-    return result.data;
+    const data = result.data;
+    if (data.deliveryAddress && !data.address) {
+        return {
+            ...data,
+            address: data.deliveryAddress
+        };
+    }
+    return data;
 }
 
 export function validateCreateOrderDto(body) {
