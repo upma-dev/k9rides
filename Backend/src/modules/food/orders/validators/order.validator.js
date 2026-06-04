@@ -64,6 +64,19 @@ const pricingSchema = z.object({
     currency: z.string().optional()
 });
 
+function zodMessage(error) {
+    const first = error?.issues?.[0] || error?.errors?.[0];
+    const path = first?.path?.length ? first.path.join('.') : '';
+    return path ? `${path}: ${first?.message || 'Validation failed'}` : first?.message || 'Validation failed';
+}
+
+function normalizePaymentMethod(value) {
+    const method = String(value || '').trim().toLowerCase();
+    if (['cod', 'cash_on_delivery'].includes(method)) return 'cash';
+    if (['online', 'online_payment', 'digital', 'upi', 'card'].includes(method)) return 'razorpay';
+    return method;
+}
+
 export function validateCalculateOrderDto(body) {
     const schema = z.object({
         items: z.array(orderItemSchema).min(1, 'At least one item required'),
@@ -79,10 +92,7 @@ export function validateCalculateOrderDto(body) {
     });
     const result = schema.safeParse(body);
     if (!result.success) {
-        const first = result.error.issues?.[0];
-        const path = first?.path?.length ? first.path.join('.') : '';
-        const msg = path ? `${path}: ${first?.message || 'Validation failed'}` : first?.message || 'Validation failed';
-        throw new ValidationError(msg);
+        throw new ValidationError(zodMessage(result.error));
     }
     const data = result.data;
     if (data.deliveryAddress && !data.address) {
@@ -107,13 +117,15 @@ export function validateCreateOrderDto(body) {
         note: z.string().optional(),
         sendCutlery: z.boolean().optional(),
         // 'razorpay_qr' means COD-style flow, but payment is collected via Razorpay QR at delivery.
-        paymentMethod: z.enum(['cash', 'razorpay', 'razorpay_qr', 'card', 'wallet']),
+        paymentMethod: z.preprocess(
+            normalizePaymentMethod,
+            z.enum(['cash', 'razorpay', 'razorpay_qr', 'wallet'])
+        ),
         zoneId: z.string().nullable().optional()
     });
     const result = schema.safeParse(body);
     if (!result.success) {
-        const msg = result.error.errors?.[0]?.message || 'Validation failed';
-        throw new ValidationError(msg);
+        throw new ValidationError(zodMessage(result.error));
     }
     return result.data;
 }
@@ -127,8 +139,7 @@ export function validateVerifyPaymentDto(body) {
     });
     const result = schema.safeParse(body);
     if (!result.success) {
-        const msg = result.error.errors?.[0]?.message || 'Validation failed';
-        throw new ValidationError(msg);
+        throw new ValidationError(zodMessage(result.error));
     }
     return result.data;
 }
@@ -139,7 +150,7 @@ export function validateCancelOrderDto(body) {
     });
     const result = schema.safeParse(body || {});
     if (!result.success) {
-        throw new ValidationError(result.error.errors?.[0]?.message || 'Validation failed');
+        throw new ValidationError(zodMessage(result.error));
     }
     return result.data;
 }
@@ -158,7 +169,7 @@ export function validateOrderStatusDto(body) {
     });
     const result = schema.safeParse(body);
     if (!result.success) {
-        throw new ValidationError(result.error.errors?.[0]?.message || 'Validation failed');
+        throw new ValidationError(zodMessage(result.error));
     }
     return result.data;
 }
@@ -169,7 +180,7 @@ export function validateAssignDeliveryDto(body) {
     });
     const result = schema.safeParse(body);
     if (!result.success) {
-        throw new ValidationError(result.error.errors?.[0]?.message || 'Validation failed');
+        throw new ValidationError(zodMessage(result.error));
     }
     return result.data;
 }
@@ -180,7 +191,7 @@ export function validateDispatchSettingsDto(body) {
     });
     const result = schema.safeParse(body);
     if (!result.success) {
-        throw new ValidationError(result.error.errors?.[0]?.message || 'Validation failed');
+        throw new ValidationError(zodMessage(result.error));
     }
     return result.data;
 }
@@ -194,7 +205,7 @@ export function validateOrderRatingsDto(body) {
     });
     const result = schema.safeParse(body || {});
     if (!result.success) {
-        throw new ValidationError(result.error.errors?.[0]?.message || 'Validation failed');
+        throw new ValidationError(zodMessage(result.error));
     }
     return result.data;
 }

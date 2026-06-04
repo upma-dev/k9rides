@@ -1,7 +1,7 @@
 import mongoose from 'mongoose';
 import { ValidationError } from '../../../../core/auth/errors.js';
 import { FoodUserWallet } from '../models/userWallet.model.js';
-import { createRazorpayOrder, getRazorpayKeyId, isRazorpayConfigured, verifyPaymentSignature } from '../../orders/helpers/razorpay.helper.js';
+import { createRazorpayCheckoutOrder, isRazorpayConfigured, verifyPaymentSignature } from '../../orders/helpers/razorpay.helper.js';
 
 const ensureWallet = async (userId) => {
     const id = String(userId || '');
@@ -74,29 +74,16 @@ export const createWalletTopupOrder = async (userId, amountInr) => {
     const amountPaise = Math.round(amount * 100);
 
     if (!isRazorpayConfigured()) {
-        // Dev fallback: return a compatible shape without writing to DB.
-        const orderId = `order_dev_${Date.now()}`;
-        return {
-            razorpay: {
-                key: getRazorpayKeyId() || 'rzp_test_dummy',
-                orderId,
-                amount: amountPaise,
-                currency: 'INR'
-            }
-        };
+        throw new ValidationError('Razorpay payment gateway is not configured');
     }
 
     const receipt = `wallet_topup_${String(userId).slice(-8)}_${Date.now()}`;
-    const order = await createRazorpayOrder(amountPaise, 'INR', receipt);
-
-    return {
-        razorpay: {
-            key: getRazorpayKeyId(),
-            orderId: String(order.id),
-            amount: Number(order.amount) || amountPaise,
-            currency: order.currency || 'INR'
-        }
-    };
+    try {
+        const razorpay = await createRazorpayCheckoutOrder(amountPaise, 'INR', receipt);
+        return { razorpay };
+    } catch (error) {
+        throw new ValidationError(error?.message || 'Payment gateway error');
+    }
 };
 
 export const verifyWalletTopupPayment = async (userId, payload) => {
@@ -116,10 +103,11 @@ export const verifyWalletTopupPayment = async (userId, payload) => {
         return { wallet: await getUserWallet(userId) };
     }
 
-    // If razorpay not configured (dev), accept and credit wallet.
-    const ok = isRazorpayConfigured()
-        ? verifyPaymentSignature(orderId, paymentId, signature)
-        : true;
+    if (!isRazorpayConfigured()) {
+        throw new ValidationError('Razorpay payment gateway is not configured');
+    }
+
+    const ok = verifyPaymentSignature(orderId, paymentId, signature);
     if (!ok) {
         throw new ValidationError('Payment verification failed');
     }
@@ -129,8 +117,8 @@ export const verifyWalletTopupPayment = async (userId, payload) => {
         type: 'addition',
         amount,
         status: 'Completed',
-        description: isRazorpayConfigured() ? 'Wallet top-up' : 'Wallet top-up (dev)',
-        metadata: { source: 'wallet_topup', mode: isRazorpayConfigured() ? 'razorpay' : 'dev' },
+        description: 'Wallet top-up',
+        metadata: { source: 'wallet_topup', mode: 'razorpay' },
         razorpayOrderId: orderId,
         razorpayPaymentId: paymentId,
         razorpaySignature: signature
@@ -187,4 +175,3 @@ export const refundWalletBalance = async (userId, amountInr, description = 'Orde
 
     return { wallet: await getUserWallet(userId) };
 };
-

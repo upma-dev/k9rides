@@ -79,6 +79,8 @@ const getStoredTokenByRole = (role) => {
       ? [
           getSessionItem('driverToken'),
           getSessionItem('token'),
+          localStorage.getItem('driverToken'),
+          localStorage.getItem('token'),
         ]
       : [
           normalizedRole === 'admin' ? localStorage.getItem('admin_accessToken') : null,

@@ -147,7 +147,9 @@ const getTokenPayload = (token) => {
 
 const readLocalDriverToken = () => {
   const direct = readSessionValue("driverToken");
-  if (direct) return direct;
+  if (["driver", "owner", "bus_driver", "service_center", "service_center_staff"].includes(getTokenPayload(direct)?.role)) {
+    return direct;
+  }
 
   const fallback = readSessionValue("token");
   if (["driver", "owner", "bus_driver", "service_center", "service_center_staff"].includes(getTokenPayload(fallback)?.role)) {

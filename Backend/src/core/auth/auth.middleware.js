@@ -1,6 +1,7 @@
 import { verifyAccessToken } from './token.util.js';
 import { sendError } from '../../utils/response.js';
 import { FoodUser } from '../users/user.model.js';
+import mongoose from 'mongoose';
 
 export const requireAdmin = (req, res, next) => {
     if (req.user?.role !== 'ADMIN') {
@@ -19,18 +20,23 @@ export const authMiddleware = (req, res, next) => {
 
     try {
         const decoded = verifyAccessToken(token);
+        const userId = decoded.userId || decoded.sub || '';
+        const role = String(decoded.role || '').toUpperCase();
         req.user = {
-            userId: decoded.userId,
-            role: decoded.role
+            userId,
+            role
         };
-        if (decoded.role === 'USER') {
+        if (role === 'USER') {
+            if (!mongoose.Types.ObjectId.isValid(userId)) {
+                return sendError(res, 401, 'Invalid user token');
+            }
             // Enforce active status in real-time - deactivated users are logged out on next request.
-            FoodUser.findById(decoded.userId).select('isActive').lean().then((doc) => {
+            FoodUser.findById(userId).select('isActive').lean().then((doc) => {
                 if (!doc || doc.isActive === false) {
-                    return sendError(res, 401, 'User account is deactivated');
+                    return sendError(res, 401, doc ? 'User account is deactivated' : 'User account not found');
                 }
                 next();
-            }).catch(() => sendError(res, 401, 'Authentication failed'));
+            }).catch(() => sendError(res, 401, 'Invalid user token'));
             return;
         }
         return next();

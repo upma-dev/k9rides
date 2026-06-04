@@ -1,7 +1,7 @@
 import mongoose from 'mongoose';
 import { ApiError } from '../../../../../utils/ApiError.js';
 import { ServiceLocation } from '../../models/ServiceLocation.js';
-import { ensureAdminState } from '../../services/adminService.js';
+import { ensureAdminState, listUsers as listTaxiAdminUsers } from '../../services/adminService.js';
 import { User } from '../../../user/models/User.js';
 import { Banner } from '../models/Banner.js';
 import { Notification } from '../models/Notification.js';
@@ -69,6 +69,25 @@ const normalizeTransportType = (value, fallback = 'all') => {
   return normalized || fallback;
 };
 
+const resolveAudienceType = (payloadValue, existing = null) => {
+  const normalized = normalizeText(payloadValue).toLowerCase().replace(/\s+/g, '_');
+
+  if (['all', 'specific_user', 'new_users'].includes(normalized)) {
+    return normalized;
+  }
+
+  const existingAudience = normalizeText(existing?.audience_type).toLowerCase().replace(/\s+/g, '_');
+  if (['all', 'specific_user', 'new_users'].includes(existingAudience)) {
+    return existingAudience;
+  }
+
+  if (existing?.user_specific === true) {
+    return 'specific_user';
+  }
+
+  return 'all';
+};
+
 const toObjectIdOrThrow = (value, fieldName = 'id') => {
   if (!mongoose.isValidObjectId(value)) {
     throw new ApiError(400, `Invalid ${fieldName}`);
@@ -104,6 +123,7 @@ const serializePromoCode = (item) => ({
   user_id: item.user_id || '',
   user_name: item.user_name || '',
   user_specific: item.user_specific === true,
+  audience_type: resolveAudienceType(item.audience_type, item),
   transport_type: item.transport_type || 'all',
   code: item.code || '',
   minimum_trip_amount: Number(item.minimum_trip_amount || 0),
@@ -241,8 +261,12 @@ const ensurePromoCodeUnique = async (code, ignoreId = null) => {
 const normalizePromoPayload = async (payload, existing = null) => {
   const serviceLocationData = await normalizeServiceLocationIds(payload, existing);
   const state = await ensureAdminState();
-  const userSpecific = normalizeBoolean(payload.user_specific, existing?.user_specific ?? false);
-  const userId = normalizeText(payload.user_id ?? existing?.user_id);
+  const audienceType = resolveAudienceType(
+    payload.audience_type ?? (payload.user_specific === true ? 'specific_user' : payload.user_specific === false ? 'all' : ''),
+    existing,
+  );
+  const userSpecific = audienceType === 'specific_user';
+  const userId = userSpecific ? normalizeText(payload.user_id ?? existing?.user_id) : '';
   const realUser = userId
     ? await User.findById(toObjectIdOrThrow(userId, 'user id')).select('_id name phone').lean()
     : null;
@@ -251,7 +275,7 @@ const normalizePromoPayload = async (payload, existing = null) => {
     : null;
   const user = realUser || legacyUser;
 
-  if (userSpecific && (payload.user_id !== undefined || !existing || existing?.user_specific !== true)) {
+  if (userSpecific && (payload.user_id !== undefined || !existing || resolveAudienceType(existing?.audience_type, existing) !== 'specific_user')) {
     if (!userId) {
       throw new ApiError(400, 'User is required');
     }
@@ -305,6 +329,7 @@ const normalizePromoPayload = async (payload, existing = null) => {
     user_id: userSpecific ? user?._id || userId : '',
     user_name: userSpecific ? user?.name || '' : '',
     user_specific: userSpecific,
+    audience_type: audienceType,
     transport_type: transportType,
     code,
     minimum_trip_amount: minimumTripAmount,
@@ -660,16 +685,6 @@ export const listServiceLocationsForPromotions = async () => {
 };
 
 export const listAdminUsersForPromotions = async () => {
-  const users = await User.find()
-    .sort({ createdAt: -1 })
-    .select('name phone createdAt updatedAt')
-    .lean();
-
-  return users.map((user) => ({
-    _id: user._id,
-    name: user.name || '',
-    phone: user.phone || '',
-    createdAt: user.createdAt,
-    updatedAt: user.updatedAt,
-  }));
+  const response = await listTaxiAdminUsers({ page: 1, limit: 5000, search: '' });
+  return Array.isArray(response?.results) ? response.results : [];
 };

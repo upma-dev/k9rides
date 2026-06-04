@@ -16,9 +16,8 @@ import { FoodTransaction } from '../models/foodTransaction.model.js';
 import { FoodSupportTicket } from '../../user/models/supportTicket.model.js';
 import { config } from '../../../../config/env.js';
 import {
-    createRazorpayOrder,
+    createRazorpayCheckoutOrder,
     verifyPaymentSignature,
-    getRazorpayKeyId,
     isRazorpayConfigured,
     initiateRazorpayRefund
 } from '../helpers/razorpay.helper.js';
@@ -117,8 +116,7 @@ export async function createOrder(userId, dto) {
         : undefined,
     };
 
-    const paymentMethod =
-      dto.paymentMethod === "card" ? "razorpay" : dto.paymentMethod;
+    const paymentMethod = dto.paymentMethod === "card" ? "razorpay" : dto.paymentMethod;
     const isCash = paymentMethod === "cash";
     const isWallet = paymentMethod === "wallet";
 
@@ -188,6 +186,10 @@ export async function createOrder(userId, dto) {
     );
 
     normalizedPricing.total = Math.round(computedTotal * 100) / 100;
+
+    if (paymentMethod === "razorpay" && !isRazorpayConfigured()) {
+      throw new ValidationError("Razorpay payment gateway is not configured");
+    }
 
     const payment = {
       method: paymentMethod,
@@ -268,19 +270,11 @@ export async function createOrder(userId, dto) {
 
     let razorpayPayload = null;
 
-    if (paymentMethod === "razorpay" && isRazorpayConfigured()) {
+    if (paymentMethod === "razorpay") {
       const amountPaise = Math.round((normalizedPricing.total || 0) * 100);
-      if (amountPaise < 100)
-        throw new ValidationError("Amount too low for online payment");
       try {
-        const rzOrder = await createRazorpayOrder(amountPaise, "INR", order._id.toString());
-        razorpayPayload = {
-          key: getRazorpayKeyId(),
-          orderId: rzOrder.id,
-          amount: rzOrder.amount,
-          currency: rzOrder.currency || "INR",
-        };
-        payment.razorpay = { orderId: rzOrder.id, paymentId: "", signature: "" };
+        razorpayPayload = await createRazorpayCheckoutOrder(amountPaise, "INR", order._id.toString());
+        payment.razorpay = { orderId: razorpayPayload.orderId, paymentId: "", signature: "" };
         payment.status = "created";
         // Update order payment state before saving
         order.payment = payment;
@@ -1439,5 +1433,4 @@ export async function deleteOrderAdmin(orderId, adminId) {
     orderMongoId: String(order._id),
   };
 }
-
 

@@ -90,17 +90,43 @@ function getModuleFromConfig(config) {
   return getModuleFromUrl(config?.url);
 }
 
+function decodeJwtPayload(token) {
+  try {
+    const payload = String(token || "").split(".")[1];
+    if (!payload) return null;
+    const normalized = payload.replace(/-/g, "+").replace(/_/g, "/");
+    const padded = normalized.padEnd(normalized.length + ((4 - normalized.length % 4) % 4), "=");
+    return JSON.parse(atob(padded));
+  } catch {
+    return null;
+  }
+}
+
+function isTokenForModule(token, module) {
+  const payload = decodeJwtPayload(token);
+  if (!payload) return false;
+  const role = String(payload.role || "").toLowerCase();
+
+  if (module === "user") return role === "user" && Boolean(payload.userId);
+  if (module === "admin") return role === "admin" && Boolean(payload.userId);
+  if (module === "restaurant") return role === "restaurant" && Boolean(payload.userId);
+  if (module === "delivery") return ["delivery_partner", "delivery"].includes(role) && Boolean(payload.userId);
+
+  return true;
+}
+
 function getAccessToken(config) {
   const module = getModuleFromConfig(config);
   const key = `${module}_accessToken`;
   try {
     // 1. Try module-specific token first
     const moduleToken = localStorage.getItem(key);
-    if (moduleToken) return moduleToken;
+    if (moduleToken && isTokenForModule(moduleToken, module)) return moduleToken;
     
-    // 2. Fallback to generic token only for non-admin modules
+    // 2. Fallback to generic token only if it matches this Food module shape.
     if (module !== "admin") {
-      return localStorage.getItem("accessToken") || null;
+      const genericToken = localStorage.getItem("accessToken");
+      return genericToken && isTokenForModule(genericToken, module) ? genericToken : null;
     }
     return null;
   } catch {

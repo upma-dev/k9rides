@@ -7,7 +7,7 @@ import { FoodDeliveryPartner } from '../models/deliveryPartner.model.js';
 import { DeliveryBonusTransaction } from '../../admin/models/deliveryBonusTransaction.model.js';
 import { getDeliveryCashLimitSettings } from '../../admin/services/admin.service.js';
 import { ValidationError } from '../../../../core/auth/errors.js';
-import { createRazorpayOrder, getRazorpayKeyId, isRazorpayConfigured, verifyPaymentSignature } from '../../orders/helpers/razorpay.helper.js';
+import { createRazorpayCheckoutOrder, isRazorpayConfigured, verifyPaymentSignature } from '../../orders/helpers/razorpay.helper.js';
 
 /**
  * Enhanced wallet fetch for delivery partners.
@@ -221,25 +221,15 @@ export const createDeliveryCashDepositOrder = async (deliveryPartnerId, amountIn
     const receipt = `cash_deposit_${String(deliveryPartnerId).slice(-8)}_${Date.now()}`;
 
     if (!isRazorpayConfigured()) {
-        return {
-            razorpay: {
-                key: getRazorpayKeyId() || 'rzp_test_dummy',
-                orderId: `order_dev_${Date.now()}`,
-                amount: amountPaise,
-                currency: 'INR'
-            }
-        };
+        throw new ValidationError('Razorpay payment gateway is not configured');
     }
 
-    const order = await createRazorpayOrder(amountPaise, 'INR', receipt);
-    return {
-        razorpay: {
-            key: getRazorpayKeyId(),
-            orderId: String(order.id),
-            amount: Number(order.amount) || amountPaise,
-            currency: order.currency || 'INR'
-        }
-    };
+    try {
+        const razorpay = await createRazorpayCheckoutOrder(amountPaise, 'INR', receipt);
+        return { razorpay };
+    } catch (error) {
+        throw new ValidationError(error?.message || 'Payment gateway error');
+    }
 };
 
 export const verifyDeliveryCashDepositPayment = async (deliveryPartnerId, payload = {}) => {
@@ -270,9 +260,11 @@ export const verifyDeliveryCashDepositPayment = async (deliveryPartnerId, payloa
         throw new ValidationError('Deposit amount cannot exceed cash in hand');
     }
 
-    const isValid = isRazorpayConfigured()
-        ? verifyPaymentSignature(orderId, paymentId, signature)
-        : true;
+    if (!isRazorpayConfigured()) {
+        throw new ValidationError('Razorpay payment gateway is not configured');
+    }
+
+    const isValid = verifyPaymentSignature(orderId, paymentId, signature);
 
     if (!isValid) {
         throw new ValidationError('Payment verification failed');
@@ -284,7 +276,7 @@ export const verifyDeliveryCashDepositPayment = async (deliveryPartnerId, payloa
             {
                 $set: {
                     amount,
-                    paymentMethod: isRazorpayConfigured() ? 'razorpay' : 'cash',
+                    paymentMethod: 'razorpay',
                     status: 'Completed',
                     razorpayOrderId: orderId,
                     razorpayPaymentId: paymentId
@@ -295,7 +287,7 @@ export const verifyDeliveryCashDepositPayment = async (deliveryPartnerId, payloa
         : await FoodDeliveryCashDeposit.create({
             deliveryPartnerId,
             amount,
-            paymentMethod: isRazorpayConfigured() ? 'razorpay' : 'cash',
+            paymentMethod: 'razorpay',
             status: 'Completed',
             razorpayOrderId: orderId,
             razorpayPaymentId: paymentId

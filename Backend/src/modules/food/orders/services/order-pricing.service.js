@@ -62,12 +62,19 @@ async function resolveDistanceRule(distanceKm) {
   const rules = await FoodDeliveryCommissionRule.find({ status: { $ne: false } }).lean();
   if (!rules.length) return null;
   const d = Number(distanceKm);
-  const matched = rules.find((r) => {
+  const sorted = [...rules].sort((a, b) => Number(a.minDistance || 0) - Number(b.minDistance || 0));
+  const matched = sorted.find((r) => {
     const min = Number(r.minDistance || 0);
     const max = r.maxDistance == null ? null : Number(r.maxDistance);
     return d >= min && (max == null || d < max);
   });
-  return matched || null;
+  if (matched) return matched;
+
+  const lowerRule = [...sorted]
+    .reverse()
+    .find((r) => d >= Number(r.minDistance || 0));
+
+  return lowerRule || sorted[0] || null;
 }
 
 export async function calculateOrderPricing(userId, dto) {
