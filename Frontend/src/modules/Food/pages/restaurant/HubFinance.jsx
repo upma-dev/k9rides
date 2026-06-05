@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion"
 import { Bell, Menu, ChevronDown, Calendar, Download, FileText, Wallet, X } from "lucide-react"
 import BottomNavOrders from "@food/components/restaurant/BottomNavOrders"
 import { restaurantAPI } from "@food/api"
+import { toast } from "sonner"
 const debugLog = (...args) => {}
 const debugWarn = (...args) => {}
 const debugError = (...args) => {}
@@ -215,6 +216,28 @@ export default function HubFinance() {
       hour12: true
     })
   }
+
+  const withdrawableAmount = Number(
+    financeData?.currentCycle?.netAvailable ??
+    (financeData?.currentCycle?.estimatedPayout || 0)
+  ) || 0
+  const minimumWithdrawalAmount = Number(financeData?.currentCycle?.minimumWithdrawalAmount || 0) || 0
+  const parsedWithdrawalAmount = Number(withdrawalAmount)
+  const hasWithdrawalAmount = withdrawalAmount !== ""
+  const isAmountBelowMinimum =
+    hasWithdrawalAmount &&
+    Number.isFinite(parsedWithdrawalAmount) &&
+    parsedWithdrawalAmount > 0 &&
+    parsedWithdrawalAmount < minimumWithdrawalAmount
+  const isAmountAboveWithdrawable =
+    hasWithdrawalAmount &&
+    Number.isFinite(parsedWithdrawalAmount) &&
+    parsedWithdrawalAmount > withdrawableAmount
+  const isWithdrawalAmountInvalid =
+    !Number.isFinite(parsedWithdrawalAmount) ||
+    parsedWithdrawalAmount <= 0 ||
+    isAmountBelowMinimum ||
+    isAmountAboveWithdrawable
 
   // Parse date range string to extract start and end dates
   const parseDateRange = (dateRangeStr) => {
@@ -1235,30 +1258,46 @@ export default function HubFinance() {
                   </button>
                 </div>
                 
-                <div className="mb-4">
-                  <div className="flex flex-col gap-1 mb-3">
-                    <p className="text-sm text-gray-500">
-                      Total Earnings: <span className="font-medium text-gray-700">{formatCurrency(financeData?.currentCycle?.estimatedPayout || 0)}</span>
-                    </p>
-                    <p className="text-sm text-gray-900 font-bold">
-                      Available to Withdraw: {formatCurrency(financeData?.currentCycle?.netAvailable ?? (financeData?.currentCycle?.estimatedPayout || 0))}
-                    </p>
+                <div className="mb-5">
+                  <div className="grid grid-cols-2 gap-3 mb-4">
+                    <div className="rounded-xl border border-gray-200 bg-gray-50 px-4 py-3">
+                      <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">
+                        Available
+                      </p>
+                      <p className="mt-1 text-base font-bold text-gray-900">
+                        {formatCurrency(withdrawableAmount)}
+                      </p>
+                    </div>
+                    <div className="rounded-xl border border-gray-200 bg-gray-50 px-4 py-3">
+                      <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">
+                        Minimum
+                      </p>
+                      <p className="mt-1 text-base font-bold text-gray-900">
+                        {formatCurrency(minimumWithdrawalAmount)}
+                      </p>
+                    </div>
                   </div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Enter Amount to Withdraw
+
+                  <label className="block text-sm font-semibold text-gray-800 mb-2">
+                    Enter withdrawal amount
                   </label>
                   <input
                     type="number"
-                    min="0.01"
-                      max={financeData?.currentCycle?.netAvailable ?? (financeData?.currentCycle?.estimatedPayout || 0)}
+                    min={Math.max(minimumWithdrawalAmount, 0.01)}
+                      max={withdrawableAmount}
                       step="0.01"
                       value={withdrawalAmount}
                       onChange={(e) => setWithdrawalAmount(e.target.value)}
                       placeholder="0.00"
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent outline-none"
+                      className="w-full rounded-xl border border-gray-300 px-4 py-3 text-base text-gray-900 focus:ring-2 focus:ring-black focus:border-transparent outline-none"
                     />
-                    {withdrawalAmount && parseFloat(withdrawalAmount) > (financeData?.currentCycle?.netAvailable ?? (financeData?.currentCycle?.estimatedPayout || 0)) && (
-                      <p className="text-sm text-red-600 mt-1">Amount exceeds your withdrawable limit</p>
+                    {isAmountBelowMinimum && (
+                      <p className="text-sm text-red-600 mt-2">
+                        Minimum withdrawal amount is {formatCurrency(minimumWithdrawalAmount)}
+                      </p>
+                    )}
+                    {isAmountAboveWithdrawable && (
+                      <p className="text-sm text-red-600 mt-2">Amount exceeds your withdrawable limit</p>
                     )}
                 </div>
 
@@ -1268,15 +1307,19 @@ export default function HubFinance() {
                       setShowWithdrawalModal(false)
                       setWithdrawalAmount('')
                     }}
-                    className="flex-1 px-4 py-3 border border-gray-300 rounded-lg font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                    className="flex-1 rounded-xl border border-gray-300 px-4 py-3 font-medium text-gray-700 hover:bg-gray-50 transition-colors"
                   >
                     Cancel
                   </button>
                   <button
                     onClick={async () => {
-                      const amount = parseFloat(withdrawalAmount)
-                      if (!amount || amount <= 0) return
-                      if (amount > (financeData?.currentCycle?.estimatedPayout || 0)) return
+                      const amount = Number(withdrawalAmount)
+                      if (!Number.isFinite(amount) || amount <= 0) return
+                      if (amount < minimumWithdrawalAmount) {
+                        toast.error(`Minimum withdrawal amount is ${formatCurrency(minimumWithdrawalAmount)}`)
+                        return
+                      }
+                      if (amount > withdrawableAmount) return
                       
                       try {
                         setSubmittingWithdrawal(true)
@@ -1299,20 +1342,20 @@ export default function HubFinance() {
                               : []
                           setWithdrawalRequests(withdrawalList)
                         } else {
-                          console.error('Submission failed:', response.data?.message);
+                          toast.error(response.data?.message || 'Failed to submit withdrawal request')
                         }
                       } catch (error) {
                         debugError('Error submitting withdrawal request:', error)
                         if (error.response?.status !== 401) {
-                           const message = error.response?.data?.message || '';
-                           console.error('Withdrawal error:', message);
+                           const message = error.response?.data?.message || 'Failed to submit withdrawal request'
+                           toast.error(message)
                         }
                       } finally {
                         setSubmittingWithdrawal(false)
                       }
                     }}
-                    disabled={submittingWithdrawal || !withdrawalAmount || parseFloat(withdrawalAmount) <= 0 || parseFloat(withdrawalAmount) > (financeData?.currentCycle?.netAvailable ?? (financeData?.currentCycle?.estimatedPayout || 0))}
-                    className="flex-1 px-4 py-3 bg-black text-white rounded-lg font-medium hover:bg-gray-800 transition-all disabled:bg-gray-300 disabled:cursor-not-allowed shadow-lg"
+                    disabled={submittingWithdrawal || !hasWithdrawalAmount || isWithdrawalAmountInvalid}
+                    className="flex-1 rounded-xl bg-black px-4 py-3 font-medium text-white hover:bg-gray-800 transition-all disabled:bg-gray-300 disabled:cursor-not-allowed shadow-lg"
                   >
                     {submittingWithdrawal ? 'Submitting...' : 'Submit Request'}
                   </button>

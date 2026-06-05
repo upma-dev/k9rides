@@ -3,6 +3,7 @@ import { FoodOrder } from '../../orders/models/order.model.js';
 import { FoodTransaction } from '../../orders/models/foodTransaction.model.js';
 import { FoodRestaurant } from '../models/restaurant.model.js';
 import { FoodRestaurantWithdrawal } from '../models/foodRestaurantWithdrawal.model.js';
+import { getRestaurantWithdrawalSettings } from '../../admin/services/admin.service.js';
 
 function toTwoDigitYearString(dateObj) {
     const y = String(dateObj.getFullYear());
@@ -144,6 +145,8 @@ export async function getRestaurantFinance(restaurantId, query = {}) {
     ]);
     const totalPendingWithdrawals = Number(pendingWithdrawalsAgg?.[0]?.total || 0);
     const availableBalance = Math.max(0, globalEstimatedPayout - totalPendingWithdrawals);
+    const withdrawalSettings = await getRestaurantWithdrawalSettings();
+    const minimumWithdrawalAmount = Number(withdrawalSettings?.minimumWithdrawalAmount) || 0;
 
     const currentCycle = {
         start: { ...nowWindow.startMeta },
@@ -152,6 +155,7 @@ export async function getRestaurantFinance(restaurantId, query = {}) {
         totalWithdrawn: totalPendingWithdrawals,
         estimatedPayout: availableBalance,
         netAvailable: availableBalance,
+        minimumWithdrawalAmount,
         totalOrders: currentCycleOrders.length,
         payoutDate: null,
         orders: currentCycleOrders

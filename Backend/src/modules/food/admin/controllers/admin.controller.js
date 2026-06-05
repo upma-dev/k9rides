@@ -975,6 +975,24 @@ export async function updateDeliveryCashLimit(req, res, next) {
     }
 }
 
+export async function getRestaurantWithdrawalSetting(req, res, next) {
+    try {
+        const data = await adminService.getRestaurantWithdrawalSettings();
+        res.status(200).json({ success: true, message: 'Restaurant withdrawal setting fetched successfully', data });
+    } catch (error) {
+        next(error);
+    }
+}
+
+export async function updateRestaurantWithdrawalSetting(req, res, next) {
+    try {
+        const data = await adminService.upsertRestaurantWithdrawalSettings(req.body || {});
+        res.status(200).json({ success: true, message: 'Restaurant withdrawal setting updated successfully', data });
+    } catch (error) {
+        next(error);
+    }
+}
+
 // ----- Delivery Emergency Help (admin) -----
 export async function getEmergencyHelp(req, res, next) {
     try {

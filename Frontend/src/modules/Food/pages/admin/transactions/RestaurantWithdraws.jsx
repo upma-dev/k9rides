@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from "react"
-import { Search, Download, ChevronDown, Eye, Settings, Building, ArrowUpDown, FileText, FileSpreadsheet, Code, Check, Columns, CheckCircle, XCircle, Loader2 } from "lucide-react"
+import { Search, Download, ChevronDown, Eye, Settings, Building, ArrowUpDown, FileText, FileSpreadsheet, Code, CheckCircle, XCircle, Loader2, Wallet } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@food/components/ui/dropdown-menu"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@food/components/ui/dialog"
 import { exportTransactionsToExcel, exportTransactionsToPDF } from "@food/components/admin/transactions/transactionsExportUtils"
@@ -21,6 +21,9 @@ export default function RestaurantWithdraws() {
   const [processingAction, setProcessingAction] = useState(null)
   const [rejectionReason, setRejectionReason] = useState("")
   const [showRejectModal, setShowRejectModal] = useState(false)
+  const [minimumWithdrawalAmount, setMinimumWithdrawalAmount] = useState("")
+  const [loadingWithdrawalSetting, setLoadingWithdrawalSetting] = useState(true)
+  const [savingWithdrawalSetting, setSavingWithdrawalSetting] = useState(false)
   const [visibleColumns, setVisibleColumns] = useState({
     si: true,
     amount: true,
@@ -36,6 +39,10 @@ export default function RestaurantWithdraws() {
   useEffect(() => {
     fetchWithdrawals()
   }, [activeTab])
+
+  useEffect(() => {
+    fetchRestaurantWithdrawalSetting()
+  }, [])
 
   const fetchWithdrawals = async () => {
     try {
@@ -53,6 +60,59 @@ export default function RestaurantWithdraws() {
       toast.error('Failed to fetch withdrawal requests')
     } finally {
       setLoading(false)
+    }
+  }
+
+  const fetchRestaurantWithdrawalSetting = async () => {
+    try {
+      setLoadingWithdrawalSetting(true)
+      const response = await adminAPI.getRestaurantWithdrawalSetting()
+      const data = response?.data?.data || response?.data || {}
+      const nextAmount = data.minimumWithdrawalAmount
+      setMinimumWithdrawalAmount(
+        nextAmount !== undefined && nextAmount !== null ? String(nextAmount) : "0"
+      )
+    } catch (error) {
+      debugError("Error fetching restaurant withdrawal setting:", error)
+      toast.error(error.response?.data?.message || "Failed to load restaurant withdrawal setting")
+    } finally {
+      setLoadingWithdrawalSetting(false)
+    }
+  }
+
+  const handleWithdrawalSettingChange = (event) => {
+    const nextValue = event.target.value.replace(/[^\d]/g, "")
+    setMinimumWithdrawalAmount(nextValue)
+  }
+
+  const saveRestaurantWithdrawalSetting = async () => {
+    if (minimumWithdrawalAmount === "") {
+      toast.error("Minimum withdrawal amount is required")
+      return
+    }
+
+    const parsedAmount = Number(minimumWithdrawalAmount)
+    if (!Number.isInteger(parsedAmount) || parsedAmount < 0) {
+      toast.error("Minimum withdrawal amount must be a whole number greater than or equal to 0")
+      return
+    }
+
+    try {
+      setSavingWithdrawalSetting(true)
+      const response = await adminAPI.updateRestaurantWithdrawalSetting({
+        minimumWithdrawalAmount: parsedAmount,
+      })
+      const savedAmount =
+        response?.data?.data?.minimumWithdrawalAmount ??
+        response?.data?.minimumWithdrawalAmount ??
+        parsedAmount
+      setMinimumWithdrawalAmount(String(savedAmount))
+      toast.success("Restaurant withdrawal limit updated successfully")
+    } catch (error) {
+      debugError("Error saving restaurant withdrawal setting:", error)
+      toast.error(error.response?.data?.message || "Failed to update restaurant withdrawal limit")
+    } finally {
+      setSavingWithdrawalSetting(false)
     }
   }
 
@@ -238,9 +298,44 @@ export default function RestaurantWithdraws() {
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 mb-6">
-          <div className="flex items-center gap-3">
-            <Building className="w-5 h-5 text-blue-600" />
-            <h1 className="text-2xl font-bold text-slate-900">Restaurant Withdraw Transaction</h1>
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div className="flex items-center gap-3">
+              <Building className="w-5 h-5 text-blue-600" />
+              <h1 className="text-2xl font-bold text-slate-900">Restaurant Withdraw Transaction</h1>
+            </div>
+
+            <div className="flex items-center justify-start lg:justify-end">
+              <div className="flex items-center gap-2 rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 shadow-sm">
+                <div className="rounded-lg bg-white p-2 shadow-sm">
+                  <Wallet className="w-4 h-4 text-blue-600" />
+                </div>
+                <div className="min-w-[165px]">
+                  <p className="text-[11px] font-semibold uppercase tracking-wide text-blue-900">
+                    Restaurant Withdraw Min
+                  </p>
+                  <div className="mt-1.5 flex items-center gap-2">
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      pattern="[0-9]*"
+                      value={minimumWithdrawalAmount}
+                      onChange={handleWithdrawalSettingChange}
+                      placeholder={loadingWithdrawalSetting ? "Loading..." : "0"}
+                      disabled={loadingWithdrawalSetting || savingWithdrawalSetting}
+                      className="h-9 w-full rounded-lg border border-blue-200 bg-white px-3 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                    <button
+                      onClick={saveRestaurantWithdrawalSetting}
+                      disabled={loadingWithdrawalSetting || savingWithdrawalSetting}
+                      className="h-9 rounded-lg bg-blue-600 px-3 text-sm font-medium text-white hover:bg-blue-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                    >
+                      {savingWithdrawalSetting && <Loader2 className="w-4 h-4 animate-spin" />}
+                      Save
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 

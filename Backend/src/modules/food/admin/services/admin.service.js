@@ -19,6 +19,7 @@ import { FeedbackExperience } from '../models/feedbackExperience.model.js';
 import { FoodUser } from '../../../../core/users/user.model.js';
 import { FoodRefreshToken } from '../../../../core/refreshTokens/refreshToken.model.js';
 import { FoodDeliveryCashLimit } from '../models/deliveryCashLimit.model.js';
+import { FoodRestaurantWithdrawalSetting } from '../models/restaurantWithdrawalSetting.model.js';
 import { FoodDeliveryEmergencyHelp } from '../models/deliveryEmergencyHelp.model.js';
 import { FoodReferralSettings } from '../models/referralSettings.model.js';
 import { FoodReferralLog } from '../models/referralLog.model.js';
@@ -1986,6 +1987,42 @@ export async function upsertDeliveryCashLimitSettings(body = {}) {
     return {
         deliveryCashLimit: created.deliveryCashLimit,
         deliveryWithdrawalLimit: created.deliveryWithdrawalLimit
+    };
+}
+
+export async function getRestaurantWithdrawalSettings() {
+    const doc = await FoodRestaurantWithdrawalSetting.findOne({ isActive: true }).sort({ createdAt: -1 }).lean();
+    const settings = doc || { minimumWithdrawalAmount: 0, isActive: true };
+    return {
+        minimumWithdrawalAmount: Number(settings.minimumWithdrawalAmount) || 0
+    };
+}
+
+export async function upsertRestaurantWithdrawalSettings(body = {}) {
+    const rawAmount = body.minimumWithdrawalAmount;
+    const parsedAmount = Number(rawAmount);
+
+    if (!Number.isInteger(parsedAmount) || parsedAmount < 0) {
+        throw new ValidationError('Minimum withdrawal amount must be a whole number greater than or equal to 0');
+    }
+
+    const existing = await FoodRestaurantWithdrawalSetting.findOne({ isActive: true }).sort({ createdAt: -1 });
+
+    if (existing) {
+        existing.minimumWithdrawalAmount = parsedAmount;
+        await existing.save();
+        return {
+            minimumWithdrawalAmount: existing.minimumWithdrawalAmount
+        };
+    }
+
+    const created = await FoodRestaurantWithdrawalSetting.create({
+        minimumWithdrawalAmount: parsedAmount,
+        isActive: true
+    });
+
+    return {
+        minimumWithdrawalAmount: created.minimumWithdrawalAmount
     };
 }
 

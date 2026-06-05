@@ -135,6 +135,8 @@ router.patch('/business-settings', upload.fields([
 // ----- Delivery Cash Limit -----
 router.get('/delivery-cash-limit', adminController.getDeliveryCashLimit);
 router.patch('/delivery-cash-limit', adminController.updateDeliveryCashLimit);
+router.get('/restaurant-withdrawal-setting', adminController.getRestaurantWithdrawalSetting);
+router.patch('/restaurant-withdrawal-setting', adminController.updateRestaurantWithdrawalSetting);
 
 // ----- Delivery Emergency Help -----
 router.get('/delivery-emergency-help', adminController.getEmergencyHelp);

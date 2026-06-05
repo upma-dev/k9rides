@@ -856,6 +856,14 @@ export const adminAPI = {
     apiClient.patch("/food/admin/delivery-cash-limit", body ?? {}, {
       contextModule: "admin",
     }),
+  getRestaurantWithdrawalSetting: () =>
+    apiClient.get("/food/admin/restaurant-withdrawal-setting", {
+      contextModule: "admin",
+    }),
+  updateRestaurantWithdrawalSetting: (body) =>
+    apiClient.patch("/food/admin/restaurant-withdrawal-setting", body ?? {}, {
+      contextModule: "admin",
+    }),
 
   /** Delivery Emergency Help (admin) */
   getEmergencyHelp: () =>
