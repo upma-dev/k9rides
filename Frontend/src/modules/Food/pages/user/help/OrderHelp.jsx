@@ -147,7 +147,7 @@ export default function OrderHelp() {
       case "preparing":
         return "bg-primary-orange"
       case "outForDelivery":
-        return "bg-orange-500"
+        return "bg-primary-orange/50"
       case "delivered":
         return "bg-[#EB590E]"
       default:
@@ -192,7 +192,7 @@ export default function OrderHelp() {
 
   if (!order) {
     return (
-      <AnimatedPage className="min-h-screen bg-gradient-to-b from-yellow-50/30 via-white to-orange-50/20 p-4">
+      <AnimatedPage className="min-h-screen bg-gradient-to-b from-yellow-50/30 via-white to-primary-orange/5/20 p-4">
         <div className="max-w-4xl mx-auto">
           <Card>
             <CardContent className="py-12 text-center">
@@ -217,7 +217,7 @@ export default function OrderHelp() {
   }
 
   return (
-    <AnimatedPage className="min-h-screen bg-gradient-to-b from-yellow-50/30 via-white to-orange-50/20 dark:from-[#0a0a0a] dark:via-[#0a0a0a] dark:to-[#0a0a0a] p-4 md:p-6 lg:p-8">
+    <AnimatedPage className="min-h-screen bg-gradient-to-b from-yellow-50/30 via-white to-primary-orange/5/20 dark:from-[#0a0a0a] dark:via-[#0a0a0a] dark:to-[#0a0a0a] p-4 md:p-6 lg:p-8">
       <div className="max-w-md md:max-w-2xl lg:max-w-4xl xl:max-w-5xl mx-auto space-y-4 md:space-y-5 lg:space-y-6">
         {/* Header */}
         <ScrollReveal>
@@ -344,7 +344,7 @@ export default function OrderHelp() {
 
         {/* Quick Actions */}
         <ScrollReveal delay={0.3}>
-          <Card className="bg-gradient-to-br from-yellow-50 to-orange-50 border-yellow-200 shadow-lg">
+          <Card className="bg-gradient-to-br from-yellow-50 to-primary-orange/5 border-yellow-200 shadow-lg">
             <CardHeader className="p-4 md:p-5 lg:p-6">
               <CardTitle className="flex items-center gap-2 text-lg md:text-xl lg:text-2xl">
                 <HelpCircle className="h-4 w-4 md:h-5 md:w-5 text-primary-orange" />
@@ -408,7 +408,7 @@ export default function OrderHelp() {
             <CardContent className="space-y-4 md:space-y-5 lg:space-y-6 p-4 md:p-5 lg:p-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-5 lg:gap-6">
                 <div className="flex items-start gap-3 p-4 bg-muted/50 rounded-lg">
-                  <div className="p-2 bg-orange-100 rounded-lg">
+                  <div className="p-2 bg-primary-orange/10 rounded-lg">
                     <Phone className="h-5 w-5 text-[#EB590E]" />
                   </div>
                   <div>
@@ -425,7 +425,7 @@ export default function OrderHelp() {
                   </div>
                 </div>
                 <div className="flex items-start gap-3 p-4 bg-muted/50 rounded-lg">
-                  <div className="p-2 bg-orange-100 rounded-lg">
+                  <div className="p-2 bg-primary-orange/10 rounded-lg">
                     <Mail className="h-5 w-5 text-[#EB590E]" />
                   </div>
                   <div>
@@ -434,10 +434,10 @@ export default function OrderHelp() {
                       Include order {order.id} in subject
                     </p>
                     <a
-                      href={`mailto:support@K9 Rides.com?subject=Help with Order ${order.id}`}
+                      href={`mailto:support@k9rides.com?subject=Help with Order ${order.id}`}
                       className="text-sm text-primary hover:underline font-medium"
                     >
-                      support@K9 Rides.com
+                      support@k9rides.com
                     </a>
                   </div>
                 </div>

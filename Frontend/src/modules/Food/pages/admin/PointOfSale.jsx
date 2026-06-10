@@ -708,8 +708,8 @@ export default function PointOfSale() {
               {/* Restaurant Details */}
               <div className="bg-white rounded-lg shadow-sm border border-[#e3e6ef] p-6">
                 <div className="flex items-center gap-3 mb-4">
-                  <div className="p-2 bg-orange-100 rounded-lg">
-                    <Package className="w-5 h-5 text-orange-600" />
+                  <div className="p-2 bg-primary-orange/10 rounded-lg">
+                    <Package className="w-5 h-5 text-accent-orange" />
                   </div>
                   <h3 className="text-base font-semibold text-[#334257]">Restaurant Details</h3>
                 </div>

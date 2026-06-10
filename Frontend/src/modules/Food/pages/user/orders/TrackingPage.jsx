@@ -20,7 +20,7 @@ const TrackingPage = () => {
           <h2 className="text-2xl font-bold mb-3">Order placed</h2>
           <div className="flex items-center justify-center gap-2 bg-[#D94F0C] w-fit mx-auto px-4 py-2 rounded-full">
             <span className="text-sm font-medium">Food preparation will begin shortly</span>
-            <RefreshCcw className="w-4 h-4 text-orange-200" />
+            <RefreshCcw className="w-4 h-4 text-primary-orange/20" />
           </div>
         </div>
       </div>

@@ -359,7 +359,7 @@ const RentalDeposit = () => {
 
   return (
     <div className="min-h-screen bg-[linear-gradient(180deg,#F8FAFC_0%,#F3F4F6_38%,#EEF2F7_100%)] max-w-lg mx-auto font-sans pb-28 relative overflow-hidden">
-      <div className="absolute -top-16 right-[-40px] h-44 w-44 rounded-full bg-orange-100/60 blur-3xl pointer-events-none" />
+      <div className="absolute -top-16 right-[-40px] h-44 w-44 rounded-full bg-primary-orange/10/60 blur-3xl pointer-events-none" />
 
       <motion.header
         initial={{ opacity: 0, y: -10 }}
@@ -460,11 +460,11 @@ const RentalDeposit = () => {
                 onClick={() => setMethod(id)}
                 className={`flex flex-col items-center gap-1.5 py-3 rounded-[14px] border transition-all ${
                   method === id
-                    ? 'border-orange-200 bg-orange-50 shadow-[0_4px_12px_rgba(249,115,22,0.12)]'
+                    ? 'border-primary-orange/20 bg-primary-orange/5 shadow-[0_4px_12px_rgba(249,115,22,0.12)]'
                     : 'border-slate-100 bg-slate-50'
                 }`}
               >
-                <Icon size={18} className={method === id ? 'text-orange-500' : 'text-slate-400'} strokeWidth={2} />
+                <Icon size={18} className={method === id ? 'text-primary-orange/50' : 'text-slate-400'} strokeWidth={2} />
                 <span className={`text-[11px] font-black ${method === id ? 'text-slate-900' : 'text-slate-400'}`}>
                   {label}
                 </span>

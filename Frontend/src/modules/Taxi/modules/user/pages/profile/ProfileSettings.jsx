@@ -120,7 +120,7 @@ const ProfileSettings = () => {
                     />
                     {photoUploading && (
                         <div className="absolute inset-0 flex items-center justify-center">
-                            <Loader2 className="animate-spin text-orange-600" size={28} strokeWidth={3} />
+                            <Loader2 className="animate-spin text-accent-orange" size={28} strokeWidth={3} />
                         </div>
                     )}
                 </div>

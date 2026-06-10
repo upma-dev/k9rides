@@ -259,7 +259,7 @@ export default function DeliverySettings() {
                         initial={{ opacity: 0, y: -5 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -5 }}
-                        className="text-xs text-orange-600 mt-2 flex items-center gap-1"
+                        className="text-xs text-accent-orange mt-2 flex items-center gap-1"
                       >
                         <AlertCircle className="w-3 h-3" />
                         You are outside outlet timings
@@ -332,10 +332,10 @@ export default function DeliverySettings() {
               <div className="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-6">
                 <div className="flex justify-center mb-4">
                   <div className={`w-16 h-16 rounded-full flex items-center justify-center ${
-                    pendingStatus ? "bg-orange-100" : "bg-red-100"
+                    pendingStatus ? "bg-primary-orange/10" : "bg-red-100"
                   }`}>
                     <AlertCircle className={`w-10 h-10 ${
-                      pendingStatus ? "text-orange-600" : "text-red-600"
+                      pendingStatus ? "text-accent-orange" : "text-red-600"
                     }`} />
                   </div>
                 </div>

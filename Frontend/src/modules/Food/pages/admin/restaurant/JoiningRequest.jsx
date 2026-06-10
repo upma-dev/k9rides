@@ -806,7 +806,7 @@ export default function JoiningRequest() {
                         })()}
                         {r?.pureVegRestaurant != null && (
                           <div className="flex items-center gap-3">
-                            <span className={`px-3 py-1 rounded-full text-xs font-semibold ${r.pureVegRestaurant ? "bg-green-100 text-green-700" : "bg-orange-100 text-orange-700"}`}>
+                            <span className={`px-3 py-1 rounded-full text-xs font-semibold ${r.pureVegRestaurant ? "bg-green-100 text-green-700" : "bg-primary-orange/10 text-accent-orange/90"}`}>
                               {r.pureVegRestaurant ? "🟢 Pure Veg" : "🟠 Mixed Menu"}
                             </span>
                           </div>

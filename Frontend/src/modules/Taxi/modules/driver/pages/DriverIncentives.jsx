@@ -164,7 +164,7 @@ const DriverIncentives = () => {
             <div>
               <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Streak</p>
               <p className="text-base font-bold text-gray-900 flex items-center gap-1">
-                {summary.streakDays || 0} <Flame size={14} className="text-orange-500" />
+                {summary.streakDays || 0} <Flame size={14} className="text-primary-orange/50" />
               </p>
             </div>
             <div>

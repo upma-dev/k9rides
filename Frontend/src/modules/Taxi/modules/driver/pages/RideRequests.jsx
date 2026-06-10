@@ -382,7 +382,7 @@ const RideRequests = () => {
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${item.type === 'parcel' ? 'bg-orange-50 text-orange-600' : 'bg-slate-100 text-slate-900'}`}>
+                  <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${item.type === 'parcel' ? 'bg-primary-orange/5 text-accent-orange' : 'bg-slate-100 text-slate-900'}`}>
                     {item.type === 'parcel' ? <Package size={18} strokeWidth={2.5} /> : <Bike size={18} strokeWidth={2.5} />}
                   </div>
                   <div className="space-y-0.5">

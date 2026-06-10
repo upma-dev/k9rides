@@ -852,7 +852,7 @@ const normalizeVehicleType = (type, index) => {
     name: getTypeLabel(type),
     capacity: getCapacity(type),
     badge: null,
-    badgeColor: 'bg-orange-50 text-orange-500 border-orange-100',
+    badgeColor: 'bg-primary-orange/5 text-primary-orange/50 border-primary-orange/10',
     sublabel: type?.short_description || type?.description || 'Available ride',
     price: getFallbackVehicleEstimate(type),
     dispatchType,
@@ -2021,7 +2021,7 @@ const SelectVehicle = () => {
               <div className="w-10 h-1 bg-slate-200 rounded-full mx-auto mb-5" />
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <p className="text-[10px] font-bold uppercase tracking-wider text-orange-500 mb-1">Vehicle details</p>
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-primary-orange/50 mb-1">Vehicle details</p>
                   <h3 className="text-[20px] font-extrabold text-slate-900">{previewVehicle.name}</h3>
                   <p className="mt-1 text-[12px] font-bold text-slate-500">
                     {previewVehicle.sublabel || 'Comfortable ride option for this route.'}
@@ -2059,8 +2059,8 @@ const SelectVehicle = () => {
                 </div>
               </div>
 
-              <div className="mt-4 rounded-[20px] border border-orange-100 bg-orange-50/60 px-4 py-4">
-                <p className="text-[10px] font-black uppercase tracking-[0.14em] text-orange-500">Trip snapshot</p>
+              <div className="mt-4 rounded-[20px] border border-primary-orange/10 bg-primary-orange/5/60 px-4 py-4">
+                <p className="text-[10px] font-black uppercase tracking-[0.14em] text-primary-orange/50">Trip snapshot</p>
                 <p className="mt-2 text-[12px] font-bold leading-5 text-slate-700">
                   {rideMode === 'schedule'
                     ? 'This vehicle can be reserved for a later trip at your chosen time.'
@@ -2098,16 +2098,16 @@ const SelectVehicle = () => {
               className="fixed bottom-0 left-0 right-0 max-w-lg mx-auto bg-white rounded-t-[28px] px-5 pt-4 pb-10 z-[101]"
             >
               <div className="w-10 h-1 bg-slate-200 rounded-full mx-auto mb-5" />
-              <p className="text-[10px] font-bold uppercase tracking-wider text-orange-500 mb-1">Bid fare</p>
+              <p className="text-[10px] font-bold uppercase tracking-wider text-primary-orange/50 mb-1">Bid fare</p>
               <h3 className="text-[18px] font-bold text-slate-900">Choose your max fare</h3>
               <p className="mt-1 text-[12px] font-bold text-slate-500">
                 Drivers can send offers up to this amount for {selectedVehicle.name}.
               </p>
 
-              <div className="mt-5 rounded-[20px] border border-orange-100 bg-orange-50/60 px-4 py-4">
+              <div className="mt-5 rounded-[20px] border border-primary-orange/10 bg-primary-orange/5/60 px-4 py-4">
                 <div className="flex items-start justify-between gap-3">
                   <div>
-                    <p className="text-[10px] font-black uppercase tracking-[0.14em] text-orange-500">Bid Range</p>
+                    <p className="text-[10px] font-black uppercase tracking-[0.14em] text-primary-orange/50">Bid Range</p>
                     <p className="mt-1 text-[13px] font-bold text-slate-900">Adjust the fare ceiling inside the admin-configured bidding range.</p>
                   </div>
                   <div className="text-right">
@@ -2293,7 +2293,7 @@ const SelectVehicle = () => {
                       setShowPaymentModal(false);
                     }}
                     className={`w-full flex items-center gap-3.5 p-4 rounded-[18px] border-2 transition-all ${
-                      paymentMethod === stateValue ? 'border-orange-200 bg-orange-50/40' : 'border-slate-100 bg-slate-50/50'
+                      paymentMethod === stateValue ? 'border-primary-orange/20 bg-primary-orange/5/40' : 'border-slate-100 bg-slate-50/50'
                     }`}
                   >
                     <div className={`w-10 h-10 rounded-[12px] ${bg} flex items-center justify-center shrink-0`}>
@@ -2304,7 +2304,7 @@ const SelectVehicle = () => {
                       <p className="text-[11px] font-bold text-slate-400">{sub}</p>
                     </div>
                     {paymentMethod === stateValue && (
-                      <div className="w-5 h-5 rounded-full bg-orange-500 flex items-center justify-center shrink-0">
+                      <div className="w-5 h-5 rounded-full bg-primary-orange/50 flex items-center justify-center shrink-0">
                         <svg width="8" height="6" viewBox="0 0 8 6" fill="none">
                           <path d="M1 3L3 5L7 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                         </svg>

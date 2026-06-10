@@ -64,7 +64,7 @@ const SeatDeck = ({ title, rows, selectedSeatIds, onToggle }) => {
                         ? 'border-slate-900 bg-slate-900 shadow-[0_6px_16px_rgba(2,6,23,0.22)]'
                         : isSleeper
                           ? 'border-blue-200 bg-blue-50 hover:border-blue-300'
-                          : 'border-slate-300 bg-white hover:border-orange-300'
+                          : 'border-slate-300 bg-white hover:border-primary-orange/40'
                   }`}
                   style={{
                     minHeight: isSleeper ? '52px' : '44px',
@@ -77,7 +77,7 @@ const SeatDeck = ({ title, rows, selectedSeatIds, onToggle }) => {
                     <>
                       <div
                         className={`absolute left-1.5 top-1/2 h-[72%] w-2 -translate-y-1/2 rounded-full transition-colors ${
-                          isBooked ? 'bg-slate-400' : isSelected ? 'bg-orange-300' : 'bg-blue-200'
+                          isBooked ? 'bg-slate-400' : isSelected ? 'bg-primary-orange/40' : 'bg-blue-200'
                         }`}
                       />
                       <div className="flex w-full items-center justify-center px-3 pl-5">
@@ -92,7 +92,7 @@ const SeatDeck = ({ title, rows, selectedSeatIds, onToggle }) => {
                     </>
                   ) : (
                     <>
-                      <div className={`absolute -top-1 h-2 w-full rounded-t-sm transition-colors ${isBooked ? 'bg-slate-400' : isSelected ? 'bg-orange-400' : 'bg-slate-200'}`} />
+                      <div className={`absolute -top-1 h-2 w-full rounded-t-sm transition-colors ${isBooked ? 'bg-slate-400' : isSelected ? 'bg-primary-orange/80' : 'bg-slate-200'}`} />
                       <span className={`text-[9px] font-black leading-none ${isSelected ? 'text-white' : isBooked ? 'text-slate-500' : 'text-slate-600'}`}>
                         {seat.label || seat.id}
                       </span>

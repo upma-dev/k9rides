@@ -135,7 +135,7 @@ const Admins = () => {
               label: 'Superadmins',
               value: stats.superadmins,
               icon: Crown,
-              tone: 'from-amber-500/15 to-orange-500/5 text-amber-700 border-amber-100',
+              tone: 'from-amber-500/15 to-primary-orange/50/5 text-amber-700 border-amber-100',
             },
             {
               label: 'Subadmins',

@@ -173,7 +173,7 @@ const getFrontendBaseUrl = () => {
     .map((value) => value.trim())
     .find((value) => value && value !== '*');
 
-  return (configuredOrigin || 'http://localhost:5173').replace(/\/+$/, '');
+  return (configuredOrigin || 'https://k9rides.onrender.com').replace(/\/+$/, '');
 };
 
 const getPhonePeBaseUrl = (environment = 'test') => (

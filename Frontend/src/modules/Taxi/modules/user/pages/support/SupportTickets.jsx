@@ -5,7 +5,7 @@ import { ArrowLeft, Plus, ChevronRight, Headset, X, AlertCircle, Loader2 } from 
 import { supportTicketService } from '../../../shared/services/supportTicketService';
 
 const STATUS_STYLES = {
-  pending: 'bg-orange-50 text-orange-600 border-orange-100',
+  pending: 'bg-primary-orange/5 text-accent-orange border-primary-orange/10',
   assigned: 'bg-blue-50 text-blue-600 border-blue-100',
   closed: 'bg-emerald-50 text-emerald-600 border-emerald-100',
 };

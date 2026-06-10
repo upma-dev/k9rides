@@ -259,7 +259,7 @@ const DriverList = ({ mode = 'approved' }) => {
             <button className="w-10 h-10 rounded-full border border-gray-200 bg-white text-gray-400 flex items-center justify-center shadow-sm">
               <Search size={16} />
             </button>
-            <button className="bg-orange-500 text-white px-4 py-2 rounded-lg text-xs font-semibold flex items-center gap-2 shadow-sm uppercase tracking-wide">
+            <button className="bg-primary-orange/50 text-white px-4 py-2 rounded-lg text-xs font-semibold flex items-center gap-2 shadow-sm uppercase tracking-wide">
               <Filter size={14} /> Filters
             </button>
             <div className="relative">

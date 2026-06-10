@@ -815,7 +815,7 @@ export default function AddressSelectorPage() {
                             }
                           });
                         }}
-                        className="w-full px-4 py-3 flex items-start gap-3 hover:bg-orange-50 dark:hover:bg-orange-900/10 transition-colors text-left border-b border-gray-50 dark:border-gray-800 last:border-none"
+                        className="w-full px-4 py-3 flex items-start gap-3 hover:bg-primary-orange/5 dark:hover:bg-accent-orange/50/10 transition-colors text-left border-b border-gray-50 dark:border-gray-800 last:border-none"
                       >
                         <MapPin className="h-4 w-4 text-gray-400 mt-1 flex-shrink-0" />
                         <div className="min-w-0">
@@ -858,7 +858,7 @@ export default function AddressSelectorPage() {
                           setGooglePlacesSuggestions([])
                           setKeywordAddressSuggestions([])
                         }}
-                        className="w-full px-4 py-3 flex items-start gap-3 hover:bg-orange-50 dark:hover:bg-orange-900/10 transition-colors text-left border-b border-gray-50 dark:border-gray-800 last:border-none"
+                        className="w-full px-4 py-3 flex items-start gap-3 hover:bg-primary-orange/5 dark:hover:bg-accent-orange/50/10 transition-colors text-left border-b border-gray-50 dark:border-gray-800 last:border-none"
                       >
                         <MapPin className="h-4 w-4 text-gray-400 mt-1 flex-shrink-0" />
                         <div className="min-w-0">
@@ -903,10 +903,10 @@ export default function AddressSelectorPage() {
           </div>
 
           <div className="relative bg-white dark:bg-[#0a0a0a] rounded-t-[32px] -mt-8 z-10 p-4 space-y-6 shadow-[0_-12px_24px_-10px_rgba(0,0,0,0.1)]">
-            <div className="bg-orange-50/50 dark:bg-orange-900/10 border border-orange-100 dark:border-orange-900/20 rounded-xl p-4 flex gap-3">
+            <div className="bg-primary-orange/5/50 dark:bg-accent-orange/50/10 border border-primary-orange/10 dark:border-accent-orange/50/20 rounded-xl p-4 flex gap-3">
                <MapPin className="h-5 w-5 text-[#EB590E] mt-0.5" />
                <div className="min-w-0">
-                  <p className="text-xs font-bold text-orange-800 dark:text-orange-200 uppercase mb-1">Pinnned Location</p>
+                  <p className="text-xs font-bold text-accent-orange/70 dark:text-primary-orange/20 uppercase mb-1">Pinnned Location</p>
                   <p className="text-sm text-gray-700 dark:text-gray-300 line-clamp-2">{currentAddress || "Select a location on map"}</p>
                </div>
             </div>
@@ -923,14 +923,14 @@ export default function AddressSelectorPage() {
                 required
               />
 
-              <Label className="text-sm font-bold mb-2 block text-orange-600 dark:text-orange-400">Secondary Address (House No. / Flat / Floor)</Label>
+              <Label className="text-sm font-bold mb-2 block text-accent-orange dark:text-primary-orange/80">Secondary Address (House No. / Flat / Floor)</Label>
               <Input 
                 placeholder="E.g. Flat 402, 4th Floor, K9 Rides Building" 
                 value={addressFormData.additionalDetails} 
                 onChange={e => setAddressFormData({...addressFormData, additionalDetails: e.target.value})}
                 onFocus={() => scrollFieldIntoView("additionalDetails")}
                 ref={(el) => { manualFieldRefs.current.additionalDetails = el }}
-                className="h-12 rounded-xl border-orange-200 dark:border-orange-900/40 focus:ring-orange-500"
+                className="h-12 rounded-xl border-primary-orange/20 dark:border-accent-orange/50/40 focus:ring-primary-orange/50"
               />
             </div>
 
@@ -1022,7 +1022,7 @@ export default function AddressSelectorPage() {
             onClick={handleUseCurrentLocation}
             className="w-full flex items-center gap-4 p-4 bg-white dark:bg-[#1a1a1a] rounded-xl shadow-sm hover:shadow-md transition-all group"
           >
-            <div className="h-10 w-10 rounded-full bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center">
+            <div className="h-10 w-10 rounded-full bg-primary-orange/10 dark:bg-accent-orange/50/30 flex items-center justify-center">
               <Navigation className="h-5 w-5 text-[#EB590E]" />
             </div>
             <div className="text-left flex-1">
@@ -1054,7 +1054,7 @@ export default function AddressSelectorPage() {
                   <button
                     key={getAddressId(addr) || idx}
                     onClick={() => handleSelectSavedAddress(addr)}
-                    className="w-full flex items-start gap-4 p-4 bg-slate-50 dark:bg-[#1a1a1a] rounded-xl hover:bg-orange-50 dark:hover:bg-orange-900/10 transition-colors text-left group"
+                    className="w-full flex items-start gap-4 p-4 bg-slate-50 dark:bg-[#1a1a1a] rounded-xl hover:bg-primary-orange/5 dark:hover:bg-accent-orange/50/10 transition-colors text-left group"
                   >
                     <div className="h-10 w-10 rounded-full bg-white dark:bg-gray-800 flex items-center justify-center shadow-sm">
                       <Icon className="h-5 w-5 text-gray-600 dark:text-gray-400" />

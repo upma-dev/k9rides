@@ -486,7 +486,7 @@ const DriverNotifications = () => {
                       <p className="text-[11px] font-bold leading-relaxed line-clamp-1">{ride.pickupAddress || 'Pickup point'}</p>
                     </div>
                     <div className="flex items-start gap-2 text-slate-600">
-                      <MapPin size={13} className="mt-0.5 shrink-0 text-orange-500" strokeWidth={2.3} />
+                      <MapPin size={13} className="mt-0.5 shrink-0 text-primary-orange/50" strokeWidth={2.3} />
                       <p className="text-[11px] font-bold leading-relaxed line-clamp-1">{ride.dropAddress || 'Drop point'}</p>
                     </div>
                   </div>

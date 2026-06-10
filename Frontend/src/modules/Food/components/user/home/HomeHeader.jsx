@@ -252,12 +252,12 @@ export default function HomeHeader({
                     <h3 className="font-bold text-gray-900 dark:text-white flex items-center gap-2">
                       Notifications
                       {unreadCount > 0 && (
-                        <Badge variant="secondary" className="bg-orange-100 text-orange-600 border-none text-[10px] h-4">
+                        <Badge variant="secondary" className="bg-primary-orange/10 text-accent-orange border-none text-[10px] h-4">
                           {unreadCount} New
                         </Badge>
                       )}
                     </h3>
-                    <Link to="/food/user/notifications" className="text-xs font-bold text-orange-600 hover:text-orange-700">
+                    <Link to="/food/user/notifications" className="text-xs font-bold text-accent-orange hover:text-accent-orange/90">
                       {mergedNotifications.length > 0 ? "View All" : ""}
                     </Link>
                   </div>
@@ -268,9 +268,9 @@ export default function HomeHeader({
                         return (
                           <div 
                             key={notif.id}
-                            className={`p-4 flex items-start gap-3 border-b border-gray-50 dark:border-gray-800 last:border-0 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors cursor-pointer ${!notif.read ? 'bg-orange-50/20' : ''}`}
+                            className={`p-4 flex items-start gap-3 border-b border-gray-50 dark:border-gray-800 last:border-0 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors cursor-pointer ${!notif.read ? 'bg-primary-orange/5/20' : ''}`}
                           >
-                            <div className={`mt-1 p-2 rounded-full ${notif.type === "order" ? "bg-green-100/50 text-green-600" : "bg-orange-100/50 text-orange-600"}`}>
+                            <div className={`mt-1 p-2 rounded-full ${notif.type === "order" ? "bg-green-100/50 text-green-600" : "bg-primary-orange/10/50 text-accent-orange"}`}>
                               <Icon className="h-4 w-4" />
                             </div>
                             <div className="flex-1 min-w-0">

@@ -136,7 +136,7 @@ export default function NotificationsV2() {
                 key={item.id}
                 onClick={() => handleMarkAsRead(item.id, item.source)}
                 className={`border rounded-lg p-3 flex items-start justify-between gap-3 cursor-pointer ${
-                  item.read ? "border-gray-200" : "border-orange-200 bg-orange-50/40"
+                  item.read ? "border-gray-200" : "border-primary-orange/20 bg-primary-orange/5/40"
                 }`}
               >
                 <div className="min-w-0">

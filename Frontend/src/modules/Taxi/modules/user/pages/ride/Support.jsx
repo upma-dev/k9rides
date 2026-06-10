@@ -12,7 +12,7 @@ const Support = () => {
   const helpTopics = [
     { title: "Driver didn't arrive", Icon: XCircle, iconClass: 'text-rose-500', ringClass: 'bg-rose-50/70' },
     { title: 'Safety concern', Icon: ShieldCheck, iconClass: 'text-blue-600', ringClass: 'bg-blue-50/70' },
-    { title: 'I lost an item', Icon: HelpCircle, iconClass: 'text-orange-500', ringClass: 'bg-orange-50/70' },
+    { title: 'I lost an item', Icon: HelpCircle, iconClass: 'text-primary-orange/50', ringClass: 'bg-primary-orange/5/70' },
     { title: 'Payment failure', Icon: AlertCircle, iconClass: 'text-slate-800', ringClass: 'bg-slate-50/70' },
   ];
 
@@ -30,7 +30,7 @@ const Support = () => {
 
   return (
     <div className="min-h-screen bg-[linear-gradient(180deg,#F8FAFC_0%,#F3F4F6_38%,#EEF2F7_100%)] max-w-lg mx-auto flex flex-col font-sans relative pb-24 overflow-hidden">
-      <div className="absolute -top-20 right-[-40px] h-48 w-48 rounded-full bg-orange-100/55 blur-3xl pointer-events-none" />
+      <div className="absolute -top-20 right-[-40px] h-48 w-48 rounded-full bg-primary-orange/10/55 blur-3xl pointer-events-none" />
       <div className="absolute top-56 left-[-60px] h-56 w-56 rounded-full bg-emerald-100/50 blur-3xl pointer-events-none" />
       <div className="absolute bottom-24 right-[-40px] h-44 w-44 rounded-full bg-blue-100/50 blur-3xl pointer-events-none" />
 
@@ -60,7 +60,7 @@ const Support = () => {
           >
             <div className="absolute inset-0 bg-[radial-gradient(140px_100px_at_20%_25%,rgba(249,115,22,0.18),transparent_60%)]" aria-hidden="true" />
             <div className="relative z-10 flex items-center gap-3">
-              <div className="w-11 h-11 rounded-2xl border border-white/80 bg-white/70 shadow-sm flex items-center justify-center text-orange-600">
+              <div className="w-11 h-11 rounded-2xl border border-white/80 bg-white/70 shadow-sm flex items-center justify-center text-accent-orange">
                 <MessageCircle size={20} strokeWidth={2.6} />
               </div>
               <div className="min-w-0">

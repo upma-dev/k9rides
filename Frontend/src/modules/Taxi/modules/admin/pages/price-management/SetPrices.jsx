@@ -419,7 +419,7 @@ const SetPrices = ({ mode }) => {
                           </td>
                           <td className="px-8 py-6 text-right pr-12">
                              <div className="flex items-center justify-end gap-2">
-                                <button onClick={() => navigate(`/taxi/admin/pricing/set-price/edit/${prize.id || prize._id}`)} className="w-8 h-8 flex items-center justify-center bg-[#FFF7ED] text-[#F97316] rounded transition-colors hover:bg-orange-100"><Edit2 size={14} /></button>
+                                <button onClick={() => navigate(`/taxi/admin/pricing/set-price/edit/${prize.id || prize._id}`)} className="w-8 h-8 flex items-center justify-center bg-[#FFF7ED] text-[#F97316] rounded transition-colors hover:bg-primary-orange/10"><Edit2 size={14} /></button>
                                  <button 
                                    title="set package prices"
                                    onClick={() => navigate('/taxi/admin/pricing/package-pricing')}

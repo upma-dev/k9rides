@@ -113,7 +113,7 @@ const PromoCodes = () => {
               onChange={e => setManualCode(e.target.value.toUpperCase())}
               onKeyDown={e => e.key === 'Enter' && handleManualApply()}
               placeholder="e.g. K9 Rides50"
-              className="flex-1 bg-slate-50 border border-slate-100 rounded-[12px] px-4 py-2.5 text-[14px] font-black text-slate-900 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-orange-200"
+              className="flex-1 bg-slate-50 border border-slate-100 rounded-[12px] px-4 py-2.5 text-[14px] font-black text-slate-900 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-primary-orange/20"
             />
             <motion.button whileTap={{ scale: 0.96 }} onClick={handleManualApply}
               className="bg-slate-900 text-white px-4 py-2.5 rounded-[12px] text-[12px] font-black uppercase tracking-widest flex items-center gap-1.5 shadow-sm">

@@ -72,13 +72,13 @@ const VegModePopups = ({
                 initial={{ scale: 0.9, opacity: 0, y: 20 }}
                 animate={{ scale: 1, opacity: 1, y: 0 }}
                 exit={{ scale: 0.9, opacity: 0, y: 20 }}
-                className="relative bg-white dark:bg-[#1a1a1a] rounded-3xl p-6 sm:p-8 max-w-sm w-full shadow-2xl overflow-hidden border border-orange-100 dark:border-orange-900/30"
+                className="relative bg-white dark:bg-[#1a1a1a] rounded-3xl p-6 sm:p-8 max-w-sm w-full shadow-2xl overflow-hidden border border-primary-orange/10 dark:border-accent-orange/50/30"
               >
-                <div className="absolute -top-10 -right-10 w-32 h-32 bg-orange-500/10 rounded-full blur-3xl" />
+                <div className="absolute -top-10 -right-10 w-32 h-32 bg-primary-orange/50/10 rounded-full blur-3xl" />
 
                 <div className="relative text-center">
-                  <div className="w-20 h-20 bg-orange-50 dark:bg-orange-500/20 rounded-full flex items-center justify-center mx-auto mb-6 ring-8 ring-orange-50/50 dark:ring-orange-500/5">
-                    <AlertCircle className="w-10 h-10 text-orange-600 dark:text-orange-400" />
+                  <div className="w-20 h-20 bg-primary-orange/5 dark:bg-primary-orange/50/20 rounded-full flex items-center justify-center mx-auto mb-6 ring-8 ring-primary-orange/5/50 dark:ring-primary-orange/50/5">
+                    <AlertCircle className="w-10 h-10 text-accent-orange dark:text-primary-orange/80" />
                   </div>
                   <h3 className="text-2xl font-black text-gray-900 dark:text-white mb-3">Switching Off?</h3>
                   <p className="text-gray-600 dark:text-gray-400 text-sm leading-relaxed mb-8">
@@ -87,7 +87,7 @@ const VegModePopups = ({
                   <div className="flex flex-col gap-3">
                     <button
                       onClick={onConfirmSwitchOff}
-                      className="w-full py-4 bg-orange-600 hover:bg-orange-700 text-white font-bold rounded-2xl shadow-lg shadow-orange-500/25 transition-all duration-300 transform active:scale-95 flex items-center justify-center gap-2"
+                      className="w-full py-4 bg-accent-orange hover:bg-accent-orange/90 text-white font-bold rounded-2xl shadow-lg shadow-primary-orange/50/25 transition-all duration-300 transform active:scale-95 flex items-center justify-center gap-2"
                     >
                       <RefreshCw className="w-4 h-4" />
                       Yes, Switch Off

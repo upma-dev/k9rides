@@ -91,8 +91,8 @@ const normalizeRentalVehicle = (item = {}, index = 0) => {
     tagBg = 'bg-emerald-50 border-emerald-100';
   } else if (isBike) {
     tag = 'Most Popular';
-    tagColor = 'text-orange-500';
-    tagBg = 'bg-orange-50 border-orange-100';
+    tagColor = 'text-primary-orange/50';
+    tagBg = 'bg-primary-orange/5 border-primary-orange/10';
   }
 
   const gallery = [
@@ -277,7 +277,7 @@ const BikeRentalHome = () => {
 
   return (
     <div className="min-h-screen bg-[linear-gradient(180deg,#F8FAFC_0%,#F3F4F6_38%,#EEF2F7_100%)] max-w-lg mx-auto font-sans relative overflow-hidden pb-12">
-      <div className="absolute -top-16 right-[-40px] h-44 w-44 rounded-full bg-orange-100/60 blur-3xl pointer-events-none" />
+      <div className="absolute -top-16 right-[-40px] h-44 w-44 rounded-full bg-primary-orange/10/60 blur-3xl pointer-events-none" />
       <div className="absolute bottom-28 right-[-40px] h-40 w-40 rounded-full bg-blue-100/60 blur-3xl pointer-events-none" />
 
       <motion.header

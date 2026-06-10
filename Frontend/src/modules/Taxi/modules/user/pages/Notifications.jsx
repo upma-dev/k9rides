@@ -26,7 +26,7 @@ const formatNotificationTime = (value) => {
 };
 
 const TYPE_ICONS = {
-  ride:     { icon: Star,        bg: 'bg-orange-50',  color: 'text-orange-500' },
+  ride:     { icon: Star,        bg: 'bg-primary-orange/5',  color: 'text-primary-orange/50' },
   promo:    { icon: Tag,         bg: 'bg-yellow-50',  color: 'text-yellow-500' },
   safety:   { icon: ShieldCheck, bg: 'bg-blue-50',    color: 'text-blue-500'   },
   referral: { icon: Star,        bg: 'bg-emerald-50', color: 'text-emerald-500'},

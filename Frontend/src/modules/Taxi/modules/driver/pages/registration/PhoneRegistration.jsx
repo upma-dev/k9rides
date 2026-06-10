@@ -328,7 +328,7 @@ const PhoneRegistration = () => {
                                             });
                                             navigate('/terms', { state: { role, returnTo: location.pathname } });
                                         }}
-                                        className="text-[#F38F24] font-bold hover:text-orange-600"
+                                        className="text-[#F38F24] font-bold hover:text-accent-orange"
                                     >
                                         Terms
                                     </button>
@@ -342,7 +342,7 @@ const PhoneRegistration = () => {
                                             });
                                             navigate('/privacy', { state: { role, returnTo: location.pathname } });
                                         }}
-                                        className="text-[#F38F24] font-bold hover:text-orange-600"
+                                        className="text-[#F38F24] font-bold hover:text-accent-orange"
                                     >
                                         Privacy Policy
                                     </button>.
@@ -378,9 +378,9 @@ const PhoneRegistration = () => {
                             className="w-full text-[12px] font-medium text-slate-500 transition-all pb-4"
                         >
                             {isLoginPage ? (
-                                <>Don't have an account? <span className="text-[#F38F24] font-bold hover:text-orange-600">Join Now</span></>
+                                <>Don't have an account? <span className="text-[#F38F24] font-bold hover:text-accent-orange">Join Now</span></>
                             ) : (
-                                <>Already a captain? <span className="text-[#F38F24] font-bold hover:text-orange-600">Sign in</span></>
+                                <>Already a captain? <span className="text-[#F38F24] font-bold hover:text-accent-orange">Sign in</span></>
                             )}
                         </motion.button>
                     </motion.div>

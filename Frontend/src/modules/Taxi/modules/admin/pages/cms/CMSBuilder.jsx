@@ -109,7 +109,7 @@ const CMSBuilder = () => {
                      <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm group">
                         <div className="h-32 bg-gray-900 relative">
                            <div className="absolute inset-0 bg-primary/20"></div>
-                           <div className="absolute inset-0 bg-gradient-to-r from-primary to-orange-400 opacity-80"></div>
+                           <div className="absolute inset-0 bg-gradient-to-r from-primary to-primary-orange/80 opacity-80"></div>
                            <div className="absolute top-3 left-3 bg-green-500 text-white px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-widest shadow-lg">Active</div>
                         </div>
                         <div className="p-4">

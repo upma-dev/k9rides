@@ -23,8 +23,8 @@ const DeliveryInstructionsPanel = ({ note }) => {
   if (!text) return null
 
   return (
-    <div className="w-full rounded-3xl mb-6 overflow-hidden border border-orange-100 shadow-sm">
-      <div className="bg-linear-to-r from-orange-500 to-amber-500 px-5 py-3 flex items-center justify-between">
+    <div className="w-full rounded-3xl mb-6 overflow-hidden border border-primary-orange/10 shadow-sm">
+      <div className="bg-linear-to-r from-primary-orange/50 to-amber-500 px-5 py-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <div className="w-9 h-9 bg-white/20 rounded-2xl flex items-center justify-center text-white">
             <Package className="w-5 h-5" />
@@ -39,7 +39,7 @@ const DeliveryInstructionsPanel = ({ note }) => {
           </div>
         </div>
       </div>
-      <div className="bg-orange-50 px-5 py-4">
+      <div className="bg-primary-orange/5 px-5 py-4">
         <p className="text-sm font-bold text-gray-950 leading-relaxed wrap-break-word">
           “{text}”
         </p>

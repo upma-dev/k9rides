@@ -65,7 +65,7 @@ const InputField = ({ label, name, value, onChange, placeholder, info }) => {
         className={inputClass}
       />
       {info && (
-        <div className="mt-2 bg-[#FFF8F0] border border-orange-100 rounded-lg px-4 py-2 flex items-center gap-2">
+        <div className="mt-2 bg-[#FFF8F0] border border-primary-orange/10 rounded-lg px-4 py-2 flex items-center gap-2">
            <span className="text-[11px] text-gray-500 italic">Example: {info.prefix}</span>
            <span className="text-[11px] bg-[#00BFA5] text-white px-2 py-0.5 rounded font-bold">{value || info.default}</span>
         </div>

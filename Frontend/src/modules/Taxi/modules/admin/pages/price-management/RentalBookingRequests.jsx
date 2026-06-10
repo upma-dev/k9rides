@@ -24,7 +24,7 @@ const statusClasses = {
   pending: 'bg-amber-50 text-amber-700 border-amber-100',
   confirmed: 'bg-sky-50 text-sky-700 border-sky-100',
   assigned: 'bg-violet-50 text-violet-700 border-violet-100',
-  end_requested: 'bg-orange-50 text-orange-700 border-orange-100',
+  end_requested: 'bg-primary-orange/5 text-accent-orange/90 border-primary-orange/10',
   completed: 'bg-emerald-50 text-emerald-700 border-emerald-100',
   cancelled: 'bg-rose-50 text-rose-700 border-rose-100',
 };

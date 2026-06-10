@@ -95,7 +95,7 @@ const FirebaseSettings = () => {
         <form onSubmit={handleSave} className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
           {/* Card Header */}
           <div className="p-6 border-b border-gray-100 flex items-center gap-3">
-             <div className="w-10 h-10 rounded-lg bg-orange-50 flex items-center justify-center text-orange-600">
+             <div className="w-10 h-10 rounded-lg bg-primary-orange/5 flex items-center justify-center text-accent-orange">
                 <Flame size={20} />
              </div>
              <div>

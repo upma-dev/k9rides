@@ -685,7 +685,7 @@ export default function Profile() {
                     <motion.span
                       className={`text-xs font-medium px-2 py-1 rounded ${isComplete
                           ? "bg-green-100 text-green-700 border border-green-300"
-                          : "bg-orange-100 text-orange-800"
+                          : "bg-primary-orange/10 text-accent-orange/70"
                         }`}
                       whileHover={{ scale: 1.1 }}
                       transition={{ duration: 0.2 }}>

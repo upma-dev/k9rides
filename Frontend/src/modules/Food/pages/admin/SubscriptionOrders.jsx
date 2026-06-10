@@ -127,8 +127,8 @@ export default function SubscriptionOrders() {
               <p className="text-sm text-slate-500 mb-1">Total Delivered</p>
               <p className="text-2xl font-bold text-slate-900">{stats.totalDelivered}</p>
             </div>
-            <div className="p-3 bg-orange-50 rounded-lg">
-              <Package className="w-6 h-6 text-orange-600" />
+            <div className="p-3 bg-primary-orange/5 rounded-lg">
+              <Package className="w-6 h-6 text-accent-orange" />
             </div>
           </div>
         </div>

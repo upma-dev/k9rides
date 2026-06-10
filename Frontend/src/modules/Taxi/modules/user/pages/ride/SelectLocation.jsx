@@ -712,7 +712,7 @@ const SelectLocation = () => {
 
   return (
     <div className="min-h-screen bg-[linear-gradient(180deg,#F8FAFC_0%,#F3F4F6_38%,#EEF2F7_100%)] max-w-lg mx-auto font-sans relative overflow-hidden pb-6">
-      <div className="absolute -top-20 right-[-40px] h-48 w-48 rounded-full bg-orange-100/55 blur-3xl pointer-events-none" />
+      <div className="absolute -top-20 right-[-40px] h-48 w-48 rounded-full bg-primary-orange/10/55 blur-3xl pointer-events-none" />
       <div className="absolute top-56 left-[-60px] h-56 w-56 rounded-full bg-emerald-100/50 blur-3xl pointer-events-none" />
       <div className="absolute bottom-16 right-[-40px] h-44 w-44 rounded-full bg-blue-100/50 blur-3xl pointer-events-none" />
       <AnimatePresence>
@@ -959,12 +959,12 @@ const SelectLocation = () => {
             {/* Drop Row */}
             <div className="flex items-center gap-3">
               <div className="flex flex-col items-center gap-0.5 shrink-0">
-                <div className="w-5 h-5 rounded-full border-2 border-orange-600 bg-white/70 flex items-center justify-center">
-                  <div className="w-1.5 h-1.5 rounded-full bg-orange-600" />
+                <div className="w-5 h-5 rounded-full border-2 border-accent-orange bg-white/70 flex items-center justify-center">
+                  <div className="w-1.5 h-1.5 rounded-full bg-accent-orange" />
                 </div>
               </div>
               <div
-                className={`flex-1 flex items-center bg-white/70 border border-white/80 rounded-xl px-3 py-2.5 transition-all ${activeInput === 'drop' ? 'ring-2 ring-orange-200' : ''}`}
+                className={`flex-1 flex items-center bg-white/70 border border-white/80 rounded-xl px-3 py-2.5 transition-all ${activeInput === 'drop' ? 'ring-2 ring-primary-orange/20' : ''}`}
                 onClick={() => setActiveInput('drop')}
               >
                 <input

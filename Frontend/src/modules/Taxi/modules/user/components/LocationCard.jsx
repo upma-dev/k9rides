@@ -64,7 +64,7 @@ const LocationCard = ({ location = 'Fetching location...' }) => {
           transition={{ duration: 0.18 }}
         >
           <motion.div
-            className="flex h-10 w-10 items-center justify-center rounded-xl bg-white text-orange-500 shadow-sm"
+            className="flex h-10 w-10 items-center justify-center rounded-xl bg-white text-primary-orange/50 shadow-sm"
             animate={{ y: [0, -1.5, 0] }}
             transition={{ duration: 2.6, repeat: Infinity, ease: 'easeInOut' }}
           >

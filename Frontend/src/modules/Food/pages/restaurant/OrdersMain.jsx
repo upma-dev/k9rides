@@ -483,12 +483,12 @@ function CancelledOrders({ onSelectOrder, refreshToken = 0 }) {
                       <div className="flex flex-col items-end gap-1">
                         <span
                           className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-[11px] font-medium border ${order.cancelledBy === "user"
-                            ? "border-orange-500 text-orange-600"
+                            ? "border-primary-orange/50 text-accent-orange"
                             : "border-red-500 text-red-600"
                             }`}>
                           <span
                             className={`h-1.5 w-1.5 rounded-full ${order.cancelledBy === "user"
-                              ? "bg-orange-500"
+                              ? "bg-primary-orange/50"
                               : "bg-red-500"
                               }`}
                           />
@@ -608,7 +608,7 @@ function TableBookings() {
                   className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase ${booking.status === "confirmed"
                     ? "bg-green-100 text-green-700"
                     : booking.status === "checked-in"
-                      ? "bg-orange-100 text-orange-700"
+                      ? "bg-primary-orange/10 text-accent-orange/90"
                       : booking.status === "completed"
                         ? "bg-blue-100 text-blue-700"
                         : "bg-gray-100 text-gray-600"
@@ -2244,12 +2244,12 @@ export default function OrdersMain() {
                   {/* Cutlery preference */}
                   <div
                     className={`mb-4 flex items-center gap-2 rounded-lg p-3 ${(popupOrder || newOrder)?.sendCutlery === false
-                      ? "bg-orange-50"
+                      ? "bg-primary-orange/5"
                       : "bg-gray-50"
                       }`}>
                     <svg
                       className={`h-5 w-5 ${(popupOrder || newOrder)?.sendCutlery === false
-                        ? "text-orange-600"
+                        ? "text-accent-orange"
                         : "text-gray-600"
                         }`}
                       fill="none"
@@ -2264,7 +2264,7 @@ export default function OrdersMain() {
                     </svg>
                     <span
                       className={`text-sm font-medium ${(popupOrder || newOrder)?.sendCutlery === false
-                        ? "text-orange-700"
+                        ? "text-accent-orange/90"
                         : "text-gray-700"
                         }`}>
                       {(popupOrder || newOrder)?.sendCutlery === false
@@ -2841,9 +2841,9 @@ function OrderCard({
             <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-[10px] font-semibold ${
               deliveryPartnerId
                 ? "bg-green-100 text-green-700 border border-green-300"
-                : "bg-orange-100 text-orange-700 border border-orange-300"
+                : "bg-primary-orange/10 text-accent-orange/90 border border-primary-orange/40"
             }`}>
-              <span className={`w-1.5 h-1.5 rounded-full ${deliveryPartnerId ? "bg-green-500" : "bg-orange-400"}`} />
+              <span className={`w-1.5 h-1.5 rounded-full ${deliveryPartnerId ? "bg-green-500" : "bg-primary-orange/80"}`} />
               {deliveryPartnerId ? "Assigned" : "Not Assigned"}
             </span>
           )}

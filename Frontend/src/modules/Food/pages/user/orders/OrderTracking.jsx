@@ -1358,7 +1358,7 @@ export default function OrderTracking() {
         <div className="bg-white dark:bg-zinc-900 rounded-3xl p-6 shadow-sm border border-gray-100 dark:border-zinc-800 relative overflow-hidden">
           <div className="flex items-start justify-between relative z-10">
             <div>
-              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-50 dark:bg-orange-950/30 text-[#EB590E] mb-3">
+              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary-orange/5 dark:bg-accent-orange/30/30 text-[#EB590E] mb-3">
                 {currentStatus.title}
               </span>
               <h2 className="text-2xl font-black text-gray-900 dark:text-white leading-tight">
@@ -1389,13 +1389,13 @@ export default function OrderTracking() {
         {/* 1-minute cancellation window after admin acceptance */}
         {isAdminAccepted && isEditWindowOpen && (
           <motion.div
-            className="bg-white dark:bg-zinc-900 rounded-xl p-4 shadow-sm border border-orange-100 dark:border-zinc-800"
+            className="bg-white dark:bg-zinc-900 rounded-xl p-4 shadow-sm border border-primary-orange/10 dark:border-zinc-800"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
           >
             <div className="flex items-center justify-between gap-3">
               <p className="text-sm font-semibold text-gray-900 dark:text-white">Cancel order</p>
-              <span className="text-sm font-bold px-2 py-1 rounded-md bg-orange-50 dark:bg-orange-950 text-orange-700 dark:text-orange-400">
+              <span className="text-sm font-bold px-2 py-1 rounded-md bg-primary-orange/5 dark:bg-accent-orange/30 text-accent-orange/90 dark:text-primary-orange/80">
                 {editWindowText}
               </span>
             </div>
@@ -1609,7 +1609,7 @@ export default function OrderTracking() {
       <Dialog open={isInstructionsModalOpen} onOpenChange={setIsInstructionsModalOpen}>
         <DialogContent className="sm:max-w-md w-[95vw] rounded-3xl p-6 border-0 shadow-2xl bg-white dark:bg-zinc-900 max-h-[90vh] overflow-y-auto z-[200]">
           <DialogHeader className="mb-2">
-            <DialogTitle className="text-xl font-bold bg-gradient-to-r from-orange-600 to-orange-400 bg-clip-text text-transparent">
+            <DialogTitle className="text-xl font-bold bg-gradient-to-r from-accent-orange to-primary-orange/80 bg-clip-text text-transparent">
               Delivery Instructions
             </DialogTitle>
           </DialogHeader>
@@ -1621,12 +1621,12 @@ export default function OrderTracking() {
               value={deliveryInstructions}
               onChange={(e) => setDeliveryInstructions(e.target.value)}
               placeholder="E.g. Ring the doorbell, leave at the front desk..."
-              className="min-h-[120px] resize-none border-gray-200 dark:border-zinc-700 focus:ring-orange-500 rounded-xl bg-gray-50 dark:bg-zinc-800 text-gray-800 dark:text-gray-200 text-base"
+              className="min-h-[120px] resize-none border-gray-200 dark:border-zinc-700 focus:ring-primary-orange/50 rounded-xl bg-gray-50 dark:bg-zinc-800 text-gray-800 dark:text-gray-200 text-base"
             />
             <Button
               onClick={handleUpdateInstructions}
               disabled={isUpdatingInstructions}
-              className="w-full bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-bold h-12 rounded-xl border-none"
+              className="w-full bg-gradient-to-r from-primary-orange/50 to-amber-500 hover:from-accent-orange hover:to-amber-600 text-white font-bold h-12 rounded-xl border-none"
             >
               {isUpdatingInstructions ? <Loader2 className="w-5 h-5 animate-spin mx-auto" /> : "Save Instructions"}
             </Button>

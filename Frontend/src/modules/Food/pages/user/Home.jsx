@@ -2632,7 +2632,7 @@ export default function Home() {
               className="flex-shrink-0 flex flex-col items-center gap-2 cursor-pointer group"
               onClick={() => navigate("/food/user/categories")}
             >
-              <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-orange-50 dark:bg-orange-950 flex items-center justify-center border border-orange-100 group-hover:border-[#EB590E] transition-all">
+              <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-primary-orange/5 dark:bg-accent-orange/30 flex items-center justify-center border border-primary-orange/10 group-hover:border-[#EB590E] transition-all">
                 <Plus className="w-6 h-6 text-[#EB590E]" />
               </div>
               <span className="text-xs font-medium text-gray-700">See All</span>
@@ -2847,7 +2847,7 @@ export default function Home() {
                           <p className="text-sm font-semibold text-gray-900 dark:text-white truncate tracking-tight">
                             {restaurant.name}
                           </p>
-                          <p className="text-[10px] text-orange-600 font-bold mt-1 flex items-center gap-1 uppercase tracking-wider">
+                          <p className="text-[10px] text-accent-orange font-bold mt-1 flex items-center gap-1 uppercase tracking-wider">
                             <Flame className="w-3.5 h-3.5 fill-orange-600" />
                             Near & Fast
                           </p>

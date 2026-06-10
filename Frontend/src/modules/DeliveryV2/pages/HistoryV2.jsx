@@ -270,13 +270,13 @@ export const HistoryV2 = () => {
                                 <p className="text-sm font-medium text-gray-500 mt-0.5">{trip.restaurant || trip.restaurantName || 'Sayaji'}</p>
                                 <p className="text-xs text-gray-400 font-medium mt-0.5 line-clamp-1">{extractItems(trip)}</p>
                              </div>
-                             <span className={`text-sm font-bold ${isCompleted ? 'text-[#10B981]' : isCancelled ? 'text-red-500' : 'text-orange-500'}`}>
+                             <span className={`text-sm font-bold ${isCompleted ? 'text-[#10B981]' : isCancelled ? 'text-red-500' : 'text-primary-orange/50'}`}>
                                 {trip.status || 'Status'}
                              </span>
                          </div>
                          
                          <div className="flex gap-2 mb-4 mt-3">
-                             <span className={`text-[10px] font-bold px-3 py-1 rounded-full ${isCOD ? 'bg-orange-50 text-orange-600' : 'bg-green-50 text-[#10B981]'}`}>
+                             <span className={`text-[10px] font-bold px-3 py-1 rounded-full ${isCOD ? 'bg-primary-orange/5 text-accent-orange' : 'bg-green-50 text-[#10B981]'}`}>
                                 {isCOD ? 'COD' : 'Online'}
                              </span>
                          </div>

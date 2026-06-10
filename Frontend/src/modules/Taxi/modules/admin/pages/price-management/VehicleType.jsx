@@ -35,7 +35,7 @@ import trucksImg from '@/assets/images/delivery/trucks.png';
 import bikeImg from '@/assets/images/delivery/bike.png';
 import moversImg from '@/assets/images/delivery/movers.png';
 
-const inputClass = 'w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-800 outline-none transition-all focus:border-orange-300 focus:ring-2 focus:ring-orange-100';
+const inputClass = 'w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-800 outline-none transition-all focus:border-primary-orange/40 focus:ring-2 focus:ring-primary-orange/10';
 const labelClass = 'mb-2 block text-[12px] font-bold text-slate-700';
 
 const iconMap = {
@@ -490,7 +490,7 @@ const VehicleType = ({ mode: propMode }) => {
             </div>
             <button
               onClick={() => navigate('/taxi/admin/pricing/vehicle-type/create')}
-              className="inline-flex items-center gap-2 rounded-xl bg-[#ff6b4a] px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-orange-200 transition hover:bg-[#f55a37]"
+              className="inline-flex items-center gap-2 rounded-xl bg-[#ff6b4a] px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-primary-orange/20 transition hover:bg-[#f55a37]"
             >
               <Plus size={18} />
               Add Vehicle
@@ -501,7 +501,7 @@ const VehicleType = ({ mode: propMode }) => {
         <div className="mb-6 grid grid-cols-1 gap-5 md:grid-cols-3">
           <div className="rounded-2xl border border-slate-200 bg-white p-5">
             <div className="flex items-center gap-3">
-              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-orange-50 text-orange-500">
+              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-primary-orange/5 text-primary-orange/50">
                 <Car size={20} />
               </div>
               <div>
@@ -577,7 +577,7 @@ const VehicleType = ({ mode: propMode }) => {
                     <td className="px-6 py-5">
                       <span className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${
                         String(vehicle.transport_type || '').toLowerCase() === 'delivery'
-                          ? 'bg-orange-50 text-orange-600'
+                          ? 'bg-primary-orange/5 text-accent-orange'
                           : String(vehicle.transport_type || '').toLowerCase() === 'both'
                             ? 'bg-emerald-50 text-emerald-600'
                             : 'bg-blue-50 text-blue-600'
@@ -850,7 +850,7 @@ const VehicleType = ({ mode: propMode }) => {
                 ) : (
                   <label className="flex cursor-pointer flex-col items-center gap-3">
                     <input type="file" accept="image/*" className="hidden" onChange={(event) => handleImageChange(event, 'image')} />
-                    <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white text-orange-500 shadow-sm">
+                    <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white text-primary-orange/50 shadow-sm">
                       <Upload size={20} />
                     </span>
                     <span className="text-sm font-semibold text-slate-700">Upload preview image</span>
@@ -859,9 +859,9 @@ const VehicleType = ({ mode: propMode }) => {
                 )}
               </div>
             </div>
-            <div className="mt-4 rounded-[24px] border border-orange-100 bg-gradient-to-r from-white via-orange-50/30 to-white p-3 shadow-sm">
+            <div className="mt-4 rounded-[24px] border border-primary-orange/10 bg-gradient-to-r from-white via-primary-orange/5/30 to-white p-3 shadow-sm">
               <p className="mb-2 text-[11px] font-black uppercase tracking-[0.18em] text-slate-400">User Card Preview</p>
-              <div className="flex items-center gap-3 rounded-[20px] border border-orange-400 bg-white px-3 py-3">
+              <div className="flex items-center gap-3 rounded-[20px] border border-primary-orange/80 bg-white px-3 py-3">
                 <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-slate-100">
                   <img
                     src={previewImage || mapIconPreview}
@@ -872,7 +872,7 @@ const VehicleType = ({ mode: propMode }) => {
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
                     <p className="truncate text-sm font-black text-slate-900">{formData.name || 'Taxi'}</p>
-                    <span className="rounded bg-orange-500 px-1.5 py-0.5 text-[7px] font-black text-white">FASTEST</span>
+                    <span className="rounded bg-primary-orange/50 px-1.5 py-0.5 text-[7px] font-black text-white">FASTEST</span>
                   </div>
                   <p className="truncate text-[11px] font-bold text-slate-500">{formData.short_description || formData.description || 'Closest driver 940 m away'}</p>
                 </div>
@@ -888,7 +888,7 @@ const VehicleType = ({ mode: propMode }) => {
                   <p className="text-sm font-semibold text-slate-800">Live Map Icon Preview</p>
                   <p className="text-[11px] font-medium text-slate-500">This uploaded icon is saved to the DB and used on app maps.</p>
                 </div>
-                <label className="inline-flex cursor-pointer items-center gap-2 rounded-xl bg-white px-3 py-2 text-[11px] font-bold text-slate-700 shadow-sm transition hover:text-orange-500">
+                <label className="inline-flex cursor-pointer items-center gap-2 rounded-xl bg-white px-3 py-2 text-[11px] font-bold text-slate-700 shadow-sm transition hover:text-primary-orange/50">
                   <Upload size={14} />
                   Change
                   <input type="file" accept="image/*" className="hidden" onChange={(event) => handleImageChange(event, 'map_icon')} />

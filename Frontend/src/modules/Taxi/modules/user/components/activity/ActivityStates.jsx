@@ -9,7 +9,7 @@ export const ActivitySupportState = ({ onContact }) => (
     className="flex flex-col items-center justify-center py-20 text-center gap-5"
   >
     <div className="w-20 h-20 bg-white/80 border border-white/80 shadow-sm rounded-3xl flex items-center justify-center">
-      <Headset size={36} className="text-orange-500" />
+      <Headset size={36} className="text-primary-orange/50" />
     </div>
     <div className="space-y-1">
       <h3 className="text-[17px] font-black text-slate-900">No support tickets</h3>
@@ -32,7 +32,7 @@ export const ActivityLoadingState = () => (
     className="flex flex-col items-center justify-center py-20 text-center gap-3"
   >
     <div className="w-14 h-14 rounded-3xl bg-white/80 border border-white/80 shadow-sm flex items-center justify-center">
-      <Loader2 size={24} className="animate-spin text-orange-500" strokeWidth={3} />
+      <Loader2 size={24} className="animate-spin text-primary-orange/50" strokeWidth={3} />
     </div>
     <p className="text-[15px] font-black text-slate-500">Loading your trips</p>
   </motion.div>

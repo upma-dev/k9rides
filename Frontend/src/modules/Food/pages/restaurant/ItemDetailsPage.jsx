@@ -1039,7 +1039,7 @@ export default function ItemDetailsPage() {
                   </div>
                 </div>
               ) : (
-                <div className="rounded-lg border border-orange-100 bg-orange-50 px-3 py-2 text-sm text-orange-700">
+                <div className="rounded-lg border border-primary-orange/10 bg-primary-orange/5 px-3 py-2 text-sm text-accent-orange/90">
                   Customers will see the lowest variant price first.
                 </div>
               )}
@@ -1053,7 +1053,7 @@ export default function ItemDetailsPage() {
                   <button
                     type="button"
                     onClick={handleAddVariant}
-                    className="inline-flex items-center gap-1 rounded-full border border-orange-200 bg-orange-50 px-3 py-1.5 text-xs font-semibold text-orange-700 hover:bg-orange-100"
+                    className="inline-flex items-center gap-1 rounded-full border border-primary-orange/20 bg-primary-orange/5 px-3 py-1.5 text-xs font-semibold text-accent-orange/90 hover:bg-primary-orange/10"
                   >
                     <Plus className="w-3.5 h-3.5" />
                     Add variant

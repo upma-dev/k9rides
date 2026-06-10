@@ -336,8 +336,8 @@ const RentalConfirmed = () => {
             transition={{ duration: 0.35 }}
             className="flex flex-col items-center text-center gap-3 py-5"
           >
-            <div className={`w-16 h-16 rounded-full flex items-center justify-center shadow-[0_8px_24px_rgba(16,185,129,0.15)] ${isCompletedRentalRide ? 'bg-emerald-50' : 'bg-orange-50'}`}>
-              <CheckCircle2 size={32} className={isCompletedRentalRide ? 'text-emerald-500' : 'text-orange-500'} strokeWidth={2} />
+            <div className={`w-16 h-16 rounded-full flex items-center justify-center shadow-[0_8px_24px_rgba(16,185,129,0.15)] ${isCompletedRentalRide ? 'bg-emerald-50' : 'bg-primary-orange/5'}`}>
+              <CheckCircle2 size={32} className={isCompletedRentalRide ? 'text-emerald-500' : 'text-primary-orange/50'} strokeWidth={2} />
             </div>
             <div>
               <p className="text-[10px] font-black uppercase tracking-[0.26em] text-slate-400">
@@ -375,7 +375,7 @@ const RentalConfirmed = () => {
                   <p className="text-[10px] font-black uppercase tracking-[0.22em] text-slate-400">Time Elapsed</p>
                   <p className="mt-1 text-[18px] font-black text-slate-900">{liveElapsedLabel}</p>
                 </div>
-                <Clock size={18} className="text-orange-500" />
+                <Clock size={18} className="text-primary-orange/50" />
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div className="rounded-[14px] bg-slate-50 px-4 py-3">
@@ -416,7 +416,7 @@ const RentalConfirmed = () => {
                 </div>
               </div>
               <div className="flex items-center gap-2.5">
-                <MapPin size={13} className="text-orange-400 shrink-0" />
+                <MapPin size={13} className="text-primary-orange/80 shrink-0" />
                 <p className="text-[11px] font-black text-slate-700">
                   {activeRentalRide.serviceLocation?.name || `${appName} Hub`}
                 </p>
@@ -455,8 +455,8 @@ const RentalConfirmed = () => {
           ) : (
             <div className="pointer-events-auto w-full space-y-3">
               {!isWithinHubRange && !locationError && (
-                <div className="bg-orange-50 border border-orange-100 rounded-[14px] px-4 py-2 text-center">
-                  <p className="text-[11px] font-black text-orange-600">
+                <div className="bg-primary-orange/5 border border-primary-orange/10 rounded-[14px] px-4 py-2 text-center">
+                  <p className="text-[11px] font-black text-accent-orange">
                     {distanceToHub !== null 
                       ? `Return to hub to end ride (${Math.round(distanceToHub)}m away)` 
                       : 'Calculating distance to hub...'}
@@ -541,7 +541,7 @@ const RentalConfirmed = () => {
               </div>
             </div>
             <div className="flex items-center gap-2.5">
-              <MapPin size={13} className="text-orange-400 shrink-0" />
+              <MapPin size={13} className="text-primary-orange/80 shrink-0" />
               <p className="text-[11px] font-black text-slate-700">
                 {serviceLocation?.name || `${appName} Hub`}
               </p>
@@ -573,8 +573,8 @@ const RentalConfirmed = () => {
           className="rounded-[20px] border border-white/80 bg-white/90 shadow-[0_4px_14px_rgba(15,23,42,0.05)] px-5 py-4 space-y-3"
         >
           <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-[9px] bg-orange-50 flex items-center justify-center">
-              <Camera size={13} className="text-orange-500" strokeWidth={2.5} />
+            <div className="w-7 h-7 rounded-[9px] bg-primary-orange/5 flex items-center justify-center">
+              <Camera size={13} className="text-primary-orange/50" strokeWidth={2.5} />
             </div>
             <p className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-500">
               Condition Photo at Pickup

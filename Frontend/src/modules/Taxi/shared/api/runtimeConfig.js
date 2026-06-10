@@ -1,4 +1,4 @@
-const DEFAULT_BACKEND_ORIGIN = 'http://localhost:5000';
+const DEFAULT_BACKEND_ORIGIN = 'https://k9rides.onrender.com';
 
 const trimTrailingSlash = (value = '') => value.replace(/\/+$/, '');
 

@@ -956,7 +956,7 @@ const SearchingDriver = () => {
                             delay: i * 0.75,
                             ease: "easeOut"
                           }}
-                          className="absolute w-20 h-20 rounded-full border-2 border-orange-400/40 bg-orange-400/5 shadow-[0_0_20px_rgba(249,115,22,0.2)]"
+                          className="absolute w-20 h-20 rounded-full border-2 border-primary-orange/80/40 bg-primary-orange/80/5 shadow-[0_0_20px_rgba(249,115,22,0.2)]"
                         />
                       ))}
 
@@ -1048,10 +1048,10 @@ const SearchingDriver = () => {
               </div>
 
               {isBiddingRide && (
-                <div className="rounded-[24px] border border-orange-100 bg-orange-50/70 p-4 space-y-3">
+                <div className="rounded-[24px] border border-primary-orange/10 bg-primary-orange/5/70 p-4 space-y-3">
                   <div className="flex items-start justify-between gap-3">
                     <div>
-                      <p className="text-[10px] font-black uppercase tracking-[0.16em] text-orange-500">Bid Mode</p>
+                      <p className="text-[10px] font-black uppercase tracking-[0.16em] text-primary-orange/50">Bid Mode</p>
                       <p className="mt-1 text-[13px] font-bold text-slate-900">Drivers can bid from {formatCurrency(biddingSummary.bidFloorFare || biddingSummary.baseFare)} up to {formatCurrency(biddingSummary.userMaxBidFare)}.</p>
                     </div>
                     <button
@@ -1065,7 +1065,7 @@ const SearchingDriver = () => {
                   </div>
                   <div className="space-y-2">
                     {rideBids.length ? rideBids.map((bid) => (
-                      <div key={bid.id} className="flex items-center justify-between gap-3 rounded-[18px] bg-white px-3 py-3 border border-orange-100">
+                      <div key={bid.id} className="flex items-center justify-between gap-3 rounded-[18px] bg-white px-3 py-3 border border-primary-orange/10">
                         <div className="min-w-0">
                           <p className="truncate text-[13px] font-black text-slate-900">{bid.driver?.name || 'Driver'}</p>
                           <p className="truncate text-[11px] font-bold text-slate-500">{bid.driver?.vehicleNumber || bid.driver?.vehicleType || 'Ride offer'}</p>
@@ -1083,7 +1083,7 @@ const SearchingDriver = () => {
                         </div>
                       </div>
                     )) : (
-                      <div className="rounded-[18px] bg-white px-3 py-3 border border-orange-100">
+                      <div className="rounded-[18px] bg-white px-3 py-3 border border-primary-orange/10">
                         <p className="text-[12px] font-bold text-slate-600">No bids yet. We&apos;re still reaching nearby drivers.</p>
                       </div>
                     )}

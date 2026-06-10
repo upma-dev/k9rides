@@ -480,7 +480,7 @@ const ContactDetailsSheet = ({
 
             <div className="space-y-4">
               <div className="flex items-center gap-2">
-                <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-orange-50 text-orange-600">
+                <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-primary-orange/5 text-accent-orange">
                   <Contact size={16} />
                 </div>
                 <p className="text-sm font-black text-slate-900">Receiver</p>

@@ -6,10 +6,10 @@ import { ArrowRight, Clock3, ShieldCheck, Sparkles } from 'lucide-react';
 const rotatingCards = [
   {
     icon: Clock3,
-    iconClass: 'text-orange-600',
+    iconClass: 'text-accent-orange',
     title: 'In a hurry?',
     description: 'Auto for shorter wait times.',
-    actionClass: 'bg-orange-50 text-orange-500',
+    actionClass: 'bg-primary-orange/5 text-primary-orange/50',
     path: '/taxi/user/ride/select-location',
     images: [
       { src: '/2_AutoRickshaw.png', alt: 'Auto' },

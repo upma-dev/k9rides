@@ -18,7 +18,7 @@ const getCorsOrigins = () => {
         .map((value) => value.trim())
         .filter(Boolean);
 
-    return parsed.length > 0 ? parsed : ['http://localhost:5173'];
+    return parsed.length > 0 ? parsed : ['https://k9rides.onrender.com'];
 };
 
 const app = express();

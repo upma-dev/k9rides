@@ -421,7 +421,7 @@ export default function UserOrderDetails() {
             <button
               type="button"
               onClick={handleCallRestaurant}
-              className="w-8 h-8 rounded-full border border-gray-200 dark:border-zinc-700 flex items-center justify-center text-[#EB590E] hover:bg-orange-50 dark:hover:bg-orange-950/30"
+              className="w-8 h-8 rounded-full border border-gray-200 dark:border-zinc-700 flex items-center justify-center text-[#EB590E] hover:bg-primary-orange/5 dark:hover:bg-accent-orange/30/30"
             >
               <Phone className="w-4 h-4" />
             </button>
@@ -441,7 +441,7 @@ export default function UserOrderDetails() {
               <span
                 className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${sendsCutlery
                     ? "bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-400 dark:border-emerald-800"
-                    : "bg-orange-50 text-orange-700 border border-orange-200 dark:bg-orange-900/20 dark:text-orange-400 dark:border-orange-800"
+                    : "bg-primary-orange/5 text-accent-orange/90 border border-primary-orange/20 dark:bg-accent-orange/50/20 dark:text-primary-orange/80 dark:border-accent-orange/70"
                   }`}
               >
                 {sendsCutlery ? "Send cutlery" : "Don't send cutlery"}
@@ -485,7 +485,7 @@ export default function UserOrderDetails() {
             <button
               type="button"
               onClick={handleDownloadSummary}
-              className="w-7 h-7 rounded-full bg-orange-50 dark:bg-orange-950/30 flex items-center justify-center text-[#EB590E] hover:bg-orange-100 dark:hover:bg-orange-900/40"
+              className="w-7 h-7 rounded-full bg-primary-orange/5 dark:bg-accent-orange/30/30 flex items-center justify-center text-[#EB590E] hover:bg-primary-orange/10 dark:hover:bg-accent-orange/50/40"
             >
               <Download className="w-4 h-4" />
             </button>
@@ -553,7 +553,7 @@ export default function UserOrderDetails() {
 
           {/* Savings Banner */}
           {savings > 0 && (
-            <div className="relative bg-orange-50 dark:bg-orange-950/20 p-3 pb-4 mt-2">
+            <div className="relative bg-primary-orange/5 dark:bg-accent-orange/30/20 p-3 pb-4 mt-2">
               <div className="absolute -top-1.5 left-0 w-full overflow-hidden leading-none">
                 <svg
                   className="relative block w-[calc(100%+1.3px)] h-[8px]"
@@ -652,7 +652,7 @@ export default function UserOrderDetails() {
         <button
           type="button"
           onClick={handleDownloadSummary}
-          className="flex-1 bg-white dark:bg-zinc-800 border border-[#EB590E] text-[#EB590E] py-3 rounded-lg font-semibold flex items-center justify-center gap-2 hover:bg-orange-50 dark:hover:bg-orange-900/20 transition-colors"
+          className="flex-1 bg-white dark:bg-zinc-800 border border-[#EB590E] text-[#EB590E] py-3 rounded-lg font-semibold flex items-center justify-center gap-2 hover:bg-primary-orange/5 dark:hover:bg-accent-orange/50/20 transition-colors"
         >
           <Download className="w-4 h-4" />
           Invoice
@@ -686,7 +686,7 @@ export default function UserOrderDetails() {
               debugLog("Navigating to complaint page with orderId:", orderIdString)
               navigate(`/user/complaints/submit/${encodeURIComponent(orderIdString)}`)
             }}
-            className="w-full bg-orange-50 dark:bg-orange-950/20 border border-orange-200 dark:border-orange-900/30 text-orange-700 dark:text-orange-400 py-3 rounded-lg font-semibold flex items-center justify-center gap-2 hover:bg-orange-100 dark:hover:bg-orange-900/40 transition-colors"
+            className="w-full bg-primary-orange/5 dark:bg-accent-orange/30/20 border border-primary-orange/20 dark:border-accent-orange/50/30 text-accent-orange/90 dark:text-primary-orange/80 py-3 rounded-lg font-semibold flex items-center justify-center gap-2 hover:bg-primary-orange/10 dark:hover:bg-accent-orange/50/40 transition-colors"
           >
             <FileText className="w-4 h-4" />
             Restaurant Complaint

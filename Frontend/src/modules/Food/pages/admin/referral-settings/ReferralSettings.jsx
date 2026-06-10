@@ -92,7 +92,7 @@ export default function ReferralSettings() {
     <div className="p-4 lg:p-6 bg-slate-50 min-h-screen">
       <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 mb-6">
         <div className="flex items-center gap-3 mb-4">
-          <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center">
+          <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-primary-orange/80 to-accent-orange flex items-center justify-center">
             <Gift className="w-6 h-6 text-white" />
           </div>
           <h1 className="text-2xl font-bold text-slate-900">Referral Settings</h1>
@@ -114,7 +114,7 @@ export default function ReferralSettings() {
             <Button
               onClick={handleSave}
               disabled={saving || loading}
-              className="bg-orange-600 hover:bg-orange-700 text-white flex items-center gap-2"
+              className="bg-accent-orange hover:bg-accent-orange/90 text-white flex items-center gap-2"
             >
               {saving ? (
                 <>
@@ -132,7 +132,7 @@ export default function ReferralSettings() {
 
           {loading ? (
             <div className="flex items-center justify-center py-12">
-              <Loader2 className="w-6 h-6 animate-spin text-orange-600" />
+              <Loader2 className="w-6 h-6 animate-spin text-accent-orange" />
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

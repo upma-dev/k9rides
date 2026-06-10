@@ -29,7 +29,7 @@ import DriverBottomNav from "../../../shared/components/DriverBottomNav";
 import { uploadService } from "../../../../shared/services/uploadService";
 
 const inputClass =
-  "w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-800 outline-none transition-all focus:border-orange-300 focus:ring-2 focus:ring-orange-100";
+  "w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-800 outline-none transition-all focus:border-primary-orange/40 focus:ring-2 focus:ring-primary-orange/10";
 const labelClass = "mb-2 block text-[12px] font-bold text-slate-700";
 
 const unwrap = (response) => response?.data?.data || response?.data || response;
@@ -603,9 +603,9 @@ const OwnerVehicleFleet = () => {
 
                 {selectedType ? (
                   <div className="p-6">
-                    <div className="rounded-[24px] border border-orange-100 bg-gradient-to-br from-white via-orange-50/40 to-slate-50 p-4 shadow-sm">
+                    <div className="rounded-[24px] border border-primary-orange/10 bg-gradient-to-br from-white via-primary-orange/5/40 to-slate-50 p-4 shadow-sm">
                       <div className="mb-4 flex items-center gap-4">
-                        <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-white shadow-sm text-orange-500">
+                        <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-white shadow-sm text-primary-orange/50">
                           <ActiveIcon size={30} />
                         </div>
                         <div className="min-w-0">
@@ -662,7 +662,7 @@ const OwnerVehicleFleet = () => {
 
                       <div className="mt-4 rounded-[24px] border border-slate-200 bg-slate-50 p-4">
                         <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-slate-700">
-                          <Users size={16} className="text-orange-500" />
+                          <Users size={16} className="text-primary-orange/50" />
                           Service Notes
                         </div>
                         <div className="space-y-2 text-sm text-slate-600">
@@ -692,7 +692,7 @@ const OwnerVehicleFleet = () => {
 
                     <div className="mt-4 rounded-[24px] border border-slate-200 bg-slate-50/80 p-4">
                       <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-slate-700">
-                        <FileText size={16} className="text-orange-500" />
+                        <FileText size={16} className="text-primary-orange/50" />
                         Edit Summary
                       </div>
                       <div className="space-y-2 text-sm text-slate-600">
@@ -738,7 +738,7 @@ const OwnerVehicleFleet = () => {
                 ) : (
                   <div className="p-6">
                     <div className="flex min-h-[320px] flex-col items-center justify-center rounded-[24px] border border-dashed border-slate-300 bg-slate-50 px-6 text-center">
-                      <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-white text-orange-500 shadow-sm">
+                      <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-white text-primary-orange/50 shadow-sm">
                         <Car size={24} />
                       </div>
                       <p className="text-base font-semibold text-slate-800">
@@ -802,7 +802,7 @@ const OwnerVehicleFleet = () => {
                           accept="image/*"
                         />
                         <div className="flex flex-col items-center gap-3 text-center">
-                          <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white text-orange-500 shadow-sm">
+                          <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white text-primary-orange/50 shadow-sm">
                             <Upload size={20} />
                           </span>
                           <span className="text-sm font-semibold text-slate-700">
@@ -817,12 +817,12 @@ const OwnerVehicleFleet = () => {
                   </div>
 
                   {formData.rcFile ? (
-                    <div className="flex items-center justify-between rounded-2xl border border-orange-200 bg-orange-50 p-4">
+                    <div className="flex items-center justify-between rounded-2xl border border-primary-orange/20 bg-primary-orange/5 p-4">
                       <div>
-                        <p className="text-sm font-semibold text-orange-800">
+                        <p className="text-sm font-semibold text-accent-orange/70">
                           {formData.rcFile.name}
                         </p>
-                        <p className="text-xs text-orange-600">
+                        <p className="text-xs text-accent-orange">
                           This file will replace the current RC document after save.
                         </p>
                       </div>
@@ -834,7 +834,7 @@ const OwnerVehicleFleet = () => {
                             rcFile: null,
                           }))
                         }
-                        className="rounded-xl p-2 text-orange-700 transition hover:bg-white hover:text-rose-500"
+                        className="rounded-xl p-2 text-accent-orange/90 transition hover:bg-white hover:text-rose-500"
                       >
                         <X size={16} />
                       </button>
@@ -853,7 +853,7 @@ const OwnerVehicleFleet = () => {
                 <button
                   onClick={handleSave}
                   disabled={!canSave || isSaving}
-                  className="flex-1 rounded-2xl bg-[#ff6b4a] px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-orange-200 transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="flex-1 rounded-2xl bg-[#ff6b4a] px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-primary-orange/20 transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {isSaving ? "Saving..." : "Save Changes"}
                 </button>

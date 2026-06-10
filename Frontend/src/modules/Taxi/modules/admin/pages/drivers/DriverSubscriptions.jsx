@@ -147,7 +147,7 @@ const DriverSubscriptions = () => {
           </div>
           
           <div className="flex items-center gap-3">
-            <button className="bg-orange-500 text-white px-4 py-2 rounded-lg text-xs font-semibold flex items-center gap-2 shadow-sm uppercase tracking-wide">
+            <button className="bg-primary-orange/50 text-white px-4 py-2 rounded-lg text-xs font-semibold flex items-center gap-2 shadow-sm uppercase tracking-wide">
               <Filter size={14} /> Filters
             </button>
             <div className="relative">

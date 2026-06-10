@@ -359,9 +359,9 @@ export default function DeliveryManPayments() {
                       {visibleColumns.actions && <td className="px-6 py-4 whitespace-nowrap text-center">
                         <button
                           onClick={() => handleViewPayment(payment)}
-                          className="p-2 rounded-lg bg-orange-50 hover:bg-orange-100 transition-colors"
+                          className="p-2 rounded-lg bg-primary-orange/5 hover:bg-primary-orange/10 transition-colors"
                         >
-                          <Eye className="w-4 h-4 text-orange-600" />
+                          <Eye className="w-4 h-4 text-accent-orange" />
                         </button>
                       </td>}
                     </tr>

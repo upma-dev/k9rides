@@ -549,7 +549,7 @@ const Home = () => {
 
   return (
     <div className="min-h-screen bg-[linear-gradient(180deg,#F8FAFC_0%,#F3F4F6_38%,#EEF2F7_100%)] pb-24 max-w-lg mx-auto relative overflow-hidden font-sans no-scrollbar">
-      <div className="absolute -top-16 right-[-40px] h-44 w-44 rounded-full bg-orange-100/60 blur-3xl pointer-events-none" />
+      <div className="absolute -top-16 right-[-40px] h-44 w-44 rounded-full bg-primary-orange/10/60 blur-3xl pointer-events-none" />
       <div className="absolute top-52 left-[-60px] h-52 w-52 rounded-full bg-emerald-100/60 blur-3xl pointer-events-none" />
       <div className="absolute bottom-28 right-[-40px] h-40 w-40 rounded-full bg-blue-100/60 blur-3xl pointer-events-none" />
 
@@ -646,7 +646,7 @@ const Home = () => {
                     {rentalTimerLabel}
                   </h2>
                   <div className="flex items-center gap-1.5 mt-1.5">
-                    <div className="h-1.5 w-1.5 rounded-full bg-orange-500 animate-pulse" />
+                    <div className="h-1.5 w-1.5 rounded-full bg-primary-orange/50 animate-pulse" />
                     <p className="text-[12px] font-black text-slate-900">
                       {currentRide.vehicle?.name || 'Assigned Vehicle'}
                     </p>
@@ -673,7 +673,7 @@ const Home = () => {
               </div>
             </div>
             
-            <div className="absolute -right-6 -bottom-6 h-24 w-24 rounded-full bg-orange-100/40 blur-3xl pointer-events-none" />
+            <div className="absolute -right-6 -bottom-6 h-24 w-24 rounded-full bg-primary-orange/10/40 blur-3xl pointer-events-none" />
             <div className="absolute -left-6 -top-6 h-24 w-24 rounded-full bg-emerald-100/40 blur-3xl pointer-events-none" />
           </motion.div>
         )}
@@ -759,8 +759,8 @@ const Home = () => {
             </div>
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-1.5">
-                <span className="h-2 w-2 rounded-full bg-orange-500 animate-pulse" />
-                <p className="text-[9px] font-black uppercase tracking-[0.22em] text-orange-600">
+                <span className="h-2 w-2 rounded-full bg-primary-orange/50 animate-pulse" />
+                <p className="text-[9px] font-black uppercase tracking-[0.22em] text-accent-orange">
                   {isScheduledAcceptedRide
                     ? 'Scheduled ride ready'
                     : serviceType === 'parcel'
@@ -791,7 +791,7 @@ const Home = () => {
                 <span className="truncate">{currentRide.pickup || 'Pickup location'}</span>
               </div>
               <div className="mt-0.5 flex min-w-0 items-center gap-1.5 text-[10px] font-bold text-slate-500">
-                <MapPin size={12} className="shrink-0 text-orange-500" strokeWidth={2.5} />
+                <MapPin size={12} className="shrink-0 text-primary-orange/50" strokeWidth={2.5} />
                 <span className="truncate">{currentRide.drop || 'Drop location'}</span>
               </div>
               {serviceType === 'rental' ? (

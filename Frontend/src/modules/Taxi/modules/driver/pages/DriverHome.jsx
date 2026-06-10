@@ -2352,7 +2352,7 @@ const DriverHome = () => {
                                         </div>
 
                                         <div className="flex flex-col items-center">
-                                            <div className="mb-2 flex h-10 w-10 items-center justify-center rounded-2xl bg-orange-50 text-orange-600">
+                                            <div className="mb-2 flex h-10 w-10 items-center justify-center rounded-2xl bg-primary-orange/5 text-accent-orange">
                                                 <Navigation size={18} strokeWidth={2.5} />
                                             </div>
                                             <span className="text-[14px] font-black text-slate-900">{formatSummaryDistance(todaySummary.distanceMeters)}</span>

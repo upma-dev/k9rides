@@ -78,7 +78,8 @@
   --color-sidebar-ring: var(--sidebar-ring);
   
   --color-page-bg: #ffffff;
-  --color-primary-orange: #dc2626;
+  --color-primary-orange: var(--primary-color, #dc2626);
+  --color-accent-orange: var(--accent-color, #f97316);
   --font-poppins: var(--font-poppins);
   --font-outfit: var(--font-outfit);
 }
@@ -171,3 +172,5 @@
 .pac-container::after {
   display: none !important;
 }
+
+html.dark { color-scheme: dark; }

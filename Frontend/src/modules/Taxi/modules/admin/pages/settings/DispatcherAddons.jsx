@@ -60,7 +60,7 @@ const DispatcherAddons = () => {
               <div className="flex flex-col md:flex-row items-end gap-6">
                  <div className="flex-1 space-y-2">
                     <label className="block text-[11px] font-black text-gray-700 uppercase tracking-tight">
-                       Purchase Code <span className="text-orange-500">*</span>
+                       Purchase Code <span className="text-primary-orange/50">*</span>
                     </label>
                     <input 
                        type="text"

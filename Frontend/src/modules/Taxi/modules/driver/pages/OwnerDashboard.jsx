@@ -65,7 +65,7 @@ const StatCard = ({ icon, label, value, sub, tone = 'slate' }) => {
       : tone === 'blue'
         ? 'from-blue-600 to-indigo-600 text-white'
         : tone === 'amber'
-          ? 'from-amber-500 to-orange-500 text-white'
+          ? 'from-amber-500 to-primary-orange/50 text-white'
           : 'from-slate-900 to-slate-800 text-white';
 
   return (

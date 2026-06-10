@@ -283,7 +283,7 @@ const SidebarBadge = ({ count, isActive = false }) => {
   return (
     <span
       className={`ml-auto inline-flex min-w-[1.5rem] items-center justify-center rounded-full px-2 py-0.5 text-[10px] font-black ${
-        isActive ? 'bg-white/20 text-white' : 'bg-orange-500 text-white'
+        isActive ? 'bg-white/20 text-white' : 'bg-primary-orange/50 text-white'
       }`}
     >
       {count > 99 ? '99+' : count}
@@ -442,7 +442,7 @@ const NestedGroup = ({
         )}
       >
         <span className="flex min-w-0 items-center gap-3 text-[12px] font-medium">
-          <div className={cn("h-1 w-1 shrink-0 rounded-full", isActive || isExpanded ? "bg-white" : "bg-neutral-600")} />
+          <div className={cn("h-1 w-1 shrink-0 rounded-full", isActive || isExpanded ? "bg-white dark:bg-slate-900" : "bg-neutral-600")} />
           <span className="truncate">{label}</span>
         </span>
         <span className="ml-3 flex items-center gap-2">
@@ -493,20 +493,20 @@ const ModeSwitcher = ({ mode, setMode }) => {
       <button
         type="button"
         onClick={() => setIsOpen((current) => !current)}
-        className="group flex items-center gap-3 rounded-2xl border border-neutral-200 bg-white px-4 py-2 shadow-sm transition-all hover:border-amber-400/30 hover:shadow-md active:scale-95"
+        className="group flex items-center gap-3 rounded-2xl border border-neutral-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-4 py-2 shadow-sm transition-all hover:border-amber-400/30 hover:shadow-md active:scale-95"
       >
-        <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-amber-50 text-amber-600 group-hover:bg-amber-600 group-hover:text-white transition-all">
+        <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-[#f8fafc] dark:bg-slate-900mber-50 text-amber-600 group-hover:bg-[#f8fafc] dark:bg-slate-900mber-600 group-hover:text-white transition-all">
           <Briefcase size={16} />
         </div>
         <div className="text-left leading-tight">
           <p className="text-[10px] font-bold uppercase tracking-widest text-neutral-400">Panel Mode</p>
-          <p className="text-[13px] font-extrabold text-neutral-900">{active.label}</p>
+          <p className="text-[13px] font-extrabold text-neutral-900 dark:text-neutral-100">{active.label}</p>
         </div>
         <ChevronDown size={14} className="text-neutral-300 transition-transform group-hover:text-amber-400" />
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 top-full z-50 mt-2 w-64 rounded-2xl border border-slate-100 bg-white p-2 shadow-2xl ring-1 ring-black/5 animate-in fade-in slide-in-from-top-2 duration-200">
+        <div className="absolute right-0 top-full z-50 mt-2 w-64 rounded-2xl border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 p-2 shadow-2xl ring-1 ring-black/5 animate-in fade-in slide-in-from-top-2 duration-200">
           {options.map((option) => {
             const selected = option.id === mode;
             return (
@@ -518,23 +518,23 @@ const ModeSwitcher = ({ mode, setMode }) => {
                   setIsOpen(false);
                 }}
                 className={`flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left transition-all ${
-                  selected ? 'bg-amber-600 text-white shadow-lg shadow-amber-200' : 'hover:bg-neutral-50'
+                  selected ? 'bg-[#f8fafc] dark:bg-slate-900mber-600 text-white shadow-lg shadow-amber-200' : 'hover:bg-neutral-50 dark:bg-slate-900'
                 }`}
               >
                 <span
                   className={`h-2.5 w-2.5 rounded-full transition-all ${
-                    selected ? 'bg-white' : 'bg-neutral-300'
+                    selected ? 'bg-white dark:bg-slate-900' : 'bg-neutral-300'
                   }`}
                 />
                 <span className="flex-1">
-                  <span className={`block text-[13px] font-bold ${selected ? 'text-white' : 'text-neutral-900'}`}>
+                  <span className={`block text-[13px] font-bold ${selected ? 'text-white' : 'text-neutral-900 dark:text-neutral-100'}`}>
                     {option.label}
                   </span>
                   <span className={`block text-[11px] ${selected ? 'text-amber-100' : 'text-neutral-500'}`}>
                     {option.subtitle}
                   </span>
                 </span>
-                {selected && <div className="h-1.5 w-1.5 rounded-full bg-white animate-pulse" />}
+                {selected && <div className="h-1.5 w-1.5 rounded-full bg-white dark:bg-slate-900 animate-pulse" />}
               </button>
             );
           })}
@@ -1227,7 +1227,7 @@ const AdminLayout = () => {
         setChatUnreadCount((current) => current + 1);
         toast(nextItem.body, {
           duration: 4500,
-          className: 'font-bold text-[13px] rounded-2xl shadow-xl border border-sky-50 bg-white',
+          className: 'font-bold text-[13px] rounded-2xl shadow-xl border border-sky-50 bg-white dark:bg-slate-900',
         });
       }
     };
@@ -1249,7 +1249,7 @@ const AdminLayout = () => {
   };
 
   return (
-    <div className="flex h-screen overflow-hidden bg-neutral-200 font-sans text-gray-900">
+    <div className="flex h-screen overflow-hidden bg-neutral-200 dark:bg-slate-950 font-sans text-gray-900 dark:text-gray-100">
       <aside
         className={cn(
           "relative z-50 flex h-screen flex-col overflow-hidden transition-all duration-500 bg-neutral-950 border-r border-neutral-800/60",
@@ -1270,7 +1270,7 @@ const AdminLayout = () => {
                   </h3>
                   <div className="mt-1 flex items-center gap-1.5">
                     <div className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
-                    <span className="text-[11px] font-bold uppercase tracking-widest text-slate-400">
+                    <span className="text-[11px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">
                       System Admin
                     </span>
                   </div>
@@ -1280,7 +1280,7 @@ const AdminLayout = () => {
             <button
               type="button"
               onClick={() => setCollapsed((current) => !current)}
-              className="absolute -right-3 top-9 z-[60] hidden h-7 w-7 items-center justify-center rounded-full border border-neutral-800 bg-neutral-900 text-neutral-300 shadow-lg ring-4 ring-neutral-950 transition-all hover:bg-white hover:text-black hover:scale-110 active:scale-90 lg:flex group/collapse"
+              className="absolute -right-3 top-9 z-[60] hidden h-7 w-7 items-center justify-center rounded-full border border-neutral-800 bg-neutral-900 text-neutral-300 shadow-lg ring-4 ring-neutral-950 transition-all hover:bg-white dark:bg-slate-900 hover:text-black hover:scale-110 active:scale-90 lg:flex group/collapse"
             >
               {isCollapsed ? (
                 <ChevronRight size={12} strokeWidth={3.5} className="transition-transform group-hover/collapse:translate-x-0.5" />
@@ -1316,7 +1316,7 @@ const AdminLayout = () => {
                   onClick={() => navigate("/taxi/admin/dashboard")}
                   className={cn(
                     "flex-1 flex items-center justify-center gap-2 py-2 text-xs font-bold rounded-lg transition-all duration-300",
-                    "bg-white text-black shadow-[0_4px_12px_rgba(255,255,255,0.15)] scale-[1.02]"
+                    "bg-white dark:bg-slate-900 text-black shadow-[0_4px_12px_rgba(255,255,255,0.15)] scale-[1.02]"
                   )}
                 >
                   <Truck className="w-3.5 h-3.5 text-black" />
@@ -1331,7 +1331,7 @@ const AdminLayout = () => {
               <div key={section.title} className="space-y-1">
                 {!isCollapsed && (
                   <div className="px-4 mb-4 flex items-center gap-2">
-                    <div className="h-3 w-1 rounded-full bg-white" />
+                    <div className="h-3 w-1 rounded-full bg-white dark:bg-slate-900" />
                     <span className="text-[12px] font-black uppercase tracking-widest text-white/90">
                       {section.title}
                     </span>
@@ -1367,11 +1367,11 @@ const AdminLayout = () => {
         </div>
       </aside>
 
-      <div className="flex min-w-0 flex-1 flex-col overflow-hidden bg-neutral-100">
-        <header className="sticky top-0 z-40 flex h-16 items-center justify-between border-b border-neutral-200 bg-white px-6 shadow-sm">
+      <div className="flex min-w-0 flex-1 flex-col overflow-hidden bg-neutral-100 dark:bg-slate-950">
+        <header className="sticky top-0 z-40 flex h-16 items-center justify-between border-b border-neutral-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-6 shadow-sm">
           <div className="flex items-center gap-3">
-            <div className="h-6 w-1 rounded-full bg-amber-600" />
-            <h2 className="text-[15px] font-bold tracking-tight text-neutral-800">{pageTitle}</h2>
+            <div className="h-6 w-1 rounded-full bg-[#f8fafc] dark:bg-slate-900mber-600" />
+            <h2 className="text-[15px] font-bold tracking-tight text-neutral-800 dark:text-neutral-200">{pageTitle}</h2>
           </div>
 
           <div className="flex items-center gap-3">
@@ -1381,7 +1381,7 @@ const AdminLayout = () => {
               <button
                 type="button"
                 onClick={() => setIsSearchOpen((current) => !current)}
-                className="rounded-lg p-2 text-neutral-400 transition-all hover:bg-neutral-50 hover:text-amber-600"
+                className="rounded-lg p-2 text-neutral-400 transition-all hover:bg-neutral-50 dark:bg-slate-900 hover:text-amber-600"
               >
                 <Search size={18} />
               </button>
@@ -1390,7 +1390,7 @@ const AdminLayout = () => {
                 <button
                   type="button"
                   onClick={() => setIsNotificationsOpen((current) => !current)}
-                  className="relative rounded-lg p-2 text-neutral-400 transition-all hover:bg-neutral-50 hover:text-amber-600"
+                  className="relative rounded-lg p-2 text-neutral-400 transition-all hover:bg-neutral-50 dark:bg-slate-900 hover:text-amber-600"
                 >
                   <Bell size={18} />
                   {totalNotificationItems > 0 ? (
@@ -1399,15 +1399,15 @@ const AdminLayout = () => {
                 </button>
 
                 <div
-                  className={`absolute right-0 top-full z-50 mt-2 w-[360px] overflow-hidden rounded-[24px] border border-slate-100 bg-white shadow-2xl transition-all ${
+                  className={`absolute right-0 top-full z-50 mt-2 w-[360px] overflow-hidden rounded-[24px] border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xl transition-all ${
                     isNotificationsOpen ? 'pointer-events-auto scale-100 opacity-100' : 'pointer-events-none scale-95 opacity-0'
                   }`}
                 >
-                  <div className="border-b border-slate-100 px-4 py-4">
+                  <div className="border-b border-slate-100 dark:border-slate-800 px-4 py-4">
                     <div className="flex items-center justify-between gap-3">
                       <div>
                         <p className="text-sm font-extrabold text-slate-900">Notifications</p>
-                        <p className="mt-1 text-[11px] font-semibold text-slate-500">
+                        <p className="mt-1 text-[11px] font-semibold text-slate-500 dark:text-slate-400 dark:text-slate-500">
                           Latest bookings, ride requests, and support chats
                         </p>
                       </div>
@@ -1416,18 +1416,18 @@ const AdminLayout = () => {
                           <button
                             type="button"
                             onClick={dismissCurrentNotifications}
-                            className="rounded-full border border-slate-200 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-slate-500 transition-all hover:border-rose-200 hover:bg-rose-50 hover:text-rose-700"
+                            className="rounded-full border border-slate-200 dark:border-slate-800 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400 dark:text-slate-500 transition-all hover:border-rose-200 hover:bg-rose-50 hover:text-rose-700"
                           >
                             Clear
                           </button>
                         ) : null}
-                        <span className="rounded-full bg-amber-50 px-2.5 py-1 text-[11px] font-bold text-amber-700">
+                        <span className="rounded-full bg-[#f8fafc] dark:bg-slate-900mber-50 px-2.5 py-1 text-[11px] font-bold text-amber-700">
                           {totalNotificationItems}
                         </span>
                       </div>
                     </div>
 
-                    <div className="mt-4 grid grid-cols-3 gap-2 rounded-2xl bg-slate-50 p-1">
+                    <div className="mt-4 grid grid-cols-3 gap-2 rounded-2xl bg-slate-50 dark:bg-slate-800 p-1">
                       <button
                         type="button"
                         onClick={() => {
@@ -1436,8 +1436,8 @@ const AdminLayout = () => {
                         }}
                         className={`rounded-xl px-3 py-2 text-xs font-bold transition-all ${
                           notificationTab === 'ride_requests'
-                            ? 'bg-white text-slate-900 shadow-sm'
-                            : 'text-slate-500 hover:text-slate-900'
+                            ? 'bg-white dark:bg-slate-900 text-slate-900 shadow-sm'
+                            : 'text-slate-500 dark:text-slate-400 dark:text-slate-500 hover:text-slate-900'
                         }`}
                       >
                         Ride Requests
@@ -1450,8 +1450,8 @@ const AdminLayout = () => {
                         }}
                         className={`rounded-xl px-3 py-2 text-xs font-bold transition-all ${
                           notificationTab === 'bookings'
-                            ? 'bg-white text-slate-900 shadow-sm'
-                            : 'text-slate-500 hover:text-slate-900'
+                            ? 'bg-white dark:bg-slate-900 text-slate-900 shadow-sm'
+                            : 'text-slate-500 dark:text-slate-400 dark:text-slate-500 hover:text-slate-900'
                         }`}
                       >
                         Bookings
@@ -1463,8 +1463,8 @@ const AdminLayout = () => {
                         }}
                         className={`rounded-xl px-3 py-2 text-xs font-bold transition-all ${
                           notificationTab === 'chats'
-                            ? 'bg-white text-slate-900 shadow-sm'
-                            : 'text-slate-500 hover:text-slate-900'
+                            ? 'bg-white dark:bg-slate-900 text-slate-900 shadow-sm'
+                            : 'text-slate-500 dark:text-slate-400 dark:text-slate-500 hover:text-slate-900'
                         }`}
                       >
                         Chats
@@ -1474,14 +1474,14 @@ const AdminLayout = () => {
 
                   <div className="max-h-[420px] overflow-y-auto p-3">
                     {notificationsLoading ? (
-                      <div className="flex items-center justify-center px-4 py-12 text-sm font-semibold text-slate-500">
+                      <div className="flex items-center justify-center px-4 py-12 text-sm font-semibold text-slate-500 dark:text-slate-400 dark:text-slate-500">
                         Loading notifications...
                       </div>
                     ) : notificationTab === 'ride_requests' ? (
                       visibleRideRequestResults.length === 0 ? (
-                        <div className="rounded-2xl border border-slate-100 bg-slate-50 px-4 py-8 text-center">
+                        <div className="rounded-2xl border border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 px-4 py-8 text-center">
                           <p className="text-sm font-bold text-slate-900">No ride requests found</p>
-                          <p className="mt-1 text-xs font-semibold text-slate-500">New ride requests will show up here.</p>
+                          <p className="mt-1 text-xs font-semibold text-slate-500 dark:text-slate-400 dark:text-slate-500">New ride requests will show up here.</p>
                         </div>
                       ) : (
                         <div className="space-y-2">
@@ -1493,22 +1493,22 @@ const AdminLayout = () => {
                                 navigate('/taxi/admin/trips');
                                 setIsNotificationsOpen(false);
                               }}
-                              className="relative w-full rounded-2xl border border-slate-100 bg-white px-4 py-3 text-left transition-all hover:border-indigo-200 hover:bg-indigo-50/40"
+                              className="relative w-full rounded-2xl border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 px-4 py-3 text-left transition-all hover:border-indigo-200 hover:bg-indigo-50/40"
                             >
                               <div className="flex items-start justify-between gap-3">
                                 <div className="min-w-0">
                                   <p className="truncate text-sm font-bold text-slate-900">
                                     {item.requestId} · {item.userName}
                                   </p>
-                                  <p className="mt-1 truncate text-xs font-semibold text-slate-500">
+                                  <p className="mt-1 truncate text-xs font-semibold text-slate-500 dark:text-slate-400 dark:text-slate-500">
                                     Pickup: {formatAdminNotificationLocation(item.pickupLabel, 'Pickup location set')}
                                   </p>
                                 </div>
-                                <span className="shrink-0 rounded-full bg-amber-50 px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-amber-700">
+                                <span className="shrink-0 rounded-full bg-[#f8fafc] dark:bg-slate-900mber-50 px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-amber-700">
                                   {item.tripStatus || 'Upcoming'}
                                 </span>
                               </div>
-                            <div className="mt-2 flex items-center justify-between gap-3 text-[11px] font-semibold text-slate-400">
+                            <div className="mt-2 flex items-center justify-between gap-3 text-[11px] font-semibold text-slate-400 dark:text-slate-500">
                               <span>
                                 Destination: {formatAdminNotificationLocation(item.dropLabel, 'Destination set')}
                               </span>
@@ -1529,7 +1529,7 @@ const AdminLayout = () => {
                                   dismissNotification('ride_requests', item);
                                 }
                               }}
-                              className="absolute right-3 top-3 inline-flex rounded-lg p-1.5 text-slate-400 transition-all hover:bg-rose-50 hover:text-rose-600"
+                              className="absolute right-3 top-3 inline-flex rounded-lg p-1.5 text-slate-400 dark:text-slate-500 transition-all hover:bg-rose-50 hover:text-rose-600"
                               aria-label="Delete notification"
                             >
                               <Trash2 size={14} />
@@ -1539,9 +1539,9 @@ const AdminLayout = () => {
                         </div>
                       )
                     ) : notificationTab === 'bookings' ? pagedBookings.results.length === 0 ? (
-                      <div className="rounded-2xl border border-slate-100 bg-slate-50 px-4 py-8 text-center">
+                      <div className="rounded-2xl border border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 px-4 py-8 text-center">
                         <p className="text-sm font-bold text-slate-900">No bookings found</p>
-                        <p className="mt-1 text-xs font-semibold text-slate-500">Recent bookings will show up here.</p>
+                        <p className="mt-1 text-xs font-semibold text-slate-500 dark:text-slate-400 dark:text-slate-500">Recent bookings will show up here.</p>
                       </div>
                     ) : (
                       <div className="space-y-2">
@@ -1553,14 +1553,14 @@ const AdminLayout = () => {
                               navigate('/taxi/admin/owners/bookings');
                               setIsNotificationsOpen(false);
                             }}
-                            className="relative w-full rounded-2xl border border-slate-100 bg-white px-4 py-3 text-left transition-all hover:border-indigo-200 hover:bg-indigo-50/40"
+                            className="relative w-full rounded-2xl border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 px-4 py-3 text-left transition-all hover:border-indigo-200 hover:bg-indigo-50/40"
                           >
                             <div className="flex items-start justify-between gap-3">
                               <div className="min-w-0">
                                 <p className="truncate text-sm font-bold text-slate-900">
                                   {item.booking_reference || 'Booking'} · {item.customer_name || 'Customer'}
                                 </p>
-                                <p className="mt-1 truncate text-xs font-semibold text-slate-500">
+                                <p className="mt-1 truncate text-xs font-semibold text-slate-500 dark:text-slate-400 dark:text-slate-500">
                                   {item.pickup_location || 'Pickup'} to {item.dropoff_location || 'Drop'}
                                 </p>
                               </div>
@@ -1568,7 +1568,7 @@ const AdminLayout = () => {
                                 {item.booking_status || 'Pending'}
                               </span>
                             </div>
-                            <div className="mt-2 flex items-center justify-between gap-3 text-[11px] font-semibold text-slate-400">
+                            <div className="mt-2 flex items-center justify-between gap-3 text-[11px] font-semibold text-slate-400 dark:text-slate-500">
                               <span>{item.owner_id?.name || item.owner_id?.company_name || 'Owner booking'}</span>
                               <span>{formatRelativeAdminTime(item.trip_date || item.createdAt)}</span>
                             </div>
@@ -1587,7 +1587,7 @@ const AdminLayout = () => {
                                   dismissNotification('bookings', item);
                                 }
                               }}
-                              className="absolute right-3 top-3 inline-flex rounded-lg p-1.5 text-slate-400 transition-all hover:bg-rose-50 hover:text-rose-600"
+                              className="absolute right-3 top-3 inline-flex rounded-lg p-1.5 text-slate-400 dark:text-slate-500 transition-all hover:bg-rose-50 hover:text-rose-600"
                               aria-label="Delete notification"
                             >
                               <Trash2 size={14} />
@@ -1596,9 +1596,9 @@ const AdminLayout = () => {
                         ))}
                       </div>
                     ) : visibleChatNotifications.length === 0 ? (
-                      <div className="rounded-2xl border border-slate-100 bg-slate-50 px-4 py-8 text-center">
+                      <div className="rounded-2xl border border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 px-4 py-8 text-center">
                         <p className="text-sm font-bold text-slate-900">No new chats found</p>
-                        <p className="mt-1 text-xs font-semibold text-slate-500">New user and driver support messages will show up here.</p>
+                        <p className="mt-1 text-xs font-semibold text-slate-500 dark:text-slate-400 dark:text-slate-500">New user and driver support messages will show up here.</p>
                       </div>
                     ) : (
                       <div className="space-y-2">
@@ -1611,18 +1611,18 @@ const AdminLayout = () => {
                               setChatNotifications([]);
                               setIsNotificationsOpen(false);
                             }}
-                            className="relative w-full rounded-2xl border border-slate-100 bg-white px-4 py-3 text-left transition-all hover:border-indigo-200 hover:bg-indigo-50/40"
+                            className="relative w-full rounded-2xl border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 px-4 py-3 text-left transition-all hover:border-indigo-200 hover:bg-indigo-50/40"
                           >
                             <div className="flex items-start justify-between gap-3">
                               <div className="min-w-0">
                                 <p className="truncate text-sm font-bold text-slate-900">{item.title}</p>
-                                <p className="mt-1 truncate text-xs font-semibold text-slate-500">{item.body}</p>
+                                <p className="mt-1 truncate text-xs font-semibold text-slate-500 dark:text-slate-400 dark:text-slate-500">{item.body}</p>
                               </div>
                               <span className="shrink-0 rounded-full bg-sky-50 px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-sky-700">
                                 {item.senderRole}
                               </span>
                             </div>
-                            <div className="mt-2 flex items-center justify-end text-[11px] font-semibold text-slate-400">
+                            <div className="mt-2 flex items-center justify-end text-[11px] font-semibold text-slate-400 dark:text-slate-500">
                               <span>{formatRelativeAdminTime(item.createdAt)}</span>
                             </div>
                             <span
@@ -1640,7 +1640,7 @@ const AdminLayout = () => {
                                   dismissNotification('chats', item);
                                 }
                               }}
-                              className="absolute right-3 top-3 inline-flex rounded-lg p-1.5 text-slate-400 transition-all hover:bg-rose-50 hover:text-rose-600"
+                              className="absolute right-3 top-3 inline-flex rounded-lg p-1.5 text-slate-400 dark:text-slate-500 transition-all hover:bg-rose-50 hover:text-rose-600"
                               aria-label="Delete notification"
                             >
                               <Trash2 size={14} />
@@ -1651,7 +1651,7 @@ const AdminLayout = () => {
                     )}
                   </div>
 
-                  <div className="flex items-center justify-between gap-3 border-t border-slate-100 px-4 py-3">
+                  <div className="flex items-center justify-between gap-3 border-t border-slate-100 dark:border-slate-800 px-4 py-3">
                     <button
                       type="button"
                       disabled={(activeNotificationMeta?.current_page || 1) <= 1}
@@ -1662,12 +1662,12 @@ const AdminLayout = () => {
                           setBookingPage((current) => Math.max(1, current - 1));
                         }
                       }}
-                      className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-bold text-slate-600 transition-all hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+                      className="rounded-lg border border-slate-200 dark:border-slate-800 px-3 py-1.5 text-xs font-bold text-slate-600 dark:text-slate-300 transition-all hover:bg-slate-50 dark:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-40"
                     >
                       Previous
                     </button>
 
-                    <span className="text-[11px] font-bold uppercase tracking-wide text-slate-400">
+                    <span className="text-[11px] font-bold uppercase tracking-wide text-slate-400 dark:text-slate-500">
                       Page {activeNotificationMeta?.current_page || 1} of {activeNotificationMeta?.last_page || 1}
                     </span>
 
@@ -1681,7 +1681,7 @@ const AdminLayout = () => {
                           setBookingPage((current) => current + 1);
                         }
                       }}
-                      className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-bold text-slate-600 transition-all hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+                      className="rounded-lg border border-slate-200 dark:border-slate-800 px-3 py-1.5 text-xs font-bold text-slate-600 dark:text-slate-300 transition-all hover:bg-slate-50 dark:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-40"
                     >
                       Next
                     </button>
@@ -1696,14 +1696,14 @@ const AdminLayout = () => {
                 className="group flex cursor-pointer items-center gap-3 rounded-full border border-gray-100 bg-gray-50 px-3 py-1.5 transition-all hover:bg-gray-100"
                 onClick={() => setIsUserMenuOpen((current) => !current)}
               >
-                <div className="flex h-7 w-7 items-center justify-center rounded-full bg-slate-200 text-slate-500 transition-all group-hover:bg-primary group-hover:text-white">
+                <div className="flex h-7 w-7 items-center justify-center rounded-full bg-slate-200 text-slate-500 dark:text-slate-400 dark:text-slate-500 transition-all group-hover:bg-primary group-hover:text-white">
                   <Users size={14} />
                 </div>
                 <div className="text-left leading-tight">
                   <span className="block text-[11px] font-black text-gray-950">
                     {adminProfile?.name || 'Admin'}
                   </span>
-                  <span className="block text-[9px] font-black uppercase tracking-[0.18em] text-slate-400">
+                  <span className="block text-[9px] font-black uppercase tracking-[0.18em] text-slate-400 dark:text-slate-500">
                     {adminProfile?.admin_type === 'subadmin' ? adminProfile?.role || 'Subadmin' : 'Superadmin'}
                   </span>
                 </div>
@@ -1711,7 +1711,7 @@ const AdminLayout = () => {
               </button>
 
               <div
-                className={`absolute right-0 top-full z-50 mt-2 w-48 rounded-2xl border border-gray-100 bg-white p-2 shadow-xl transition-all ${
+                className={`absolute right-0 top-full z-50 mt-2 w-48 rounded-2xl border border-gray-100 bg-white dark:bg-slate-900 p-2 shadow-xl transition-all ${
                   isUserMenuOpen ? 'pointer-events-auto scale-100 opacity-100' : 'pointer-events-none scale-95 opacity-0'
                 }`}
               >
@@ -1738,11 +1738,11 @@ const AdminLayout = () => {
           >
             <div className="mx-auto mt-20 w-full max-w-2xl px-4">
               <div
-                className="overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-2xl"
+                className="overflow-hidden rounded-[28px] border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xl"
                 onClick={(event) => event.stopPropagation()}
               >
-                <div className="border-b border-slate-100 px-5 py-4">
-                  <div className="flex items-center gap-3 rounded-2xl border border-neutral-200 bg-neutral-50 px-4 py-3">
+                <div className="border-b border-slate-100 dark:border-slate-800 px-5 py-4">
+                  <div className="flex items-center gap-3 rounded-2xl border border-neutral-200 dark:border-slate-800 bg-neutral-50 dark:bg-slate-900 px-4 py-3">
                     <Search size={18} className="text-neutral-400" />
                     <input
                       autoFocus
@@ -1750,12 +1750,12 @@ const AdminLayout = () => {
                       value={searchTerm}
                       onChange={(event) => setSearchTerm(event.target.value)}
                       placeholder="Search sidebar options..."
-                      className="w-full bg-transparent text-sm font-semibold text-slate-900 outline-none placeholder:text-slate-400"
+                      className="w-full bg-transparent text-sm font-semibold text-slate-900 outline-none placeholder:text-slate-400 dark:text-slate-500"
                     />
                     <button
                       type="button"
                       onClick={() => setIsSearchOpen(false)}
-                      className="rounded-lg px-2 py-1 text-[11px] font-bold uppercase tracking-wider text-slate-400 hover:bg-slate-200/70"
+                      className="rounded-lg px-2 py-1 text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 hover:bg-slate-200/70"
                     >
                       Close
                     </button>
@@ -1764,9 +1764,9 @@ const AdminLayout = () => {
 
                 <div className="max-h-[420px] overflow-y-auto p-3">
                   {filteredSearchEntries.length === 0 ? (
-                    <div className="rounded-2xl border border-slate-100 bg-slate-50 px-4 py-8 text-center">
+                    <div className="rounded-2xl border border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 px-4 py-8 text-center">
                       <p className="text-sm font-bold text-slate-900">No sidebar option found</p>
-                      <p className="mt-1 text-xs font-semibold text-slate-500">Try searching for drivers, trips, pricing, reports, or settings.</p>
+                      <p className="mt-1 text-xs font-semibold text-slate-500 dark:text-slate-400 dark:text-slate-500">Try searching for drivers, trips, pricing, reports, or settings.</p>
                     </div>
                   ) : (
                     <div className="space-y-2">
@@ -1779,11 +1779,11 @@ const AdminLayout = () => {
                             setIsSearchOpen(false);
                             setSearchTerm('');
                           }}
-                          className="flex w-full items-center justify-between gap-4 rounded-2xl border border-slate-100 bg-white px-4 py-3 text-left transition-all hover:border-indigo-200 hover:bg-indigo-50/50"
+                          className="flex w-full items-center justify-between gap-4 rounded-2xl border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 px-4 py-3 text-left transition-all hover:border-indigo-200 hover:bg-indigo-50/50"
                         >
                           <div className="min-w-0">
                             <p className="truncate text-sm font-bold text-slate-900">{entry.label}</p>
-                            <p className="mt-1 truncate text-[11px] font-semibold text-slate-500">
+                            <p className="mt-1 truncate text-[11px] font-semibold text-slate-500 dark:text-slate-400 dark:text-slate-500">
                               {[...entry.trail, entry.path].join(' • ')}
                             </p>
                           </div>

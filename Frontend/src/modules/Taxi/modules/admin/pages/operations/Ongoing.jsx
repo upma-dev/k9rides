@@ -155,7 +155,7 @@ const Ongoing = () => {
                         </span>
                       </td>
                       <td className="px-6 py-5">
-                        <span className={`inline-block px-3 py-1 text-[10px] font-bold rounded uppercase ${PAYMENT_STYLES[row.paymentOption] || 'bg-orange-500 text-white'}`}>
+                        <span className={`inline-block px-3 py-1 text-[10px] font-bold rounded uppercase ${PAYMENT_STYLES[row.paymentOption] || 'bg-primary-orange/50 text-white'}`}>
                           {row.paymentOption || 'CASH'}
                         </span>
                       </td>

@@ -198,7 +198,7 @@ export default function SearchOverlay({ isOpen, onClose, searchValue, onSearchCh
               <button
                 key={suggestion}
                 onClick={() => handleSuggestionClick(suggestion)}
-                className="inline-flex items-center gap-2 px-3 sm:px-4 py-2 rounded-full bg-orange-50 dark:bg-orange-900/20 hover:bg-orange-100 dark:hover:bg-orange-900/30 border border-orange-200 dark:border-orange-800 hover:border-orange-300 dark:hover:border-orange-700 text-gray-700 dark:text-gray-300 hover:text-primary-orange dark:hover:text-orange-400 transition-all duration-200 text-xs sm:text-sm font-medium shadow-sm hover:shadow-md"
+                className="inline-flex items-center gap-2 px-3 sm:px-4 py-2 rounded-full bg-primary-orange/5 dark:bg-accent-orange/50/20 hover:bg-primary-orange/10 dark:hover:bg-accent-orange/50/30 border border-primary-orange/20 dark:border-accent-orange/70 hover:border-primary-orange/40 dark:hover:border-accent-orange/90 text-gray-700 dark:text-gray-300 hover:text-primary-orange dark:hover:text-primary-orange/80 transition-all duration-200 text-xs sm:text-sm font-medium shadow-sm hover:shadow-md"
                 style={{
                   animation: `scaleIn 0.3s ease-out ${0.1 + index * 0.02}s both`
                 }}
@@ -245,7 +245,7 @@ export default function SearchOverlay({ isOpen, onClose, searchValue, onSearchCh
                     )}
                   </div>
                   <div className="px-1 sm:px-2 text-center">
-                    <span className="text-xs sm:text-sm font-semibold text-gray-800 dark:text-gray-200 group-hover:text-primary-orange dark:group-hover:text-orange-400 transition-colors line-clamp-2">
+                    <span className="text-xs sm:text-sm font-semibold text-gray-800 dark:text-gray-200 group-hover:text-primary-orange dark:group-hover:text-primary-orange/80 transition-colors line-clamp-2">
                       {food.name}
                     </span>
                   </div>

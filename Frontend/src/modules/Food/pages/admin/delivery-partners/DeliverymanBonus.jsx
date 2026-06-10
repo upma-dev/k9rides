@@ -21,7 +21,7 @@ const formatBonusAmount = (transaction) => {
   
   // Clean the bonus string - remove superscript characters
   let cleaned = transaction.bonus.toString()
-    .replace(/¹/g, '') // Remove superscript 1
+    .replace(/ï¿½/g, '') // Remove superscript 1
     .replace(/[\u2070-\u207F\u2080-\u208F]/g, '') // Remove all superscript characters
     .trim()
   
@@ -421,7 +421,7 @@ export default function DeliverymanBonus() {
                 <div className="w-20 h-20 bg-white rounded-xl flex items-center justify-center shadow-md">
                   <div className="relative">
                     <Folder className="w-12 h-12 text-slate-400" />
-                    <div className="absolute -top-1 -right-1 w-6 h-6 bg-orange-500 rounded-full flex items-center justify-center z-10">
+                    <div className="absolute -top-1 -right-1 w-6 h-6 bg-primary-orange/50 rounded-full flex items-center justify-center z-10">
                       <span className="text-white text-xs font-bold">!</span>
                     </div>
                   </div>

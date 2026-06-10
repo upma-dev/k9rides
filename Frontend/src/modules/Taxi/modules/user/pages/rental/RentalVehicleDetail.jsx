@@ -1074,7 +1074,7 @@ const RentalVehicleDetail = () => {
 
   return (
     <div className="min-h-screen bg-[linear-gradient(180deg,#F8FAFC_0%,#F3F4F6_38%,#EEF2F7_100%)] max-w-lg mx-auto font-sans pb-36 relative overflow-hidden">
-      <div className="absolute -top-16 right-[-40px] h-44 w-44 rounded-full bg-orange-100/60 blur-3xl pointer-events-none" />
+      <div className="absolute -top-16 right-[-40px] h-44 w-44 rounded-full bg-primary-orange/10/60 blur-3xl pointer-events-none" />
 
       <motion.header
         initial={{ opacity: 0, y: -10 }}
@@ -1231,7 +1231,7 @@ const RentalVehicleDetail = () => {
                 Choose Hourly Rental
               </p>
             </div>
-            <span className="rounded-full bg-orange-50 px-3 py-1 text-[10px] font-black text-orange-600">
+            <span className="rounded-full bg-primary-orange/5 px-3 py-1 text-[10px] font-black text-accent-orange">
               {selectionStep === 'package' ? 'Step 1 of 2' : 'Step 2 of 2'}
             </span>
           </div>
@@ -1433,7 +1433,7 @@ const RentalVehicleDetail = () => {
                               ) : null}
                             </div>
                             <div className="mt-1 flex items-start gap-2">
-                              <MapPin size={13} className="mt-0.5 shrink-0 text-orange-400" />
+                              <MapPin size={13} className="mt-0.5 shrink-0 text-primary-orange/80" />
                               <div>
                                 {item.pickupLabel ? (
                                   <p className="text-[12px] font-black text-slate-700">

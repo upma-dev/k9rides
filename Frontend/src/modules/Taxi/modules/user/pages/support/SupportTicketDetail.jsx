@@ -5,7 +5,7 @@ import { ArrowLeft, Loader2, Send } from 'lucide-react';
 import { supportTicketService } from '../../../shared/services/supportTicketService';
 
 const STATUS_STYLES = {
-  pending: 'bg-orange-50 text-orange-600 border-orange-100',
+  pending: 'bg-primary-orange/5 text-accent-orange border-primary-orange/10',
   assigned: 'bg-blue-50 text-blue-600 border-blue-100',
   closed: 'bg-emerald-50 text-emerald-600 border-emerald-100',
 };
@@ -129,7 +129,7 @@ const SupportTicketDetail = () => {
           onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
           placeholder="Type your reply..."
           rows={1}
-          className="flex-1 bg-slate-50 border border-slate-100 rounded-[14px] px-4 py-3 text-[14px] font-bold text-slate-900 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-orange-200 resize-none"
+          className="flex-1 bg-slate-50 border border-slate-100 rounded-[14px] px-4 py-3 text-[14px] font-bold text-slate-900 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-primary-orange/20 resize-none"
         />
         <motion.button whileTap={{ scale: 0.9 }} onClick={handleSend} disabled={!reply.trim() || sending}
           className={`w-11 h-11 rounded-[14px] flex items-center justify-center shrink-0 transition-all ${

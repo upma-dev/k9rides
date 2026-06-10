@@ -16,8 +16,8 @@ const SeatMap = ({ seats, onToggle }) => {
   const getSeatColor = (seat) => {
     if (!seat) return 'invisible';
     if (seat.status === 'booked') return 'bg-red-400 border-red-500 cursor-not-allowed opacity-60';
-    if (seat.status === 'selected') return 'bg-primary border-primary text-white shadow-lg shadow-orange-200';
-    return 'bg-white border-gray-200 text-gray-500 hover:border-primary hover:bg-orange-50 cursor-pointer';
+    if (seat.status === 'selected') return 'bg-primary border-primary text-white shadow-lg shadow-primary-orange/20';
+    return 'bg-white border-gray-200 text-gray-500 hover:border-primary hover:bg-primary-orange/5 cursor-pointer';
   };
 
   return (
@@ -201,7 +201,7 @@ const CabSharing = () => {
                       <span className="line-clamp-1">{trip.from}</span>
                     </div>
                     <div className="flex items-center gap-2 text-[13px] font-black text-gray-900">
-                      <MapPin size={13} className="text-orange-500 shrink-0" strokeWidth={2.5} />
+                      <MapPin size={13} className="text-primary-orange/50 shrink-0" strokeWidth={2.5} />
                       <span className="line-clamp-1">{trip.to}</span>
                     </div>
                   </div>
@@ -253,7 +253,7 @@ const CabSharing = () => {
                         <motion.div
                           initial={{ opacity: 0, y: 10 }}
                           animate={{ opacity: 1, y: 0 }}
-                          className="bg-orange-50 border border-orange-100 rounded-2xl p-4 flex items-center justify-between"
+                          className="bg-primary-orange/5 border border-primary-orange/10 rounded-2xl p-4 flex items-center justify-between"
                         >
                           <div>
                             <p className="text-[12px] font-black text-gray-500">

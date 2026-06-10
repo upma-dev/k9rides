@@ -150,7 +150,7 @@ export default function FeedbackExperienceReport() {
 
   const getRatingColor = (rating) => {
     if (rating <= 2) return 'bg-red-100 text-red-700'
-    if (rating <= 4) return 'bg-orange-100 text-orange-700'
+    if (rating <= 4) return 'bg-primary-orange/10 text-accent-orange/90'
     if (rating <= 6) return 'bg-yellow-100 text-yellow-700'
     if (rating <= 8) return 'bg-blue-100 text-blue-700'
     return 'bg-green-100 text-green-700'

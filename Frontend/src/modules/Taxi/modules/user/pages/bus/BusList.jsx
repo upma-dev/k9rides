@@ -232,7 +232,7 @@ const BusList = () => {
 
   return (
     <div className="min-h-screen max-w-lg mx-auto bg-[linear-gradient(180deg,#fff7ed_0%,#fffaf7_16%,#f8fafc_100%)] font-sans pb-10">
-      <div className="sticky top-0 z-20 border-b border-orange-100/70 bg-white/92 px-4 pb-4 pt-10 shadow-[0_6px_20px_rgba(15,23,42,0.05)] backdrop-blur-md">
+      <div className="sticky top-0 z-20 border-b border-primary-orange/10/70 bg-white/92 px-4 pb-4 pt-10 shadow-[0_6px_20px_rgba(15,23,42,0.05)] backdrop-blur-md">
         <div className="flex items-center gap-3">
           <button
             onClick={() => navigate(-1)}
@@ -246,8 +246,8 @@ const BusList = () => {
             </h1>
             <p className="mt-0.5 text-xs font-semibold text-slate-500">{visibleBuses.length || 0} buses</p>
           </div>
-          <div className="rounded-2xl border border-orange-100 bg-orange-50 px-3 py-2 text-right">
-            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-orange-400">{formatTravelDate(date)}</p>
+          <div className="rounded-2xl border border-primary-orange/10 bg-primary-orange/5 px-3 py-2 text-right">
+            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-primary-orange/80">{formatTravelDate(date)}</p>
           </div>
         </div>
       </div>
@@ -325,7 +325,7 @@ const BusList = () => {
                   onClick={() => setShowDealsOnly((current) => !current)}
                   className={`inline-flex shrink-0 items-center rounded-xl border px-4 py-2 text-xs font-bold shadow-sm transition ${
                     showDealsOnly
-                      ? 'border-orange-200 bg-orange-50 text-orange-700'
+                      ? 'border-primary-orange/20 bg-primary-orange/5 text-accent-orange/90'
                       : 'border-slate-200 bg-white text-slate-700'
                   }`}
                 >
@@ -487,7 +487,7 @@ const BusList = () => {
 
                   <div className="mt-3 flex flex-wrap gap-2">
                     {bus.availableSeats > 0 ? (
-                      <span className="rounded-full bg-orange-50 px-3 py-1 text-[10px] font-black text-orange-600">
+                      <span className="rounded-full bg-primary-orange/5 px-3 py-1 text-[10px] font-black text-accent-orange">
                         {bus.availableSeats} seats left
                       </span>
                     ) : null}

@@ -113,7 +113,7 @@ export default function About() {
           transition={{ duration: 0.5 }}
         >
           <Card className="bg-white dark:bg-[#1a1a1a] rounded-2xl shadow-lg border-0 dark:border-gray-800 mb-6 overflow-hidden">
-            <div className="bg-gradient-to-br from-orange-50 to-amber-50 dark:from-orange-900/20 dark:to-amber-900/20 p-8 md:p-10 text-center">
+            <div className="bg-gradient-to-br from-primary-orange/5 to-amber-50 dark:from-accent-orange/50/20 dark:to-amber-900/20 p-8 md:p-10 text-center">
               <motion.div
                 initial={{ scale: 0.8, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}

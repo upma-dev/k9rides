@@ -66,7 +66,7 @@ const SharedTaxiSeats = () => {
               <span className="text-[11px] font-black text-slate-700 truncate">{route.from}</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <div className="w-1.5 h-1.5 rounded-full bg-orange-500 shrink-0" />
+              <div className="w-1.5 h-1.5 rounded-full bg-primary-orange/50 shrink-0" />
               <span className="text-[11px] font-black text-slate-700 truncate">{route.to}</span>
             </div>
           </div>

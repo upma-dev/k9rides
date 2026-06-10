@@ -455,9 +455,9 @@ export default function DiningReservations() {
                         transition={{ duration: 0.3, delay: 0.2 }}
                         className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 relative overflow-hidden group hover:shadow-md transition-shadow"
                     >
-                        <div className="absolute top-0 right-0 w-24 h-24 bg-orange-50/50 rounded-bl-full -mr-8 -mt-8 transition-transform group-hover:scale-110" />
+                        <div className="absolute top-0 right-0 w-24 h-24 bg-primary-orange/5/50 rounded-bl-full -mr-8 -mt-8 transition-transform group-hover:scale-110" />
                         <div className="flex items-center gap-4 relative">
-                            <div className="bg-orange-600 p-3 rounded-xl text-white shadow-lg shadow-orange-200">
+                            <div className="bg-accent-orange p-3 rounded-xl text-white shadow-lg shadow-primary-orange/20">
                                 <Clock4 className="w-6 h-6" />
                             </div>
                             <div>
@@ -797,7 +797,7 @@ export default function DiningReservations() {
                                                             <div className="flex items-center gap-2">
                                                                 <Badge className={`rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-wider ${booking.status === 'confirmed' ? 'bg-amber-100 text-amber-700' :
                                                                         booking.status === 'accepted' ? 'bg-emerald-100 text-emerald-700' :
-                                                                            booking.status === 'checked-in' ? 'bg-orange-100 text-orange-700' :
+                                                                            booking.status === 'checked-in' ? 'bg-primary-orange/10 text-accent-orange/90' :
                                                                                 booking.status === 'completed' ? 'bg-blue-100 text-blue-700' :
                                                                                     'bg-rose-100 text-rose-700'
                                                                     }`}>
@@ -826,7 +826,7 @@ export default function DiningReservations() {
                                                                 {booking.status === 'accepted' && (
                                                                     <button
                                                                         onClick={() => handleStatusUpdate(booking._id, 'checked-in')}
-                                                                        className="px-3 py-1.5 bg-orange-600 text-white text-xs font-bold rounded-lg hover:bg-orange-700 transition-colors shadow-sm"
+                                                                        className="px-3 py-1.5 bg-accent-orange text-white text-xs font-bold rounded-lg hover:bg-accent-orange/90 transition-colors shadow-sm"
                                                                     >
                                                                         Check-in
                                                                     </button>
@@ -880,7 +880,7 @@ export default function DiningReservations() {
                                                     </div>
                                                     <Badge className={`rounded-full px-2.5 py-0.5 text-[9px] font-black uppercase tracking-wider ${booking.status === 'confirmed' ? 'bg-amber-100 text-amber-700' :
                                                             booking.status === 'accepted' ? 'bg-emerald-100 text-emerald-700' :
-                                                                booking.status === 'checked-in' ? 'bg-orange-100 text-orange-700' :
+                                                                booking.status === 'checked-in' ? 'bg-primary-orange/10 text-accent-orange/90' :
                                                                     booking.status === 'completed' ? 'bg-blue-100 text-blue-700' :
                                                                         'bg-rose-100 text-rose-700'
                                                         }`}>
@@ -936,7 +936,7 @@ export default function DiningReservations() {
                                                     {booking.status === 'accepted' && (
                                                         <button
                                                             onClick={() => handleStatusUpdate(booking._id, 'checked-in')}
-                                                            className="flex-1 py-2.5 bg-orange-600 text-white text-xs font-black rounded-xl hover:bg-orange-700 transition-colors uppercase tracking-widest"
+                                                            className="flex-1 py-2.5 bg-accent-orange text-white text-xs font-black rounded-xl hover:bg-accent-orange/90 transition-colors uppercase tracking-widest"
                                                         >
                                                             Check-in
                                                         </button>

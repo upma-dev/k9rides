@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { adminService } from '../../services/adminService';
 
 const STATUS_STYLES = {
-  CANCELLED: 'bg-orange-500 text-white',
+  CANCELLED: 'bg-primary-orange/50 text-white',
   COMPLETED: 'bg-teal-500 text-white',
   UPCOMING: 'bg-amber-400 text-white',
   ONGOING: 'bg-blue-500 text-white',
@@ -12,7 +12,7 @@ const STATUS_STYLES = {
 };
 
 const PAYMENT_STYLES = {
-  CASH: 'bg-orange-500 text-white',
+  CASH: 'bg-primary-orange/50 text-white',
   CARD: 'bg-red-500 text-white',
   WALLET: 'bg-teal-500 text-white',
 };
@@ -178,7 +178,7 @@ const Trips = () => {
                         </span>
                       </td>
                       <td className="px-6 py-5">
-                        <span className={`inline-block px-3 py-1 text-[10px] font-bold rounded uppercase ${PAYMENT_STYLES[row.paymentOption] || 'bg-orange-500 text-white'}`}>
+                        <span className={`inline-block px-3 py-1 text-[10px] font-bold rounded uppercase ${PAYMENT_STYLES[row.paymentOption] || 'bg-primary-orange/50 text-white'}`}>
                           {row.paymentOption}
                         </span>
                       </td>

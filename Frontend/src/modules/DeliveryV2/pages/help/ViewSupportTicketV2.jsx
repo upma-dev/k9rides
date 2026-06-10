@@ -39,12 +39,12 @@ export const ViewSupportTicketV2 = () => {
     fetchTicket();
   }, [ticketId]);
 
-  if (loading) return <div className="min-h-screen flex items-center justify-center bg-white"><Loader2 className="w-8 h-8 animate-spin text-orange-500" /></div>;
+  if (loading) return <div className="min-h-screen flex items-center justify-center bg-white"><Loader2 className="w-8 h-8 animate-spin text-primary-orange/50" /></div>;
   if (!ticket) return <div className="p-20 text-center text-gray-400 font-bold uppercase tracking-widest h-screen">Ticket Not Found</div>;
 
   const getStatusColor = (status) => {
     switch (status?.toLowerCase()) {
-      case "open": return "text-orange-600 bg-orange-50";
+      case "open": return "text-accent-orange bg-primary-orange/5";
       case "resolved": return "text-green-600 bg-green-50";
       case "closed": return "text-gray-600 bg-gray-50";
       default: return "text-blue-600 bg-blue-50";
@@ -86,13 +86,13 @@ export const ViewSupportTicketV2 = () => {
          </div>
 
          {/* Response Section */}
-         <div className="bg-white rounded-3xl p-6 shadow-sm border border-orange-100 flex items-start gap-4">
-            <div className="w-10 h-10 rounded-2xl bg-orange-50 flex items-center justify-center shrink-0">
-               <ShieldCheck className="w-5 h-5 text-orange-500" />
+         <div className="bg-white rounded-3xl p-6 shadow-sm border border-primary-orange/10 flex items-start gap-4">
+            <div className="w-10 h-10 rounded-2xl bg-primary-orange/5 flex items-center justify-center shrink-0">
+               <ShieldCheck className="w-5 h-5 text-primary-orange/50" />
             </div>
             <div className="space-y-2">
                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Support Response</p>
-               <p className="text-xs text-orange-600 font-bold leading-relaxed italic">
+               <p className="text-xs text-accent-orange font-bold leading-relaxed italic">
                  {ticket.adminResponse || "Our support team is currently reviewing your ticket. You'll receive a notification once there is an update."}
                </p>
                {ticket.respondedAt && (

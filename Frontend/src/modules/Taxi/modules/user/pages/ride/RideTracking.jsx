@@ -1326,7 +1326,7 @@ const RideTracking = () => {
             {/* OTP CARD - High Fidelity */}
             {otp && (
               <div className="bg-[#fff9ef] border border-[#fef3c7] rounded-[20px] px-3 py-3 flex flex-col items-center justify-center min-w-[80px] shadow-sm">
-                <span className="text-[9px] font-black text-orange-500 uppercase tracking-[0.18em] mb-1 leading-none">OTP</span>
+                <span className="text-[9px] font-black text-primary-orange/50 uppercase tracking-[0.18em] mb-1 leading-none">OTP</span>
                 <span className="text-[18px] font-black text-slate-900 tracking-tighter leading-none">{otp}</span>
               </div>
             )}

@@ -106,12 +106,12 @@ const FareConfiguration = () => {
                ))}
             </div>
 
-            <div className="bg-orange-50 border border-orange-100 p-6 rounded-[24px] space-y-3">
-               <div className="flex items-center gap-2 text-orange-600">
+            <div className="bg-primary-orange/5 border border-primary-orange/10 p-6 rounded-[24px] space-y-3">
+               <div className="flex items-center gap-2 text-accent-orange">
                   <AlertTriangle size={18} />
                   <span className="text-[13px] font-black tracking-tight uppercase">Live Pricing Warning</span>
                </div>
-               <p className="text-[12px] font-bold text-orange-800 leading-relaxed">
+               <p className="text-[12px] font-bold text-accent-orange/70 leading-relaxed">
                   Changes made to {selectedVehicle} pricing will affect all ongoing booking calculations in {selectedCity} immediately after saving.
                </p>
             </div>

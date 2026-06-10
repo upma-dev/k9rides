@@ -7,7 +7,7 @@ const getStatusColor = (status) => {
     "Accepted": "bg-green-100 text-green-700",
     "Rejected": "bg-red-100 text-red-700",
     "Delivery Boy Assigned": "bg-purple-100 text-purple-700",
-    "Reached Pickup": "bg-orange-100 text-orange-700",
+    "Reached Pickup": "bg-primary-orange/10 text-accent-orange/90",
     "Reached Drop": "bg-amber-100 text-amber-700",
     "Ordered Delivered": "bg-emerald-100 text-emerald-700",
   }
@@ -35,7 +35,7 @@ export default function OrderDetectDeliveryTable({ orders, visibleColumns, onVie
         <div className="flex flex-col items-center justify-center py-20">
           <div className="w-32 h-32 bg-gradient-to-br from-slate-100 to-slate-200 rounded-2xl flex items-center justify-center mb-6 shadow-inner">
             <div className="w-20 h-20 bg-white rounded-xl flex items-center justify-center shadow-md">
-              <span className="text-5xl text-orange-500 font-bold">!</span>
+              <span className="text-5xl text-primary-orange/50 font-bold">!</span>
             </div>
           </div>
           <p className="text-lg font-semibold text-slate-700 mb-1">No Data Found</p>
@@ -173,7 +173,7 @@ export default function OrderDetectDeliveryTable({ orders, visibleColumns, onVie
                     <div className="flex items-center justify-center gap-2">
                       <button 
                         onClick={() => onViewOrder(order)}
-                        className="p-1.5 rounded text-orange-600 hover:bg-orange-50 transition-colors"
+                        className="p-1.5 rounded text-accent-orange hover:bg-primary-orange/5 transition-colors"
                         title="View Details"
                       >
                         <Eye className="w-4 h-4" />

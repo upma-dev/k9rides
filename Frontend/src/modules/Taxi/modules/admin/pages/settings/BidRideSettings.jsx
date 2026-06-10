@@ -64,7 +64,7 @@ const PreviewBox = ({ label }) => (
               <div className="h-1 bg-slate-100 rounded-full flex-1"></div>
            </div>
            <div className="flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full bg-orange-500"></div>
+              <div className="w-2 h-2 rounded-full bg-primary-orange/50"></div>
               <div className="h-1 bg-slate-100 rounded-full flex-1"></div>
            </div>
         </div>

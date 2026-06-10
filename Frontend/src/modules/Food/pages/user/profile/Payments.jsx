@@ -42,7 +42,7 @@ export default function Payments() {
   }
 
   return (
-    <AnimatedPage className="min-h-screen bg-gradient-to-b from-yellow-50/30 via-white to-orange-50/20 p-4 sm:p-6 md:p-8 lg:p-10">
+    <AnimatedPage className="min-h-screen bg-gradient-to-b from-yellow-50/30 via-white to-primary-orange/5/20 p-4 sm:p-6 md:p-8 lg:p-10">
       <div className="max-w-4xl md:max-w-5xl lg:max-w-6xl xl:max-w-7xl mx-auto space-y-4 sm:space-y-6 md:space-y-8 lg:space-y-10">
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 sm:gap-4">
           <div>
@@ -52,7 +52,7 @@ export default function Payments() {
             </p>
           </div>
           <Link to="/user/profile/payments/new" className="w-full sm:w-auto">
-            <Button className="w-full sm:w-auto bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white text-sm sm:text-base">
+            <Button className="w-full sm:w-auto bg-gradient-to-r from-yellow-500 to-primary-orange/50 hover:from-yellow-600 hover:to-accent-orange text-white text-sm sm:text-base">
               <Plus className="h-4 w-4 mr-2" />
               Add Payment Method
             </Button>
@@ -67,7 +67,7 @@ export default function Payments() {
                 Add your first payment method to get started with orders
               </p>
               <Link to="/user/profile/payments/new">
-                <Button className="bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white">
+                <Button className="bg-gradient-to-r from-yellow-500 to-primary-orange/50 hover:from-yellow-600 hover:to-accent-orange text-white">
                   <Plus className="h-4 w-4 mr-2" />
                   Add Your First Payment Method
                 </Button>
@@ -95,7 +95,7 @@ export default function Payments() {
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="p-4 bg-gradient-to-br from-yellow-50 to-orange-50 rounded-lg border border-yellow-200">
+                  <div className="p-4 bg-gradient-to-br from-yellow-50 to-primary-orange/5 rounded-lg border border-yellow-200">
                     <div className="flex items-center justify-between mb-3">
                       <div className="flex items-center gap-3">
                         <span className="text-3xl">{getCardTypeIcon(payment.type)}</span>

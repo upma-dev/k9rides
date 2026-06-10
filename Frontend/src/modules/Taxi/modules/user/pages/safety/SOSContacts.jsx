@@ -16,7 +16,7 @@ const MOCK_CONTACTS = [
 const EMERGENCY_SERVICES = [
   { id: 'police', label: 'Police', phone: '100', accent: 'bg-blue-50 border-blue-100 text-blue-600' },
   { id: 'ambulance', label: 'Ambulance', phone: '108', accent: 'bg-emerald-50 border-emerald-100 text-emerald-600' },
-  { id: 'fire', label: 'Fire Brigade', phone: '101', accent: 'bg-orange-50 border-orange-100 text-orange-600' },
+  { id: 'fire', label: 'Fire Brigade', phone: '101', accent: 'bg-primary-orange/5 border-primary-orange/10 text-accent-orange' },
 ];
 
 const SOSContacts = () => {

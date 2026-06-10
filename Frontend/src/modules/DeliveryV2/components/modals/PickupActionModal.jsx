@@ -124,8 +124,8 @@ export const PickupActionModal = ({
                         <span className="text-emerald-600 text-[10px] font-black uppercase tracking-widest">At Restaurant √</span>
                       </div>
                     ) : (
-                      <div className="bg-orange-50 px-3 py-1 rounded-full border border-orange-100">
-                        <span className="text-orange-600 text-[10px] font-black uppercase tracking-widest">
+                      <div className="bg-primary-orange/5 px-3 py-1 rounded-full border border-primary-orange/10">
+                        <span className="text-accent-orange text-[10px] font-black uppercase tracking-widest">
                           {(distanceToTarget / 1000).toFixed(1)} km • {eta || '--'} min
                         </span>
                       </div>
@@ -156,15 +156,15 @@ export const PickupActionModal = ({
             <div className="space-y-8">
               {/* Delivery Instructions (User Note) */}
               {order?.note && (
-                <div className="bg-orange-50/50 border border-orange-100 rounded-[2rem] p-5 flex gap-4 items-start relative overflow-hidden group">
+                <div className="bg-primary-orange/5/50 border border-primary-orange/10 rounded-[2rem] p-5 flex gap-4 items-start relative overflow-hidden group">
                   <div className="absolute top-0 right-0 p-3 opacity-10 group-hover:opacity-20 transition-opacity">
-                    <ChefHat className="w-12 h-12 text-orange-500" />
+                    <ChefHat className="w-12 h-12 text-primary-orange/50" />
                   </div>
-                  <div className="w-10 h-10 rounded-xl bg-orange-100 flex items-center justify-center shrink-0">
-                    <ChefHat className="w-5 h-5 text-orange-600" />
+                  <div className="w-10 h-10 rounded-xl bg-primary-orange/10 flex items-center justify-center shrink-0">
+                    <ChefHat className="w-5 h-5 text-accent-orange" />
                   </div>
                   <div>
-                    <p className="text-[10px] font-black text-orange-600 uppercase tracking-[0.2em] mb-1.5">User Note</p>
+                    <p className="text-[10px] font-black text-accent-orange uppercase tracking-[0.2em] mb-1.5">User Note</p>
                     <p className="text-sm font-bold text-gray-800 leading-relaxed italic">"{order.note}"</p>
                   </div>
                 </div>
@@ -215,7 +215,7 @@ export const PickupActionModal = ({
           {!isAtPickup ? (
             <div className="pt-6">
               <p className={`text-center text-[10px] font-black uppercase tracking-[0.2em] mb-4 transition-colors ${
-                isWithinRange ? 'text-emerald-600' : 'text-orange-500 animate-pulse'
+                isWithinRange ? 'text-emerald-600' : 'text-primary-orange/50 animate-pulse'
               }`}>
                 {isWithinRange ? 'Ready - Swipe to confirm arrival' : 'Get closer to restaurant'}
               </p>
@@ -242,7 +242,7 @@ export const PickupActionModal = ({
                       </button>
                       <button
                         onClick={handlePickFromGallery}
-                        className="flex-1 flex items-center justify-center gap-3 py-5 rounded-[1.5rem] bg-orange-50 text-orange-600 border-2 border-dashed border-orange-200 font-black text-[11px] uppercase tracking-widest active:scale-95 transition-all group"
+                        className="flex-1 flex items-center justify-center gap-3 py-5 rounded-[1.5rem] bg-primary-orange/5 text-accent-orange border-2 border-dashed border-primary-orange/20 font-black text-[11px] uppercase tracking-widest active:scale-95 transition-all group"
                       >
                         <ImageIcon className="w-5 h-5 group-hover:scale-110 transition-transform" />
                         <span>Gallery</span>
@@ -283,7 +283,7 @@ export const PickupActionModal = ({
                   successLabel="Picked Up!"
                   disabled={!billImageUploaded}
                   onConfirm={() => onPickedUp(billImageUrl)}
-                  color="bg-orange-500"
+                  color="bg-primary-orange/50"
                 />
               </div>
             </div>

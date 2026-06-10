@@ -226,7 +226,7 @@ const RentalPackageTypes = ({ mode: propMode }) => {
                               </div>
                             </td>
                             <td className="px-6 py-5">
-                              <span className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${p.transport_type === 'taxi' ? 'bg-indigo-50 text-indigo-600 border border-indigo-100' : 'bg-orange-50 text-orange-600 border border-orange-100'}`}>
+                              <span className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${p.transport_type === 'taxi' ? 'bg-indigo-50 text-indigo-600 border border-indigo-100' : 'bg-primary-orange/5 text-accent-orange border border-primary-orange/10'}`}>
                                 {p.transport_type || 'Taxi'}
                               </span>
                             </td>
@@ -243,7 +243,7 @@ const RentalPackageTypes = ({ mode: propMode }) => {
                             </td>
                             <td className="px-6 py-5 text-right">
                               <div className="flex items-center justify-end gap-2">
-                                <button onClick={() => navigate(`edit/${p._id || p.id}`)} className="p-2 bg-orange-50 text-orange-400 hover:bg-orange-100 rounded-lg transition-colors"><Edit2 size={16} /></button>
+                                <button onClick={() => navigate(`edit/${p._id || p.id}`)} className="p-2 bg-primary-orange/5 text-primary-orange/80 hover:bg-primary-orange/10 rounded-lg transition-colors"><Edit2 size={16} /></button>
                                 <button onClick={() => handleDelete(p._id || p.id)} className="p-2 bg-rose-50 text-rose-400 hover:bg-rose-100 rounded-lg transition-colors"><Trash2 size={16} /></button>
                               </div>
                             </td>

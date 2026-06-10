@@ -92,7 +92,7 @@ const Finance = () => {
          <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
             <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Pending Payouts</p>
             <p className="text-3xl font-black text-primary mt-2 tracking-tight">₹42.5k</p>
-            <div className="flex items-center gap-1 text-orange-500 text-[11px] font-bold mt-2">
+            <div className="flex items-center gap-1 text-primary-orange/50 text-[11px] font-bold mt-2">
                <Clock size={14} /> 12 Requests <span className="text-gray-300 ml-1">unprocessed</span>
             </div>
          </div>
@@ -134,7 +134,7 @@ const Finance = () => {
                   {[
                     { label: 'UPI Instant', value: 82, color: 'bg-primary' },
                     { label: 'Bank Transfer', value: 15, color: 'bg-blue-500' },
-                    { label: 'Cash Remittance', value: 3, color: 'bg-orange-500' },
+                    { label: 'Cash Remittance', value: 3, color: 'bg-primary-orange/50' },
                   ].map((chan, i) => (
                     <div key={i} className="space-y-2">
                        <div className="flex justify-between text-[11px] font-bold">
@@ -185,7 +185,7 @@ const Finance = () => {
                         <div className="flex justify-center">
                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${
                               st.status === 'Completed' ? 'bg-green-50 text-green-600 border-green-100' :
-                              st.status === 'Pending' ? 'bg-orange-50 text-orange-600 border-orange-100' : 'bg-red-50 text-red-600 border-red-100'
+                              st.status === 'Pending' ? 'bg-primary-orange/5 text-accent-orange border-primary-orange/10' : 'bg-red-50 text-red-600 border-red-100'
                            }`}>
                               {st.status}
                            </span>

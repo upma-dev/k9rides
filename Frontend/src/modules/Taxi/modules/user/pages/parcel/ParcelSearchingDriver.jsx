@@ -794,7 +794,7 @@ const ParcelSearchingDriver = () => {
                             delay: i * 0.75,
                             ease: 'easeOut',
                           }}
-                          className="absolute w-20 h-20 rounded-full border-2 border-orange-400/40 bg-orange-400/5 shadow-[0_0_20px_rgba(249,115,22,0.2)]"
+                          className="absolute w-20 h-20 rounded-full border-2 border-primary-orange/80/40 bg-primary-orange/80/5 shadow-[0_0_20px_rgba(249,115,22,0.2)]"
                         />
                       ))}
 

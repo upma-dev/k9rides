@@ -18,7 +18,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import api from '../../../../shared/api/axiosInstance';
 import { adminService } from '../../services/adminService';
 
-const inputClass = 'w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-800 outline-none transition-all focus:border-orange-300 focus:ring-2 focus:ring-orange-100';
+const inputClass = 'w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-800 outline-none transition-all focus:border-primary-orange/40 focus:ring-2 focus:ring-primary-orange/10';
 const labelClass = 'mb-2 block text-[12px] font-bold text-slate-700';
 
 const defaultFormData = {
@@ -314,7 +314,7 @@ const GoodsTypes = ({ mode }) => {
             </div>
             <button
               onClick={() => navigate('/taxi/admin/pricing/goods-types/create')}
-              className="inline-flex items-center gap-2 rounded-xl bg-[#ff6b4a] px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-orange-200 transition hover:bg-[#f55a37]"
+              className="inline-flex items-center gap-2 rounded-xl bg-[#ff6b4a] px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-primary-orange/20 transition hover:bg-[#f55a37]"
             >
               <Plus size={18} />
               Add Goods Type
@@ -478,7 +478,7 @@ const GoodsTypes = ({ mode }) => {
                         key={option.id}
                         className={`flex cursor-pointer items-center gap-3 rounded-xl border px-4 py-3 text-sm font-medium transition-all ${
                           checked
-                            ? 'border-orange-200 bg-orange-50 text-orange-700'
+                            ? 'border-primary-orange/20 bg-primary-orange/5 text-accent-orange/90'
                             : 'border-slate-200 bg-slate-50 text-slate-600 hover:border-slate-300'
                         }`}
                       >

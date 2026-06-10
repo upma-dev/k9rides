@@ -782,7 +782,7 @@ const ParcelTracking = () => {
               <div className="flex items-center justify-between bg-slate-900 px-4 py-3">
                 <div className="flex items-center gap-2.5">
                   <div className="flex h-8 w-8 items-center justify-center rounded-[10px] bg-white/10">
-                    <Receipt size={14} className="text-orange-300" />
+                    <Receipt size={14} className="text-primary-orange/40" />
                   </div>
                   <div>
                     <p className="text-[13px] font-black text-white">Delivery Summary</p>
@@ -815,7 +815,7 @@ const ParcelTracking = () => {
                     <div className="flex flex-col items-center pt-1">
                       <div className="h-2.5 w-2.5 rounded-full bg-emerald-500" />
                       <div className="h-10 border-l border-dashed border-slate-200" />
-                      <div className="h-2.5 w-2.5 rounded-full bg-orange-500" />
+                      <div className="h-2.5 w-2.5 rounded-full bg-primary-orange/50" />
                     </div>
                     <div className="min-w-0 flex-1 space-y-3">
                       <div>
@@ -874,7 +874,7 @@ const ParcelTracking = () => {
                         }}
                         disabled={!tipsEnabled && amount > 0}
                         className={`rounded-full border px-4 py-2 text-[11px] font-black transition-all ${
-                          selectedTip === amount ? 'border-orange-500 bg-orange-500 text-white shadow-[0_8px_18px_rgba(249,115,22,0.24)]' : 'border-slate-100 bg-slate-50 text-slate-600'
+                          selectedTip === amount ? 'border-primary-orange/50 bg-primary-orange/50 text-white shadow-[0_8px_18px_rgba(249,115,22,0.24)]' : 'border-slate-100 bg-slate-50 text-slate-600'
                         } ${!tipsEnabled && amount > 0 ? 'cursor-not-allowed opacity-50' : ''}`}
                       >
                         {amount === 0 ? 'No tip' : `Rs ${amount}`}
@@ -898,7 +898,7 @@ const ParcelTracking = () => {
                     }}
                     disabled={isFeedbackSubmitted}
                     className={`flex h-11 w-11 items-center justify-center rounded-[12px] transition-all ${
-                      rating >= value ? 'bg-orange-500 shadow-[0_10px_20px_rgba(249,115,22,0.24)]' : 'bg-slate-100'
+                      rating >= value ? 'bg-primary-orange/50 shadow-[0_10px_20px_rgba(249,115,22,0.24)]' : 'bg-slate-100'
                     } ${isFeedbackSubmitted ? 'cursor-default' : ''}`}
                   >
                     <Star size={19} className={rating >= value ? 'fill-white text-white' : 'text-slate-300'} />

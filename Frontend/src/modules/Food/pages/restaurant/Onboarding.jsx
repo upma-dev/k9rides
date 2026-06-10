@@ -1633,7 +1633,7 @@ export default function RestaurantOnboarding() {
               />
               {isSearchingLocation && (
                 <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                   <div className="animate-spin rounded-full h-4 w-4 border-2 border-orange-500 border-t-transparent" />
+                   <div className="animate-spin rounded-full h-4 w-4 border-2 border-primary-orange/50 border-t-transparent" />
                 </div>
               )}
             </div>
@@ -1669,7 +1669,7 @@ export default function RestaurantOnboarding() {
                       setLocationSearchValue(display)
                       setLocationSuggestions([])
                     }}
-                    className="w-full px-4 py-2 text-left text-[13px] hover:bg-orange-50 border-b border-gray-100 last:border-none font-medium text-gray-700"
+                    className="w-full px-4 py-2 text-left text-[13px] hover:bg-primary-orange/5 border-b border-gray-100 last:border-none font-medium text-gray-700"
                   >
                     <span className="truncate">{s.display}</span>
                   </button>
@@ -2843,13 +2843,13 @@ export default function RestaurantOnboarding() {
         {registrationProcessing && (
           <div className="fixed inset-0 z-[1000] flex flex-col items-center justify-center bg-black/60 backdrop-blur-sm px-6 text-center">
             <div className="bg-white p-8 rounded-2xl shadow-2xl flex flex-col items-center gap-4 max-w-sm">
-              <div className="w-12 h-12 border-4 border-orange-500 border-t-transparent rounded-full animate-spin"></div>
+              <div className="w-12 h-12 border-4 border-primary-orange/50 border-t-transparent rounded-full animate-spin"></div>
               <h3 className="text-xl font-bold text-gray-900">Processing Registration</h3>
               <p className="text-sm text-gray-600">
                 We're uploading your documents & setting up your profile. This can take a minute for high resolution images.
               </p>
               <div className="w-full bg-gray-100 h-1.5 rounded-full overflow-hidden">
-                <div className="bg-orange-500 h-full animate-[loading_2s_infinite]"></div>
+                <div className="bg-primary-orange/50 h-full animate-[loading_2s_infinite]"></div>
               </div>
               <p className="text-[10px] text-gray-400 font-medium uppercase tracking-widest mt-2">
                 Please do not refresh or close

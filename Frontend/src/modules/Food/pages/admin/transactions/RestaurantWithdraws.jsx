@@ -472,10 +472,10 @@ export default function RestaurantWithdraws() {
                           <div className="flex items-center justify-center gap-2">
                             <button
                               onClick={() => handleViewWithdraw(withdraw)}
-                              className="p-2 rounded-lg bg-orange-50 hover:bg-orange-100 transition-colors"
+                              className="p-2 rounded-lg bg-primary-orange/5 hover:bg-primary-orange/10 transition-colors"
                               title="View Details"
                             >
-                              <Eye className="w-4 h-4 text-orange-600" />
+                              <Eye className="w-4 h-4 text-accent-orange" />
                             </button>
                             {withdraw.status === 'Pending' && (
                               <>

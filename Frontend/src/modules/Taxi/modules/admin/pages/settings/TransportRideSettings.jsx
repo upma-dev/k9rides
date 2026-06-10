@@ -226,7 +226,7 @@ const TransportRideSettings = () => {
       {/* Floating Scroll Top */}
       <button
          onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-         className="fixed bottom-10 right-10 bg-orange-500 text-white w-12 h-12 rounded-xl flex items-center justify-center shadow-2xl hover:bg-orange-600 transition-all z-50 hover:-translate-y-2 active:translate-y-0"
+         className="fixed bottom-10 right-10 bg-primary-orange/50 text-white w-12 h-12 rounded-xl flex items-center justify-center shadow-2xl hover:bg-accent-orange transition-all z-50 hover:-translate-y-2 active:translate-y-0"
       >
          <ChevronUp size={24} />
       </button>

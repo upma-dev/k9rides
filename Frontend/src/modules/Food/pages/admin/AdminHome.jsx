@@ -264,8 +264,8 @@ export default function AdminHome() {
               title="GST"
               value={formatCurrency(gstTotal)}
               helper={`Total tax collected: ${periodLabel}`}
-              icon={<Receipt className="h-5 w-5 text-orange-600" />}
-              accent="bg-orange-200/40"
+              icon={<Receipt className="h-5 w-5 text-accent-orange" />}
+              accent="bg-primary-orange/20/40"
               path="/admin/food/tax-report"
             />
             <MetricCard
@@ -288,8 +288,8 @@ export default function AdminHome() {
               title="Restaurant request pending"
               value={pendingRestaurantRequests.toLocaleString("en-IN")}
               helper="Awaiting approval"
-              icon={<UserCheck className="h-5 w-5 text-orange-600" />}
-              accent="bg-orange-200/40"
+              icon={<UserCheck className="h-5 w-5 text-accent-orange" />}
+              accent="bg-primary-orange/20/40"
               path="/admin/food/restaurants/joining-request"
             />
             <MetricCard

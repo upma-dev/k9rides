@@ -7,11 +7,11 @@ const getStatusColor = (orderStatus) => {
     "Pending": "bg-blue-100 text-blue-700",
     "Scheduled": "bg-blue-100 text-blue-700",
     "Accepted": "bg-green-100 text-green-700",
-    "Processing": "bg-orange-100 text-orange-700",
+    "Processing": "bg-primary-orange/10 text-accent-orange/90",
     "Food On The Way": "bg-yellow-100 text-yellow-700",
     "Canceled": "bg-rose-100 text-rose-700",
     "Cancelled by Restaurant": "bg-red-100 text-red-700",
-    "Cancelled by User": "bg-orange-100 text-orange-700",
+    "Cancelled by User": "bg-primary-orange/10 text-accent-orange/90",
     "Payment Failed": "bg-red-100 text-red-700",
     "Refunded": "bg-sky-100 text-sky-700",
     "Dine In": "bg-indigo-100 text-indigo-700",
@@ -65,7 +65,7 @@ export default function OrdersTable({
         <div className="flex flex-col items-center justify-center py-20">
           <div className="w-32 h-32 bg-gradient-to-br from-slate-100 to-slate-200 rounded-2xl flex items-center justify-center mb-6 shadow-inner">
             <div className="w-20 h-20 bg-white rounded-xl flex items-center justify-center shadow-md">
-              <span className="text-5xl text-orange-500 font-bold">!</span>
+              <span className="text-5xl text-primary-orange/50 font-bold">!</span>
             </div>
           </div>
           <p className="text-lg font-semibold text-slate-700 mb-1">No Data Found</p>
@@ -374,7 +374,7 @@ export default function OrdersTable({
                       )}
                       <button 
                         onClick={() => onViewOrder(order)}
-                        className="p-1.5 rounded text-orange-600 hover:bg-orange-50 transition-colors"
+                        className="p-1.5 rounded text-accent-orange hover:bg-primary-orange/5 transition-colors"
                         title="View Details"
                       >
                         <Eye className="w-4 h-4" />

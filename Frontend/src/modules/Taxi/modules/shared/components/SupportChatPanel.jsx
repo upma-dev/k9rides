@@ -690,7 +690,7 @@ const SupportChatPanel = ({
                         {conversation.peer?.name || 'Support Contact'}
                       </p>
                       {conversation.unreadCount > 0 && (
-                        <span className="rounded-full bg-orange-500 px-2 py-0.5 text-[10px] font-black text-white">
+                        <span className="rounded-full bg-primary-orange/50 px-2 py-0.5 text-[10px] font-black text-white">
                           {conversation.unreadCount}
                         </span>
                       )}

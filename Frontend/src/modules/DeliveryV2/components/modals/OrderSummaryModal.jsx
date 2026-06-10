@@ -27,9 +27,9 @@ export const OrderSummaryModal = ({ order, onDone }) => {
 
           <div className="bg-white rounded-3xl p-8 mb-12 shadow-2xl text-gray-900 border border-white/20">
             <div className="flex items-center justify-center gap-2 mb-2">
-              <Star className="w-4 h-4 text-orange-400 fill-orange-400" />
+              <Star className="w-4 h-4 text-primary-orange/80 fill-orange-400" />
               <p className="text-gray-400 text-xs font-bold uppercase tracking-widest">Earnings Added</p>
-              <Star className="w-4 h-4 text-orange-400 fill-orange-400" />
+              <Star className="w-4 h-4 text-primary-orange/80 fill-orange-400" />
             </div>
             
             <p className="text-gray-950 text-6xl font-bold mb-6 tracking-tighter">₹{Number(earnings).toFixed(2)}</p>

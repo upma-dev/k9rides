@@ -134,7 +134,7 @@ const BusPreview = () => {
                     key={`${image}-${index}`}
                     type="button"
                     onClick={() => setActiveImage(image)}
-                    className={`overflow-hidden rounded-2xl border-2 ${activeImage === image ? 'border-orange-400' : 'border-transparent'}`}
+                    className={`overflow-hidden rounded-2xl border-2 ${activeImage === image ? 'border-primary-orange/80' : 'border-transparent'}`}
                   >
                     <img src={image} alt={`${bus.operator} ${index + 1}`} className="h-20 w-28 object-cover" />
                   </button>
@@ -165,7 +165,7 @@ const BusPreview = () => {
               <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Journey Summary</p>
               <h3 className="mt-1 text-lg font-black text-slate-900">{fromCity} to {toCity}</h3>
             </div>
-            <div className="rounded-full bg-orange-50 px-3 py-2 text-[11px] font-black text-orange-600">
+            <div className="rounded-full bg-primary-orange/5 px-3 py-2 text-[11px] font-black text-accent-orange">
               {formatDurationBrief(bus.duration)}
             </div>
           </div>
@@ -216,7 +216,7 @@ const BusPreview = () => {
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
                     <div className="flex items-center gap-2">
-                      <MapPin size={14} className="text-orange-500" />
+                      <MapPin size={14} className="text-primary-orange/50" />
                       <p className="truncate text-sm font-black text-slate-900">{stop.city || stop.pointName || `Stop ${index + 1}`}</p>
                     </div>
                     <p className="mt-1 truncate text-[12px] font-semibold text-slate-500">{stop.pointName || 'Point not set'}</p>

@@ -287,7 +287,7 @@ export default function DeliveryWelcome() {
             
             {/* Main circle with checkmark */}
             <motion.div
-              className="w-32 h-32 bg-gradient-to-br from-[#F38F24] to-orange-600 rounded-full flex items-center justify-center shadow-2xl relative overflow-hidden"
+              className="w-32 h-32 bg-gradient-to-br from-[#F38F24] to-accent-orange rounded-full flex items-center justify-center shadow-2xl relative overflow-hidden"
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
               transition={{

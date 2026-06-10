@@ -49,7 +49,7 @@ const services = [
     path: '/intercity',
     accent: 'bg-[linear-gradient(135deg,#FFF7ED_0%,#FFE5C2_100%)]',
     tag: 'No return charge',
-    tagColor: 'bg-orange-50 text-orange-600 border-orange-100',
+    tagColor: 'bg-primary-orange/5 text-accent-orange border-primary-orange/10',
   },
   {
     id: 'bus',

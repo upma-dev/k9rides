@@ -210,8 +210,8 @@ const RideDetail = () => {
           </div>
 
           <div className="relative">
-            <div className="absolute -left-9 top-0.5 w-4 h-4 rounded-full border-2 border-orange-500 bg-white shadow-sm flex items-center justify-center">
-              <div className="w-1.5 h-1.5 bg-orange-500 rounded-full" />
+            <div className="absolute -left-9 top-0.5 w-4 h-4 rounded-full border-2 border-primary-orange/50 bg-white shadow-sm flex items-center justify-center">
+              <div className="w-1.5 h-1.5 bg-primary-orange/50 rounded-full" />
             </div>
             <h4 className="text-[12px] font-black text-gray-400 uppercase tracking-widest mb-1">Drop</h4>
             <p className="text-[15px] font-black text-gray-800 leading-tight">{details.drop}</p>
@@ -246,9 +246,9 @@ const RideDetail = () => {
           </div>
         </div>
 
-        <div className="flex items-center justify-between p-5 bg-orange-50/50 rounded-[28px] border border-orange-50">
+        <div className="flex items-center justify-between p-5 bg-primary-orange/5/50 rounded-[28px] border border-primary-orange/5">
           <div className="flex items-center gap-4">
-            <div className="w-11 h-11 bg-white rounded-2xl p-0.5 overflow-hidden border border-orange-100">
+            <div className="w-11 h-11 bg-white rounded-2xl p-0.5 overflow-hidden border border-primary-orange/10">
               <img
                 src={`https://ui-avatars.com/api/?name=${String(details.driverName).replace(' ', '+')}&background=f0f0f0&color=000`}
                 className="w-full h-full rounded-[14px]"
@@ -257,7 +257,7 @@ const RideDetail = () => {
             </div>
             <div>
               <h4 className="text-[14px] font-black text-gray-900">{details.driverName}</h4>
-              <div className="flex items-center gap-1 text-[11px] font-black text-orange-600">
+              <div className="flex items-center gap-1 text-[11px] font-black text-accent-orange">
                 <Star size={12} className="fill-orange-600" />
                 <span>{details.rating} - {details.plate}</span>
               </div>
@@ -266,7 +266,7 @@ const RideDetail = () => {
           <button
             type="button"
             onClick={() => navigate(`${routePrefix}/support`)}
-            className="bg-white px-4 py-2 rounded-full text-[12px] font-black text-gray-900 border border-orange-100 active:scale-95 transition-all"
+            className="bg-white px-4 py-2 rounded-full text-[12px] font-black text-gray-900 border border-primary-orange/10 active:scale-95 transition-all"
           >
             Support
           </button>

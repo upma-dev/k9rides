@@ -130,7 +130,7 @@ export default function SelectAddress() {
   }
 
   return (
-    <AnimatedPage className="min-h-screen bg-linear-to-b from-orange-50/30 via-white to-orange-50/20 dark:from-[#0a0a0a] dark:via-[#1a1a1a] dark:to-[#0a0a0a] p-4 sm:p-6 md:p-8">
+    <AnimatedPage className="min-h-screen bg-linear-to-b from-primary-orange/5/30 via-white to-primary-orange/5/20 dark:from-[#0a0a0a] dark:via-[#1a1a1a] dark:to-[#0a0a0a] p-4 sm:p-6 md:p-8">
       <div className="max-w-3xl mx-auto space-y-6 md:space-y-8">
         <ScrollReveal>
           <div className="flex items-center gap-4">
@@ -224,7 +224,7 @@ export default function SelectAddress() {
                                 key={id || formatAddressLine(addr)}
                                 type="button"
                                 onClick={() => onPickSuggestion(addr)}
-                                className="w-full text-left px-4 py-3 hover:bg-orange-50/60 dark:hover:bg-white/5 transition-colors border-b border-gray-100 dark:border-gray-800 last:border-b-0"
+                                className="w-full text-left px-4 py-3 hover:bg-primary-orange/5/60 dark:hover:bg-white/5 transition-colors border-b border-gray-100 dark:border-gray-800 last:border-b-0"
                               >
                                 <div className="flex items-start justify-between gap-3">
                                   <div className="min-w-0">
@@ -233,7 +233,7 @@ export default function SelectAddress() {
                                         {String(addr?.label || "Saved").toLowerCase() === "office" ? "Work" : (addr?.label || "Saved")}
                                       </p>
                                       {addr?.isDefault && (
-                                        <Badge className="bg-orange-100 text-orange-800 dark:bg-orange-500/15 dark:text-orange-200">
+                                        <Badge className="bg-primary-orange/10 text-accent-orange/70 dark:bg-primary-orange/50/15 dark:text-primary-orange/20">
                                           Default
                                         </Badge>
                                       )}

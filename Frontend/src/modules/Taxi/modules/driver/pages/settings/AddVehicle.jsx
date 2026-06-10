@@ -37,7 +37,7 @@ import SuvIcon from "../../../../assets/icons/SUV.png";
 import MapBackground from "../../../../assets/map_image.png";
 
 const inputClass =
-  "w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-800 outline-none transition-all focus:border-orange-300 focus:ring-2 focus:ring-orange-100";
+  "w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-800 outline-none transition-all focus:border-primary-orange/40 focus:ring-2 focus:ring-primary-orange/10";
 const labelClass = "mb-2 block text-[12px] font-bold text-slate-700";
 
 const iconMap = {
@@ -313,7 +313,7 @@ const AddVehicle = () => {
               key={item}
               className={`rounded-2xl border px-4 py-3 text-center text-xs font-bold uppercase tracking-[0.18em] transition-all ${
                 step >= item
-                  ? "border-orange-200 bg-orange-50 text-orange-600"
+                  ? "border-primary-orange/20 bg-primary-orange/5 text-accent-orange"
                   : "border-slate-200 bg-white text-slate-400"
               }`}
             >
@@ -434,7 +434,7 @@ const AddVehicle = () => {
 
                   {selectedType ? (
                     <div className="p-6">
-                      <div className="rounded-[24px] border border-orange-100 bg-gradient-to-br from-white via-orange-50/40 to-slate-50 p-4 shadow-sm">
+                      <div className="rounded-[24px] border border-primary-orange/10 bg-gradient-to-br from-white via-primary-orange/5/40 to-slate-50 p-4 shadow-sm">
                         <div className="mb-4 flex items-center gap-4">
                           <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-white shadow-sm">
                             <img
@@ -497,7 +497,7 @@ const AddVehicle = () => {
 
                         <div className="mt-4 rounded-[24px] border border-slate-200 bg-slate-50 p-4">
                           <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-slate-700">
-                            <Users size={16} className="text-orange-500" />
+                            <Users size={16} className="text-primary-orange/50" />
                             Service Notes
                           </div>
                           <div className="space-y-2 text-sm text-slate-600">
@@ -559,7 +559,7 @@ const AddVehicle = () => {
                   ) : (
                     <div className="p-6">
                       <div className="flex min-h-[320px] flex-col items-center justify-center rounded-[24px] border border-dashed border-slate-300 bg-slate-50 px-6 text-center">
-                        <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-white text-orange-500 shadow-sm">
+                        <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-white text-primary-orange/50 shadow-sm">
                           <Car size={24} />
                         </div>
                         <p className="text-base font-semibold text-slate-800">
@@ -623,7 +623,7 @@ const AddVehicle = () => {
                             <span
                               className={`rounded-full px-3 py-1 text-[11px] font-bold uppercase tracking-[0.18em] ${
                                 field.isRequired
-                                  ? "bg-orange-100 text-orange-700"
+                                  ? "bg-primary-orange/10 text-accent-orange/90"
                                   : "bg-slate-200 text-slate-600"
                               }`}
                             >
@@ -640,7 +640,7 @@ const AddVehicle = () => {
                                 accept="image/*"
                               />
                               <div className="flex flex-col items-center gap-3 text-center">
-                                <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-orange-50 text-orange-500 shadow-sm">
+                                <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary-orange/5 text-primary-orange/50 shadow-sm">
                                   <Upload size={20} />
                                 </span>
                                 <span className="text-sm font-semibold text-slate-700">
@@ -695,7 +695,7 @@ const AddVehicle = () => {
                   <div className="space-y-4 p-6">
                     <div className="rounded-[24px] border border-slate-200 bg-slate-50 p-4">
                       <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-slate-700">
-                        <FileText size={16} className="text-orange-500" />
+                        <FileText size={16} className="text-primary-orange/50" />
                         Vehicle Summary
                       </div>
                       <div className="space-y-2 text-sm text-slate-600">
@@ -726,7 +726,7 @@ const AddVehicle = () => {
                       </div>
                     </div>
 
-                    <div className="rounded-[24px] border border-orange-100 bg-gradient-to-r from-white via-orange-50/30 to-white p-4">
+                    <div className="rounded-[24px] border border-primary-orange/10 bg-gradient-to-r from-white via-primary-orange/5/30 to-white p-4">
                       <p className="text-sm font-semibold text-slate-900">
                         Approval note
                       </p>
@@ -737,7 +737,7 @@ const AddVehicle = () => {
 
                     <div className="rounded-[24px] border border-slate-200 bg-slate-50 p-4">
                       <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-slate-700">
-                        <ShieldCheck size={16} className="text-orange-500" />
+                        <ShieldCheck size={16} className="text-primary-orange/50" />
                         Document Summary
                       </div>
                       <div className="space-y-2 text-sm text-slate-600">
@@ -773,7 +773,7 @@ const AddVehicle = () => {
                   initial={{ scale: 0 }}
                   animate={{ scale: 1 }}
                   transition={{ type: "spring", damping: 12, stiffness: 200 }}
-                  className="relative z-10 flex h-24 w-24 items-center justify-center rounded-[28px] bg-[#ff6b4a] text-white shadow-xl shadow-orange-200"
+                  className="relative z-10 flex h-24 w-24 items-center justify-center rounded-[28px] bg-[#ff6b4a] text-white shadow-xl shadow-primary-orange/20"
                 >
                   <CheckCircle2 size={38} strokeWidth={2.5} />
                 </motion.div>
@@ -820,7 +820,7 @@ const AddVehicle = () => {
                 disabled={!canContinue}
                 className={`inline-flex h-14 flex-1 items-center justify-center gap-2 rounded-2xl text-sm font-semibold transition ${
                   canContinue
-                    ? "bg-[#ff6b4a] text-white shadow-lg shadow-orange-200 hover:bg-[#f55a37]"
+                    ? "bg-[#ff6b4a] text-white shadow-lg shadow-primary-orange/20 hover:bg-[#f55a37]"
                     : "bg-slate-100 text-slate-400"
                 }`}
               >
@@ -832,7 +832,7 @@ const AddVehicle = () => {
                 disabled={!canSubmit || isSubmitting}
                 className={`inline-flex h-14 flex-1 items-center justify-center gap-2 rounded-2xl text-sm font-semibold transition ${
                   canSubmit && !isSubmitting
-                    ? "bg-[#ff6b4a] text-white shadow-lg shadow-orange-200 hover:bg-[#f55a37]"
+                    ? "bg-[#ff6b4a] text-white shadow-lg shadow-primary-orange/20 hover:bg-[#f55a37]"
                     : "bg-slate-100 text-slate-400"
                 }`}
               >

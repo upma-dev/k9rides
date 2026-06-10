@@ -275,7 +275,7 @@ const PendingDrivers = () => {
               <option value={50}>50</option>
             </select>
           </div>
-          <button className="flex items-center gap-2 px-4 py-2 text-sm text-white bg-orange-500 rounded-lg hover:bg-orange-600 transition-colors">
+          <button className="flex items-center gap-2 px-4 py-2 text-sm text-white bg-primary-orange/50 rounded-lg hover:bg-accent-orange transition-colors">
             <Filter size={16} /> Filters
           </button>
         </div>

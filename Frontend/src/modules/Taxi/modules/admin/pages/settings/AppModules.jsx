@@ -398,7 +398,7 @@ const AppModules = ({ mode: propMode }) => {
                             </td>
                             <td className="px-6 py-5">
                               <div className="flex items-center gap-2">
-                                <button onClick={() => navigate(`edit/${m._id || m.id}`)} className="p-2 bg-orange-50 text-orange-400 hover:bg-orange-100 rounded-lg transition-colors"><Edit2 size={16} /></button>
+                                <button onClick={() => navigate(`edit/${m._id || m.id}`)} className="p-2 bg-primary-orange/5 text-primary-orange/80 hover:bg-primary-orange/10 rounded-lg transition-colors"><Edit2 size={16} /></button>
                                 <button onClick={() => handleDelete(m._id || m.id)} className="p-2 bg-rose-50 text-rose-400 hover:bg-rose-100 rounded-lg transition-colors"><Trash2 size={16} /></button>
                               </div>
                             </td>

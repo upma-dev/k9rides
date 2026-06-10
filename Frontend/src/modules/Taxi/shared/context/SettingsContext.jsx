@@ -213,6 +213,10 @@ export const SettingsProvider = ({ children }) => {
       settings.customization?.sidebar_text_color,
       DEFAULT_SIDEBAR_TEXT_COLOR
     );
+    const primaryColor = normalizeHexColor(settings.customization?.primary_color, '#dc2626');
+    const accentColor = normalizeHexColor(settings.customization?.accent_color, '#f97316');
+    const themeMode = settings.customization?.theme_mode || 'light';
+
     const rgb = hexToRgb(adminThemeColor) || { r: 64, g: 81, b: 137 };
 
     root.style.setProperty('--admin-theme-color', adminThemeColor);
@@ -220,10 +224,26 @@ export const SettingsProvider = ({ children }) => {
     root.style.setProperty('--admin-theme-contrast', getReadableTextColor(adminThemeColor));
     root.style.setProperty('--landing-theme-color', landingThemeColor);
     root.style.setProperty('--admin-sidebar-text-color', sidebarTextColor);
+    
+    // Set global theme variables
+    root.style.setProperty('--primary-color', primaryColor);
+    root.style.setProperty('--accent-color', accentColor);
+
+    // Toggle dark mode (do not toggle if in an admin page that overrides this manually, 
+    // but the app structure suggests the toggle works globally)
+    if (themeMode === 'dark') {
+      root.classList.add('dark');
+    } else {
+      root.classList.remove('dark');
+    }
+
   }, [
     settings.customization?.admin_theme_color,
     settings.customization?.landing_theme_color,
     settings.customization?.sidebar_text_color,
+    settings.customization?.primary_color,
+    settings.customization?.accent_color,
+    settings.customization?.theme_mode,
   ]);
 
   const refreshSettings = () => fetchSettings();

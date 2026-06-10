@@ -66,8 +66,8 @@ export default function QuickSection() {
             <span className="text-[8px] font-bold text-gray-400">FAST DELIVERY</span>
           </div>
           <div className="flex flex-col items-center gap-1">
-            <div className="h-8 w-8 rounded-full bg-orange-50 flex items-center justify-center">
-              <Star className="h-4 w-4 text-orange-500" />
+            <div className="h-8 w-8 rounded-full bg-primary-orange/5 flex items-center justify-center">
+              <Star className="h-4 w-4 text-primary-orange/50" />
             </div>
             <span className="text-[8px] font-bold text-gray-400">TOP BRANDS</span>
           </div>

@@ -152,7 +152,7 @@ export default function DiningCategory() {
         <div className="mb-6 rounded-[28px] border border-[#f0dfca] bg-gradient-to-br from-[#fff4e7] via-white to-[#fff9f3] p-6 shadow-[0_18px_60px_rgba(90,55,20,0.08)] dark:border-gray-800 dark:bg-gradient-to-br dark:from-[#161616] dark:via-[#101010] dark:to-[#1a1a1a] dark:shadow-[0_18px_60px_rgba(0,0,0,0.35)]">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
             <div>
-              <p className="mb-2 text-xs font-semibold uppercase tracking-[0.34em] text-[#c07a3a] dark:text-orange-300">Dining Category</p>
+              <p className="mb-2 text-xs font-semibold uppercase tracking-[0.34em] text-[#c07a3a] dark:text-primary-orange/40">Dining Category</p>
               <h1 className="text-3xl font-black tracking-tight text-[#23180f] sm:text-4xl dark:text-white">{heading}</h1>
               <p className="mt-2 max-w-2xl text-sm text-[#6b5641] dark:text-gray-300">
                 Explore all restaurants linked to this dining category, check their timings, preview the menu, and jump straight into table booking.
@@ -257,7 +257,7 @@ export default function DiningCategory() {
                           <Clock className="h-3.5 w-3.5" />
                           <span>{restaurant.availability?.isOpen ? "Open now" : "Closed now"}</span>
                         </div>
-                        <div className="inline-flex items-center rounded-full bg-[#fff4e7] px-3 py-1.5 text-xs font-semibold text-[#a25b1f] dark:bg-[#2a1d12] dark:text-orange-300">
+                        <div className="inline-flex items-center rounded-full bg-[#fff4e7] px-3 py-1.5 text-xs font-semibold text-[#a25b1f] dark:bg-[#2a1d12] dark:text-primary-orange/40">
                           {formatTimingLabel(restaurant.availability)}
                         </div>
                       </div>

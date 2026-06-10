@@ -67,9 +67,9 @@ const ActionsSection = () => {
           title="Ride"
           description="Bike, auto, and cab rides."
           image="/1_Bike.png"
-          surfaceClass="bg-gradient-to-br from-orange-50/80 via-white/80 to-orange-100/60"
+          surfaceClass="bg-gradient-to-br from-primary-orange/5/80 via-white/80 to-primary-orange/10/60"
           titleClass="text-slate-900"
-          buttonClass="bg-orange-500"
+          buttonClass="bg-primary-orange/50"
           buttonText="Book Now"
           path={resolvePath('/ride/select-location')}
         />

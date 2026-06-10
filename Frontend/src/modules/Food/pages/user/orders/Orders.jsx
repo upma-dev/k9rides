@@ -1146,7 +1146,7 @@ Order again from this restaurant in the ${companyName} app.`
                 type="button"
                 disabled={ratingSubmitDisabled}
                 onClick={handleSubmitRating}
-                className="w-full rounded-xl bg-gradient-to-r from-[#EB590E] to-[#D94F0C] text-white text-base font-bold py-3.5 hover:from-[#D94F0C] hover:to-[#C44409] disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg shadow-orange-500/30 flex items-center justify-center gap-2"
+                className="w-full rounded-xl bg-gradient-to-r from-[#EB590E] to-[#D94F0C] text-white text-base font-bold py-3.5 hover:from-[#D94F0C] hover:to-[#C44409] disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg shadow-primary-orange/50/30 flex items-center justify-center gap-2"
               >
                 {submittingRating ? (
                   <>

@@ -248,7 +248,7 @@ export default function DeliveryHomeV2({ tab = 'feed' }) {
 
   const emergencyOptions = [
     { title: "Medical Emergency", subtitle: "Call an ambulance", icon: <AlertTriangle className="text-red-600" />, phone: emergencyNumbers.medicalEmergency },
-    { title: "Accident Helpline", subtitle: "Report an accident", icon: <AlertTriangle className="text-orange-600" />, phone: emergencyNumbers.accidentHelpline },
+    { title: "Accident Helpline", subtitle: "Report an accident", icon: <AlertTriangle className="text-accent-orange" />, phone: emergencyNumbers.accidentHelpline },
     { title: "Contact Police", subtitle: "Nearest police support", icon: <AlertTriangle className="text-blue-600" />, phone: emergencyNumbers.contactPolice },
     { title: "Insurance", subtitle: "Policy & claim help", icon: <AlertTriangle className="text-green-600" />, phone: emergencyNumbers.insurance },
   ];
@@ -616,7 +616,7 @@ export default function DeliveryHomeV2({ tab = 'feed' }) {
           <div className="flex items-center gap-3">
              <button onClick={() => setShowEmergencyPopup(true)} className="w-9 h-9 rounded-full bg-red-500/10 flex items-center justify-center text-red-500 border border-red-500/20 active:scale-95 transition-all shadow-lg"><AlertTriangle className="w-4 h-4" /></button>
              <button onClick={() => navigate('/food/delivery/help/id-card')} className="w-9 h-9 rounded-full bg-blue-500/10 flex items-center justify-center text-blue-500 border border-blue-500/20 active:scale-95 transition-all shadow-lg"><Contact className="w-4 h-4" /></button>
-             <button onClick={() => navigate('/food/delivery/notifications')} className="relative w-9 h-9 rounded-full bg-white/10 flex items-center justify-center text-white border border-white/10 active:scale-95 transition-all shadow-lg"><Bell className="w-4 h-4" />{notificationUnreadCount > 0 && <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-orange-400 border border-[#1f1f1f]" />}</button>
+             <button onClick={() => navigate('/food/delivery/notifications')} className="relative w-9 h-9 rounded-full bg-white/10 flex items-center justify-center text-white border border-white/10 active:scale-95 transition-all shadow-lg"><Bell className="w-4 h-4" />{notificationUnreadCount > 0 && <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-primary-orange/80 border border-[#1f1f1f]" />}</button>
           </div>
         </div>
 
@@ -632,7 +632,7 @@ export default function DeliveryHomeV2({ tab = 'feed' }) {
               {activeOrder ? (
                 <div className="grid grid-cols-2 gap-3 w-full">
                   {/* LEFT: DISTANCE (Vibrant Orange Card) */}
-                  <div className="bg-[#ff8100] rounded-2xl p-3.5 shadow-xl shadow-orange-500/20 border border-orange-400/50 flex items-center justify-between overflow-hidden relative">
+                  <div className="bg-[#ff8100] rounded-2xl p-3.5 shadow-xl shadow-primary-orange/50/20 border border-primary-orange/80/50 flex items-center justify-between overflow-hidden relative">
                     <div className="flex flex-col z-10">
                       <span className="text-[9px] text-white/70 font-black uppercase tracking-[0.15em] mb-1">Distance</span>
                       <div className="flex items-end gap-1">
@@ -705,11 +705,11 @@ export default function DeliveryHomeV2({ tab = 'feed' }) {
              {isSimMode && (
                <div className="absolute top-[180px] left-4 right-4 z-[100] bg-black/80 backdrop-blur-md rounded-xl p-4 border border-white/20 flex items-center justify-between shadow-2xl">
                   <div className="flex items-center gap-4">
-                     <div className="w-8 h-8 bg-orange-500 rounded-lg flex items-center justify-center animate-pulse">
+                     <div className="w-8 h-8 bg-primary-orange/50 rounded-lg flex items-center justify-center animate-pulse">
                         <Play className="w-4 h-4 text-white fill-current" />
                      </div>
                      <div className="flex flex-col">
-                        <span className="text-orange-500 text-[10px] font-bold uppercase tracking-widest">Auto Navigation Active</span>
+                        <span className="text-primary-orange/50 text-[10px] font-bold uppercase tracking-widest">Auto Navigation Active</span>
                         <span className="text-white text-[11px] font-medium">Following actual road path...</span>
                      </div>
                   </div>
@@ -742,7 +742,7 @@ export default function DeliveryHomeV2({ tab = 'feed' }) {
                       }
                     }
                   }}
-                  className={`w-14 h-14 rounded-full shadow-2xl flex items-center justify-center border border-gray-100 transition-all ${isSimMode ? 'bg-orange-500 text-white' : 'bg-white text-green-500'}`}
+                  className={`w-14 h-14 rounded-full shadow-2xl flex items-center justify-center border border-gray-100 transition-all ${isSimMode ? 'bg-primary-orange/50 text-white' : 'bg-white text-green-500'}`}
                 >
                   <div className={`w-8 h-8 rounded-full border-2 flex items-center justify-center ${isSimMode ? 'border-white' : 'border-green-500'}`}>
                     <Play className={`w-4 h-4 fill-current ml-0.5 ${isSimMode ? 'animate-pulse' : ''}`} />
@@ -836,9 +836,9 @@ export default function DeliveryHomeV2({ tab = 'feed' }) {
                               </div>
                               <div>
                                  <h3 className="text-gray-950 text-2xl font-black tracking-tight leading-none mb-2 underline decoration-emerald-500/30 decoration-4 underline-offset-4">Handover Drop</h3>
-                                 <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full border ${isWithinRange ? 'bg-emerald-50 border-emerald-100' : 'bg-orange-50 border-orange-100'}`}>
-                                   <div className={`w-1.5 h-1.5 rounded-full ${isWithinRange ? 'bg-emerald-500 animate-pulse' : 'bg-orange-500'}`} />
-                                   <span className={`text-[10px] font-black uppercase tracking-widest ${isWithinRange ? 'text-emerald-600' : 'text-orange-500'}`}>
+                                 <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full border ${isWithinRange ? 'bg-emerald-50 border-emerald-100' : 'bg-primary-orange/5 border-primary-orange/10'}`}>
+                                   <div className={`w-1.5 h-1.5 rounded-full ${isWithinRange ? 'bg-emerald-500 animate-pulse' : 'bg-primary-orange/50'}`} />
+                                   <span className={`text-[10px] font-black uppercase tracking-widest ${isWithinRange ? 'text-emerald-600' : 'text-primary-orange/50'}`}>
                                      {isWithinRange ? 'Ready to Arrive' : `${(distanceToTarget / 1000).toFixed(1)} km • ${eta || '--'} min`}
                                    </span>
                                  </div>
@@ -859,15 +859,15 @@ export default function DeliveryHomeV2({ tab = 'feed' }) {
   
                           {/* Customer Instructions Panel */}
                           {activeOrder?.note && (
-                            <div className="w-full bg-linear-to-br from-orange-50/50 to-amber-50/50 border border-orange-100 rounded-[2rem] p-6 mb-8 flex gap-4 items-start relative overflow-hidden group">
+                            <div className="w-full bg-linear-to-br from-primary-orange/5/50 to-amber-50/50 border border-primary-orange/10 rounded-[2rem] p-6 mb-8 flex gap-4 items-start relative overflow-hidden group">
                                <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
                                   <Package className="w-16 h-16" />
                                </div>
-                               <div className="w-11 h-11 bg-white rounded-2xl flex items-center justify-center text-orange-600 shadow-sm shrink-0 border border-orange-50 relative z-10">
+                               <div className="w-11 h-11 bg-white rounded-2xl flex items-center justify-center text-accent-orange shadow-sm shrink-0 border border-primary-orange/5 relative z-10">
                                   <Package className="w-5 h-5" />
                                </div>
                                <div className="relative z-10">
-                                  <p className="text-[10px] font-black text-orange-600 uppercase tracking-[0.2em] mb-1.5">Drop Message</p>
+                                  <p className="text-[10px] font-black text-accent-orange uppercase tracking-[0.2em] mb-1.5">Drop Message</p>
                                  <p className="text-sm font-bold text-gray-950 leading-relaxed italic">"{activeOrder.note}"</p>
                                </div>
                             </div>
@@ -954,7 +954,7 @@ export default function DeliveryHomeV2({ tab = 'feed' }) {
                  <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Order Action Pending</span>
                  <span className="text-xs font-bold uppercase tracking-wider">Tap to open delivery panel</span>
               </div>
-              <div className="bg-orange-500 p-2 rounded-xl text-white">
+              <div className="bg-primary-orange/50 p-2 rounded-xl text-white">
                  <Plus className="w-5 h-5" />
               </div>
            </button>

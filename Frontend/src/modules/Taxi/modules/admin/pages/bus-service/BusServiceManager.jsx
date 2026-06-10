@@ -1592,7 +1592,7 @@ const BusServiceManager = ({
                     ) : (
                       <label className="flex cursor-pointer flex-col items-center gap-3 text-center">
                         <input type="file" accept="image/*" className="hidden" onChange={(event) => handleImageChange(event, 'coverImage')} />
-                        <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white text-orange-500 shadow-sm">
+                        <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white text-primary-orange/50 shadow-sm">
                           <Upload size={20} />
                         </span>
                         <span className="text-sm font-bold text-slate-700">Upload main bus image</span>

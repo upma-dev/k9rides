@@ -20,7 +20,7 @@ const getMediaUrl = (url) => {
   if (url.startsWith('http')) return url;
   
   // Use VITE_API_BASE_URL to derive the backend origin
-  const apiBase = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api/v1";
+  const apiBase = import.meta.env.VITE_API_BASE_URL || "https://k9rides.onrender.com/api/v1";
   const origin = apiBase.split('/api/v1')[0];
   
   return `${origin}${url.startsWith('/') ? url : '/' + url}`;
@@ -334,7 +334,7 @@ export default function ProfessionalSearch() {
             {results.dishes.length > 0 && (
               <section>
                 <div className="flex items-center gap-2 mb-4">
-                   <div className="w-1 h-5 bg-orange-500 rounded-full" />
+                   <div className="w-1 h-5 bg-primary-orange/50 rounded-full" />
                    <h2 className="text-lg font-bold dark:text-white">Dishes from restaurants</h2>
                 </div>
                 <div className="grid gap-4">
@@ -359,7 +359,7 @@ export default function ProfessionalSearch() {
                           <h3 className="font-bold text-slate-900 dark:text-white line-clamp-1">{r.restaurantName}</h3>
                           <div className="flex items-center gap-3 text-xs text-slate-500 dark:text-zinc-400 mt-1">
                              <div className="flex items-center gap-1">
-                                <Star className="w-3 h-3 text-orange-500 fill-orange-500" />
+                                <Star className="w-3 h-3 text-primary-orange/50 fill-orange-500" />
                                 <span className="font-semibold text-slate-700 dark:text-white">{r.rating || "New"}</span>
                              </div>
                              <span>•</span>

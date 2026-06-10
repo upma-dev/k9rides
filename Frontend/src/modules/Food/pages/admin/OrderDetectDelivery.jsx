@@ -372,7 +372,7 @@ export default function OrderDetectDelivery() {
     return (
       <div className="p-4 lg:p-6 bg-slate-50 min-h-screen flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
-          <Loader2 className="w-8 h-8 text-orange-500 animate-spin" />
+          <Loader2 className="w-8 h-8 text-primary-orange/50 animate-spin" />
           <p className="text-slate-600 font-medium">Loading orders...</p>
         </div>
       </div>
@@ -391,7 +391,7 @@ export default function OrderDetectDelivery() {
           <p className="text-sm text-slate-600 mb-4">{error}</p>
           <button
             onClick={() => window.location.reload()}
-            className="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors"
+            className="px-4 py-2 bg-primary-orange/50 text-white rounded-lg hover:bg-accent-orange transition-colors"
           >
             Retry
           </button>
@@ -474,10 +474,10 @@ export default function OrderDetectDelivery() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-slate-500 mb-1">Delivery Boy Reached Pickup</p>
-              <p className="text-2xl font-bold text-orange-600">{stats.reachedPickup}</p>
+              <p className="text-2xl font-bold text-accent-orange">{stats.reachedPickup}</p>
             </div>
-            <div className="p-3 bg-orange-50 rounded-lg">
-              <Package className="w-6 h-6 text-orange-600" />
+            <div className="p-3 bg-primary-orange/5 rounded-lg">
+              <Package className="w-6 h-6 text-accent-orange" />
             </div>
           </div>
         </div>

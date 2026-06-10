@@ -81,7 +81,7 @@ export default function Checkout() {
 
   if (cart.length === 0) {
     return (
-      <AnimatedPage className="min-h-screen bg-linear-to-b from-orange-50/30 via-white to-orange-50/20 p-4">
+      <AnimatedPage className="min-h-screen bg-linear-to-b from-primary-orange/5/30 via-white to-primary-orange/5/20 p-4">
         <div className="max-w-4xl mx-auto space-y-6">
           <Card>
             <CardHeader>
@@ -102,7 +102,7 @@ export default function Checkout() {
   }
 
   return (
-    <AnimatedPage className="min-h-screen bg-linear-to-b from-orange-50/30 via-white to-orange-50/20 dark:from-[#0a0a0a] dark:via-[#1a1a1a] dark:to-[#0a0a0a] p-4 sm:p-6 md:p-8">
+    <AnimatedPage className="min-h-screen bg-linear-to-b from-primary-orange/5/30 via-white to-primary-orange/5/20 dark:from-[#0a0a0a] dark:via-[#1a1a1a] dark:to-[#0a0a0a] p-4 sm:p-6 md:p-8">
       <div className="max-w-7xl mx-auto space-y-6 md:space-y-8">
         <ScrollReveal>
           <div className="flex items-center gap-4 mb-6 md:mb-8">
@@ -143,8 +143,8 @@ export default function Checkout() {
                           <div
                             key={addressId || `${address.label}-${address.street}-${address.city}`}
                             className={`border-2 rounded-lg p-4 cursor-pointer transition-colors ${isSelected
-                                ? "border-[#EB590E] bg-orange-50"
-                                : "border-gray-200 hover:border-orange-300"
+                                ? "border-[#EB590E] bg-primary-orange/5"
+                                : "border-gray-200 hover:border-primary-orange/40"
                               }`}
                             onClick={() => {
                               setSelectedAddressId(addressId)
@@ -202,8 +202,8 @@ export default function Checkout() {
                           <div
                             key={payment.id}
                             className={`border-2 rounded-lg p-4 cursor-pointer transition-colors ${isSelected
-                                ? "border-[#EB590E] bg-orange-50"
-                                : "border-gray-200 hover:border-orange-300"
+                                ? "border-[#EB590E] bg-primary-orange/5"
+                                : "border-gray-200 hover:border-primary-orange/40"
                               }`}
                             onClick={() => setSelectedPayment(payment.id)}
                           >
@@ -295,7 +295,7 @@ export default function Checkout() {
                     </div>
                     <div className="flex justify-between font-bold text-lg md:text-xl lg:text-2xl pt-2 md:pt-3 border-t dark:border-gray-700">
                       <span className="dark:text-white">Total</span>
-                      <span className="text-[#EB590E] dark:text-orange-400">₹{total.toFixed(0)}</span>
+                      <span className="text-[#EB590E] dark:text-primary-orange/80">₹{total.toFixed(0)}</span>
                     </div>
                   </div>
 

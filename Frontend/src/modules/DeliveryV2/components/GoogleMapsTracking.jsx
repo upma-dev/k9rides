@@ -583,13 +583,13 @@ export default function GoogleMapsTracking({
       {/* Warning when customer location is missing */}
       {isTracking && (!customerLocation || customerLocation.lat === 0) && (
         <div className="absolute bottom-16 left-1/2 -translate-x-1/2 z-10 w-max max-w-[90%]">
-          <div className="bg-orange-50 border border-orange-200 text-orange-800 px-4 py-3 rounded-lg text-xs font-medium shadow-lg flex flex-col items-center gap-1 text-center">
+          <div className="bg-primary-orange/5 border border-primary-orange/20 text-accent-orange/70 px-4 py-3 rounded-lg text-xs font-medium shadow-lg flex flex-col items-center gap-1 text-center">
             <div className="flex items-center gap-2">
               <span>??</span>
               <span className="font-bold">Location Unavailable</span>
             </div>
             <span>Customer hasn't pinned their location.</span>
-            <span className="text-orange-600/80 text-[10px]">Please rely on the written address.</span>
+            <span className="text-accent-orange/80 text-[10px]">Please rely on the written address.</span>
           </div>
         </div>
       )}

@@ -17,11 +17,11 @@ const getStatusColor = (orderStatus) => {
     "Pending": "bg-blue-100 text-blue-700",
     "Scheduled": "bg-blue-100 text-blue-700",
     "Accepted": "bg-green-100 text-green-700",
-    "Processing": "bg-orange-100 text-orange-700",
+    "Processing": "bg-primary-orange/10 text-accent-orange/90",
     "Food On The Way": "bg-yellow-100 text-yellow-700",
     "Canceled": "bg-rose-100 text-rose-700",
     "Cancelled by Restaurant": "bg-red-100 text-red-700",
-    "Cancelled by User": "bg-orange-100 text-orange-700",
+    "Cancelled by User": "bg-primary-orange/10 text-accent-orange/90",
     "Payment Failed": "bg-red-100 text-red-700",
     "Refunded": "bg-sky-100 text-sky-700",
     "Dine In": "bg-indigo-100 text-indigo-700",
@@ -103,7 +103,7 @@ export default function ViewOrderDialog({ isOpen, onOpenChange, order }) {
       <DialogContent className="max-w-4xl max-h-[90vh] bg-white p-0 overflow-y-auto">
         <DialogHeader className="px-6 pt-6 pb-4 border-b border-slate-200 sticky top-0 bg-white z-10">
           <DialogTitle className="flex items-center gap-2">
-            <Eye className="w-5 h-5 text-orange-600" />
+            <Eye className="w-5 h-5 text-accent-orange" />
             Order Details
           </DialogTitle>
           <DialogDescription>
@@ -130,7 +130,7 @@ export default function ViewOrderDialog({ isOpen, onOpenChange, order }) {
               </div>
               {order.orderOtp && (
                 <div className="space-y-1">
-                  <p className="text-xs font-semibold text-orange-600 uppercase tracking-wider flex items-center gap-2 font-bold">
+                  <p className="text-xs font-semibold text-accent-orange uppercase tracking-wider flex items-center gap-2 font-bold">
                     <CheckCircle2 className="w-4 h-4" />
                     Handover Code (OTP)
                   </p>
@@ -305,7 +305,7 @@ export default function ViewOrderDialog({ isOpen, onOpenChange, order }) {
           {(order.billImageUrl || order.billImage || order.deliveryState?.billImageUrl) && (
             <div className="border-t border-slate-200 pt-4">
               <h3 className="text-sm font-semibold text-slate-700 mb-4 flex items-center gap-2">
-                <Receipt className="w-4 h-4 text-orange-600" />
+                <Receipt className="w-4 h-4 text-accent-orange" />
                 Bill Image (Captured by Delivery Boy)
               </h3>
               <div className="space-y-3">

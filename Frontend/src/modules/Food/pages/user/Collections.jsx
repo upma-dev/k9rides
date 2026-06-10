@@ -11,13 +11,13 @@ import collectionsBanner from "@food/assets/collectionspagebanner.png"
 // Gradient colors for collection cards
 const gradientColors = [
   "bg-gradient-to-br from-red-400 to-red-600",
-  "bg-gradient-to-br from-orange-400 to-orange-600",
+  "bg-gradient-to-br from-primary-orange/80 to-accent-orange",
   "bg-gradient-to-br from-purple-500 to-pink-600",
   "bg-gradient-to-br from-green-400 to-emerald-600",
-  "bg-gradient-to-br from-orange-400 to-red-500",
+  "bg-gradient-to-br from-primary-orange/80 to-red-500",
   "bg-gradient-to-br from-amber-400 to-yellow-600",
   "bg-gradient-to-br from-pink-400 to-rose-600",
-  "bg-gradient-to-br from-amber-400 to-orange-600",
+  "bg-gradient-to-br from-amber-400 to-accent-orange",
 ]
 
 export default function Collections() {
@@ -146,10 +146,10 @@ export default function Collections() {
                       {/* Right card - Restaurant */}
                       <div className="absolute right-0 top-0 w-14 h-11 bg-white rounded-lg shadow-lg transform rotate-12 overflow-hidden">
                         <div className="w-full h-full bg-gray-50 flex items-center justify-center p-1">
-                          <Store className="h-6 w-6 text-orange-500" />
+                          <Store className="h-6 w-6 text-primary-orange/50" />
                         </div>
                         {/* Striped awning */}
-                        <div className="absolute -top-0.5 left-0 right-0 h-2 bg-gradient-to-r from-orange-400 via-white to-orange-400"
+                        <div className="absolute -top-0.5 left-0 right-0 h-2 bg-gradient-to-r from-primary-orange/80 via-white to-primary-orange/80"
                           style={{ backgroundSize: '8px 100%', backgroundImage: 'repeating-linear-gradient(90deg, #fb923c 0px, #fb923c 4px, white 4px, white 8px)' }}
                         />
                       </div>

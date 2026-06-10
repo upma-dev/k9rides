@@ -141,8 +141,8 @@ const IncomingRideRequest = ({
   const category = data.raw?.parcel?.category || data.raw?.parcel?.weight || (isParcel ? 'Parcel delivery' : isIntercity ? intercityRoute || 'Intercity trip' : 'Passenger ride');
   const payment = normalizePayment(data.payment);
   const timerProgress = Math.max(0, Math.min(100, (timer / requestDurationSeconds) * 100));
-  const accentClass = isParcel ? 'bg-orange-500' : isIntercity ? 'bg-yellow-400' : 'bg-blue-600';
-  const accentTextClass = isParcel ? 'text-orange-600' : isIntercity ? 'text-yellow-700' : 'text-blue-600';
+  const accentClass = isParcel ? 'bg-primary-orange/50' : isIntercity ? 'bg-yellow-400' : 'bg-blue-600';
+  const accentTextClass = isParcel ? 'text-accent-orange' : isIntercity ? 'text-yellow-700' : 'text-blue-600';
   const pickupAddress = data.raw?.pickupAddress || data.pickup || 'Pickup point';
   const dropAddress = data.raw?.dropAddress || data.drop || 'Drop point';
   const attemptCount = Number(data.attempt || data.raw?.attempt || 1);
@@ -344,8 +344,8 @@ const IncomingRideRequest = ({
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
-                  <div className="relative z-10 grid h-5 w-5 shrink-0 place-items-center rounded-full bg-orange-50">
-                    <MapPin size={13} className="text-orange-500" fill="currentColor" strokeWidth={0} />
+                  <div className="relative z-10 grid h-5 w-5 shrink-0 place-items-center rounded-full bg-primary-orange/5">
+                    <MapPin size={13} className="text-primary-orange/50" fill="currentColor" strokeWidth={0} />
                   </div>
                   <div className="min-w-0 flex-1">
                     <p className="text-[9px] font-black uppercase tracking-[0.16em] text-slate-400">Drop</p>
@@ -408,7 +408,7 @@ const IncomingRideRequest = ({
                             type="button"
                             onClick={() => onSubmitBid?.(bidValue)}
                             disabled={isAccepting}
-                            className="rounded-[14px] border border-orange-200 bg-orange-50 px-2 py-2 text-[10px] font-black uppercase tracking-[0.1em] text-orange-600 disabled:opacity-60"
+                            className="rounded-[14px] border border-primary-orange/20 bg-primary-orange/5 px-2 py-2 text-[10px] font-black uppercase tracking-[0.1em] text-accent-orange disabled:opacity-60"
                           >
                             Rs {bidValue}
                           </button>

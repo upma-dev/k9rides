@@ -108,7 +108,7 @@ export default function DisbursementPage({
       return "bg-green-100 text-green-700"
     }
     if (statusLower === "partially completed") {
-      return "bg-orange-100 text-orange-700"
+      return "bg-primary-orange/10 text-accent-orange/90"
     }
     if (statusLower === "canceled") {
       return "bg-red-100 text-red-700"

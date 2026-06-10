@@ -132,7 +132,7 @@ const SharedTaxi = () => {
                       </div>
                       <div className="ml-1 w-px h-3 border-l border-dashed border-slate-200" />
                       <div className="flex items-center gap-2">
-                        <div className="w-2 h-2 rounded-full bg-orange-500 shrink-0" />
+                        <div className="w-2 h-2 rounded-full bg-primary-orange/50 shrink-0" />
                         <span className="text-[13px] font-black text-slate-900 leading-tight truncate">{r.to}</span>
                       </div>
                     </div>

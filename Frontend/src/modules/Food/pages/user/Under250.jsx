@@ -1369,7 +1369,7 @@ export default function Under250() {
                       key={option.id || 'relevance'}
                       onClick={() => setDraftSelectedSort(option.id)}
                       className={`px-4 md:px-5 lg:px-6 py-3 md:py-4 rounded-xl border text-left transition-colors ${draftSelectedSort === option.id
-                        ? 'border-[#EB590E] bg-[#FFF2EB] dark:bg-orange-900/20'
+                        ? 'border-[#EB590E] bg-[#FFF2EB] dark:bg-accent-orange/50/20'
                         : 'border-gray-200 dark:border-gray-800 hover:border-[#EB590E]'
                         }`}
                     >

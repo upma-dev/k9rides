@@ -326,7 +326,7 @@ const RentalSchedule = () => {
 
   return (
     <div className="min-h-screen bg-[linear-gradient(180deg,#F8FAFC_0%,#F3F4F6_38%,#EEF2F7_100%)] max-w-lg mx-auto font-sans pb-28 relative overflow-hidden">
-      <div className="absolute -top-16 right-[-40px] h-44 w-44 rounded-full bg-orange-100/60 blur-3xl pointer-events-none" />
+      <div className="absolute -top-16 right-[-40px] h-44 w-44 rounded-full bg-primary-orange/10/60 blur-3xl pointer-events-none" />
 
       <motion.header
         initial={{ opacity: 0, y: -10 }}
@@ -379,7 +379,7 @@ const RentalSchedule = () => {
         <DateTimePickerCard
           title="Pickup Date & Time"
           icon={Calendar}
-          accentClass="bg-orange-100"
+          accentClass="bg-primary-orange/10"
           selectedDate={pickupDate}
           selectedTime={pickupTime}
           monthDate={pickupMonthDate}

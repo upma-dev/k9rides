@@ -92,7 +92,7 @@ export default function Footer() {
                     }
                   }}
                 />
-                <span className="text-2xl font-bold bg-gradient-to-r from-yellow-400 to-orange-400 bg-clip-text text-transparent">
+                <span className="text-2xl font-bold bg-gradient-to-r from-yellow-400 to-primary-orange/80 bg-clip-text text-transparent">
                   {companyName}
                 </span>
               </div>

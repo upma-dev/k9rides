@@ -273,13 +273,13 @@ export default function RestaurantReviews() {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="bg-purple-50 rounded-lg p-4"><p className="text-xs text-purple-600 mb-1">Customer</p><p className="text-sm font-semibold text-purple-700">{selectedReview.customer}</p></div>
-                <div className="bg-orange-50 rounded-lg p-4">
-                  <p className="text-xs text-orange-600 mb-2 font-semibold">Rating</p>
+                <div className="bg-primary-orange/5 rounded-lg p-4">
+                  <p className="text-xs text-accent-orange mb-2 font-semibold">Rating</p>
                   <div className="flex items-center gap-3">
                     <div className="flex items-center gap-1">
                       {renderStars(selectedReview.rating)}
                     </div>
-                    <span className="text-lg font-bold text-orange-700">
+                    <span className="text-lg font-bold text-accent-orange/90">
                       {selectedReview.rating} / 5
                     </span>
                   </div>

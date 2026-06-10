@@ -45,7 +45,7 @@ const SharedTaxiConfirm = () => {
             <span className="text-[12px] font-black text-slate-800 truncate">{route.from}</span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-orange-500 shrink-0" />
+            <div className="w-2 h-2 rounded-full bg-primary-orange/50 shrink-0" />
             <span className="text-[12px] font-black text-slate-800 truncate">{route.to}</span>
           </div>
           <div className="border-t border-slate-50 pt-2.5 flex justify-between items-center">
@@ -95,7 +95,7 @@ const SharedTaxiConfirm = () => {
             </div>
             <div className="ml-0.5 w-px h-3 border-l border-dashed border-slate-200" />
             <div className="flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full bg-orange-500 shrink-0" />
+              <div className="w-2 h-2 rounded-full bg-primary-orange/50 shrink-0" />
               <span className="text-[13px] font-black text-slate-900 truncate">{route.to}</span>
             </div>
           </div>
@@ -131,9 +131,9 @@ const SharedTaxiConfirm = () => {
             {PAYMENT_METHODS.map(({ id, label, sub, icon: Icon }) => (
               <motion.button key={id} whileTap={{ scale: 0.96 }} onClick={() => setMethod(id)}
                 className={`flex flex-col items-center gap-1.5 py-3 rounded-[14px] border transition-all ${
-                  method === id ? 'border-orange-200 bg-orange-50 shadow-[0_3px_10px_rgba(249,115,22,0.12)]' : 'border-slate-100 bg-slate-50'
+                  method === id ? 'border-primary-orange/20 bg-primary-orange/5 shadow-[0_3px_10px_rgba(249,115,22,0.12)]' : 'border-slate-100 bg-slate-50'
                 }`}>
-                <Icon size={16} className={method === id ? 'text-orange-500' : 'text-slate-400'} strokeWidth={2} />
+                <Icon size={16} className={method === id ? 'text-primary-orange/50' : 'text-slate-400'} strokeWidth={2} />
                 <span className={`text-[10px] font-black ${method === id ? 'text-slate-900' : 'text-slate-400'}`}>{label}</span>
               </motion.button>
             ))}

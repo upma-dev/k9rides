@@ -60,7 +60,7 @@ const RegistrationDashboard = () => {
                         </span>
                     </div>
                     <h1 className="text-3xl font-black text-taxi-text tracking-tighter leading-none uppercase">
-                        Start Your <br/> <span className="text-orange-500">Journey</span>
+                        Start Your <br/> <span className="text-primary-orange/50">Journey</span>
                     </h1>
                     <p className="text-[14px] font-bold text-slate-400">Complete these 4 simple steps to join the Elite Driver network and start earning today.</p>
                 </motion.div>
