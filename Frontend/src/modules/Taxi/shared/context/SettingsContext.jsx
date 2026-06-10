@@ -168,7 +168,10 @@ export const SettingsProvider = ({ children }) => {
   }, []);
 
   useEffect(() => {
-    const appName = settings.general?.app_name || 'App';
+    let appName = settings.general?.app_name || 'App';
+    if (appName.toLowerCase().includes('eqosy') || appName.toLowerCase().includes('appzeto')) {
+      appName = 'K9 Rides';
+    }
     document.title = appName;
 
     const favicon = settings.general?.favicon || settings.customization?.favicon;
