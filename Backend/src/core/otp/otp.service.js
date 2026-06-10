@@ -1,4 +1,4 @@
-﻿import crypto from 'crypto';
+import crypto from 'crypto';
 import ms from 'ms';
 import { FoodOtp } from './otp.model.js';
 import { config } from '../../config/env.js';
@@ -36,9 +36,9 @@ const sendSmsViaIndiaHub = async (phone, otp) => {
 
         // EXACT DLT TEMPLATE provided by user:
         // "Welcome to the ##var## powered by SMSINDIAHUB. Your OTP for registration is ##var##"
-        const message = `Welcome to the Eqosy powered by SMSINDIAHUB. Your OTP for registration is ${otp}`;
+        const message = `Welcome to the K9 Rides powered by SMSINDIAHUB. Your OTP for registration is ${otp}`;
 
-        // SMS India Hub HTTP GET API â€” query param names are case-sensitive per SOP
+        // SMS India Hub HTTP GET API — query param names are case-sensitive per SOP
         const url = new URL('http://cloud.smsindiahub.in/vendorsms/pushsms.aspx');
         url.searchParams.append('APIKey', config.smsApiKey);
         url.searchParams.append('sid', config.smsSenderId);
@@ -58,7 +58,7 @@ const sendSmsViaIndiaHub = async (phone, otp) => {
         const resultText = await response.text();
         logger.info(`[SMS] Raw response for ${msisdn}: ${resultText}`);
 
-        // SMS India Hub often returns HTTP 200 OK even for errors â€” check response body
+        // SMS India Hub often returns HTTP 200 OK even for errors — check response body
         let parsed = null;
         try { parsed = JSON.parse(resultText); } catch (_) { /* plain text response is OK */ }
 
@@ -66,19 +66,19 @@ const sendSmsViaIndiaHub = async (phone, otp) => {
             const errMsg = `SMS India Hub ERROR for ${phone}: [${parsed.ErrorCode}] ${parsed.ErrorMessage || resultText}`;
             logger.error(errMsg);
             // eslint-disable-next-line no-console
-            console.error(`âŒ [SMS ERROR] ${errMsg}`);
+            console.error(`❌ [SMS ERROR] ${errMsg}`);
             if (parsed.ErrorCode === '006') {
                 // eslint-disable-next-line no-console
-                console.error('âŒ [SMS ERROR] ErrorCode 006 = DLT Template mismatch. The message text must EXACTLY match your registered TRAI DLT template. Login to https://cloud.smsindiahub.in and verify the approved template text.');
+                console.error('❌ [SMS ERROR] ErrorCode 006 = DLT Template mismatch. The message text must EXACTLY match your registered TRAI DLT template. Login to https://cloud.smsindiahub.in and verify the approved template text.');
             }
         } else if (!response.ok) {
-            logger.error(`SMS API HTTP error for ${phone}: ${response.status} â€“ ${resultText}`);
+            logger.error(`SMS API HTTP error for ${phone}: ${response.status} – ${resultText}`);
         } else {
-            logger.info(`âœ… SMS sent successfully to ${msisdn}`);
+            logger.info(`✅ SMS sent successfully to ${msisdn}`);
         }
     } catch (error) {
         logger.error(`Error sending SMS to ${phone}: ${error.message}`);
-        // Do NOT throw â€” OTP is already stored in DB; SMS failure should not block the flow
+        // Do NOT throw — OTP is already stored in DB; SMS failure should not block the flow
     }
 };
 
@@ -119,7 +119,7 @@ export const createOrUpdateOtp = async (phone, scope = 'default') => {
     let otp;
     if (config.useDefaultOtp) {
         otp = '1234';
-        logger.info(`Default OTP mode enabled â€“ OTP is ${otp} for phone ${normalizedPhone}`);
+        logger.info(`Default OTP mode enabled – OTP is ${otp} for phone ${normalizedPhone}`);
     } else {
         otp = generateOtpCode();
     }

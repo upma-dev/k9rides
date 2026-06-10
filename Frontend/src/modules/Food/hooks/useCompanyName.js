@@ -1,9 +1,9 @@
-﻿import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { loadBusinessSettings, getCachedSettings, normalizeCompanyName } from '@food/utils/businessSettings';
 
 /**
  * Custom hook to get company name from business settings
- * @returns {string} Company name with fallback to "Eqosy"
+ * @returns {string} Company name with fallback to "K9 Rides"
  */
 export const useCompanyName = () => {
   const [companyName, setCompanyName] = useState(() => {

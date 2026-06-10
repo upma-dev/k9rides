@@ -308,7 +308,7 @@ export default function GoogleMapsTracking({
         suppressMarkers: true, // We'll use custom markers
         preserveViewport: true, // Preserve viewport - we'll center manually
                       polylineOptions: {
-                        strokeColor: '#3b82f6', // Bright blue like Eqosy Partner
+                        strokeColor: '#3b82f6', // Bright blue like K9 Rides Partner
                         strokeWeight: 6,
                         strokeOpacity: 1.0, // Fully visible - plain solid line
                         icons: [], // No icons/dots - plain solid line only

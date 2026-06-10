@@ -1,11 +1,11 @@
-﻿import { Link } from "react-router-dom"
+import { Link } from "react-router-dom"
 import { useState, useEffect } from "react"
 import { ArrowLeft, ArrowRight, Heart, Users, Shield, Clock, Star, Award, FileText, Lock, Loader2, Receipt, Truck, XCircle } from "lucide-react"
 import { motion } from "framer-motion"
 import AnimatedPage from "@food/components/user/AnimatedPage"
 import { Button } from "@food/components/ui/button"
 import { Card, CardContent } from "@food/components/ui/card"
-import quickSpicyLogo from "@food/assets/eqosy-logo.png"
+import quickSpicyLogo from "@food/assets/k9-logo.jpg"
 import api from "@food/api"
 import { API_ENDPOINTS } from "@food/api/config"
 import { useCompanyName } from "@food/hooks/useCompanyName"
@@ -326,7 +326,7 @@ export default function About() {
           className="text-center mt-8 mb-4"
         >
           <p className="text-sm text-gray-500 dark:text-gray-500">
-            ï¿½ {new Date().getFullYear()} {companyName}. All rights reserved.
+            � {new Date().getFullYear()} {companyName}. All rights reserved.
           </p>
         </motion.div>
       </div>

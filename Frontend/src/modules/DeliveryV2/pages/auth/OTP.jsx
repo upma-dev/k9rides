@@ -7,7 +7,7 @@ import { deliveryAPI } from "@food/api"
 import { setAuthData as storeAuthData } from "@food/utils/auth"
 import { useCompanyName } from "@food/hooks/useCompanyName"
 import { motion, AnimatePresence } from "framer-motion"
-import logoImg from "@food/assets/eqosy-logo.png"
+import logoImg from "@food/assets/k9-logo.jpg"
 
 export default function DeliveryOTP() {
   const companyName = useCompanyName()

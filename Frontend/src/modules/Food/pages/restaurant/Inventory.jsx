@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useRef, useMemo } from "react"
+import { useState, useEffect, useRef, useMemo } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import {
   Search,
@@ -1136,7 +1136,7 @@ export default function Inventory() {
     try {
       let imageUrl = ""
       if (addonImageFile) {
-        const uploadRes = await uploadAPI.uploadMedia(addonImageFile, { folder: "eqosy/restaurant/addons" })
+        const uploadRes = await uploadAPI.uploadMedia(addonImageFile, { folder: "K9 Rides/restaurant/addons" })
         imageUrl = uploadRes?.data?.data?.url || uploadRes?.data?.url || ""
       }
       const payload = {
@@ -2066,7 +2066,7 @@ export default function Inventory() {
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Price (â‚¹) *</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Price (₹) *</label>
                       <input
                         type="number"
                         value={addonPrice}
@@ -2557,8 +2557,8 @@ export default function Inventory() {
                     <div className="">
                       <h3 className="text-base font-bold text-gray-900 mb-3">{categoryData.name}</h3>
                       <ul className="space-y-1 text-sm text-gray-600">
-                        <li>â€¢ {categoryData.name}</li>
-                        <li>â€¢ Includes {categoryData.itemCount} item{categoryData.itemCount !== 1 ? 's' : ''}</li>
+                        <li>• {categoryData.name}</li>
+                        <li>• Includes {categoryData.itemCount} item{categoryData.itemCount !== 1 ? 's' : ''}</li>
                       </ul>
                       <div className="border-t border-gray-200 mt-4"></div>
                     </div>
@@ -2668,7 +2668,7 @@ export default function Inventory() {
                         />
                       </div>
                       <p className="text-sm text-gray-500">
-                        Item won't be visible to customers on the Eqosy Store app till you mark it back in stock
+                        Item won't be visible to customers on the K9 Rides Store app till you mark it back in stock
                       </p>
                     </div>
                   </label>

@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from "react"
+import { useState, useEffect } from "react"
 import { toast } from "sonner"
 import api, { adminAPI } from "@food/api"
 import { API_ENDPOINTS } from "@food/api/config"
@@ -48,7 +48,7 @@ export default function AboutUs() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [aboutData, setAboutData] = useState({
-    appName: 'Eqosy Food',
+    appName: 'K9 Rides Food',
     version: '1.0.0',
     description: '',
     logo: '',
@@ -234,7 +234,7 @@ export default function AboutUs() {
                 id="logo"
                 value={aboutData.logo}
                 onChange={(e) => setAboutData(prev => ({ ...prev, logo: e.target.value }))}
-                placeholder="https://example.com/eqosy-logo.png"
+                placeholder="https://example.com/k9-logo.jpg"
                 className="mt-1"
               />
             </div>

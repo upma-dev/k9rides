@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef } from "react"
 import { useNavigate } from "react-router-dom"
 import { Loader2, AlertCircle } from "lucide-react"
 import AnimatedPage from "@food/components/user/AnimatedPage"
@@ -8,7 +8,7 @@ import apiClient, { authAPI } from "@food/api"
 import { setAuthData as setUserAuthData } from "@food/utils/auth"
 import { useCompanyName } from "@food/hooks/useCompanyName"
 import { motion, AnimatePresence } from "framer-motion"
-import logoImg from "@food/assets/eqosy-logo.png"
+import logoImg from "@food/assets/k9-logo.jpg"
 
 export default function OTP() {
   const navigate = useNavigate()
@@ -451,7 +451,7 @@ export default function OTP() {
 
           <footer className="mt-auto pt-10 text-center">
             <p className="text-[9px] text-zinc-300 dark:text-zinc-700 font-black uppercase tracking-[0.4em]">
-              Eqosy Secure Network
+              K9 Rides Secure Network
             </p>
           </footer>
         </div>

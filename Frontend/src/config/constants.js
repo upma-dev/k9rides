@@ -1,5 +1,5 @@
-﻿export const APP_CONFIG = {
-  NAME: 'Eqosy',
+export const APP_CONFIG = {
+  NAME: 'K9 Rides',
   VERSION: '1.0.0',
 };
 

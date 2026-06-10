@@ -1,4 +1,4 @@
-﻿import mongoose from 'mongoose';
+import mongoose from 'mongoose';
 import { FoodOrder, FoodSettings } from '../models/order.model.js';
 // import { paymentSnapshotFromOrder } from './foodOrderPayment.service.js';
 import { logger } from '../../../../utils/logger.js';
@@ -47,7 +47,7 @@ import {
   notifyRestaurantNewOrder,
   isStatusAdvance,
 } from './order.helpers.js';
-// ðŸ—‘ï¸ Moved to foodTransaction.service.js to centralize finance logic.
+// 🗑️ Moved to foodTransaction.service.js to centralize finance logic.
 
 async function getZoneSurgeSnapshot(zoneId) {
   if (!zoneId) return { surgeAmount: 0, isEnabled: false };
@@ -58,7 +58,7 @@ async function getZoneSurgeSnapshot(zoneId) {
 }
 
 /** Append-only food_order_payments row; never blocks main flow on failure */
-// ðŸ—‘ï¸ Deprecated in favor of FoodTransaction system.
+// 🗑️ Deprecated in favor of FoodTransaction system.
 
 // ----- Settings -----
 export async function getDispatchSettings() {
@@ -312,11 +312,11 @@ export async function createOrder(userId, dto) {
       await notifyOwnersSafely([{ ownerType: "USER", ownerId: userId }], {
         title: isAwaitingOnlinePayment
           ? "Complete Payment to Confirm Order"
-          : "Order Confirmed! ðŸ”",
+          : "Order Confirmed! 🍔",
         body: isAwaitingOnlinePayment
           ? `Order #${order.order_id || order._id} is created. Please complete payment to send it to ${restaurant.restaurantName || "the restaurant"}.`
           : `Your order #${order.order_id || order._id} from ${restaurant.restaurantName || "the restaurant"} has been placed successfully.`,
-        image: "https://i.ibb.co/5GzXz7r/Eqosy-Brand-Image.png",
+        image: "https://i.ibb.co/5GzXz7r/K9 Rides-Brand-Image.png",
         data: {
           type: isAwaitingOnlinePayment ? "order_created_pending_payment" : "order_created",
           orderId: String(order._id),
@@ -410,9 +410,9 @@ export async function verifyPayment(userId, dto) {
 
   // Notify Customer about payment success
   await notifyOwnersSafely([{ ownerType: "USER", ownerId: userId }], {
-    title: "Payment Successful! âœ…",
-    body: `We have received your payment of â‚¹${order.payment.amountDue} for Order #${order._id.toString()}.`,
-    image: "https://i.ibb.co/5GzXz7r/Eqosy-Brand-Image.png",
+    title: "Payment Successful! ✅",
+    body: `We have received your payment of ₹${order.payment.amountDue} for Order #${order._id.toString()}.`,
+    image: "https://i.ibb.co/5GzXz7r/K9 Rides-Brand-Image.png",
     data: {
       type: "payment_success",
       orderId: String(order._id.toString()),
@@ -665,7 +665,7 @@ export async function cancelOrder(orderId, userId, reason) {
   const hasRefundProcessed =
     String(order.payment?.refund?.status || "none").toLowerCase() === "processed";
 
-  // âœ… NEW: Automated Razorpay Refund on User Cancel
+  // ✅ NEW: Automated Razorpay Refund on User Cancel
   if (
     paymentStatus === "paid" &&
     paymentMethod === "razorpay" &&
@@ -748,7 +748,7 @@ export async function cancelOrder(orderId, userId, reason) {
   const isOnlinePaid =
     finalPaymentMethod === "razorpay" &&
     (finalPaymentStatus === "paid" || finalPaymentStatus === "refunded");
-  const refundDetail = isOnlinePaid ? ` Your refund of â‚¹${order.pricing.total} is being processed and will be credited to your original payment method within 5-7 working days.` : "";
+  const refundDetail = isOnlinePaid ? ` Your refund of ₹${order.pricing.total} is being processed and will be credited to your original payment method within 5-7 working days.` : "";
   
   await notifyOwnersSafely(
     [
@@ -756,9 +756,9 @@ export async function cancelOrder(orderId, userId, reason) {
       { ownerType: "RESTAURANT", ownerId: order.restaurantId },
     ],
     {
-      title: "Order Cancelled âŒ",
+      title: "Order Cancelled ❌",
       body: `Order #${order.order_id || order._id} has been cancelled successfully.${refundDetail}`,
-      image: "https://i.ibb.co/5GzXz7r/Eqosy-Brand-Image.png",
+      image: "https://i.ibb.co/5GzXz7r/K9 Rides-Brand-Image.png",
       data: {
         type: "order_cancelled",
         orderId: String(order._id.toString()),
@@ -937,19 +937,19 @@ export async function updateOrderStatusRestaurant(
   let body = `Status changed to ${String(orderStatus).replace(/_/g, " ")}`;
 
   if (orderStatus === "confirmed") {
-    title = "Order Accepted! ðŸ§‘â€ðŸ³";
+    title = "Order Accepted! 🧑‍🍳";
     body = "The restaurant has accepted your order and is starting to prepare it.";
   } else if (orderStatus === "preparing") {
-    title = "Food is being prepared! ðŸ³";
+    title = "Food is being prepared! 🍳";
     body = "Your food is currently being prepared by the restaurant.";
   } else if (orderStatus === "ready_for_pickup") {
-    title = "Food is ready! ðŸ›ï¸";
+    title = "Food is ready! 🛍️";
     body = "Your order is ready and waiting to be picked up.";
   } else if (String(orderStatus).includes("cancel")) {
     const isOnlinePaid = order.payment.method === "razorpay" && (order.payment.status === "paid" || order.payment.status === "refunded");
-    const refundDetail = isOnlinePaid ? ` Your refund of â‚¹${order.pricing.total} is being processed and will be credited to your original payment method within 5-7 working days.` : "";
+    const refundDetail = isOnlinePaid ? ` Your refund of ₹${order.pricing.total} is being processed and will be credited to your original payment method within 5-7 working days.` : "";
     
-    title = "Order Cancelled âŒ";
+    title = "Order Cancelled ❌";
     body = (note && String(note).trim()) ? note : `Unfortunately, your order has been cancelled by the restaurant.${refundDetail}`;
   }
 
@@ -999,7 +999,7 @@ export async function updateOrderStatusRestaurant(
     let riderBody = `The order status is now ${String(orderStatus).replace(/_/g, " ")}.`;
 
     if (String(orderStatus).includes("cancel")) {
-      riderTitle = "Order Cancelled âŒ";
+      riderTitle = "Order Cancelled ❌";
       riderBody = `Order #${order.order_id || order._id} has been cancelled. Please stop your current task.`;
       
       // Sync transaction status
@@ -1021,7 +1021,7 @@ export async function updateOrderStatusRestaurant(
       {
         title: title,
         body: body,
-        image: "https://i.ibb.co/5GzXz7r/Eqosy-Brand-Image.png",
+        image: "https://i.ibb.co/5GzXz7r/K9 Rides-Brand-Image.png",
         data: {
           type: "order_status_update",
           orderId: order._id.toString(),
@@ -1086,7 +1086,7 @@ export async function updateOrderStatusRestaurant(
         to: orderStatus
     });
 
-    // âœ… NEW: Automated Razorpay Refund on Restaurant Cancel
+    // ✅ NEW: Automated Razorpay Refund on Restaurant Cancel
     // Triggers if the restaurant sets status to a cancelled state (e.g., cancelled_by_restaurant)
     if (
       String(orderStatus).includes("cancel") &&

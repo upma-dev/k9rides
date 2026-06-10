@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef } from "react"
 import { useNavigate, Link, useSearchParams } from "react-router-dom"
 import { AlertCircle, Loader2 } from "lucide-react"
 import AnimatedPage from "@food/components/user/AnimatedPage"
@@ -7,7 +7,7 @@ import { Input } from "@food/components/ui/input"
 import { authAPI } from "@food/api"
 import { useCompanyName } from "@food/hooks/useCompanyName"
 import { motion } from "framer-motion"
-import logoImg from "@food/assets/eqosy-logo.png"
+import logoImg from "@food/assets/k9-logo.jpg"
 const debugLog = (...args) => { }
 const debugWarn = (...args) => { }
 const debugError = (...args) => { }

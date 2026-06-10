@@ -1,4 +1,4 @@
-﻿import { FoodPageContent } from '../models/pageContent.model.js';
+import { FoodPageContent } from '../models/pageContent.model.js';
 import { ValidationError } from '../../../../core/auth/errors.js';
 
 const normalizeKey = (key) => String(key || '').trim().toLowerCase();
@@ -71,7 +71,7 @@ export const upsertLegalPage = async (key, payload, updatedBy) => {
 };
 
 export const upsertAboutPage = async (payload, updatedBy) => {
-    const appName = decodeHtmlEntities(String(payload?.appName || '')).trim() || 'Eqosy';
+    const appName = decodeHtmlEntities(String(payload?.appName || '')).trim() || 'K9 Rides';
     const version = decodeHtmlEntities(String(payload?.version || '')).trim() || '1.0.0';
     const description = decodeHtmlEntities(String(payload?.description || '')).trim();
     const logo = decodeHtmlEntities(String(payload?.logo || '')).trim();

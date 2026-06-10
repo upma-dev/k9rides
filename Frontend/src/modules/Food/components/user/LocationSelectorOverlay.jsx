@@ -437,7 +437,7 @@ export default function LocationSelectorOverlay({ isOpen, onClose }) {
     location?.accuracy || null,
   ])
 
-  // Initialize Google Maps with Loader (EQOSY-STYLE)
+  // Initialize Google Maps with Loader (K9 Rides-STYLE)
   useEffect(() => {
     if (!MAPS_ENABLED) {
       // Maps disabled: ensure loading spinner is off and rely on coordinates-only UX
@@ -472,7 +472,7 @@ export default function LocationSelectorOverlay({ isOpen, onClose }) {
         const map = new google.maps.Map(mapContainerRef.current, {
           center: initialLocation,
           zoom: 15,
-          disableDefaultUI: true, // Eqosy-style clean look
+          disableDefaultUI: true, // K9 Rides-style clean look
           zoomControl: true,
           mapTypeControl: false,
           streetViewControl: false,

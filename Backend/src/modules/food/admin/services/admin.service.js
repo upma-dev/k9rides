@@ -1,4 +1,4 @@
-﻿import mongoose from 'mongoose';
+import mongoose from 'mongoose';
 import { ValidationError } from '../../../../core/auth/errors.js';
 import { FoodRestaurant } from '../../restaurant/models/restaurant.model.js';
 import { FoodDeliveryPartner } from '../../delivery/models/deliveryPartner.model.js';
@@ -236,7 +236,7 @@ export async function globalSearch(query = '') {
         id: i._id,
         type: 'Product',
         title: i.name,
-        description: `Price: â‚¹${i.price}`,
+        description: `Price: ₹${i.price}`,
         path: `/admin/food/foods?productId=${i._id}`
     }));
 
@@ -252,7 +252,7 @@ export async function globalSearch(query = '') {
         id: a._id,
         type: 'Addon',
         title: a.name,
-        description: `Price: â‚¹${a.price}`,
+        description: `Price: ₹${a.price}`,
         path: `/admin/food/addons`
     }));
 
@@ -2878,9 +2878,9 @@ export async function approveRestaurantAddon(addonId) {
             await notifyOwnersSafely(
                 [{ ownerType: 'RESTAURANT', ownerId: updated.restaurantId }],
                 {
-                    title: 'Addon Approved! Ã¢Å“â€¦',
+                    title: 'Addon Approved! âœ…',
                     body: `Your addon "${updated.published?.name || 'New Addon'}" has been approved and is now live.`,
-                    image: 'https://i.ibb.co/5GzXz7r/Eqosy-Brand-Image.png',
+                    image: 'https://i.ibb.co/5GzXz7r/K9 Rides-Brand-Image.png',
                     data: {
                         type: 'addon_approved',
                         addonId: String(updated._id),
@@ -2921,9 +2921,9 @@ export async function rejectRestaurantAddon(addonId, reason) {
             await notifyOwnersSafely(
                 [{ ownerType: 'RESTAURANT', ownerId: updated.restaurantId }],
                 {
-                    title: 'Addon Rejected Ã¢ÂÅ’',
+                    title: 'Addon Rejected âŒ',
                     body: `Your addon request for "${updated.draft?.name || 'New Addon'}" was rejected. Reason: ${rejectionReason}`,
-                    image: 'https://i.ibb.co/5GzXz7r/Eqosy-Brand-Image.png',
+                    image: 'https://i.ibb.co/5GzXz7r/K9 Rides-Brand-Image.png',
                     data: {
                         type: 'addon_rejected',
                         addonId: String(updated._id),
@@ -3312,9 +3312,9 @@ export async function approveRestaurant(id) {
             await notifyOwnersSafely(
                 [{ ownerType: 'RESTAURANT', ownerId: updated._id }],
                 {
-                    title: 'Congratulations! Ã°Å¸Å½â€°',
+                    title: 'Congratulations! ðŸŽ‰',
                     body: `Your restaurant "${updated.restaurantName}" has been approved. You can now start receiving orders!`,
-                    image: updated.profileImage || 'https://i.ibb.co/5GzXz7r/Eqosy-Brand-Image.png',
+                    image: updated.profileImage || 'https://i.ibb.co/5GzXz7r/K9 Rides-Brand-Image.png',
                     data: {
                         type: 'restaurant_approved',
                         restaurantId: String(updated._id)
@@ -3349,9 +3349,9 @@ export async function rejectRestaurant(id, reason) {
             await notifyOwnersSafely(
                 [{ ownerType: 'RESTAURANT', ownerId: updated._id }],
                 {
-                    title: 'Update on Registration Ã°Å¸â€œâ€¹',
+                    title: 'Update on Registration ðŸ“‹',
                     body: `Your restaurant registration for "${updated.restaurantName}" has been rejected. Reason: ${reason || 'Incomplete documents'}.`,
-                    image: 'https://i.ibb.co/5GzXz7r/Eqosy-Brand-Image.png',
+                    image: 'https://i.ibb.co/5GzXz7r/K9 Rides-Brand-Image.png',
                     data: {
                         type: 'restaurant_rejected',
                         restaurantId: String(updated._id),
@@ -3445,9 +3445,9 @@ export async function createAdminOffer(body) {
             await notifyOwnersSafely(
                 [{ ownerType: 'RESTAURANT', ownerId: doc.restaurantId }],
                 {
-                    title: 'New Campaign Invitation! Ã°Å¸â€œÂ¢',
+                    title: 'New Campaign Invitation! ðŸ“¢',
                     body: `You have been invited to join a new campaign: "${doc.couponCode}". Check it out now!`,
-                    image: 'https://i.ibb.co/5GzXz7r/Eqosy-Brand-Image.png',
+                    image: 'https://i.ibb.co/5GzXz7r/K9 Rides-Brand-Image.png',
                     data: {
                         type: 'campaign_invitation',
                         offerId: String(doc._id),
@@ -3797,9 +3797,9 @@ export async function addDeliveryPartnerBonus(body, adminUser) {
         await notifyOwnerSafely(
             { ownerType: 'DELIVERY_PARTNER', ownerId: body.deliveryPartnerId },
             {
-                title: 'Bonus Credited! Ã°Å¸Å½Å ',
+                title: 'Bonus Credited! ðŸŽŠ',
                 body: `You have received a bonus of \u20B9${body.amount}. ${body.reference || 'Great job!'}`,
-                image: 'https://i.ibb.co/5GzXz7r/Eqosy-Brand-Image.png',
+                image: 'https://i.ibb.co/5GzXz7r/K9 Rides-Brand-Image.png',
                 data: {
                     type: 'bonus_credited',
                     amount: String(body.amount),
@@ -4154,9 +4154,9 @@ export async function creditEarningAddonHistory(historyId, notes) {
         await notifyOwnerSafely(
             { ownerType: 'DELIVERY_PARTNER', ownerId: doc.deliveryPartnerId },
             {
-                title: 'Incentive Credited! Ã°Å¸Å½Â¯',
+                title: 'Incentive Credited! ðŸŽ¯',
                 body: `Your incentive for "${doc.offerId?.title || 'Earning Addon'}" has been approved and moved to your pocket.`,
-                image: 'https://i.ibb.co/5GzXz7r/Eqosy-Brand-Image.png',
+                image: 'https://i.ibb.co/5GzXz7r/K9 Rides-Brand-Image.png',
                 data: {
                     type: 'incentive_credited',
                     historyId: String(doc._id),
@@ -4186,9 +4186,9 @@ export async function cancelEarningAddonHistory(historyId, reason) {
         await notifyOwnerSafely(
             { ownerType: 'DELIVERY_PARTNER', ownerId: doc.deliveryPartnerId },
             {
-                title: 'Incentive Update Ã°Å¸â€œâ€¹',
+                title: 'Incentive Update ðŸ“‹',
                 body: `Your incentive request for "${doc.offerId?.title || 'Earning Addon'}" was not approved. Reason: ${doc.cancelReason || 'Ineligible'}`,
-                image: 'https://i.ibb.co/5GzXz7r/Eqosy-Brand-Image.png',
+                image: 'https://i.ibb.co/5GzXz7r/K9 Rides-Brand-Image.png',
                 data: {
                     type: 'incentive_rejected',
                     historyId: String(doc._id),
@@ -4392,9 +4392,9 @@ export async function approveDeliveryPartner(id) {
         await notifyOwnerSafely(
             { ownerType: 'DELIVERY_PARTNER', ownerId: partner._id },
             {
-                title: 'Welcome Aboard! Ã°Å¸Å¡Â²',
+                title: 'Welcome Aboard! ðŸš²',
                 body: `Your delivery partner application has been approved. You can now go online and start earning!`,
-                image: 'https://i.ibb.co/5GzXz7r/Eqosy-Brand-Image.png',
+                image: 'https://i.ibb.co/5GzXz7r/K9 Rides-Brand-Image.png',
                 data: {
                     type: 'onboarding_approved',
                     partnerId: String(partner._id)
@@ -4473,9 +4473,9 @@ export async function rejectDeliveryPartner(id, reason) {
             await notifyOwnerSafely(
                 { ownerType: 'DELIVERY_PARTNER', ownerId: updated._id },
                 {
-                    title: 'Onboarding Update Ã°Å¸â€œâ€¹',
+                    title: 'Onboarding Update ðŸ“‹',
                     body: `Your application to join as a delivery partner was rejected. Reason: ${reason || 'Incomplete documents'}.`,
-                    image: 'https://i.ibb.co/5GzXz7r/Eqosy-Brand-Image.png',
+                    image: 'https://i.ibb.co/5GzXz7r/K9 Rides-Brand-Image.png',
                     data: {
                         type: 'onboarding_rejected',
                         partnerId: String(updated._id),

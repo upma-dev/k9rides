@@ -1,4 +1,4 @@
-﻿import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import io from 'socket.io-client';
 import { API_BASE_URL } from '@food/api/config';
 import { restaurantAPI } from '@food/api';
@@ -26,7 +26,7 @@ const buildRestaurantOrderNotification = (orderData = {}) => {
   return {
     title: `New order #${orderId}`,
     body: itemCount > 0
-      ? `${itemCount} item${itemCount === 1 ? '' : 's'} - â‚¹${total.toFixed(2)}`
+      ? `${itemCount} item${itemCount === 1 ? '' : 's'} - ₹${total.toFixed(2)}`
       : 'A new order is waiting for review',
     tag: `restaurant-order-${orderId}`,
     data: {
@@ -400,10 +400,10 @@ export const useRestaurantNotifications = () => {
       let suggestedBackendUrl = null;
       
       // Common patterns:
-      // - If frontend is on foods.eqosy.com, backend might be api.foods.eqosy.com or foods.eqosy.com
-      if (frontendHost.includes('foods.eqosy.com')) {
-        suggestedBackendUrl = `${frontendProtocol}//api.foods.eqosy.com/api`;
-      } else if (frontendHost.includes('eqosy.com')) {
+      // - If frontend is on foods.K9 Rides.com, backend might be api.foods.K9 Rides.com or foods.K9 Rides.com
+      if (frontendHost.includes('foods.K9 Rides.com')) {
+        suggestedBackendUrl = `${frontendProtocol}//api.foods.K9 Rides.com/api`;
+      } else if (frontendHost.includes('K9 Rides.com')) {
         suggestedBackendUrl = `${frontendProtocol}//api.${frontendHost}/api`;
       }
       

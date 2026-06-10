@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Business Settings Utility
  * Handles loading and updating business settings (favicon, title, logo)
  */
@@ -11,8 +11,8 @@ const SETTINGS_KEY = 'food_business_settings';
 
 export const normalizeCompanyName = (value) => {
   const raw = typeof value === "string" ? value.trim() : "";
-  if (!raw) return "Eqosy";
-  if (raw.toLowerCase() === "appzeto") return "Eqosy";
+  if (!raw) return "K9 Rides";
+  if (raw.toLowerCase() === "appzeto" || raw.toLowerCase() === "K9 Rides") return "K9 Rides";
   return raw;
 };
 
@@ -151,7 +151,7 @@ export const getCachedSettings = () => {
 
 /**
  * Get company name from business settings with fallback
- * @returns {string} Company name or default "Eqosy Food"
+ * @returns {string} Company name or default "K9 Rides"
  */
 export const getCompanyName = () => {
   const settings = getCachedSettings();
@@ -160,14 +160,22 @@ export const getCompanyName = () => {
 
 /**
  * Get company name asynchronously (loads if not cached)
- * @returns {Promise<string>} Company name or default "Eqosy Food"
+ * @returns {Promise<string>} Company name or default "K9 Rides"
  */
 export const getCompanyNameAsync = async () => {
   try {
     const settings = await loadBusinessSettings();
     return normalizeCompanyName(settings?.companyName);
   } catch (error) {
-    return "Eqosy";
+    return "K9 Rides";
   }
+};
+
+/**
+ * Get dynamic logo with fallback to local K9 logo
+ */
+export const getDynamicLogo = () => {
+  const settings = getCachedSettings();
+  return settings?.logo?.url || "/k9-logo.jpg";
 };
 

@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef } from "react"
 import { useNavigate } from "react-router-dom"
 import { ArrowLeft, X, Pencil, Loader2, Camera, Upload } from "lucide-react"
 import { Button } from "@food/components/ui/button"
@@ -47,7 +47,7 @@ const genderOptions = [
 // Load profile data from localStorage (legacy + current keys)
 const loadProfileFromStorage = () => {
   try {
-    const candidates = ["user_user", "userProfile", "eqosy_user_profile"]
+    const candidates = ["user_user", "userProfile", "K9 Rides_user_profile"]
     for (const key of candidates) {
       const stored = localStorage.getItem(key)
       if (stored) return JSON.parse(stored)

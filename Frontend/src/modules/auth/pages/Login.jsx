@@ -5,6 +5,7 @@ import { Phone, Lock, ArrowRight, ShieldCheck, Loader2, UtensilsCrossed, Car, Sh
 import { toast } from "sonner"
 import apiClient, { authAPI } from "@food/api"
 import { setUnifiedAuthData, isUnifiedAuthenticated } from "@food/utils/auth"
+import { getDynamicLogo, getCompanyName } from "@food/utils/businessSettings"
 
 export default function UnifiedOTPFastLogin({ viewType = "auth" }) {
   const RESEND_COOLDOWN_SECONDS = 60
@@ -455,9 +456,9 @@ export default function UnifiedOTPFastLogin({ viewType = "auth" }) {
             className="flex items-center gap-4 mb-16"
           >
             <div className="w-12 h-12 flex items-center justify-center bg-white rounded-xl shadow-lg">
-              <img src="/eqosy-logo.png" alt="Eqosy" className="w-8 h-8 object-contain" />
+              <img src={getDynamicLogo()} alt={getCompanyName()} className="w-8 h-8 object-contain" />
             </div>
-            <h1 className="text-3xl font-black tracking-tight">Eqosy</h1>
+            <h1 className="text-3xl font-black tracking-tight">K9 Rides</h1>
           </motion.div>
 
           <motion.div
@@ -521,14 +522,14 @@ export default function UnifiedOTPFastLogin({ viewType = "auth" }) {
                 >
                   {/* Circular Logo */}
                   <img 
-                    src="/eqosy-logo.png" 
-                    alt="Eqosy" 
+                    src={getDynamicLogo()} 
+                    alt={getCompanyName()} 
                     className="w-[84px] h-[84px] rounded-full object-cover shadow-lg mb-6" 
                   />
 
                   <div className="text-center mb-8">
                     <h2 className="text-[32px] leading-tight font-black text-[#1A1A1A] tracking-tight mb-2">
-                      Welcome to Eqosy
+                      Welcome to K9 Rides
                     </h2>
                     <p className="text-[#1A1A1A] text-[15px] font-medium max-w-[28ch] mx-auto">
                       Enter your phone number to<br />access the unified ecosystem.

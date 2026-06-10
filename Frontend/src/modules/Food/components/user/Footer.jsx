@@ -1,9 +1,9 @@
-﻿import { Link } from "react-router-dom"
+import { Link } from "react-router-dom"
 import { Facebook, Twitter, Instagram, Mail, Phone, MapPin, Heart } from "lucide-react"
 import { useState, useEffect } from "react"
 import { getCachedSettings, loadBusinessSettings } from "@food/utils/businessSettings"
 import { useCompanyName } from "@food/hooks/useCompanyName"
-import quickSpicyLogo from "@food/assets/eqosy-logo.png"
+import quickSpicyLogo from "@food/assets/k9-logo.jpg"
 
 export default function Footer() {
   const companyName = useCompanyName()
@@ -203,7 +203,7 @@ export default function Footer() {
         >
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             <p className="text-slate-400 text-sm text-center md:text-left">
-              ï¿½ {currentYear} {companyName}. All rights reserved.
+              � {currentYear} {companyName}. All rights reserved.
             </p>
             <div className="flex items-center gap-1 text-slate-400 text-sm">
               <span>Made with</span>

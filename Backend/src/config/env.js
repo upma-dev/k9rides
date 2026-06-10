@@ -116,7 +116,7 @@ export const env = {
         cloudName: config.cloudinaryCloudName,
         apiKey: config.cloudinaryApiKey,
         apiSecret: config.cloudinaryApiSecret,
-        folder: process.env.CLOUDINARY_FOLDER || 'eqosy-taxi',
+        folder: process.env.CLOUDINARY_FOLDER || 'K9 Rides-taxi',
     },
     firebase: {
         databaseURL: config.firebaseDatabaseUrl,
