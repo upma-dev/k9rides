@@ -3,10 +3,12 @@ import {
     createHeroBannersFromFiles,
     deleteHeroBanner,
     updateHeroBannerOrder,
-    toggleHeroBannerStatus
+    toggleHeroBannerStatus,
+    linkRestaurantsToHeroBanner
 } from '../services/heroBanner.service.js';
 import { sendResponse } from '../../../../utils/response.js';
 import { ValidationError } from '../../../../core/auth/errors.js';
+import { FoodHeroBanner } from '../models/heroBanner.model.js';
 
 export const listHeroBannersController = async (req, res, next) => {
     try {
@@ -24,10 +26,30 @@ export const uploadHeroBannersController = async (req, res, next) => {
             throw new ValidationError('No files uploaded');
         }
 
+        let linkedIds = [];
+        if (req.body.linkedRestaurantIds) {
+            try {
+                linkedIds = JSON.parse(req.body.linkedRestaurantIds);
+            } catch (_) {
+                if (typeof req.body.linkedRestaurantIds === 'string') {
+                    linkedIds = req.body.linkedRestaurantIds.split(',').map(id => id.trim()).filter(Boolean);
+                }
+            }
+        } else if (req.body.restaurantIds) {
+            try {
+                linkedIds = JSON.parse(req.body.restaurantIds);
+            } catch (_) {
+                if (typeof req.body.restaurantIds === 'string') {
+                    linkedIds = req.body.restaurantIds.split(',').map(id => id.trim()).filter(Boolean);
+                }
+            }
+        }
+
         const meta = {
             title: req.body.title,
             ctaText: req.body.ctaText,
-            ctaLink: req.body.ctaLink
+            ctaLink: req.body.ctaLink,
+            linkedRestaurantIds: linkedIds
         };
 
         const results = await createHeroBannersFromFiles(req.files, meta);
@@ -67,12 +89,35 @@ export const updateHeroBannerOrderController = async (req, res, next) => {
 export const toggleHeroBannerStatusController = async (req, res, next) => {
     try {
         const { id } = req.params;
-        const { isActive } = req.body;
-        if (!id || typeof isActive !== 'boolean') {
-            throw new ValidationError('id and boolean isActive are required');
+        let { isActive } = req.body;
+        if (!id) {
+            throw new ValidationError('id is required');
         }
+
+        if (typeof isActive !== 'boolean') {
+            const banner = await FoodHeroBanner.findById(id);
+            if (!banner) {
+                return sendResponse(res, 404, 'Hero banner not found');
+            }
+            isActive = !banner.isActive;
+        }
+
         const updated = await toggleHeroBannerStatus(id, isActive);
         return sendResponse(res, 200, 'Hero banner status updated', updated);
+    } catch (error) {
+        next(error);
+    }
+};
+
+export const linkHeroBannerRestaurantsController = async (req, res, next) => {
+    try {
+        const { id } = req.params;
+        const { restaurantIds } = req.body;
+        if (!id || !Array.isArray(restaurantIds)) {
+            throw new ValidationError('id and restaurantIds array are required');
+        }
+        const updated = await linkRestaurantsToHeroBanner(id, restaurantIds);
+        return sendResponse(res, 200, 'Restaurants linked to hero banner successfully', updated);
     } catch (error) {
         next(error);
     }
