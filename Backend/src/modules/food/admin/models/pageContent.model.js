@@ -32,6 +32,34 @@ const aboutPageSchema = new mongoose.Schema(
     { _id: false }
 );
 
+const faqSchema = new mongoose.Schema(
+    {
+        question: { type: String, default: '' },
+        answer: { type: String, default: '' }
+    },
+    { _id: false }
+);
+
+const helpSupportCategorySchema = new mongoose.Schema(
+    {
+        title: { type: String, default: '' },
+        icon: { type: String, default: 'HelpCircle' },
+        faqs: { type: [faqSchema], default: [] }
+    },
+    { _id: false }
+);
+
+const helpSupportSchema = new mongoose.Schema(
+    {
+        title: { type: String, default: 'Help & Support' },
+        description: { type: String, default: 'We are here to help you.' },
+        contactEmail: { type: String, default: '' },
+        contactPhone: { type: String, default: '' },
+        categories: { type: [helpSupportCategorySchema], default: [] }
+    },
+    { _id: false }
+);
+
 const pageContentSchema = new mongoose.Schema(
     {
         key: {
@@ -39,10 +67,11 @@ const pageContentSchema = new mongoose.Schema(
             required: true,
             unique: true,
             index: true,
-            enum: ['terms', 'privacy', 'refund', 'shipping', 'cancellation', 'about']
+            enum: ['terms', 'privacy', 'refund', 'shipping', 'cancellation', 'about', 'help_support']
         },
         legal: { type: legalPageSchema, default: undefined },
         about: { type: aboutPageSchema, default: undefined },
+        help_support: { type: helpSupportSchema, default: undefined },
         updatedBy: { type: mongoose.Schema.Types.ObjectId, default: null },
         updatedByRole: { type: String, default: 'ADMIN' }
     },

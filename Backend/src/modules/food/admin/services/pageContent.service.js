@@ -40,6 +40,7 @@ export const getPublicPageByKey = async (key) => {
     const doc = await FoodPageContent.findOne({ key: k }).lean();
     if (!doc) return { key: k, data: null };
     if (k === 'about') return { key: k, data: normalizeAboutForResponse(doc.about || null) };
+    if (k === 'help_support') return { key: k, data: doc.help_support || null };
     return { key: k, data: normalizeLegalForResponse(doc.legal || null) };
 };
 
@@ -60,6 +61,7 @@ export const upsertLegalPage = async (key, payload, updatedBy) => {
                 key: k,
                 legal: { title, content },
                 about: undefined,
+                help_support: undefined,
                 updatedBy: updatedBy || null,
                 updatedByRole: 'ADMIN'
             }
@@ -94,6 +96,7 @@ export const upsertAboutPage = async (payload, updatedBy) => {
                 key: 'about',
                 about: { appName, version, description, logo, features: normalizedFeatures, stats },
                 legal: undefined,
+                help_support: undefined,
                 updatedBy: updatedBy || null,
                 updatedByRole: 'ADMIN'
             }
@@ -102,6 +105,53 @@ export const upsertAboutPage = async (payload, updatedBy) => {
     ).lean();
 
     return { key: 'about', data: normalizeAboutForResponse(doc?.about || null) };
+};
+
+export const upsertHelpSupportPage = async (payload, updatedBy) => {
+    const title = decodeHtmlEntities(String(payload?.title || '')).trim() || 'Help & Support';
+    const description = decodeHtmlEntities(String(payload?.description || '')).trim() || 'We are here to help you.';
+    const contactEmail = decodeHtmlEntities(String(payload?.contactEmail || '')).trim();
+    const contactPhone = decodeHtmlEntities(String(payload?.contactPhone || '')).trim();
+    const categories = Array.isArray(payload?.categories) ? payload.categories : [];
+
+    const normalizedCategories = categories.map((cat) => {
+        const catTitle = decodeHtmlEntities(String(cat?.title || '')).trim();
+        const catIcon = String(cat?.icon || 'HelpCircle');
+        const faqs = Array.isArray(cat?.faqs) ? cat.faqs : [];
+        const normalizedFaqs = faqs.map((faq) => ({
+            question: decodeHtmlEntities(String(faq?.question || '')).trim(),
+            answer: decodeHtmlEntities(String(faq?.answer || '')).trim()
+        }));
+
+        return {
+            title: catTitle,
+            icon: catIcon,
+            faqs: normalizedFaqs
+        };
+    });
+
+    const doc = await FoodPageContent.findOneAndUpdate(
+        { key: 'help_support' },
+        {
+            $set: {
+                key: 'help_support',
+                help_support: {
+                    title,
+                    description,
+                    contactEmail,
+                    contactPhone,
+                    categories: normalizedCategories
+                },
+                legal: undefined,
+                about: undefined,
+                updatedBy: updatedBy || null,
+                updatedByRole: 'ADMIN'
+            }
+        },
+        { upsert: true, new: true }
+    ).lean();
+
+    return { key: 'help_support', data: doc?.help_support || null };
 };
 
 

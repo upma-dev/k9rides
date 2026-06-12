@@ -9,6 +9,7 @@ const NATIVE_LAST_ROUTE_KEY = 'native_last_route'
 const FoodApp = lazy(() => import('../modules/Food/routes'))
 const TaxiApp = lazy(() => import('../modules/Taxi/TaxiApp'))
 const AuthApp = lazy(() => import('../modules/auth/routes'))
+const HelpSupportPage = lazy(() => import('../modules/auth/pages/HelpSupportPage'))
 import ProtectedRoute from '@food/components/ProtectedRoute'
 
 const PageLoader = () => <AppShellSkeleton />
@@ -103,6 +104,9 @@ const AppRoutes = () => {
 
       {/* Auth Module */}
       <Route path="/login/*" element={<Suspense fallback={<PageLoader />}><AuthApp /></Suspense>} />
+
+      {/* Support Module */}
+      <Route path="/support" element={<Suspense fallback={<PageLoader />}><HelpSupportPage /></Suspense>} />
 
 
       {/* Food Module */}
