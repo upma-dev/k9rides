@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MapPin, ChevronDown, Search, Mic, Bell, CheckCircle2, Tag, Gift, AlertCircle, Clock, BellOff, X, ChevronRight, ShoppingBag, Sparkles } from 'lucide-react';
+import { MapPin, ChevronDown, Search, Mic, Bell, CheckCircle2, Tag, Gift, AlertCircle, Clock, BellOff, X, ChevronRight, ShoppingBag, Sparkles, Utensils, Car } from 'lucide-react';
 import { 
   Popover, 
   PopoverContent, 
@@ -333,6 +333,27 @@ export default function HomeHeader({
           </div>
         </div>
         
+        {/* Mobile Option Buttons (Food & Taxi) */}
+        <div className="absolute top-[80px] inset-x-0 z-20 px-4 md:hidden flex gap-3 pointer-events-auto">
+          {/* Food Button */}
+          <Link
+            to="/food/user"
+            className="flex-1 flex items-center justify-center gap-2 h-11 rounded-full bg-gradient-to-r from-[#FA0272] to-[#ff4b8e] text-white font-bold text-sm shadow-[0_4px_14px_rgba(250,2,114,0.3)] transition-transform active:scale-95 border border-[#FA0272]/20"
+          >
+            <Utensils className="h-4.5 w-4.5" />
+            <span>Food</span>
+          </Link>
+
+          {/* Taxi Button */}
+          <Link
+            to="/taxi/user"
+            className="flex-1 flex items-center justify-center gap-2 h-11 rounded-full bg-black/35 backdrop-blur-md text-white font-bold text-sm shadow-[0_4px_12px_rgba(0,0,0,0.15)] border border-white/10 transition-transform active:scale-95 hover:bg-black/45"
+          >
+            <Car className="h-4.5 w-4.5 text-white" />
+            <span>Taxi</span>
+          </Link>
+        </div>
+        
         {/* Carousel Pager Dots */}
         <div className="absolute bottom-2 inset-x-0 flex justify-center gap-1.5 z-20">
           {slideBanners.map((_, i) => (
@@ -346,7 +367,7 @@ export default function HomeHeader({
 
       {/* Sticky Search Bar wrapper — position adjusts when categories are also stuck (sticky only on mobile/tablet) */}
       <div
-        className={`relative sticky md:relative z-[60] px-3 pb-0 -mt-[256px] mb-[210px] pointer-events-none transition-all duration-300 ${
+        className={`relative sticky md:relative z-[60] px-3 pb-0 md:-mt-[256px] -mt-[196px] md:mb-[210px] mb-[150px] pointer-events-none transition-all duration-300 ${
           isCategoryStuck ? 'top-0 pt-2 md:top-auto' : 'top-2 md:top-auto'
         }`}
       >

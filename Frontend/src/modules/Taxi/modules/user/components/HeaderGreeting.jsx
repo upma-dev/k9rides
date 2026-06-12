@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { MapPin, Search, Wallet } from 'lucide-react';
+import { MapPin, Search, Wallet, Utensils, Car } from 'lucide-react';
 import { DEFAULT_LOCATION_LABEL, getSavedLocationLabel, LOCATION_UPDATED_EVENT } from '../services/locationStore';
 
 const fallingCoins = [
@@ -127,6 +127,27 @@ const HeaderGreeting = () => {
             <Wallet size={20} className="text-gray-900" strokeWidth={2.5} />
           </motion.div>
         </button>
+      </div>
+
+      {/* Mobile Option Buttons (Food & Taxi) */}
+      <div className="mt-4 md:hidden flex gap-3">
+        {/* Food Button (Inactive) */}
+        <Link
+          to="/food/user"
+          className="flex-1 flex items-center justify-center gap-2 h-11 rounded-full bg-white border border-slate-200 text-slate-800 dark:bg-black/35 dark:border-white/10 dark:text-white font-bold text-sm shadow-sm transition-transform active:scale-95 hover:bg-slate-50"
+        >
+          <Utensils className="h-4.5 w-4.5 text-slate-700 dark:text-gray-300" />
+          <span>Food</span>
+        </Link>
+
+        {/* Taxi Button (Active) */}
+        <Link
+          to="/taxi/user"
+          className="flex-1 flex items-center justify-center gap-2 h-11 rounded-full bg-slate-900 text-white font-bold text-sm shadow-md transition-transform active:scale-95 border border-slate-900"
+        >
+          <Car className="h-4.5 w-4.5 text-white" />
+          <span>Taxi</span>
+        </Link>
       </div>
 
       <motion.div
