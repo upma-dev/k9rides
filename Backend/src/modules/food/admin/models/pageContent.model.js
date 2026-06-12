@@ -67,7 +67,10 @@ const pageContentSchema = new mongoose.Schema(
             required: true,
             unique: true,
             index: true,
-            enum: ['terms', 'privacy', 'refund', 'shipping', 'cancellation', 'about', 'help_support']
+            enum: [
+                'terms', 'privacy', 'refund', 'shipping', 'cancellation', 'about', 'help_support',
+                'terms_restaurant', 'privacy_restaurant', 'terms_delivery', 'privacy_delivery'
+            ]
         },
         legal: { type: legalPageSchema, default: undefined },
         about: { type: aboutPageSchema, default: undefined },

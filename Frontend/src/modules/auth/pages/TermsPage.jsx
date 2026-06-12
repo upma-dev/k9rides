@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react"
-import { useNavigate } from "react-router-dom"
+import { useNavigate, useLocation } from "react-router-dom"
 import { motion } from "framer-motion"
 import { ArrowLeft, FileText, Shield, Receipt, Truck, X, Loader2 } from "lucide-react"
 import api from "@food/api"
@@ -30,6 +30,10 @@ const DEFAULT_TERMS_CONTENT = `
 
 export default function TermsPage({ defaultTab = "terms" }) {
   const navigate = useNavigate()
+  const location = useLocation()
+  const queryParams = new URLSearchParams(location.search)
+  const role = queryParams.get("role") // e.g., 'restaurant' or 'delivery'
+
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState(defaultTab)
   const [pageContent, setPageContent] = useState("")
@@ -54,7 +58,13 @@ export default function TermsPage({ defaultTab = "terms" }) {
       const currentItem = menuItems.find(item => item.id === tabId)
       if (!currentItem) return
 
-      const response = await api.get(currentItem.endpoint)
+      let fetchEndpoint = currentItem.endpoint;
+      // Append _role to endpoint if a specific role is provided (e.g., terms_restaurant)
+      if (role && (tabId === 'terms' || tabId === 'privacy')) {
+          fetchEndpoint += `_${role}`;
+      }
+
+      const response = await api.get(fetchEndpoint)
       if (response.data?.success && response.data?.data?.content) {
         setPageTitle(response.data.data.title || currentItem.label)
         setPageContent(response.data.data.content)

@@ -37,11 +37,24 @@ const zoneSchema = new mongoose.Schema(
             enum: ['kilometer', 'miles'],
             default: 'kilometer'
         },
+        boundary_mode: {
+            type: String,
+            enum: ['polygon', 'circle'],
+            default: 'polygon'
+        },
+        circle_center: {
+            lat: { type: Number },
+            lng: { type: Number }
+        },
+        circle_radius_meters: {
+            type: Number
+        },
         coordinates: {
             type: [coordinateSchema],
-            required: true,
+            required: function() { return this.boundary_mode === 'polygon'; },
             validate: {
                 validator(v) {
+                    if (this.boundary_mode === 'circle') return true;
                     return Array.isArray(v) && v.length >= 3;
                 },
                 message: 'Zone must have at least 3 coordinates (polygon).'

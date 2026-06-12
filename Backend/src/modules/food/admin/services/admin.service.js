@@ -4525,8 +4525,13 @@ export async function getZoneById(id) {
 export async function createZone(body) {
     const name = typeof body.name === 'string' ? body.name.trim() : (body.zoneName && body.zoneName.trim()) || '';
     if (!name) return { error: 'Zone name is required' };
+    
+    const boundary_mode = body.boundary_mode === 'circle' ? 'circle' : 'polygon';
     const coordinates = Array.isArray(body.coordinates) ? body.coordinates : [];
-    if (coordinates.length < 3) return { error: 'At least 3 coordinates (polygon points) are required' };
+    
+    if (boundary_mode === 'polygon' && coordinates.length < 3) {
+        return { error: 'At least 3 coordinates (polygon points) are required' };
+    }
 
     const normalized = coordinates.map((c) => ({
         latitude: Number(c.latitude) || 0,
@@ -4539,6 +4544,9 @@ export async function createZone(body) {
         country: (body.country && body.country.trim()) || 'India',
         serviceLocation: (body.serviceLocation && body.serviceLocation.trim()) || name,
         unit: body.unit === 'miles' ? 'miles' : 'kilometer',
+        boundary_mode,
+        circle_center: body.circle_center,
+        circle_radius_meters: body.circle_radius_meters,
         coordinates: normalized,
         isActive: body.isActive !== false
     });
@@ -4556,7 +4564,14 @@ export async function updateZone(id, body) {
     if (body.serviceLocation !== undefined) zone.serviceLocation = String(body.serviceLocation).trim();
     if (body.unit !== undefined) zone.unit = body.unit === 'miles' ? 'miles' : 'kilometer';
     if (body.isActive !== undefined) zone.isActive = body.isActive !== false;
-    if (Array.isArray(body.coordinates) && body.coordinates.length >= 3) {
+    
+    if (body.boundary_mode !== undefined) {
+        zone.boundary_mode = body.boundary_mode === 'circle' ? 'circle' : 'polygon';
+    }
+    if (body.circle_center !== undefined) zone.circle_center = body.circle_center;
+    if (body.circle_radius_meters !== undefined) zone.circle_radius_meters = body.circle_radius_meters;
+
+    if (Array.isArray(body.coordinates)) {
         zone.coordinates = body.coordinates.map((c) => ({
             latitude: Number(c.latitude) || 0,
             longitude: Number(c.longitude) || 0

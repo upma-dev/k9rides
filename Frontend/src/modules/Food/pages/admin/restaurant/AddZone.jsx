@@ -31,6 +31,8 @@ export default function AddZone() {
   const drawPointsRef = useRef([])
   const isDrawingRef = useRef(false)
   const polygonRef = useRef(null)
+  const circleRef = useRef(null)
+  const circleListenersRef = useRef([])
   const markersRef = useRef([])
   const pathMarkersRef = useRef([])
   
@@ -46,6 +48,11 @@ export default function AddZone() {
   })
   
   const [coordinates, setCoordinates] = useState([])
+  const [boundaryMode, setBoundaryMode] = useState("polygon")
+  const boundaryModeRef = useRef("polygon")
+  useEffect(() => { boundaryModeRef.current = boundaryMode; }, [boundaryMode])
+  const [circleCenter, setCircleCenter] = useState(null)
+  const [circleRadiusMeters, setCircleRadiusMeters] = useState("")
   const [isDrawing, setIsDrawing] = useState(false)
   const [locationSearch, setLocationSearch] = useState("")
   const [existingZones, setExistingZones] = useState([])
@@ -295,8 +302,16 @@ export default function AddZone() {
           unit: zoneData.unit || "kilometer",
         })
         
-        if (zoneData.coordinates && zoneData.coordinates.length > 0) {
+        const nextBoundaryMode = zoneData.boundary_mode === 'circle' ? 'circle' : 'polygon';
+        setBoundaryMode(nextBoundaryMode);
+        
+        if (nextBoundaryMode === 'polygon' && zoneData.coordinates && zoneData.coordinates.length > 0) {
           setCoordinates(zoneData.coordinates)
+        }
+        
+        if (nextBoundaryMode === 'circle' && zoneData.circle_center) {
+          setCircleCenter(zoneData.circle_center);
+          setCircleRadiusMeters(zoneData.circle_radius_meters ? String(zoneData.circle_radius_meters) : "1000");
         }
       }
     } catch (error) {
@@ -461,19 +476,34 @@ export default function AddZone() {
 
     mapClickListenerRef.current = google.maps.event.addListener(map, 'click', (event) => {
       if (!isDrawingRef.current) return;
-      drawPointsRef.current.push(event.latLng);
-      renderDrawingPolygon(google, map);
+      if (boundaryModeRef.current === 'circle') {
+        const lat = event.latLng.lat();
+        const lng = event.latLng.lng();
+        setCircleCenter({ lat, lng });
+        setCircleRadiusMeters("1000");
+        setIsDrawing(false);
+        isDrawingRef.current = false;
+        map.setOptions({ draggableCursor: null });
+        drawEditableCircle(google, map, { lat, lng }, 1000);
+      } else {
+        drawPointsRef.current.push(event.latLng);
+        renderDrawingPolygon(google, map);
+      }
     });
 
     setMapLoading(false)
 
     // Existing zones will be drawn by useEffect when data is ready
 
-    // If in edit mode and coordinates are already loaded, draw the polygon
-    if (isEditMode && coordinates.length >= 3) {
+    // If in edit mode and coordinates are already loaded, draw the polygon/circle
+    if (isEditMode) {
       setTimeout(() => {
         if (mapInstanceRef.current && window.google) {
-          drawExistingPolygon(window.google, mapInstanceRef.current, coordinates)
+          if (boundaryModeRef.current === 'polygon' && coordinates.length >= 3) {
+            drawExistingPolygon(window.google, mapInstanceRef.current, coordinates)
+          } else if (boundaryModeRef.current === 'circle' && circleCenter) {
+            drawEditableCircle(window.google, mapInstanceRef.current, circleCenter, circleRadiusMeters)
+          }
         }
       }, 500) // Small delay to ensure map is fully loaded
     }
@@ -490,6 +520,38 @@ export default function AddZone() {
     existingZonesPolygonsRef.current = []
 
     existingZones.forEach((zone, index) => {
+      if (zone.boundary_mode === 'circle' && zone.circle_center) {
+        const circle = new google.maps.Circle({
+          center: { lat: Number(zone.circle_center.lat), lng: Number(zone.circle_center.lng) },
+          radius: Number(zone.circle_radius_meters) || 1000,
+          strokeColor: "#3b82f6",
+          strokeOpacity: 0.6,
+          strokeWeight: 2,
+          fillColor: "#3b82f6",
+          fillOpacity: 0.15,
+          editable: false,
+          draggable: false,
+          clickable: true,
+          zIndex: 0
+        })
+        circle.setMap(map)
+        existingZonesPolygonsRef.current.push(circle)
+        
+        const infoWindow = new google.maps.InfoWindow({
+          content: `
+            <div style="padding: 8px;">
+              <strong>${zone.name || zone.zoneName || 'Unnamed Zone'}</strong><br/>
+              <small>Country: ${zone.country || 'N/A'}</small>
+            </div>
+          `
+        })
+        circle.addListener('click', (e) => {
+          infoWindow.setPosition(e.latLng || circle.getCenter())
+          infoWindow.open(map)
+        })
+        return;
+      }
+
       if (!zone.coordinates || zone.coordinates.length < 3) return
 
       // Convert coordinates to LatLng array
@@ -607,6 +669,42 @@ export default function AddZone() {
     drawEditablePolygon(google, map, coords);
   };
 
+  const syncCircleState = useCallback(() => {
+    if (!circleRef.current) return;
+    const center = circleRef.current.getCenter();
+    const radius = circleRef.current.getRadius();
+    if (center) setCircleCenter({ lat: center.lat(), lng: center.lng() });
+    if (Number.isFinite(radius)) setCircleRadiusMeters(String(Math.round(radius)));
+  }, []);
+
+  const drawEditableCircle = (google, map, center, radiusMeters) => {
+    if (circleRef.current) { circleRef.current.setMap(null); circleRef.current = null; }
+    circleListenersRef.current.forEach(l => google.maps.event.removeListener(l));
+    circleListenersRef.current = [];
+    
+    const circle = new google.maps.Circle({
+      center,
+      radius: Number(radiusMeters) || 1000,
+      fillColor: '#0f766e',
+      strokeColor: '#0f766e',
+      strokeWeight: 2,
+      fillOpacity: 0.18,
+      editable: true,
+      draggable: true,
+      zIndex: 1000
+    });
+    circle.setMap(map);
+    circleRef.current = circle;
+    
+    circleListenersRef.current = [
+      google.maps.event.addListener(circle, 'radius_changed', syncCircleState),
+      google.maps.event.addListener(circle, 'center_changed', syncCircleState),
+      google.maps.event.addListener(circle, 'dragend', syncCircleState)
+    ];
+    
+    map.fitBounds(circle.getBounds());
+  };
+
   const finishDrawing = () => {
     const google = window.google, map = mapInstanceRef.current;
     if (!google || !map) return false;
@@ -658,7 +756,14 @@ export default function AddZone() {
     if (polygonRef.current) { polygonRef.current.setMap(null); polygonRef.current = null; }
     pathMarkersRef.current?.forEach(m => m.setMap(null));
     pathMarkersRef.current = [];
+    if (circleRef.current) { circleRef.current.setMap(null); circleRef.current = null; }
+    if (window.google) {
+      circleListenersRef.current.forEach(l => window.google.maps.event.removeListener(l));
+    }
+    circleListenersRef.current = [];
     setCoordinates([]);
+    setCircleCenter(null);
+    setCircleRadiusMeters("");
   };
 
   const handleInputChange = (field, value) => {
@@ -681,20 +786,18 @@ export default function AddZone() {
       return
     }
 
-    if (coordinates.length < 3) {
+    if (boundaryMode === 'polygon' && coordinates.length < 3) {
       alert("Please draw at least 3 points on the map to create a zone")
+      return
+    }
+
+    if (boundaryMode === 'circle' && (!circleCenter || !circleRadiusMeters)) {
+      alert("Please draw a circle on the map to create a zone")
       return
     }
 
     try {
       setLoading(true)
-      
-      // Validate coordinates format
-      if (!coordinates || coordinates.length < 3) {
-        alert("Please draw at least 3 points on the map")
-        setLoading(false)
-        return
-      }
 
       // Ensure coordinates have correct format
       const validCoordinates = coordinates.map(coord => {
@@ -712,8 +815,14 @@ export default function AddZone() {
         zoneName: formData.zoneName,
         country: formData.country,
         unit: formData.unit || "kilometer",
+        boundary_mode: boundaryMode,
         coordinates: validCoordinates,
         isActive: true
+      }
+      
+      if (boundaryMode === 'circle') {
+        zoneData.circle_center = circleCenter;
+        zoneData.circle_radius_meters = Number(circleRadiusMeters);
       }
 
       debugLog("Sending zone data:", zoneData)
@@ -838,6 +947,62 @@ export default function AddZone() {
                       <option value="miles">Miles (mi)</option>
                     </select>
                   </div>
+
+                  {/* Boundary Shape Selection */}
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-2">Boundary Shape</label>
+                    <div className="flex bg-slate-100 p-1 rounded-lg">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setBoundaryMode('polygon')
+                          clearDrawing()
+                        }}
+                        className={`flex-1 py-2 text-sm font-medium rounded-md transition-colors ${
+                          boundaryMode === 'polygon'
+                            ? 'bg-white text-blue-600 shadow-sm'
+                            : 'text-slate-600 hover:text-slate-900'
+                        }`}
+                      >
+                        Polygon Boundary
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setBoundaryMode('circle')
+                          clearDrawing()
+                        }}
+                        className={`flex-1 py-2 text-sm font-medium rounded-md transition-colors ${
+                          boundaryMode === 'circle'
+                            ? 'bg-white text-blue-600 shadow-sm'
+                            : 'text-slate-600 hover:text-slate-900'
+                        }`}
+                      >
+                        Circle Radius
+                      </button>
+                    </div>
+                  </div>
+
+                  {boundaryMode === 'circle' && (
+                    <div>
+                      <label className="block text-sm font-medium text-slate-700 mb-2">
+                        Circle Boundary Radius (meters)
+                      </label>
+                      <input
+                        type="number"
+                        min="10"
+                        value={circleRadiusMeters}
+                        onChange={(e) => {
+                          setCircleRadiusMeters(e.target.value);
+                          if (circleRef.current) {
+                            circleRef.current.setRadius(Number(e.target.value) || 1000);
+                          }
+                        }}
+                        className="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="e.g., 1000"
+                      />
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -859,7 +1024,7 @@ export default function AddZone() {
                     <Shapes className="w-4 h-4" />
                     <span>{isDrawing ? "Finish Drawing" : "Start Drawing"}</span>
                   </button>
-                  {coordinates.length > 0 && (
+                  {(coordinates.length > 0 || circleCenter) && (
                     <button
                       type="button"
                       onClick={clearDrawing}
@@ -901,14 +1066,24 @@ export default function AddZone() {
                     </div>
                   )}
                 </div>
-                {isDrawing && (
+                {isDrawing && boundaryMode === 'polygon' && (
                   <p className="text-xs text-slate-600 mt-2">
                     Click on the map to add points (minimum {MIN_POINTS}), then click <b>Finish Drawing</b>.
                   </p>
                 )}
-                {!isDrawing && coordinates.length > 0 && (
+                {isDrawing && boundaryMode === 'circle' && (
+                  <p className="text-xs text-slate-600 mt-2">
+                    Click on the map to place the center of the circle.
+                  </p>
+                )}
+                {!isDrawing && boundaryMode === 'polygon' && coordinates.length > 0 && (
                   <p className="text-xs text-slate-600 mt-2">
                     Points drawn: <strong>{coordinates.length}</strong>
+                  </p>
+                )}
+                {!isDrawing && boundaryMode === 'circle' && circleCenter && (
+                  <p className="text-xs text-slate-600 mt-2">
+                    Circle center set. You can drag to move it or use handles to resize.
                   </p>
                 )}
               </div>
@@ -948,7 +1123,12 @@ export default function AddZone() {
             </button>
             <button
               type="submit"
-              disabled={loading || coordinates.length < 3 || !formData.zoneName || !formData.country}
+              disabled={
+                loading || 
+                (boundaryMode === 'polygon' ? coordinates.length < 3 : !circleCenter) || 
+                !formData.zoneName || 
+                !formData.country
+              }
               className="flex items-center gap-2 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? (

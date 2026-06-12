@@ -113,7 +113,7 @@ export default function DeliverySignIn() {
           </div>
           <div className="text-center text-white">
             <h1 className="font-black text-3xl tracking-tighter leading-none mb-1 italic">
-              {companyName.toUpperCase()} <span className="opacity-60">PARTNER</span>
+              {companyName.toUpperCase()} <span className="text-white">PARTNER</span>
             </h1>
                 <div className="bg-[#F38F24] px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest inline-block mt-1">
                   Delivery Partner
@@ -195,8 +195,8 @@ export default function DeliverySignIn() {
 
           <footer className="mt-auto pt-10 text-center">
             <p className="text-xs text-gray-400 font-medium leading-relaxed">
-              By continuing you agree to the<br />
-              <Link to="/food/delivery/terms" className="text-[#1A1A1A] font-bold">Delivery Charter</Link>
+              By continuing you agree to our<br />
+              <Link to="/terms?role=delivery" className="text-[#1A1A1A] font-bold">Terms</Link> and <Link to="/privacy?role=delivery" className="text-[#1A1A1A] font-bold">Privacy Policy</Link>
             </p>
           </footer>
         </div>

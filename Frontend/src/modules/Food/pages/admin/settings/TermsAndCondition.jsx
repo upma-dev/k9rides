@@ -13,6 +13,7 @@ export default function TermsAndCondition() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [viewMode, setViewMode] = useState("edit") // "edit" | "preview"
+  const [activeTab, setActiveTab] = useState("User")
   const [termsData, setTermsData] = useState({
     title: 'Terms and Conditions',
     content: ''
@@ -20,12 +21,18 @@ export default function TermsAndCondition() {
 
   useEffect(() => {
     fetchTermsData()
-  }, [])
+  }, [activeTab])
 
   const fetchTermsData = async () => {
     try {
       setLoading(true)
-      const response = await api.get(API_ENDPOINTS.ADMIN.TERMS, { contextModule: "admin" })
+      const endpoint = activeTab === "Restaurant" 
+        ? "/food/admin/pages-social-media/terms_restaurant" 
+        : activeTab === "Delivery" 
+          ? "/food/admin/pages-social-media/terms_delivery" 
+          : API_ENDPOINTS.ADMIN.TERMS;
+          
+      const response = await api.get(endpoint, { contextModule: "admin" })
       if (response.data.success) {
         // Convert HTML to plain text for textarea
         const content = response.data.data?.content || ''
@@ -47,11 +54,16 @@ export default function TermsAndCondition() {
     e.preventDefault()
     try {
       setSaving(true)
-      // Convert plain text/markdown to HTML for storage + user rendering
       const htmlContent = plainTextToLegalHtml(termsData.content)
       
+      const endpoint = activeTab === "Restaurant" 
+        ? "/food/admin/pages-social-media/terms_restaurant" 
+        : activeTab === "Delivery" 
+          ? "/food/admin/pages-social-media/terms_delivery" 
+          : API_ENDPOINTS.ADMIN.TERMS;
+      
       const response = await api.put(
-        API_ENDPOINTS.ADMIN.TERMS,
+        endpoint,
         { title: termsData.title, content: htmlContent },
         { contextModule: "admin" }
       )
@@ -88,9 +100,37 @@ export default function TermsAndCondition() {
     <div className="h-full overflow-y-auto bg-slate-50 p-4 lg:p-6">
       <div className="max-w-6xl mx-auto">
         {/* Page Header */}
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold text-slate-900">Terms And Condition</h1>
-          <p className="text-sm text-slate-600 mt-1">Manage your Terms and Conditions content</p>
+        <div className="mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-bold text-slate-900">Terms And Condition</h1>
+            <p className="text-sm text-slate-600 mt-1">Manage your Terms and Conditions content</p>
+          </div>
+          <div className="flex bg-slate-100 p-1 rounded-lg">
+            <button
+              onClick={() => setActiveTab("User")}
+              className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
+                activeTab === "User" ? "bg-white text-blue-600 shadow-sm" : "text-slate-600 hover:text-slate-900"
+              }`}
+            >
+              User
+            </button>
+            <button
+              onClick={() => setActiveTab("Restaurant")}
+              className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
+                activeTab === "Restaurant" ? "bg-white text-blue-600 shadow-sm" : "text-slate-600 hover:text-slate-900"
+              }`}
+            >
+              Restaurant
+            </button>
+            <button
+              onClick={() => setActiveTab("Delivery")}
+              className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
+                activeTab === "Delivery" ? "bg-white text-blue-600 shadow-sm" : "text-slate-600 hover:text-slate-900"
+              }`}
+            >
+              Delivery
+            </button>
+          </div>
         </div>
 
         {/* Text Area */}
