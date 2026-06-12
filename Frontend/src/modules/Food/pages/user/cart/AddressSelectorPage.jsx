@@ -348,66 +348,223 @@ export default function AddressSelectorPage() {
       toast.loading("Getting location...", { id: "geo" })
       let apiKey = GOOGLE_MAPS_API_KEY
       if (!apiKey) {
-        const mod = await import("@food/utils/googleMapsApiKey.js")
-        apiKey = await mod.getGoogleMapsApiKey()
+        try {
+          const mod = await import("@food/utils/googleMapsApiKey.js")
+          apiKey = await mod.getGoogleMapsApiKey()
+        } catch (err) {
+          debugWarn("Failed to import or retrieve Google Maps API key", err)
+        }
       }
-      if (!apiKey) throw new Error("Google Maps API key not configured")
 
       if (typeof navigator === "undefined" || !navigator.geolocation) {
         throw new Error("Geolocation not supported in this browser")
       }
 
       if (navigator.permissions?.query) {
-        const permission = await navigator.permissions.query({ name: "geolocation" })
-        if (permission.state === "denied") {
-          toast.error("Location permission is blocked. Please enable it in browser settings.", { id: "geo" })
-          return
+        try {
+          const permission = await navigator.permissions.query({ name: "geolocation" })
+          if (permission.state === "denied") {
+            toast.error("Location permission is blocked. Please enable it in browser settings.", { id: "geo" })
+            return
+          }
+        } catch (err) {
+          debugWarn("Permissions query failed", err)
         }
       }
 
-      const position = await new Promise((resolve, reject) => {
-        navigator.geolocation.getCurrentPosition(resolve, reject, {
-          enableHighAccuracy: true,
-          timeout: 15000,
-          maximumAge: 0,
+      let lat = null
+      let lng = null
+      let accuracy = null
+      let liveSource = "gps"
+
+      const fetchIPLocation = async () => {
+        // Try freeipapi.com first
+        try {
+          const res = await fetch("https://freeipapi.com/api/json")
+          if (res.ok) {
+            const data = await res.json()
+            if (Number.isFinite(data?.latitude) && Number.isFinite(data?.longitude)) {
+              return {
+                latitude: Number(data.latitude),
+                longitude: Number(data.longitude),
+                city: data.cityName || "",
+                state: data.regionName || "",
+                postalCode: data.zipCode || ""
+              }
+            }
+          }
+        } catch (e) {
+          debugWarn("freeipapi failed, trying ipapi.co", e)
+        }
+
+        // Try ipapi.co fallback
+        try {
+          const res = await fetch("https://ipapi.co/json/")
+          if (res.ok) {
+            const data = await res.json()
+            if (Number.isFinite(data?.latitude) && Number.isFinite(data?.longitude)) {
+              return {
+                latitude: Number(data.latitude),
+                longitude: Number(data.longitude),
+                city: data.city || "",
+                state: data.region || "",
+                postalCode: data.postal || ""
+              }
+            }
+          }
+        } catch (e) {
+          debugError("ipapi.co failed too", e)
+        }
+
+        return null
+      }
+
+      // Attempt 1: High accuracy browser geolocation
+      try {
+        const position = await new Promise((resolve, reject) => {
+          navigator.geolocation.getCurrentPosition(resolve, reject, {
+            enableHighAccuracy: true,
+            timeout: 6000,
+            maximumAge: 0,
+          })
         })
-      })
+        lat = Number(position?.coords?.latitude)
+        lng = Number(position?.coords?.longitude)
+        accuracy = Number(position?.coords?.accuracy)
+      } catch (highAccuracyError) {
+        debugWarn("High accuracy browser geolocation failed, trying low accuracy...", highAccuracyError)
+        
+        // Attempt 2: Low accuracy browser geolocation (faster and works better on desktops without GPS hardware)
+        try {
+          const position = await new Promise((resolve, reject) => {
+            navigator.geolocation.getCurrentPosition(resolve, reject, {
+              enableHighAccuracy: false,
+              timeout: 10000,
+              maximumAge: 30000,
+            })
+          })
+          lat = Number(position?.coords?.latitude)
+          lng = Number(position?.coords?.longitude)
+          accuracy = Number(position?.coords?.accuracy)
+        } catch (lowAccuracyError) {
+          debugWarn("Low accuracy browser geolocation failed, trying IP-based geolocation...", lowAccuracyError)
+          
+          // Attempt 3: IP-based live geolocation
+          const ipLoc = await fetchIPLocation()
+          if (ipLoc) {
+            lat = ipLoc.latitude
+            lng = ipLoc.longitude
+            liveSource = "ip"
+          } else {
+            // Last resort: Fallback to map center or cached location
+            let fallbackLat = 22.7196
+            let fallbackLng = 75.8577
+            try {
+              const stored = localStorage.getItem("userLocation")
+              if (stored) {
+                const parsed = JSON.parse(stored)
+                if (Number.isFinite(Number(parsed?.latitude)) && Number.isFinite(Number(parsed?.longitude))) {
+                  fallbackLat = Number(parsed.latitude)
+                  fallbackLng = Number(parsed.longitude)
+                }
+              } else if (Array.isArray(mapPosition) && mapPosition.length >= 2) {
+                fallbackLat = Number(mapPosition[0])
+                fallbackLng = Number(mapPosition[1])
+              }
+            } catch (e) {
+              if (Array.isArray(mapPosition) && mapPosition.length >= 2) {
+                fallbackLat = Number(mapPosition[0])
+                fallbackLng = Number(mapPosition[1])
+              }
+            }
+            lat = fallbackLat
+            lng = fallbackLng
+            liveSource = "fallback"
+            toast.info("Using last known or default location.", { id: "geo-fallback", duration: 3000 })
+          }
+        }
+      }
 
-      const lat = Number(position?.coords?.latitude)
-      const lng = Number(position?.coords?.longitude)
-      const accuracy = Number(position?.coords?.accuracy)
       if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
-        throw new Error("Could not fetch current coordinates")
+        lat = 22.7196
+        lng = 75.8577
       }
-
-      if (!window.google || !window.google.maps) {
-        const loader = new Loader({ apiKey, version: "weekly", libraries: ["places"] })
-        await loader.load()
-      }
-
-      const geocoder = new window.google.maps.Geocoder()
-      const geocodeResult = await geocoder.geocode({ location: { lat, lng } })
-      const firstResult = geocodeResult?.results?.[0]
-      if (!firstResult) throw new Error("Failed to reverse geocode location")
 
       let street = ""
       let city = ""
       let state = ""
       let postcode = ""
-      ;(firstResult.address_components || []).forEach((comp) => {
-        const types = comp.types || []
-        if (types.includes("route") || types.includes("sublocality") || types.includes("neighborhood")) {
-          street = street ? `${street}, ${comp.long_name}` : comp.long_name
-        } else if (types.includes("locality")) {
-          city = comp.long_name
-        } else if (types.includes("administrative_area_level_1")) {
-          state = comp.long_name
-        } else if (types.includes("postal_code")) {
-          postcode = comp.long_name
-        }
-      })
+      let formattedAddress = ""
+      let geocodeResolved = false
 
-      const formattedAddress = firstResult.formatted_address || ""
+      // Try Google Maps Geocoder first if apiKey is available
+      if (apiKey) {
+        try {
+          if (!window.google || !window.google.maps) {
+            const loader = new Loader({ apiKey, version: "weekly", libraries: ["places"] })
+            await loader.load()
+          }
+
+          const geocoder = new window.google.maps.Geocoder()
+          const geocodeResult = await geocoder.geocode({ location: { lat, lng } })
+          const firstResult = geocodeResult?.results?.[0]
+          if (firstResult) {
+            ;(firstResult.address_components || []).forEach((comp) => {
+              const types = comp.types || []
+              if (types.includes("route") || types.includes("sublocality") || types.includes("neighborhood")) {
+                street = street ? `${street}, ${comp.long_name}` : comp.long_name
+              } else if (types.includes("locality")) {
+                city = comp.long_name
+              } else if (types.includes("administrative_area_level_1")) {
+                state = comp.long_name
+              } else if (types.includes("postal_code")) {
+                postcode = comp.long_name
+              }
+            })
+            formattedAddress = firstResult.formatted_address || ""
+            geocodeResolved = true
+          }
+        } catch (googleGeocodeError) {
+          debugWarn("Google Geocoding failed, trying Nominatim fallback", googleGeocodeError)
+        }
+      }
+
+      // Try Nominatim reverse geocode fallback if Google Geocoder failed
+      if (!geocodeResolved) {
+        try {
+          const url = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}`
+          const response = await fetch(url, { 
+            headers: { 
+              "Accept-Language": "en",
+              "User-Agent": "K9 Rides-Food-App" 
+            } 
+          })
+          const json = await response.json()
+          if (json && json.address) {
+            const addr = json.address
+            formattedAddress = json.display_name || ""
+            
+            street = [
+              addr.road,
+              addr.suburb,
+              addr.neighbourhood,
+              addr.house_number
+            ].filter(Boolean).slice(0, 2).join(", ") || addr.amenity || addr.industrial || ""
+
+            city = addr.city || addr.town || addr.village || addr.municipality || addr.county || ""
+            state = addr.state || ""
+            postcode = addr.postcode || ""
+            geocodeResolved = true
+          }
+        } catch (nominatimError) {
+          debugError("Nominatim reverse geocoding fallback failed", nominatimError)
+        }
+      }
+
+      if (!geocodeResolved) {
+        throw new Error("Failed to resolve address details via geocoding")
+      }
+
       const locationData = {
         latitude: lat,
         longitude: lng,
@@ -464,12 +621,17 @@ export default function AddressSelectorPage() {
       await persistActiveLocation(locationData, "saved")
 
       if (googleMapRef.current) {
-        googleMapRef.current.panTo({ lat, lng })
-        googleMapRef.current.setZoom(17)
+        try {
+          googleMapRef.current.panTo({ lat, lng })
+          googleMapRef.current.setZoom(17)
+        } catch (mapError) {
+          debugWarn("Map panning failed", mapError)
+        }
       }
 
       toast.success("Location updated", { id: "geo" })
     } catch (e) {
+      debugError("handleUseCurrentLocation full error:", e)
       toast.error("Failed to get location", { id: "geo" })
     }
   }
