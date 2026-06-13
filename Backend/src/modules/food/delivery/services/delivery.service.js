@@ -12,20 +12,42 @@ export const registerDeliveryPartner = async (payload, files) => {
     const { 
         name, phone, email, countryCode, address, city, state, 
         vehicleType, vehicleName, vehicleNumber, drivingLicenseNumber, panNumber, aadharNumber,
-        fcmToken, platform 
+        fcmToken, platform,
+        profilePhoto: preExistingProfilePhoto,
+        aadharPhoto: preExistingAadharPhoto,
+        panPhoto: preExistingPanPhoto,
+        drivingLicensePhoto: preExistingDrivingLicensePhoto
     } = payload;
     const refRaw = typeof payload?.ref === 'string' ? String(payload.ref).trim() : '';
 
-    const existing = await FoodDeliveryPartner.findOne({ phone });
+    const digits = String(phone || '').replace(/\D/g, '');
+    const last10 = digits.slice(-10);
+    const phoneCandidates = [phone, digits, last10].filter(Boolean);
+    const existing = await FoodDeliveryPartner.findOne({
+        $or: [
+            { phone: { $in: phoneCandidates } },
+            ...(last10 ? [{ phone: { $regex: new RegExp(last10 + "$") } }] : [])
+        ]
+    });
     if (existing) {
         if (existing.status !== 'rejected') {
             throw new ValidationError('Delivery partner with this phone already exists');
         }
         // If rejected, delete the old record so they can start fresh with same phone
-        await FoodDeliveryPartner.deleteMany({ phone });
+        await FoodDeliveryPartner.deleteMany({
+            $or: [
+                { phone: { $in: phoneCandidates } },
+                ...(last10 ? [{ phone: { $regex: new RegExp(last10 + "$") } }] : [])
+            ]
+        });
     }
 
-    const images = {};
+    const images = {
+        profilePhoto: preExistingProfilePhoto || '',
+        aadharPhoto: preExistingAadharPhoto || '',
+        panPhoto: preExistingPanPhoto || '',
+        drivingLicensePhoto: preExistingDrivingLicensePhoto || ''
+    };
 
     if (files?.profilePhoto?.[0]) {
         images.profilePhoto = await uploadImageBuffer(files.profilePhoto[0].buffer, 'food/delivery/profile');

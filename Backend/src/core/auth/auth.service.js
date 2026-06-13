@@ -401,7 +401,8 @@ export const verifyRestaurantOtpAndLogin = async (phone, otp, fcmToken, platform
               ? `Your restaurant registration was rejected: ${restaurantDoc.rejectionReason}`
               : "Your restaurant registration has been rejected. Please contact support.")
           : "Your restaurant registration is pending approval.",
-      phone: phone
+      phone: phone,
+      restaurant: isRejected ? restaurantDoc : null
     };
   }
 
@@ -510,7 +511,8 @@ export const verifyDeliveryOtpAndLogin = async (phone, otp, fcmToken, platform) 
               ? `Your account was rejected: ${deliveryPartner.rejectionReason}`
               : "Your delivery account was not approved. Please contact support.")
           : "Your account is pending admin verification. You will be notified once approved.",
-      phone: phone
+      phone: phone,
+      deliveryPartner: isRejected ? deliveryPartner : null
     };
   }
 

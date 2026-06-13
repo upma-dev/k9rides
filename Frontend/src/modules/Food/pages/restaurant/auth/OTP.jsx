@@ -11,6 +11,7 @@ import { checkOnboardingStatus, isRestaurantOnboardingComplete } from "@food/uti
 import { useCompanyName } from "@food/hooks/useCompanyName"
 import { motion, AnimatePresence } from "framer-motion"
 import logoImg from "@food/assets/k9-logo.jpg"
+import { formatDisplayPhone } from "../../../../../utils/phone.util"
 
 export default function RestaurantOTP() {
   const companyName = useCompanyName()
@@ -59,6 +60,12 @@ export default function RestaurantOTP() {
 
     return () => clearInterval(timer)
   }, [navigate])
+
+  useEffect(() => {
+    if (otp.every(d => d !== "") && otp.join("").length === 4 && !hasSubmittedRef.current) {
+      handleVerify(otp.join(""))
+    }
+  }, [otp])
 
   useEffect(() => {
     if (inputRefs.current[0]) inputRefs.current[0].focus()
@@ -152,6 +159,13 @@ export default function RestaurantOTP() {
         setRejectionReason(data.rejectionReason || "")
         if (data.isRejected) {
           setRestaurantPendingPhone(data.phone || phone)
+          if (data.restaurant) {
+            try {
+              sessionStorage.setItem("rejectedRestaurantData", JSON.stringify(data.restaurant))
+            } catch (e) {
+              console.error("Error storing rejectedRestaurantData:", e)
+            }
+          }
         }
         return
       }
@@ -232,7 +246,7 @@ export default function RestaurantOTP() {
   return (
     <div className="min-h-[100dvh] bg-white dark:bg-[#0A0A0B] flex flex-col font-sans overflow-hidden">
       {/* Top Branding Section - 35% height */}
-      <div className="relative h-[35dvh] w-full bg-[#1A1A1A] overflow-hidden flex flex-col items-center justify-center">
+      <div className="relative h-[35dvh] w-full bg-[#1A1A1A] overflow-hidden flex flex-col items-center justify-center pb-8">
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
             <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-[#F38F24]/5 rounded-full blur-[80px] translate-x-1/3 -translate-y-1/3"></div>
             <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-white/5 rounded-full blur-[60px] -translate-x-1/3 translate-y-1/3"></div>
@@ -242,7 +256,7 @@ export default function RestaurantOTP() {
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ duration: 0.6 }}
-          className="relative z-10 flex flex-col items-center gap-4 px-6 text-center pb-12"
+          className="relative z-10 flex flex-col items-center gap-4 px-6 text-center"
         >
           <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center border border-white/25 shadow-lg mb-2 overflow-hidden">
             <img src={logoImg} alt={`${companyName} logo`} className="w-full h-full object-cover scale-110" />
@@ -267,92 +281,208 @@ export default function RestaurantOTP() {
         style={{ marginBottom: keyboardOffset > 0 ? `${keyboardOffset}px` : 0 }}
       >
         <div className="max-w-md mx-auto w-full flex flex-col h-full">
-          <div className="space-y-10">
-            <div ref={otpSectionRef} className="flex justify-center gap-4">
-              {otp.map((digit, index) => (
-                <motion.div
-                  key={index}
-                  initial={{ scale: 0.8, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  transition={{ delay: 0.1 * index }}
-                  className="relative"
-                >
-                  <input
-                    ref={(el) => (inputRefs.current[index] = el)}
-                    type="text"
-                    inputMode="numeric"
-                    maxLength={1}
-                    value={digit}
-                    onChange={(e) => handleChange(index, e.target.value)}
-                    onKeyDown={(e) => handleKeyDown(index, e)}
-                    onPaste={handlePaste}
-                    onFocus={() => setFocusedIndex(index)}
-                    onBlur={() => setFocusedIndex(null)}
-                    disabled={isLoading}
-                    className={`w-16 h-16 text-center text-3xl font-black bg-[#F8F9FA] dark:bg-zinc-900 border rounded-xl text-[#1A1A1A] dark:text-white transition-all outline-none shadow-sm ${
-                      focusedIndex === index ? "border-[#F38F24] ring-1 ring-[#F38F24] shadow-[#F38F24]/10" : "border-gray-200"
-                    }`}
-                  />
-                  {digit && (
-                    <div className="absolute bottom-3 left-1/2 -translate-x-1/2 w-1.5 h-1.5 bg-[#F38F24] rounded-full" />
-                  )}
-                </motion.div>
-              ))}
-            </div>
-
-            {error && (
+          <AnimatePresence mode="wait">
+            {!pendingMessage ? (
               <motion.div
-                initial={{ opacity: 0, y: -5 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="flex items-center justify-center gap-2 text-xs font-bold text-red-500 bg-red-50 py-4 px-4 rounded-xl border border-red-100"
+                key="input-view"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                className="space-y-10"
               >
-                <AlertCircle className="h-4 w-4 shrink-0" />
-                <span>{error}</span>
+                <div ref={otpSectionRef} className="flex justify-center gap-4">
+                  {otp.map((digit, index) => (
+                    <motion.div
+                      key={index}
+                      initial={{ scale: 0.8, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      transition={{ delay: 0.1 * index }}
+                      className="relative"
+                    >
+                      <input
+                        ref={(el) => (inputRefs.current[index] = el)}
+                        type="text"
+                        inputMode="numeric"
+                        maxLength={1}
+                        value={digit}
+                        onChange={(e) => handleChange(index, e.target.value)}
+                        onKeyDown={(e) => handleKeyDown(index, e)}
+                        onPaste={handlePaste}
+                        onFocus={() => setFocusedIndex(index)}
+                        onBlur={() => setFocusedIndex(null)}
+                        disabled={isLoading}
+                        className={`w-16 h-16 text-center text-3xl font-black bg-[#F8F9FA] dark:bg-zinc-900 border rounded-xl text-[#1A1A1A] dark:text-white transition-all outline-none shadow-sm ${
+                          focusedIndex === index ? "border-[#F38F24] ring-1 ring-[#F38F24] shadow-[#F38F24]/10" : "border-gray-200"
+                        }`}
+                      />
+                      {digit && (
+                        <div className="absolute bottom-3 left-1/2 -translate-x-1/2 w-1.5 h-1.5 bg-[#F38F24] rounded-full" />
+                      )}
+                    </motion.div>
+                  ))}
+                </div>
+
+                {error && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -5 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="flex items-center justify-center gap-2 text-xs font-bold text-red-500 bg-red-50 py-4 px-4 rounded-xl border border-red-100"
+                  >
+                    <AlertCircle className="h-4 w-4 shrink-0" />
+                    <span>{error}</span>
+                  </motion.div>
+                )}
+
+                <div className="space-y-6 pt-4">
+                  <Button
+                    onClick={() => handleVerify()}
+                    disabled={isLoading || otp.some(d => !d)}
+                    className="w-full h-14 bg-[#1A1A1A] hover:bg-black text-white font-bold text-base rounded-xl transition-all hover:shadow-lg disabled:opacity-50 disabled:bg-gray-200 disabled:text-gray-400"
+                  >
+                    {isLoading ? (
+                      <div className="flex items-center gap-2">
+                        <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+                        <span>Validating...</span>
+                      </div>
+                    ) : (
+                      "Unlock Portal"
+                    )}
+                  </Button>
+
+                  <div className="flex justify-center flex-col items-center gap-4">
+                    {resendTimer > 0 ? (
+                      <p className="text-sm font-medium text-gray-400">
+                        Request new code in <span className="text-[#F38F24] font-semibold">{resendTimer}s</span>
+                      </p>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={handleResend}
+                        disabled={isLoading}
+                        className="text-sm font-semibold text-[#F38F24] hover:text-[#d97716] transition-colors"
+                      >
+                        Resend OTP
+                      </button>
+                    )}
+
+                    <Button
+                      onClick={() => navigate("/food/restaurant/login")}
+                      variant="ghost"
+                      className="text-gray-400 font-medium text-xs hover:bg-transparent hover:text-[#1A1A1A]"
+                    >
+                      Change Account
+                    </Button>
+                  </div>
+                </div>
+              </motion.div>
+            ) : (
+              <motion.div
+                key="pending-view"
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="text-center space-y-8"
+              >
+                <div className={`w-20 h-20 mx-auto rounded-3xl flex items-center justify-center shadow-xl transform rotate-12 ${isRejected ? "bg-red-50 text-red-600 border border-red-100" : "bg-[#F8F9FA] dark:bg-zinc-900 text-[#1A1A1A] border border-gray-200 dark:border-zinc-800"}`}>
+                   {isRejected ? <AlertCircle size={40} className="-rotate-12" /> : <ShieldCheck size={40} className="-rotate-12" />}
+                </div>
+
+                <div className="space-y-3">
+                  <h3 className={`text-2xl font-black tracking-tight ${isRejected ? "text-red-600" : "text-[#1A1A1A]"}`}>
+                     {isRejected ? "Registration Denied" : "Pending Approval"}
+                  </h3>
+                  <p className="text-sm font-medium text-gray-500 dark:text-zinc-400 leading-relaxed">
+                     {pendingMessage}
+                  </p>
+                </div>
+
+                {isRejected && rejectionReason && (
+                   <div className="bg-red-50 dark:bg-red-900/10 p-5 rounded-2xl border border-red-100 dark:border-red-900/10">
+                      <p className="text-xs font-bold text-red-500 uppercase tracking-wider mb-1">Feedback</p>
+                      <p className="text-sm text-red-700 dark:text-red-400 font-medium">"{rejectionReason}"</p>
+                   </div>
+                )}
+
+                <div className="pt-6 flex flex-col gap-4">
+                   {isRejected && (
+                      <Button
+                        onClick={() => {
+                          try {
+                            const rawData = sessionStorage.getItem("rejectedRestaurantData")
+                            if (rawData) {
+                              const r = JSON.parse(rawData)
+                              const mapped = {
+                                step1: {
+                                  restaurantName: r.restaurantName || "",
+                                  pureVegRestaurant: typeof r.pureVegRestaurant === 'boolean' ? r.pureVegRestaurant : null,
+                                  ownerName: r.ownerName || "",
+                                  ownerEmail: r.ownerEmail || "",
+                                  ownerPhone: formatDisplayPhone(r.ownerPhone || contactInfo || ""),
+                                  primaryContactNumber: formatDisplayPhone(r.primaryContactNumber || ""),
+                                  zoneId: r.zoneId || "",
+                                  location: {
+                                    formattedAddress: r.location?.formattedAddress || r.location?.address || "",
+                                    addressLine1: r.location?.addressLine1 || r.addressLine1 || "",
+                                    addressLine2: r.location?.addressLine2 || r.addressLine2 || "",
+                                    area: r.location?.area || r.area || "",
+                                    city: r.location?.city || r.city || "",
+                                    state: r.location?.state || r.state || "",
+                                    pincode: r.location?.pincode || r.pincode || "",
+                                    landmark: r.location?.landmark || r.landmark || "",
+                                    latitude: r.location?.latitude || (r.location?.coordinates ? r.location.coordinates[1] : ""),
+                                    longitude: r.location?.longitude || (r.location?.coordinates ? r.location.coordinates[0] : "")
+                                  }
+                                },
+                                step2: {
+                                  menuImages: r.menuImages || [],
+                                  profileImage: r.profileImage || null,
+                                  cuisines: r.cuisines || [],
+                                  estimatedDeliveryTime: r.estimatedDeliveryTime || "",
+                                  openingTime: r.openingTime || "",
+                                  closingTime: r.closingTime || "",
+                                  openDays: r.openDays || []
+                                },
+                                step3: {
+                                  panNumber: r.panNumber || "",
+                                  nameOnPan: r.nameOnPan || "",
+                                  panImage: r.panImage || null,
+                                  gstRegistered: typeof r.gstRegistered === 'boolean' ? r.gstRegistered : false,
+                                  gstNumber: r.gstNumber || "",
+                                  gstLegalName: r.gstLegalName || "",
+                                  gstAddress: r.gstAddress || "",
+                                  gstImage: r.gstImage || null,
+                                  fssaiNumber: r.fssaiNumber || "",
+                                  fssaiExpiry: r.fssaiExpiry ? String(r.fssaiExpiry).split("T")[0] : "",
+                                  fssaiImage: r.fssaiImage || null,
+                                  accountNumber: r.accountNumber || "",
+                                  confirmAccountNumber: r.accountNumber || "",
+                                  ifscCode: r.ifscCode || "",
+                                  accountHolderName: r.accountHolderName || "",
+                                  accountType: r.accountType || ""
+                                },
+                                currentStep: 1,
+                                timestamp: Date.now()
+                              }
+                              localStorage.setItem("restaurant_onboarding_data", JSON.stringify(mapped))
+                            }
+                          } catch (e) {
+                            console.error("Error setting onboarding local storage:", e)
+                          }
+                          navigate("/food/restaurant/onboarding", { replace: true, state: { phone: contactInfo || authData?.phone || authData?.email || "", isRejected: true, rejectionReason } })
+                        }}
+                        className="w-full h-14 rounded-xl font-bold bg-red-600 hover:bg-red-700 text-white shadow-lg"
+                      >
+                        RE-APPLY NOW
+                      </Button>
+                   )}
+                   <button 
+                    onClick={() => navigate("/food/restaurant/login")} 
+                    className="text-xs font-bold text-gray-500 uppercase tracking-widest hover:text-[#1A1A1A] transition-all"
+                   >
+                    BACK TO LOGIN
+                   </button>
+                </div>
               </motion.div>
             )}
-
-            <div className="space-y-6 pt-4">
-              <Button
-                onClick={() => handleVerify()}
-                disabled={isLoading || otp.some(d => !d)}
-                className="w-full h-14 bg-[#1A1A1A] hover:bg-black text-white font-bold text-base rounded-xl transition-all hover:shadow-lg disabled:opacity-50 disabled:bg-gray-200 disabled:text-gray-400"
-              >
-                {isLoading ? (
-                  <div className="flex items-center gap-2">
-                    <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
-                    <span>Validating...</span>
-                  </div>
-                ) : (
-                  "Unlock Portal"
-                )}
-              </Button>
-
-              <div className="flex justify-center flex-col items-center gap-4">
-                {resendTimer > 0 ? (
-                  <p className="text-sm font-medium text-gray-400">
-                    Request new code in <span className="text-[#F38F24] font-semibold">{resendTimer}s</span>
-                  </p>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={handleResend}
-                    disabled={isLoading}
-                    className="text-sm font-semibold text-[#F38F24] hover:text-[#d97716] transition-colors"
-                  >
-                    Resend OTP
-                  </button>
-                )}
-
-                <Button
-                  onClick={() => navigate("/food/restaurant/login")}
-                  variant="ghost"
-                  className="text-gray-400 font-medium text-xs hover:bg-transparent hover:text-[#1A1A1A]"
-                >
-                  Change Account
-                </Button>
-              </div>
-            </div>
-          </div>
+          </AnimatePresence>
 
           <footer className="mt-auto pt-10 text-center">
             <p className="text-xs text-gray-400 font-medium leading-relaxed">

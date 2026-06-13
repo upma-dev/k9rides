@@ -159,7 +159,28 @@ export default function DeliveryOTP() {
       if (data.pendingApproval === true) {
         if (data.isRejected) {
            sessionStorage.setItem("deliveryNeedsRegistration", "true")
-           sessionStorage.setItem("deliverySignupDetails", JSON.stringify({ name: "", phone: authData?.phone?.replace(/\D/g, "").slice(-10) || "", countryCode: "+91" }))
+           const partner = data.deliveryPartner || {}
+           sessionStorage.setItem("deliverySignupDetails", JSON.stringify({
+             name: partner.name || "",
+             phone: partner.phone || authData?.phone?.replace(/\D/g, "").slice(-10) || "",
+             countryCode: partner.countryCode || "+91",
+             email: partner.email || "",
+             address: partner.address || "",
+             city: partner.city || "",
+             state: partner.state || "",
+             vehicleType: partner.vehicleType || "bike",
+             vehicleName: partner.vehicleName || "",
+             vehicleNumber: partner.vehicleNumber || "",
+             drivingLicenseNumber: partner.drivingLicenseNumber || "",
+             panNumber: partner.panNumber || "",
+             aadharNumber: partner.aadharNumber || ""
+           }))
+           sessionStorage.setItem("deliverySignupDocs", JSON.stringify({
+             profilePhoto: partner.profilePhoto || null,
+             aadharPhoto: partner.aadharPhoto || null,
+             panPhoto: partner.panPhoto || null,
+             drivingLicensePhoto: partner.drivingLicensePhoto || null
+           }))
         }
         setIsLoading(false); setPendingMessage(data.message); setIsRejected(data.isRejected || false); setRejectionReason(data.rejectionReason || "");
         return
@@ -206,7 +227,7 @@ export default function DeliveryOTP() {
   return (
     <div className="min-h-[100dvh] bg-white dark:bg-[#0A0A0B] flex flex-col font-sans overflow-hidden">
       {/* Top Branding Section - 35% height */}
-      <div className="relative h-[35dvh] w-full bg-[#1A1A1A] overflow-hidden flex flex-col items-center justify-center text-white">
+      <div className="relative h-[35dvh] w-full bg-[#1A1A1A] overflow-hidden flex flex-col items-center justify-center text-white pb-8">
         {/* Subtle Decorative Elements */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
             <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-[#F38F24]/5 rounded-full blur-[80px] translate-x-1/3 -translate-y-1/3"></div>
@@ -365,7 +386,7 @@ export default function DeliveryOTP() {
                 <div className="pt-6 flex flex-col gap-4">
                    {isRejected && (
                       <Button
-                        onClick={() => navigate("/food/delivery/signup/details")}
+                        onClick={() => navigate("/food/delivery/signup/details", { state: { isRejected: true, rejectionReason } })}
                         className="w-full h-14 rounded-xl font-bold bg-red-600 hover:bg-red-700 text-white shadow-lg"
                       >
                         RE-APPLY NOW

@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from "react"
-import { useNavigate, useSearchParams } from "react-router-dom"
+import { useNavigate, useSearchParams, useLocation } from "react-router-dom"
 import { Input } from "@food/components/ui/input"
 import { Button } from "@food/components/ui/button"
 import { Label } from "@food/components/ui/label"
-import { Image as ImageIcon, Upload, Clock, Calendar as CalendarIcon, Sparkles, X, LogOut } from "lucide-react"
+import { Image as ImageIcon, Upload, Clock, Calendar as CalendarIcon, Sparkles, X, LogOut, AlertCircle } from "lucide-react"
 import { Popover, PopoverContent, PopoverTrigger } from "@food/components/ui/popover"
 import { Calendar } from "@food/components/ui/calendar"
 import {
@@ -168,7 +168,10 @@ const isUploadableFile = (value) => {
   )
 }
 
-const normalizePhoneDigits = (value) => String(value || "").replace(/\D/g, "").slice(-15)
+const normalizePhoneDigits = (value) => {
+  const digits = String(value || "").replace(/\D/g, "");
+  return digits.slice(-10);
+}
 
 const getVerifiedPhoneFromStoredRestaurant = () => {
   try {
@@ -475,6 +478,7 @@ function TimeSelector({ label, value, onChange }) {
 export default function RestaurantOnboarding() {
   const companyName = useCompanyName()
   const navigate = useNavigate()
+  const location = useLocation()
   const [searchParams] = useSearchParams()
   const [step, setStep] = useState(1)
   const [loading, setLoading] = useState(false)
@@ -1548,7 +1552,7 @@ export default function RestaurantOnboarding() {
           <div>
             <Label className="text-xs text-gray-700">Phone number*</Label>
             <Input
-              value={step1.ownerPhone || ""}
+              value={formatDisplayPhone(step1.ownerPhone)}
               onChange={(e) => setStep1({ ...step1, ownerPhone: handlePhoneInput(e.target.value) })}
               readOnly={Boolean(verifiedPhoneNumber)}
               className="mt-1 bg-white text-sm text-black placeholder-black"
@@ -1564,7 +1568,7 @@ export default function RestaurantOnboarding() {
         <div>
           <Label className="text-xs text-gray-700">Primary contact number*</Label>
           <Input
-            value={step1.primaryContactNumber || ""}
+            value={formatDisplayPhone(step1.primaryContactNumber)}
             onChange={(e) => {
               setStep1({ ...step1, primaryContactNumber: handlePhoneInput(e.target.value) })
             }}
@@ -2809,8 +2813,9 @@ export default function RestaurantOnboarding() {
       toast.dismiss()
       setRegistrationProcessing(false)
       setPaymentProcessing(false)
-      toast.error(err?.message || 'Failed to submit registration')
-      setError(err?.message || 'Failed to submit registration')
+      const backendError = err?.response?.data?.message || err?.response?.data?.error || err?.message || 'Failed to submit registration'
+      toast.error(backendError)
+      setError(backendError)
     }
   }
 
@@ -2896,6 +2901,17 @@ export default function RestaurantOnboarding() {
             }, 250)
           }}
         >
+          {location.state?.isRejected && location.state?.rejectionReason && (
+            <div className="bg-red-50 border border-red-200 rounded-xl p-4 mb-4">
+              <h3 className="text-red-800 font-bold text-sm mb-1 flex items-center gap-2">
+                <AlertCircle className="w-4 h-4" />
+                Previous Registration Rejected
+              </h3>
+              <p className="text-red-600 text-sm">{location.state.rejectionReason}</p>
+              <p className="text-red-500 text-xs mt-2 font-medium">Please correct these issues and submit again.</p>
+            </div>
+          )}
+
           {loading ? (
             <p className="text-sm text-gray-600">Loading...</p>
           ) : (

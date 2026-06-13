@@ -203,7 +203,20 @@ export default function SignupStep2() {
   const handleSubmit = async (e) => {
     e.preventDefault()
 
-    if (!documents.profilePhoto || !documents.aadharPhoto || !documents.panPhoto || !documents.drivingLicensePhoto) {
+    const getDocValue = (docType) => {
+      if (documents[docType]) return documents[docType];
+      const uploaded = uploadedDocs[docType];
+      if (typeof uploaded === 'string') return uploaded;
+      if (uploaded?.url) return uploaded.url;
+      return null;
+    };
+
+    const profilePhotoVal = getDocValue("profilePhoto");
+    const aadharPhotoVal = getDocValue("aadharPhoto");
+    const panPhotoVal = getDocValue("panPhoto");
+    const drivingLicensePhotoVal = getDocValue("drivingLicensePhoto");
+
+    if (!profilePhotoVal || !aadharPhotoVal || !panPhotoVal || !drivingLicensePhotoVal) {
       toast.error("Please upload all required documents")
       return
     }
@@ -242,10 +255,11 @@ export default function SignupStep2() {
     }
     if (details.panNumber) formData.append("panNumber", details.panNumber)
     if (details.aadharNumber) formData.append("aadharNumber", details.aadharNumber)
-    formData.append("profilePhoto", documents.profilePhoto)
-    formData.append("aadharPhoto", documents.aadharPhoto)
-    formData.append("panPhoto", documents.panPhoto)
-    formData.append("drivingLicensePhoto", documents.drivingLicensePhoto)
+
+    formData.append("profilePhoto", profilePhotoVal)
+    formData.append("aadharPhoto", aadharPhotoVal)
+    formData.append("panPhoto", panPhotoVal)
+    formData.append("drivingLicensePhoto", drivingLicensePhotoVal)
 
     // Try to get FCM token before registering
     let fcmToken = null;

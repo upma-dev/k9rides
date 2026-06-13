@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react"
-import { useNavigate } from "react-router-dom"
-import { ArrowLeft } from "lucide-react"
+import { useNavigate, useLocation } from "react-router-dom"
+import { ArrowLeft, AlertCircle } from "lucide-react"
 import { toast } from "sonner"
 import useDeliveryBackNavigation from "../../hooks/useDeliveryBackNavigation"
 const debugLog = (...args) => {}
@@ -10,6 +10,7 @@ const debugError = (...args) => {}
 
 export default function SignupStep1() {
   const navigate = useNavigate()
+  const location = useLocation()
   const goBack = useDeliveryBackNavigation()
   const [formData, setFormData] = useState(() => {
     const saved = sessionStorage.getItem("deliverySignupDetails")
@@ -235,6 +236,17 @@ export default function SignupStep1() {
 
       {/* Content */}
       <div className="px-4 py-6">
+        {location.state?.isRejected && location.state?.rejectionReason && (
+          <div className="bg-red-50 border border-red-200 rounded-xl p-4 mb-6">
+            <h3 className="text-red-800 font-bold text-sm mb-1 flex items-center gap-2">
+              <AlertCircle className="w-4 h-4" />
+              Previous Registration Rejected
+            </h3>
+            <p className="text-red-600 text-sm">{location.state.rejectionReason}</p>
+            <p className="text-red-500 text-xs mt-2 font-medium">Please correct these issues and submit again.</p>
+          </div>
+        )}
+
         <div className="mb-6">
           <h2 className="text-xl font-bold text-gray-900 mb-2">Basic Details</h2>
           <p className="text-sm text-gray-600">Please provide your information to continue</p>

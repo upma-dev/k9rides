@@ -451,12 +451,22 @@ export const registerRestaurant = async (payload, files) => {
     const estimatedDeliveryTimeMinutes = parseEstimatedDeliveryMinutes(estimatedDeliveryTimeText);
 
     try {
-        const existingRejected = await FoodRestaurant.findOne({ ownerPhoneDigits });
+        const existingRejected = await FoodRestaurant.findOne({
+            $or: [
+                { ownerPhoneDigits },
+                { ownerPhoneLast10 }
+            ]
+        });
         if (existingRejected) {
             if (existingRejected.status !== 'rejected') {
                 throw new ValidationError('Restaurant with this owner phone already exists');
             }
-            await FoodRestaurant.deleteMany({ ownerPhoneDigits });
+            await FoodRestaurant.deleteMany({
+                $or: [
+                    { ownerPhoneDigits },
+                    { ownerPhoneLast10 }
+                ]
+            });
         }
 
         const latNum = toFiniteNumber(latitude);
