@@ -17,6 +17,7 @@ import { requireRoles } from '../core/roles/role.middleware.js';
 import { getQueuesController } from '../controllers/admin.controller.js';
 import { getPublicEnvController } from '../modules/food/landing/controllers/publicEnv.controller.js';
 import webhookRoutes from '../core/payments/routes/webhook.routes.js'; // ✅ NEW
+import petpoojaWebhookRoutes from '../modules/food/orders/routes/petpooja.routes.js';
 import searchRoutes from '../modules/food/search/routes/search.routes.js';
 import { taxiRouter } from '../modules/taxi/routes/index.js';
 import { promotionsRouter as taxiPromotionsRouter } from '../modules/taxi/admin/promotions/routes/index.js';
@@ -52,6 +53,7 @@ router.use('/v1/food/notifications', authMiddleware, requireRoles('USER', 'RESTA
 router.use('/v1/food/orders', authMiddleware, requireRoles('USER'), orderUserRoutes);
 router.use('/v1/food/payments', authMiddleware, paymentRoutes);
 router.use('/v1/payments/webhook', webhookRoutes); // ✅ NEW: Public Webhook
+router.use('/v1/petpooja/webhook', petpoojaWebhookRoutes);
 router.use('/v1/fcm-tokens', fcmRoutes);
 router.use('/fcm-tokens', fcmRoutes);
 

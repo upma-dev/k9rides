@@ -238,6 +238,15 @@ const restaurantSchema = new mongoose.Schema(
     menu: {
       sections: { type: Array, default: [] },
     },
+    petpoojaEnabled: {
+      type: Boolean,
+      default: false,
+    },
+    petpoojaOutletId: {
+      type: String,
+      trim: true,
+      default: "",
+    },
     status: {
       type: String,
       enum: ["pending", "approved", "rejected"],

@@ -3,7 +3,8 @@ import mongoose from 'mongoose';
 const foodVariantSchema = new mongoose.Schema(
     {
         name: { type: String, required: true, trim: true },
-        price: { type: Number, required: true, min: 0 }
+        price: { type: Number, required: true, min: 0 },
+        petpoojaVariantId: { type: String, trim: true, default: '' }
     },
     { _id: true }
 );
@@ -27,7 +28,8 @@ const foodSchema = new mongoose.Schema(
         rejectionReason: { type: String, trim: true, default: '' },
         requestedAt: { type: Date },
         approvedAt: { type: Date },
-        rejectedAt: { type: Date }
+        rejectedAt: { type: Date },
+        petpoojaItemId: { type: String, trim: true, default: '' }
     },
     {
         collection: 'food_items',

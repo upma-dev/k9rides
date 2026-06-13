@@ -101,7 +101,14 @@ export const config = {
     emailPort: Number(process.env.EMAIL_PORT) || 587,
     emailUser: process.env.EMAIL_USER,
     emailPass: process.env.EMAIL_PASS ? String(process.env.EMAIL_PASS).replace(/\s/g, '') : '',
-    emailFrom: process.env.EMAIL_FROM || process.env.EMAIL_USER || 'noreply@example.com'
+    emailFrom: process.env.EMAIL_FROM || process.env.EMAIL_USER || 'noreply@example.com',
+
+    // Petpooja Integration
+    petpoojaEnabled: process.env.PETPOOJA_ENABLED === 'true',
+    petpoojaApiKey: process.env.PETPOOJA_API_KEY || '',
+    petpoojaClientCode: process.env.PETPOOJA_CLIENT_CODE || '',
+    petpoojaOutletId: process.env.PETPOOJA_OUTLET_ID || '',
+    petpoojaApiUrl: process.env.PETPOOJA_API_URL || 'https://api.petpooja.com/v2'
 };
 
 // Taxi Module Compatibility Export

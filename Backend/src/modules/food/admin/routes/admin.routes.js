@@ -202,6 +202,10 @@ router.get('/orders', orderController.listOrdersAdminController);
 router.get('/orders/:orderId', orderController.getOrderByIdAdminController);
 router.delete('/orders/:orderId', orderController.deleteOrderAdminController);
 
+// ----- Petpooja Sync Logs -----
+router.get('/petpooja/sync-logs', orderController.listPetpoojaSyncLogsController);
+router.post('/petpooja/sync-logs/:logId/retry', orderController.retryPetpoojaSyncLogController);
+
 // ----- CMS Pages (About + legal) -----
 router.get('/pages-social-media/:key', getAdminPageController);
 router.put('/pages-social-media/:key', upsertAdminPageController);

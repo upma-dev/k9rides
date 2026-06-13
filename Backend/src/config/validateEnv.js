@@ -24,6 +24,15 @@ export const validateConfig = () => {
         missing.push('REDIS_ENABLED=true (required when BULLMQ_ENABLED=true)');
     }
 
+    if (config.petpoojaEnabled) {
+        const petpoojaMissing = [];
+        if (!config.petpoojaApiKey) petpoojaMissing.push('PETPOOJA_API_KEY');
+        if (!config.petpoojaClientCode) petpoojaMissing.push('PETPOOJA_CLIENT_CODE');
+        if (petpoojaMissing.length > 0) {
+            logger.warn(`Petpooja integration is enabled but missing: ${petpoojaMissing.join(', ')}`);
+        }
+    }
+
     if (missing.length > 0) {
         logger.error(`Missing required environment variables: ${missing.join(', ')}`);
         process.exit(1);

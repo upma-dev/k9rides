@@ -183,6 +183,8 @@ const toRestaurantProfile = (doc) => {
         },
         isAcceptingOrders: doc.isAcceptingOrders !== false,
         status: doc.status || null,
+        petpoojaEnabled: Boolean(doc.petpoojaEnabled),
+        petpoojaOutletId: doc.petpoojaOutletId || '',
         createdAt: doc.createdAt,
         updatedAt: doc.updatedAt,
         rating: normalizeRatingValue(doc.rating),
@@ -1045,6 +1047,12 @@ export const updateRestaurantProfile = async (restaurantId, body = {}) => {
     if (body.fssaiImage !== undefined) {
         update.fssaiImage = toUrl(body.fssaiImage) || '';
     }
+    if (body.petpoojaEnabled !== undefined) {
+        update.petpoojaEnabled = body.petpoojaEnabled === true || body.petpoojaEnabled === 'true';
+    }
+    if (body.petpoojaOutletId !== undefined) {
+        update.petpoojaOutletId = String(body.petpoojaOutletId || '').trim();
+    }
 
     if (!Object.keys(update).length) {
         return getCurrentRestaurantProfile(restaurantId);
@@ -1107,7 +1115,9 @@ export const updateRestaurantProfile = async (restaurantId, body = {}) => {
             'isAcceptingOrders',
             'diningSettings',
             'pureVegRestaurant',
-            'cuisines'
+            'cuisines',
+            'petpoojaEnabled',
+            'petpoojaOutletId'
         ]);
 
         const onlyOperationalUpdate = Object.keys(update).every((field) =>
@@ -1183,7 +1193,9 @@ export const updateRestaurantProfile = async (restaurantId, body = {}) => {
                     'upiQrImage',
                     'estimatedDeliveryTime',
                     'estimatedDeliveryTimeMinutes',
-                    'zoneId'
+                    'zoneId',
+                    'petpoojaEnabled',
+                    'petpoojaOutletId'
                 ].join(' ')
             }
         ).lean();

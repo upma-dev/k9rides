@@ -27,6 +27,27 @@ export const processOrderJob = async (job) => {
         }
     }
 
+    // Handle Petpooja Order Push (Asynchronous / Non-blocking)
+    if (action === 'PETPOOJA_ORDER_PUSH') {
+        try {
+            const { pushOrderToPetpooja } = await import('../../../modules/food/orders/services/petpooja.service.js');
+            await pushOrderToPetpooja(orderMongoId);
+        } catch (err) {
+            logger.error(`[BullMQ:order] PETPOOJA_ORDER_PUSH failed: ${err.message}`);
+            throw err; // Re-throw to trigger BullMQ retry backoff
+        }
+    }
+
+    // Handle Petpooja Status Update (Asynchronous / Non-blocking)
+    if (action === 'PETPOOJA_STATUS_UPDATE') {
+        try {
+            const { updateOrderStatusInPetpooja } = await import('../../../modules/food/orders/services/petpooja.service.js');
+            await updateOrderStatusInPetpooja(orderMongoId, data.status);
+        } catch (err) {
+            logger.error(`[BullMQ:order] PETPOOJA_STATUS_UPDATE failed: ${err.message}`);
+            throw err;
+        }
+    }
 
     return { processed: true, action, jobId: job.id };
 };

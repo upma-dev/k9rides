@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import { config } from '../../../../config/env.js';
 import { logger } from '../../../../utils/logger.js';
 import {
   sendNotificationToOwner,
@@ -12,6 +13,50 @@ export function enqueueOrderEvent(action, payload = {}) {
     void addOrderJob({ action, ...payload }).catch((err) => {
       logger.warn(`BullMQ enqueue order event failed: ${action} - ${err?.message || err}`);
     });
+
+    // Intercept and sync with Petpooja if enabled
+    if (config.petpoojaEnabled) {
+      const orderMongoId = payload.orderMongoId || payload.orderId;
+      if (orderMongoId) {
+        if (action === 'picked_up') {
+          void addOrderJob({
+            action: 'PETPOOJA_STATUS_UPDATE',
+            orderMongoId,
+            status: 'picked_up'
+          }).catch(err => logger.warn(`[Petpooja] Enqueue picked_up status failed: ${err.message}`));
+        } else if (action === 'delivery_completed') {
+          void addOrderJob({
+            action: 'PETPOOJA_STATUS_UPDATE',
+            orderMongoId,
+            status: 'delivered'
+          }).catch(err => logger.warn(`[Petpooja] Enqueue delivery_completed status failed: ${err.message}`));
+        } else if (action === 'order_cancelled_by_user' || action === 'order_deleted_by_admin') {
+          void addOrderJob({
+            action: 'PETPOOJA_STATUS_UPDATE',
+            orderMongoId,
+            status: 'cancelled_by_user'
+          }).catch(err => logger.warn(`[Petpooja] Enqueue cancellation status failed: ${err.message}`));
+        } else if (action === 'restaurant_order_status_updated') {
+          const newStatus = payload.to || '';
+          let petpoojaStatus = '';
+          if (newStatus === 'confirmed') {
+            petpoojaStatus = 'confirmed';
+          } else if (newStatus === 'ready_for_pickup') {
+            petpoojaStatus = 'ready_for_pickup';
+          } else if (newStatus.startsWith('cancelled')) {
+            petpoojaStatus = newStatus;
+          }
+
+          if (petpoojaStatus) {
+            void addOrderJob({
+              action: 'PETPOOJA_STATUS_UPDATE',
+              orderMongoId,
+              status: petpoojaStatus
+            }).catch(err => logger.warn(`[Petpooja] Enqueue restaurant status update failed: ${err.message}`));
+          }
+        }
+      }
+    }
   } catch (err) {
     logger.warn(`BullMQ enqueue order event failed (sync): ${action} - ${err?.message || err}`);
   }
@@ -267,6 +312,14 @@ export async function notifyRestaurantNewOrder(orderDoc) {
         },
       },
     );
+
+    // Trigger Petpooja Order Push (Asynchronous / Non-blocking)
+    if (config.petpoojaEnabled) {
+      enqueueOrderEvent('PETPOOJA_ORDER_PUSH', {
+        orderMongoId: orderDoc._id.toString(),
+        orderId: orderDoc.order_id || orderDoc._id.toString()
+      });
+    }
   } catch {
     // Do not block order/payment flow if notification fails.
   }

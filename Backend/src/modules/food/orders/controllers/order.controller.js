@@ -388,3 +388,24 @@ export async function resendDeliveryNotificationRestaurantController(req, res, n
         next(err);
     }
 }
+
+export async function listPetpoojaSyncLogsController(req, res, next) {
+    try {
+        const { listPetpoojaSyncLogs } = await import('../services/petpooja.service.js');
+        const result = await listPetpoojaSyncLogs(req.query || {});
+        return sendResponse(res, 200, 'Sync logs retrieved successfully', result);
+    } catch (err) {
+        next(err);
+    }
+}
+
+export async function retryPetpoojaSyncLogController(req, res, next) {
+    try {
+        const { retryPetpoojaSyncLog } = await import('../services/petpooja.service.js');
+        const logId = req.params.logId;
+        const result = await retryPetpoojaSyncLog(logId);
+        return sendResponse(res, 200, 'Retry initiated successfully', result);
+    } catch (err) {
+        next(err);
+    }
+}
