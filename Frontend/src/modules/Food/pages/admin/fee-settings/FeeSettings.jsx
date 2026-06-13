@@ -200,7 +200,7 @@ export default function FeeSettings() {
       setSlabModalOpen(false)
       await fetchDistanceRules()
     } catch (error) {
-      toast.error(error?.response?.data?.message || "Failed to update distance slab")
+      toast.error(error?.response?.data?.error || error?.response?.data?.message || "Failed to update distance slab")
     } finally {
       setSavingRule(false)
     }
@@ -253,7 +253,7 @@ export default function FeeSettings() {
       await fetchDistanceRules()
       toast.success("Distance slab added")
     } catch (error) {
-      toast.error(error?.response?.data?.message || "Failed to add distance slab")
+      toast.error(error?.response?.data?.error || error?.response?.data?.message || "Failed to add distance slab")
     } finally {
       setSavingRule(false)
     }
@@ -274,7 +274,7 @@ export default function FeeSettings() {
       await fetchDistanceRules()
       toast.success("Distance slab deleted")
     } catch (error) {
-      toast.error(error?.response?.data?.message || "Failed to delete slab")
+      toast.error(error?.response?.data?.error || error?.response?.data?.message || "Failed to delete slab")
     }
   }
 
@@ -331,10 +331,10 @@ export default function FeeSettings() {
         toast.success("Fee settings saved successfully")
         await fetchFeeSettings()
       } else {
-        toast.error(response?.data?.message || "Failed to save fee settings")
+        toast.error(response?.data?.error || response?.data?.message || "Failed to save fee settings")
       }
     } catch (error) {
-      toast.error(error?.response?.data?.message || "Failed to save fee settings")
+      toast.error(error?.response?.data?.error || error?.response?.data?.message || "Failed to save fee settings")
     } finally {
       setSavingFeeSettings(false)
     }
@@ -351,7 +351,7 @@ export default function FeeSettings() {
       await fetchZoneSurges()
       toast.success("Zone surge updated")
     } catch (error) {
-      toast.error(error?.response?.data?.message || "Failed to update zone surge")
+      toast.error(error?.response?.data?.error || error?.response?.data?.message || "Failed to update zone surge")
     } finally {
       setSavingZoneId("")
     }
