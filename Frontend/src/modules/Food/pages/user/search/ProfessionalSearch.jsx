@@ -81,7 +81,7 @@ export default function ProfessionalSearch() {
 
     return useSavedAddress ? defaultSavedAddressLocation : userCoords
   }, [deliveryAddressMode, defaultSavedAddressLocation, userCoords])
-  const { zoneId, zoneStatus, loading: zoneLoading } = useZone(effectiveLocation)
+  const { zoneId, zoneStatus, loading: zoneLoading } = useZone(effectiveLocation, { persistToStorage: false })
   const hasEffectiveCoordinates = useMemo(
     () =>
       Number.isFinite(effectiveLocation?.latitude) &&
@@ -98,6 +98,7 @@ export default function ProfessionalSearch() {
   const [categories, setCategories] = useState([])
   const [selectedCategoryId, setSelectedCategoryId] = useState(searchParams.get("cat") || null)
   const [history, setHistory] = useState([])
+  const lastSearchedParamsRef = useRef(null)
 
   // Load search history
   useEffect(() => {
@@ -108,6 +109,14 @@ export default function ProfessionalSearch() {
   useEffect(() => {
     fetchCategories()
   }, [zoneId, zoneStatus, zoneLoading, hasEffectiveCoordinates])
+
+  // Sync URL changes to local query state (e.g. consecutive searches from navbar)
+  useEffect(() => {
+    const urlQuery = searchParams.get("q") || ""
+    if (urlQuery !== query) {
+      setQuery(urlQuery)
+    }
+  }, [searchParams.get("q")])
 
   useEffect(() => {
     const readMode = () => {
@@ -155,6 +164,16 @@ export default function ProfessionalSearch() {
 
     if (!searchTerm && !catId) {
       setResults({ restaurants: [], dishes: [] })
+      lastSearchedParamsRef.current = null
+      return
+    }
+
+    // Skip redundant search if parameters are exactly the same to prevent loop
+    if (
+      lastSearchedParamsRef.current?.q === searchTerm &&
+      lastSearchedParamsRef.current?.cat === catId &&
+      lastSearchedParamsRef.current?.zoneId === zoneId
+    ) {
       return
     }
     
@@ -163,13 +182,11 @@ export default function ProfessionalSearch() {
       const res = await searchAPI.unifiedSearch({
         q: searchTerm,
         categoryId: catId,
-        lat: effectiveLocation?.latitude,
-        lng: effectiveLocation?.longitude,
         zoneId
       })
       
       if (res.data?.success) {
-        // Grouping results into Restaurants and potential Dishes
+        lastSearchedParamsRef.current = { q: searchTerm, cat: catId, zoneId }
         const all = res.data.data.restaurants || []
         setResults({
           restaurants: all.filter(r => r.matchType === 'restaurant' || !r.matchType),
@@ -185,8 +202,16 @@ export default function ProfessionalSearch() {
 
   useEffect(() => {
     performSearch(debouncedQuery, selectedCategoryId)
-    if (debouncedQuery) {
-        setSearchParams({ q: debouncedQuery, ...(selectedCategoryId ? { cat: selectedCategoryId } : {}) })
+    
+    const currentQ = searchParams.get("q") || ""
+    const currentCat = searchParams.get("cat") || null
+    
+    // Only update search params if they are actually different to avoid infinite route changes
+    if (debouncedQuery !== currentQ || selectedCategoryId !== currentCat) {
+        const newParams = {}
+        if (debouncedQuery) newParams.q = debouncedQuery
+        if (selectedCategoryId) newParams.cat = selectedCategoryId
+        setSearchParams(newParams, { replace: true })
     }
   }, [debouncedQuery, selectedCategoryId, performSearch, setSearchParams])
 
@@ -232,14 +257,20 @@ export default function ProfessionalSearch() {
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-zinc-950">
       {/* Header */}
-      <div className="sticky top-0 z-50 bg-white dark:bg-zinc-900 border-b border-slate-200 dark:border-zinc-800 px-4 py-3">
+      <div className="sticky top-0 z-50 bg-white dark:bg-zinc-900 border-b border-slate-200 dark:border-zinc-800 px-4 py-3 md:hidden">
         <div className="max-w-3xl mx-auto flex items-center gap-3">
-          <button onClick={() => navigate(-1)} className="p-2 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-full transition-colors">
+          <button type="button" onClick={() => navigate(-1)} className="p-2 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-full transition-colors">
             <ArrowLeft className="w-5 h-5" />
           </button>
           
-          <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+          <form onSubmit={(e) => {
+            e.preventDefault()
+            setSearchParams({ q: query, ...(selectedCategoryId ? { cat: selectedCategoryId } : {}) })
+            performSearch(query, selectedCategoryId)
+          }} className="flex-1 relative">
+            <button type="submit" className="absolute left-3 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-rose-500 z-10 transition-colors">
+              <Search className="w-4 h-4" />
+            </button>
             <Input 
               autoFocus
               placeholder="Search for restaurants or dishes..." 
@@ -248,17 +279,18 @@ export default function ProfessionalSearch() {
               className="pl-10 pr-10 h-11 bg-slate-100 dark:bg-zinc-800 border-none focus:ring-2 focus:ring-rose-500 rounded-xl"
             />
             {query && (
-              <button onClick={handleClear} className="absolute right-10 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-600">
+              <button type="button" onClick={handleClear} className="absolute right-10 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-600">
                 <X className="w-4 h-4" />
               </button>
             )}
             <button 
+              type="button"
               onClick={handleVoiceSearch}
               className={`absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-full transition-all ${isListening ? 'text-rose-500 scale-125 animate-pulse' : 'text-slate-400'}`}
             >
               <Mic className="w-5 h-5" />
             </button>
-          </div>
+          </form>
         </div>
       </div>
 
@@ -296,7 +328,7 @@ export default function ProfessionalSearch() {
 
         {/* Loading Spinner */}
         <AnimatePresence>
-          {loading && (
+          {(loading || (hasEffectiveCoordinates && (zoneLoading || zoneStatus === "loading"))) && (
             <motion.div 
                initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                className="flex flex-col items-center justify-center py-20"
@@ -339,7 +371,7 @@ export default function ProfessionalSearch() {
                 </div>
                 <div className="grid gap-4">
                   {results.dishes.map((r) => (
-                    <Link to={`/user/restaurants/${r.slug || r._id}${r.matchedDishId ? `?dish=${r.matchedDishId}` : ''}`} key={r._id} className="flex gap-4 p-3 bg-white dark:bg-zinc-900 rounded-2xl shadow-sm border border-slate-100 dark:border-zinc-800 hover:shadow-md transition-shadow group">
+                    <Link to={`/food/user/restaurants/${r.slug || r._id}${r.matchedDishId ? `?dish=${r.matchedDishId}` : ''}`} key={r._id} className="flex gap-4 p-3 bg-white dark:bg-zinc-900 rounded-2xl shadow-sm border border-slate-100 dark:border-zinc-800 hover:shadow-md transition-shadow group">
                        <div className="w-24 h-24 rounded-xl overflow-hidden bg-slate-100 flex-shrink-0 relative">
                            <img 
                             src={getMediaUrl(r.matchedDishImage || r.profileImage || r.image || (Array.isArray(r.images) && r.images[0]))} 
@@ -383,7 +415,7 @@ export default function ProfessionalSearch() {
                 </div>
                 <div className="grid gap-6">
                   {results.restaurants.map((r) => (
-                    <Link to={`/user/restaurants/${r._id}`} key={r._id} className="block group">
+                    <Link to={`/food/user/restaurants/${r._id}`} key={r._id} className="block group">
                       <div className="relative rounded-3xl overflow-hidden aspect-[16/9] mb-3 bg-slate-200">
                          <img 
                           src={getMediaUrl(r.profileImage || r.image || (Array.isArray(r.images) && r.images[0]))} 
@@ -428,7 +460,7 @@ export default function ProfessionalSearch() {
             )}
 
             {/* Empty State */}
-            {!loading && results.restaurants.length === 0 && results.dishes.length === 0 && (
+            {!loading && !(hasEffectiveCoordinates && (zoneLoading || zoneStatus === "loading")) && results.restaurants.length === 0 && results.dishes.length === 0 && (
               <div className="flex flex-col items-center justify-center py-20 text-center">
                  <div className="w-20 h-20 bg-slate-100 dark:bg-zinc-900 rounded-full flex items-center justify-center mb-4">
                     <Search className="w-8 h-8 text-slate-300" />

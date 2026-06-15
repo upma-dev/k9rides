@@ -132,7 +132,7 @@ export default function SearchOverlay({ isOpen, onClose, searchValue, onSearchCh
     e.preventDefault()
     if (searchValue.trim()) {
       saveRecentSearch(searchValue)
-      navigate(`/user/search?q=${encodeURIComponent(searchValue.trim())}`)
+      navigate(`/food/user/search?q=${encodeURIComponent(searchValue.trim())}`)
       onClose()
       onSearchChange("")
     }
@@ -140,7 +140,7 @@ export default function SearchOverlay({ isOpen, onClose, searchValue, onSearchCh
 
   const handleFoodClick = (food) => {
     saveRecentSearch(food.name)
-    navigate(`/user/search?q=${encodeURIComponent(food.name)}`)
+    navigate(`/food/user/search?q=${encodeURIComponent(food.name)}`)
     onClose()
     onSearchChange("")
   }
@@ -159,7 +159,9 @@ export default function SearchOverlay({ isOpen, onClose, searchValue, onSearchCh
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <form onSubmit={handleSearchSubmit} className="flex items-center gap-4">
             <div className="flex-1 relative">
-              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground dark:text-gray-400 z-10" />
+              <button type="submit" className="absolute left-4 top-1/2 transform -translate-y-1/2 p-1 text-muted-foreground hover:text-primary-orange dark:text-gray-400 z-10 transition-colors">
+                <Search className="h-4 w-4" />
+              </button>
               <Input
                 ref={inputRef}
                 value={searchValue}

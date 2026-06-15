@@ -1,12 +1,11 @@
 import { Link, useLocation, useNavigate } from "react-router-dom"
 import { useEffect, useState, useRef } from "react"
-import { ChevronDown, ShoppingCart, Wallet, Search, Mic } from "lucide-react"
+import { ChevronDown, ShoppingCart, Wallet, Mic } from "lucide-react"
 import { Button } from "@food/components/ui/button"
-import { Input } from "@food/components/ui/input"
 import { Switch } from "@food/components/ui/switch"
 import { useLocation as useLocationHook } from "@food/hooks/useLocation"
 import { useCart } from "@food/context/CartContext"
-import { useLocationSelector, useSearchOverlay } from "./UserLayout"
+import { useLocationSelector } from "./UserLayout"
 import { useProfile } from "@food/context/ProfileContext"
 import { FaLocationDot } from "react-icons/fa6"
 import { AnimatePresence, motion } from "framer-motion"
@@ -23,9 +22,7 @@ export default function DesktopNavbar({ showLogo = true }) {
     const { location: userLocation, loading: locationLoading } = useLocationHook()
     const { getCartCount } = useCart()
     const { openLocationSelector } = useLocationSelector()
-    const { setSearchValue } = useSearchOverlay()
     const { vegMode, setVegMode } = useProfile()
-    const [heroSearch, setHeroSearch] = useState("")
     const [logoUrl, setLogoUrl] = useState(null)
     const [companyName, setCompanyName] = useState(null)
     const [hasScrolledPastBanner, setHasScrolledPastBanner] = useState(false)
@@ -209,44 +206,9 @@ export default function DesktopNavbar({ showLogo = true }) {
                             </Button>
                         </div>
 
-                        {/* Center: Search Bar & Veg Mode */}
-                        <div className="flex-1 max-w-3xl mx-4 flex items-center gap-4">
-                            {/* Search Bar */}
-                            <div className="relative flex-1">
-                                <div className="relative bg-gray-100 dark:bg-[#2a2a2a] rounded-lg transition-all duration-300 focus-within:ring-2 focus-within:ring-[#EB590E] focus-within:bg-white dark:focus-within:bg-[#1a1a1a] border border-transparent focus-within:border-[#EB590E]/20">
-                                    <div className="flex items-center px-3 py-2">
-                                        <Search className="h-4 w-4 text-gray-500 flex-shrink-0 mr-3" />
-                                        <Input
-                                            value={heroSearch}
-                                            onChange={(e) => {
-                                                const nextValue = e.target.value
-                                                setHeroSearch(nextValue)
-                                                setSearchValue(nextValue)
-                                            }}
-                                            onKeyDown={(e) => {
-                                                if (e.key === "Enter" && heroSearch.trim()) {
-                                                    navigate(`/food/search?q=${encodeURIComponent(heroSearch.trim())}`)
-                                                }
-                                            }}
-                                            className="h-6 p-0 border-0 bg-transparent text-sm font-medium placeholder:text-gray-500 focus-visible:ring-0 focus-visible:ring-offset-0"
-                                            placeholder="Search for restaurants, food..."
-                                        />
-                                        {heroSearch && (
-                                            <Button
-                                                variant="ghost"
-                                                size="sm"
-                                                className="h-5 w-5 p-0 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-full ml-1"
-                                                onClick={() => setHeroSearch("")}
-                                            >
-                                                <span className="sr-only">Clear</span>
-                                                <span aria-hidden="true">�</span>
-                                            </Button>
-                                        )}
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* VEG MODE Toggle - Moved here */}
+                        {/* Center: Veg Mode */}
+                        <div className="flex-1 max-w-3xl mx-4 flex items-center justify-center">
+                            {/* VEG MODE Toggle */}
                             <div className="flex items-center gap-2 flex-shrink-0">
                                 <div className="flex flex-col items-end">
                                     <span className="text-[10px] font-bold text-gray-700 dark:text-gray-300 leading-none">VEG</span>

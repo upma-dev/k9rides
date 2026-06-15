@@ -34,10 +34,21 @@ export function useSearchOverlay() {
 }
 
 function SearchOverlayProvider({ children }) {
+  const location = useLocation()
   const [isSearchOpen, setIsSearchOpen] = useState(false)
   const [searchValue, setSearchValue] = useState("")
 
+  // Sync state with URL when the URL changes
+  useEffect(() => {
+    const searchParams = new URLSearchParams(location.search)
+    const urlQuery = searchParams.get("q") || ""
+    setSearchValue(urlQuery)
+  }, [location.search])
+
   const openSearch = () => {
+    const searchParams = new URLSearchParams(location.search)
+    const urlQuery = searchParams.get("q") || ""
+    setSearchValue(urlQuery)
     setIsSearchOpen(true)
   }
 
@@ -146,6 +157,7 @@ export default function UserLayout() {
     normalizedPath === "/user/dining" ||
     normalizedPath === "/under-250" ||
     normalizedPath === "/user/under-250" ||
+    normalizedPath === "/user/search" ||
     isProfileRoot ||
     normalizedPath === "" // Handle empty string case for root relative to /food
 

@@ -120,8 +120,8 @@ export function useZone(location, options = {}) {
         setZone(cachedZone ? JSON.parse(cachedZone) : null);
         setZoneStatus("IN_SERVICE");
       } else {
-        // Network/CORS/backend failures should not be treated as confirmed out-of-zone.
-        setZoneStatus("loading");
+        // Fallback to out of service so the app doesn't hang in a loading state
+        setZoneStatus("OUT_OF_SERVICE");
         setZoneId(null);
         setZone(null);
       }
