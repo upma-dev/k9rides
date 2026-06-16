@@ -12,6 +12,7 @@ const AuthApp = lazy(() => import('../modules/auth/routes'))
 const HelpSupportPage = lazy(() => import('../modules/auth/pages/HelpSupportPage'))
 const TermsPage = lazy(() => import('../modules/auth/pages/TermsPage'))
 const PrivacyPage = lazy(() => import('../modules/auth/pages/PrivacyPage'))
+const LandingPage = lazy(() => import('../modules/LandingPage/LandingPage'))
 import ProtectedRoute from '@food/components/ProtectedRoute'
 
 const PageLoader = () => <AppShellSkeleton />
@@ -103,6 +104,9 @@ const AppRoutes = () => {
     <Routes>
       {/* Root → Master Landing Page */}
       <Route path="/" element={<Navigate to="/login" replace />} />
+
+      {/* Landing Page Module */}
+      <Route path="/landing-page" element={<Suspense fallback={<PageLoader />}><LandingPage /></Suspense>} />
 
       {/* Auth Module */}
       <Route path="/login/*" element={<Suspense fallback={<PageLoader />}><AuthApp /></Suspense>} />

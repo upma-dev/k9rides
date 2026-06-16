@@ -1316,10 +1316,10 @@ const AdminLayout = () => {
                   onClick={() => navigate("/taxi/admin/dashboard")}
                   className={cn(
                     "flex-1 flex items-center justify-center gap-2 py-2 text-xs font-bold rounded-lg transition-all duration-300",
-                    "bg-white dark:bg-slate-900 text-black shadow-[0_4px_12px_rgba(255,255,255,0.15)] scale-[1.02]"
+                    "bg-white dark:bg-slate-900 text-black dark:text-white shadow-[0_4px_12px_rgba(255,255,255,0.15)] scale-[1.02]"
                   )}
                 >
-                  <Truck className="w-3.5 h-3.5 text-black" />
+                  <Truck className="w-3.5 h-3.5 text-black dark:text-white" />
                   Taxi
                 </button>
               </div>
