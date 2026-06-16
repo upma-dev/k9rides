@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { zoneAPI } from '@food/api'
-const debugLog = (...args) => {}
-const debugWarn = (...args) => {}
-const debugError = (...args) => {}
+const debugLog = (...args) => console.log("[useZone Hook]", ...args)
+const debugWarn = (...args) => console.warn("[useZone Hook]", ...args)
+const debugError = (...args) => console.error("[useZone Hook]", ...args)
 
 // ---- Cross-hook caching & in-flight de-dupe (module-level) ----
 // Multiple screens/components call useZone(location). Without shared caching,
@@ -62,6 +62,17 @@ export function useZone(location, options = {}) {
   const [error, setError] = useState(null)
   const prevCoordsRef = useRef({ latitude: null, longitude: null })
   const debounceTimerRef = useRef(null)
+
+  // Failsafe: prevent infinite loading state if location or network issues occur
+  useEffect(() => {
+    if (zoneStatus === 'loading') {
+      const failsafe = setTimeout(() => {
+        debugWarn("Failsafe triggered: zoneStatus stuck in 'loading' for 5s, forcing OUT_OF_SERVICE");
+        setZoneStatus('OUT_OF_SERVICE');
+      }, 5000);
+      return () => clearTimeout(failsafe);
+    }
+  }, [zoneStatus]);
 
   // Detect zone when location is available
   const detectZone = useCallback(async (lat, lng) => {
@@ -130,10 +141,21 @@ export function useZone(location, options = {}) {
     }
   }, []);
 
+  // Clean up timer on unmount
+  useEffect(() => {
+    return () => {
+      if (debounceTimerRef.current) {
+        debugLog("Unmounting: clearing debounce timer");
+        clearTimeout(debounceTimerRef.current)
+      }
+    }
+  }, [])
+
   // Auto-detect zone when location changes
   useEffect(() => {
     const lat = roundCoord(location?.latitude, 6)
     const lng = roundCoord(location?.longitude, 6)
+    debugLog("useEffect running. location coords:", lat, lng, "prevCoordsRef:", prevCoordsRef.current);
 
     // Check if coordinates have changed significantly (threshold: ~10 meters)
     const coordThreshold = 0.0001; // approximately 10 meters
@@ -143,20 +165,29 @@ export function useZone(location, options = {}) {
       Math.abs(prevCoordsRef.current.latitude - (lat || 0)) > coordThreshold ||
       Math.abs(prevCoordsRef.current.longitude - (lng || 0)) > coordThreshold;
 
+    debugLog("coordsChanged evaluated to:", coordsChanged, "zoneStatus is:", zoneStatus);
+
     if (Number.isFinite(lat) && Number.isFinite(lng)) {
       // Only detect zone if coordinates changed significantly
       if (coordsChanged) {
         prevCoordsRef.current = { latitude: lat, longitude: lng }
-        if (debounceTimerRef.current) {
-          clearTimeout(debounceTimerRef.current)
+        if (!debounceTimerRef.current) {
+          debugLog("Scheduling detectZone in 350ms");
+          debounceTimerRef.current = setTimeout(() => {
+            debugLog("Debounce timeout fired! Executing detectZone");
+            debounceTimerRef.current = null;
+            detectZone(lat, lng)
+          }, 350)
+        } else {
+          debugLog("Debounce timer already running. Skipping scheduling.");
         }
-        debounceTimerRef.current = setTimeout(() => {
-          detectZone(lat, lng)
-        }, 350)
+      } else {
+        debugLog("Coords did not change significantly. Skipping scheduling.");
       }
     } else {
       // Try to use cached zone if location not available
       const cachedZoneId = usePersistedFallback ? localStorage.getItem("userZoneId") : null;
+      debugLog("Coords not finite. Cached zone ID:", cachedZoneId);
       if (cachedZoneId) {
         const cachedZone = localStorage.getItem("userZone");
         setZoneId(cachedZoneId);
@@ -166,12 +197,6 @@ export function useZone(location, options = {}) {
         setZoneStatus("OUT_OF_SERVICE");
         setZoneId(null);
         setZone(null);
-      }
-    }
-    return () => {
-      if (debounceTimerRef.current) {
-        clearTimeout(debounceTimerRef.current)
-        debounceTimerRef.current = null
       }
     }
   }, [location?.latitude, location?.longitude, detectZone])

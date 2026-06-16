@@ -203,6 +203,12 @@ export default function ProfessionalSearch() {
   useEffect(() => {
     performSearch(debouncedQuery, selectedCategoryId)
     
+    // Wait until the debounced query catches up to the actual query before syncing URL.
+    // This prevents stale debounced queries from overwriting the URL immediately after a clear.
+    if (query !== debouncedQuery) {
+      return
+    }
+
     const currentQ = searchParams.get("q") || ""
     const currentCat = searchParams.get("cat") || null
     
@@ -213,7 +219,7 @@ export default function ProfessionalSearch() {
         if (selectedCategoryId) newParams.cat = selectedCategoryId
         setSearchParams(newParams, { replace: true })
     }
-  }, [debouncedQuery, selectedCategoryId, performSearch, setSearchParams])
+  }, [debouncedQuery, query, selectedCategoryId, performSearch, setSearchParams])
 
   // Speech Recognition Implementation
   const handleVoiceSearch = () => {
@@ -279,14 +285,14 @@ export default function ProfessionalSearch() {
               className="pl-10 pr-10 h-11 bg-slate-100 dark:bg-zinc-800 border-none focus:ring-2 focus:ring-rose-500 rounded-xl"
             />
             {query && (
-              <button type="button" onClick={handleClear} className="absolute right-10 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-600">
+              <button type="button" onClick={handleClear} className="absolute right-10 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-600 z-10">
                 <X className="w-4 h-4" />
               </button>
             )}
             <button 
               type="button"
               onClick={handleVoiceSearch}
-              className={`absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-full transition-all ${isListening ? 'text-rose-500 scale-125 animate-pulse' : 'text-slate-400'}`}
+              className={`absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-full transition-all z-10 ${isListening ? 'text-rose-500 scale-125 animate-pulse' : 'text-slate-400'}`}
             >
               <Mic className="w-5 h-5" />
             </button>
@@ -295,6 +301,38 @@ export default function ProfessionalSearch() {
       </div>
 
       <div className="max-w-3xl mx-auto p-4">
+        {/* Desktop Search Input */}
+        <div className="hidden md:block mb-8 relative">
+          <form onSubmit={(e) => {
+            e.preventDefault()
+            setSearchParams({ q: query, ...(selectedCategoryId ? { cat: selectedCategoryId } : {}) })
+            performSearch(query, selectedCategoryId)
+          }} className="relative">
+            <button type="submit" className="absolute left-4 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-rose-500 z-10 transition-colors">
+              <Search className="w-5 h-5" />
+            </button>
+            <Input 
+              autoFocus
+              placeholder="Search for restaurants or dishes..." 
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              className="pl-12 pr-12 h-12 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 focus:ring-2 focus:ring-rose-500 rounded-2xl shadow-sm text-sm"
+            />
+            {query && (
+              <button type="button" onClick={handleClear} className="absolute right-12 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-600 transition-colors z-10">
+                <X className="w-4 h-4" />
+              </button>
+            )}
+            <button 
+              type="button"
+              onClick={handleVoiceSearch}
+              className={`absolute right-4 top-1/2 -translate-y-1/2 p-1 rounded-full transition-all z-10 ${isListening ? 'text-rose-500 scale-125 animate-pulse' : 'text-slate-400'}`}
+            >
+              <Mic className="w-5 h-5" />
+            </button>
+          </form>
+        </div>
+
         {/* Categories (Admin only) */}
         {!query && !loading && (
           <div className="mb-8">
