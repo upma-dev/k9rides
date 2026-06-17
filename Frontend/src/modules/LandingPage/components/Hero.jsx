@@ -25,10 +25,10 @@ export default function Hero() {
   }
 
   return (
-    <section className="relative min-h-screen pt-32 pb-20 flex items-center justify-center overflow-hidden bg-gradient-to-b from-orange-50/15 via-white to-white dark:from-slate-950 dark:via-slate-900 dark:to-slate-900">
+    <section className="relative min-h-screen pt-32 pb-20 flex items-center justify-center overflow-hidden bg-gradient-to-b from-[#C5902A]/5 via-white to-white dark:from-slate-950 dark:via-slate-900 dark:to-slate-900">
       {/* Decorative Blur Orbs */}
-      <div className="absolute top-20 right-10 w-96 h-96 rounded-full bg-[#F38F24]/5 dark:bg-[#F38F24]/2 blur-3xl pointer-events-none" />
-      <div className="absolute bottom-10 left-10 w-80 h-80 rounded-full bg-orange-200/20 dark:bg-orange-950/5 blur-3xl pointer-events-none" />
+      <div className="absolute top-20 right-10 w-96 h-96 rounded-full bg-[#C5902A]/5 dark:bg-[#C5902A]/2 blur-3xl pointer-events-none" />
+      <div className="absolute bottom-10 left-10 w-80 h-80 rounded-full bg-[#C5902A]/10 dark:bg-[#C5902A]/2 blur-3xl pointer-events-none" />
 
       <div className="max-w-7xl mx-auto px-6 w-full grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8 items-center relative z-10">
         
@@ -42,10 +42,10 @@ export default function Hero() {
           {/* Badge */}
           <motion.div 
             variants={itemVariants}
-            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-orange-50 border border-orange-100 dark:bg-orange-950/20 dark:border-orange-900/30"
+            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#C5902A]/10 border border-[#C5902A]/20 dark:bg-[#C5902A]/5 dark:border-[#C5902A]/15"
           >
-            <span className="flex h-2 w-2 rounded-full bg-[#F38F24] animate-pulse" />
-            <span className="text-xs font-bold tracking-wide text-[#F38F24] uppercase">
+            <span className="flex h-2 w-2 rounded-full bg-[#C5902A] animate-pulse" />
+            <span className="text-xs font-bold tracking-wide text-[#C5902A] dark:text-[#F5D476] uppercase">
               All-In-One Platform Launched
             </span>
           </motion.div>
@@ -56,7 +56,7 @@ export default function Hero() {
             className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-slate-900 dark:text-white leading-[1.1]"
           >
             All-in-One Platform for{' '}
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#F38F24] to-orange-400 dark:from-[#F38F24] dark:to-orange-300">
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#C5902A] to-[#F5D476] dark:from-[#C5902A] dark:to-[#F5D476]">
               Rides, Food & Logistics
             </span>
           </motion.h1>
@@ -76,7 +76,7 @@ export default function Hero() {
           >
             <a
               href="/login/services"
-              className="inline-flex items-center justify-center gap-2 bg-[#F38F24] hover:bg-[#E28018] text-white font-bold px-8 py-4 rounded-2xl shadow-xl shadow-[#F38F24]/20 transition-all duration-300 hover:-translate-y-1 hover:shadow-[#F38F24]/30 text-base"
+              className="inline-flex items-center justify-center gap-2 bg-[#F5D476] hover:bg-[#C5902A] text-slate-950 hover:text-white font-bold px-8 py-4 rounded-2xl shadow-xl shadow-[#C5902A]/20 transition-all duration-300 hover:-translate-y-1 hover:shadow-[#C5902A]/30 text-base"
             >
               Get Started Now
               <ArrowRight className="w-5 h-5" />
@@ -110,7 +110,7 @@ export default function Hero() {
             </div>
             
             <div className="flex items-center gap-2.5">
-              <div className="p-1.5 rounded-lg bg-orange-50 dark:bg-orange-950/15 text-[#F38F24] dark:text-[#F38F24]">
+              <div className="p-1.5 rounded-lg bg-[#C5902A]/10 dark:bg-[#C5902A]/15 text-[#C5902A] dark:text-[#F5D476]">
                 <Star className="w-5 h-5 fill-current" />
               </div>
               <span className="text-xs font-bold text-slate-700 dark:text-slate-300">Fast Deliveries</span>
@@ -142,17 +142,17 @@ export default function Hero() {
                   <span className="text-xs font-black text-white">K9 Rides</span>
                 </div>
                 <div className="h-6 w-6 rounded-full bg-slate-800 flex items-center justify-center">
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#F38F24]" />
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#C5902A]" />
                 </div>
               </div>
 
               {/* Main screen inside mockup */}
               <div className="flex-1 my-4 overflow-y-auto space-y-4 pr-1 scrollbar-hide">
                 <div className="p-4 bg-[#1A1A1A] border border-slate-800/80 rounded-2xl text-left space-y-1 relative overflow-hidden">
-                  <div className="absolute right-[-10px] bottom-[-10px] w-24 h-24 rounded-full bg-[#F38F24]/5 blur-xl" />
+                  <div className="absolute right-[-10px] bottom-[-10px] w-24 h-24 rounded-full bg-[#C5902A]/5 blur-xl" />
                   <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Available Balance</p>
                   <p className="text-2xl font-black text-white">₹142.50</p>
-                  <p className="text-[9px] font-semibold text-[#F38F24]">Instant Cashout Enabled</p>
+                  <p className="text-[9px] font-semibold text-[#F5D476]">Instant Cashout Enabled</p>
                 </div>
 
                 <p className="text-left text-xs font-black text-slate-400 tracking-wide uppercase">Our Services</p>
@@ -160,12 +160,12 @@ export default function Hero() {
                 {/* Service Quick-Buttons */}
                 <div className="grid grid-cols-2 gap-3">
                   <div className="p-3 bg-slate-800 hover:bg-slate-700 rounded-xl flex flex-col justify-between h-20 text-left cursor-pointer transition-colors duration-200">
-                    <Car className="w-5 h-5 text-[#F38F24]" />
+                    <Car className="w-5 h-5 text-[#F5D476]" />
                     <span className="text-[10px] font-bold text-white">Taxi Booking</span>
                   </div>
                   
                   <div className="p-3 bg-slate-800 hover:bg-slate-700 rounded-xl flex flex-col justify-between h-20 text-left cursor-pointer transition-colors duration-200">
-                    <Utensils className="w-5 h-5 text-orange-400" />
+                    <Utensils className="w-5 h-5 text-[#F5D476]" />
                     <span className="text-[10px] font-bold text-white">Food Order</span>
                   </div>
                   
@@ -182,7 +182,7 @@ export default function Hero() {
 
                 {/* Banner inside mock */}
                 <div className="p-3 bg-slate-800/50 rounded-xl border border-slate-700/50 flex items-center gap-3 text-left">
-                  <div className="p-2 bg-[#F38F24]/10 rounded-lg text-[#F38F24]">
+                  <div className="p-2 bg-[#C5902A]/10 rounded-lg text-[#F5D476]">
                     <Calendar className="w-4 h-4" />
                   </div>
                   <div>
@@ -194,7 +194,7 @@ export default function Hero() {
 
               {/* Bottom Nav inside mockup */}
               <div className="h-12 border-t border-slate-800 flex items-center justify-around text-slate-500 pt-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#F38F24]" />
+                <span className="w-1.5 h-1.5 rounded-full bg-[#C5902A]" />
                 <span className="w-1.5 h-1.5 rounded-full bg-slate-700" />
                 <span className="w-1.5 h-1.5 rounded-full bg-slate-700" />
               </div>

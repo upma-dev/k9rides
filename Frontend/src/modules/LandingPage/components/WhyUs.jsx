@@ -75,7 +75,7 @@ export default function WhyUs() {
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 mb-20">
           {stats.map((stat, idx) => (
             <div key={idx} className="p-6 bg-white dark:bg-slate-900 rounded-[20px] shadow-sm border border-slate-100 dark:border-slate-800 text-center space-y-2">
-              <p className="text-3xl sm:text-4xl font-black text-[#F38F24]">
+              <p className="text-3xl sm:text-4xl font-black text-[#C5902A] dark:text-[#F5D476]">
                 <StatCounter value={stat.value} />
               </p>
               <p className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
@@ -89,7 +89,7 @@ export default function WhyUs() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8 items-center">
           {/* Left Column: Heading */}
           <div className="lg:col-span-5 text-left space-y-6">
-            <h2 className="text-xs font-black tracking-widest text-[#F38F24] uppercase">
+            <h2 className="text-xs font-black tracking-widest text-[#C5902A] dark:text-[#F5D476] uppercase">
               Why Choose Us
             </h2>
             <h3 className="text-3xl sm:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight leading-tight">
@@ -101,7 +101,7 @@ export default function WhyUs() {
             <div className="pt-2">
               <a
                 href="/login/services"
-                className="inline-flex items-center gap-2 bg-slate-900 hover:bg-slate-800 dark:bg-[#F38F24] dark:hover:bg-[#E28018] text-white font-bold text-sm px-6 py-3.5 rounded-xl shadow-lg transition-all duration-300"
+                className="inline-flex items-center gap-2 bg-slate-900 hover:bg-slate-800 dark:bg-[#C5902A] dark:hover:bg-[#8E5C0D] text-white font-bold text-sm px-6 py-3.5 rounded-xl shadow-lg transition-all duration-300"
               >
                 Try the Super-App
               </a>
@@ -121,7 +121,7 @@ export default function WhyUs() {
                   transition={{ delay: index * 0.15, type: 'spring', stiffness: 70 }}
                   className="flex gap-5 p-6 bg-white dark:bg-slate-900 rounded-[24px] shadow-sm border border-slate-100 dark:border-slate-800/80 hover:shadow-md transition-shadow text-left"
                 >
-                  <div className="p-3 bg-orange-50 dark:bg-orange-950/20 text-[#F38F24] rounded-2xl h-fit shrink-0">
+                  <div className="p-3 bg-[#C5902A]/10 dark:bg-[#C5902A]/5 text-[#C5902A] dark:text-[#F5D476] rounded-2xl h-fit shrink-0">
                     <Icon className="w-6 h-6" />
                   </div>
                   <div className="space-y-1.5">

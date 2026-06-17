@@ -38,7 +38,7 @@ export default function FAQ() {
         
         {/* Header */}
         <div className="text-center mb-16 space-y-4">
-          <h2 className="text-xs font-black tracking-widest text-[#F38F24] uppercase">
+          <h2 className="text-xs font-black tracking-widest text-[#C5902A] dark:text-[#F5D476] uppercase">
             Frequently Asked Questions
           </h2>
           <p className="text-3xl sm:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight">
@@ -66,7 +66,7 @@ export default function FAQ() {
                     {faq.question}
                   </span>
                   <div className={`p-1.5 rounded-lg shrink-0 transition-colors ${
-                    isOpen ? 'bg-[#F38F24] text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
+                    isOpen ? 'bg-[#C5902A] text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
                   }`}>
                     {isOpen ? <Minus className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
                   </div>

@@ -33,8 +33,8 @@ export default function Showcase() {
         
         {/* Header */}
         <div className="text-center max-w-3xl mx-auto mb-20 space-y-4">
-          <h2 className="text-xs font-black tracking-widest text-[#F38F24] uppercase flex items-center justify-center gap-1.5">
-            <Sparkles className="w-3.5 h-3.5 fill-current text-[#F38F24]" />
+          <h2 className="text-xs font-black tracking-widest text-[#C5902A] dark:text-[#F5D476] uppercase flex items-center justify-center gap-1.5">
+            <Sparkles className="w-3.5 h-3.5 fill-current text-[#F5D476]" />
             K9 RIDES • POWERED BY MEKING TECHNOLOGY
           </h2>
           <h3 className="text-3xl sm:text-5xl font-extrabold text-white tracking-tight">
@@ -51,7 +51,7 @@ export default function Showcase() {
           {/* Left Column: Key Features */}
           <div className="lg:col-span-5 text-left space-y-8 order-2 lg:order-1">
             <div className="space-y-4">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#F38F24]/10 border border-[#F38F24]/20 text-[#F38F24] text-[10px] font-black uppercase tracking-wider">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#C5902A]/10 border border-[#C5902A]/20 text-[#C5902A] dark:text-[#F5D476] text-[10px] font-black uppercase tracking-wider">
                 <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
                 Passenger Insurance Included
               </span>
@@ -68,7 +68,7 @@ export default function Showcase() {
                 const Icon = feature.icon
                 return (
                   <div key={index} className="space-y-2 group">
-                    <div className="w-10 h-10 rounded-xl bg-slate-800 text-[#F38F24] group-hover:bg-[#F38F24] group-hover:text-black flex items-center justify-center transition-all duration-300">
+                    <div className="w-10 h-10 rounded-xl bg-slate-800 text-[#C5902A] dark:text-[#F5D476] group-hover:bg-[#C5902A] group-hover:text-black flex items-center justify-center transition-all duration-300">
                       <Icon className="w-5 h-5" />
                     </div>
                     <h5 className="text-sm font-extrabold text-white">
@@ -83,12 +83,12 @@ export default function Showcase() {
             </div>
 
             <div className="pt-6 border-t border-slate-800 flex flex-col sm:flex-row gap-4 text-xs text-slate-500">
-              <a href="mailto:k9bharatrides@gmail.com" className="flex items-center gap-1.5 hover:text-[#F38F24] transition-colors">
-                <Mail className="w-4 h-4 text-[#F38F24]" />
+              <a href="mailto:k9bharatrides@gmail.com" className="flex items-center gap-1.5 hover:text-[#C5902A] dark:hover:text-[#F5D476] transition-colors">
+                <Mail className="w-4 h-4 text-[#C5902A] dark:text-[#F5D476]" />
                 k9bharatrides@gmail.com
               </a>
-              <a href="https://www.k9rides.com" target="_blank" rel="noreferrer" className="flex items-center gap-1.5 hover:text-[#F38F24] transition-colors">
-                <Globe className="w-4 h-4 text-[#F38F24]" />
+              <a href="https://www.k9rides.com" target="_blank" rel="noreferrer" className="flex items-center gap-1.5 hover:text-[#C5902A] dark:hover:text-[#F5D476] transition-colors">
+                <Globe className="w-4 h-4 text-[#C5902A] dark:text-[#F5D476]" />
                 www.k9rides.com
               </a>
             </div>
@@ -113,11 +113,11 @@ export default function Showcase() {
               
               {/* Subtle overlay elements positioned carefully to avoid overlapping text */}
               <div className="absolute top-4 left-4 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#1A1A1A]/95 backdrop-blur-md border border-slate-800 text-white text-[9px] font-black uppercase tracking-wider shadow-lg">
-                <ShieldCheck className="w-3.5 h-3.5 text-[#F38F24]" />
+                <ShieldCheck className="w-3.5 h-3.5 text-[#F5D476]" />
                 100% Insured
               </div>
 
-              <div className="absolute bottom-4 right-4 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#F38F24] text-black text-[9px] font-black uppercase tracking-wider shadow-lg">
+              <div className="absolute bottom-4 right-4 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#C5902A] text-black text-[9px] font-black uppercase tracking-wider shadow-lg">
                 Comfort Fleet
               </div>
             </div>

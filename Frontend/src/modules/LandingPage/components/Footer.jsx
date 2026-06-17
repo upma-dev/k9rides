@@ -55,7 +55,7 @@ export default function Footer() {
                 <a
                   key={idx}
                   href={social.href}
-                  className="p-2 rounded-xl bg-slate-900 hover:bg-[#F38F24] hover:text-white transition-all duration-300 border border-slate-800"
+                  className="p-2 rounded-xl bg-slate-900 hover:bg-[#C5902A] hover:text-black transition-all duration-300 border border-slate-800"
                   aria-label="Social Link"
                 >
                   <Icon className="w-4 h-4" />
@@ -131,15 +131,15 @@ export default function Footer() {
           <h4 className="text-xs font-black uppercase tracking-wider text-slate-200">Contact Us</h4>
           <ul className="space-y-3 text-sm">
             <li className="flex items-start gap-2.5">
-              <MapPin className="w-4 h-4 text-[#F38F24] shrink-0 mt-0.5" />
+              <MapPin className="w-4 h-4 text-[#C5902A] dark:text-[#F5D476] shrink-0 mt-0.5" />
               <span>K9 Village , Siliguri,West Bengal.India</span>
             </li>
             <li className="flex items-center gap-2.5">
-              <Phone className="w-4 h-4 text-[#F38F24] shrink-0" />
+              <Phone className="w-4 h-4 text-[#C5902A] dark:text-[#F5D476] shrink-0" />
               <span>+91 7358789910</span>
             </li>
             <li className="flex items-center gap-2.5">
-              <Mail className="w-4 h-4 text-[#F38F24] shrink-0" />
+              <Mail className="w-4 h-4 text-[#C5902A] dark:text-[#F5D476] shrink-0" />
               <span>k9bharatrides@gmail.com</span>
             </li>
           </ul>

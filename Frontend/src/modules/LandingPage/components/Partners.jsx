@@ -19,7 +19,7 @@ export default function Partners() {
       ctaText: 'Register as Driver',
       ctaHref: '/taxi/signup',
       themeClass: 'from-[#1A1A1A] to-slate-900 border border-slate-800 text-white',
-      accentText: 'text-[#F38F24]',
+      accentText: 'text-[#F5D476]',
       badgeBg: 'bg-white/10 text-white border border-white/20'
     },
     {
@@ -38,7 +38,7 @@ export default function Partners() {
       ctaHref: '/food/restaurant/onboarding?step=1',
       themeClass: 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white',
       accentText: 'text-slate-550 dark:text-slate-400',
-      badgeBg: 'bg-orange-50 dark:bg-orange-950/20 text-[#F38F24] border border-orange-100 dark:border-orange-900/30'
+      badgeBg: 'bg-[#C5902A]/10 dark:bg-[#C5902A]/5 text-[#C5902A] dark:text-[#F5D476] border border-[#C5902A]/20 dark:border-[#C5902A]/15'
     }
   ]
 
@@ -48,7 +48,7 @@ export default function Partners() {
         
         {/* Header */}
         <div className="text-center max-w-3xl mx-auto mb-16 space-y-4">
-          <h2 className="text-xs font-black tracking-widest text-[#F38F24] uppercase">
+          <h2 className="text-xs font-black tracking-widest text-[#C5902A] dark:text-[#F5D476] uppercase">
             Partnership Opportunities
           </h2>
           <p className="text-3xl sm:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight">
@@ -114,7 +114,7 @@ export default function Partners() {
                     className={`w-full inline-flex items-center justify-center gap-2 font-bold px-6 py-4 rounded-2xl transition-all duration-300 ${
                       partner.type === 'driver'
                         ? 'bg-white text-slate-900 hover:bg-slate-100 font-extrabold shadow-lg shadow-black/10'
-                        : 'bg-[#F38F24] hover:bg-[#E28018] text-white shadow-xl shadow-[#F38F24]/20 hover:shadow-[#F38F24]/35'
+                        : 'bg-[#F5D476] hover:bg-[#C5902A] text-slate-950 hover:text-white shadow-xl shadow-[#C5902A]/20 hover:shadow-[#C5902A]/35'
                     }`}
                   >
                     {partner.ctaText}

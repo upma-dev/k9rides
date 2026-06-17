@@ -44,7 +44,7 @@ export default function LandingPage() {
   }, [])
 
   return (
-    <div className="min-h-screen bg-white text-slate-900 dark:bg-slate-900 dark:text-slate-100 font-sans antialiased overflow-x-hidden selection:bg-indigo-500 selection:text-white">
+    <div className="min-h-screen bg-white text-slate-900 dark:bg-slate-900 dark:text-slate-100 font-sans antialiased overflow-x-hidden selection:bg-[#C5902A] selection:text-white">
       {/* Navigation Header */}
       <Navbar />
 

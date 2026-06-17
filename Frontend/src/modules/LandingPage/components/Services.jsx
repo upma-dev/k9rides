@@ -8,7 +8,7 @@ export default function Services() {
       icon: Car,
       title: 'Ride Hailing / Taxi',
       description: 'Book rides in seconds. From budget-friendly shares to premium private cabs, travel safely with vetted drivers.',
-      color: 'text-[#F38F24] bg-orange-50 dark:bg-orange-950/20 dark:text-[#F38F24]',
+      color: 'text-[#C5902A] dark:text-[#F5D476] bg-[#C5902A]/10 dark:bg-[#C5902A]/5',
       tag: 'taxi'
     },
     {
@@ -72,7 +72,7 @@ export default function Services() {
         
         {/* Header Title */}
         <div className="text-center max-w-3xl mx-auto mb-16 space-y-4">
-          <h2 className="text-xs font-black tracking-widest text-[#F38F24] uppercase">
+          <h2 className="text-xs font-black tracking-widest text-[#C5902A] dark:text-[#F5D476] uppercase">
             Services Platform
           </h2>
           <p className="text-3xl sm:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight">
@@ -97,7 +97,7 @@ export default function Services() {
               <motion.div
                 key={service.title}
                 variants={cardVariants}
-                className="group p-8 rounded-[24px] bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800 hover:bg-white dark:hover:bg-slate-800 hover:shadow-2xl hover:shadow-[#F38F24]/5 hover:border-[#F38F24]/20 transition-all duration-300 flex flex-col justify-between"
+                className="group p-8 rounded-[24px] bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800 hover:bg-white dark:hover:bg-slate-800 hover:shadow-2xl hover:shadow-[#C5902A]/5 hover:border-[#C5902A]/20 transition-all duration-300 flex flex-col justify-between"
               >
                 <div className="space-y-6 text-left">
                   {/* Icon Wrapper */}
@@ -107,7 +107,7 @@ export default function Services() {
                   
                   {/* Description */}
                   <div className="space-y-2">
-                    <h3 className="text-lg font-extrabold text-slate-900 dark:text-white group-hover:text-[#F38F24] dark:group-hover:text-[#F38F24] transition-colors">
+                    <h3 className="text-lg font-extrabold text-slate-900 dark:text-white group-hover:text-[#C5902A] dark:group-hover:text-[#F5D476] transition-colors">
                       {service.title}
                     </h3>
                     <p className="text-slate-600 dark:text-slate-300 text-sm leading-relaxed">
@@ -119,7 +119,7 @@ export default function Services() {
                 <div className="pt-6 border-t border-slate-100 dark:border-slate-800/50 mt-6 flex justify-between items-center">
                   <a
                     href="/login/services"
-                    className="inline-flex items-center gap-1 text-xs font-black text-[#F38F24] hover:text-[#E28018] transition-colors"
+                    className="inline-flex items-center gap-1 text-xs font-black text-[#C5902A] dark:text-[#F5D476] hover:text-[#8E5C0D] transition-colors"
                   >
                     Open Service
                     <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />

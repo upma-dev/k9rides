@@ -399,18 +399,7 @@ const GeneralSettings = () => {
            </div>
         </SectionCard>
 
-        {/* Video Config */}
-        <SectionCard title="Landing Page Video Section">
-           <div className="grid grid-cols-1 gap-6">
-              <InputField 
-                label="Landing Page Video URL" 
-                name="landing_video_url" 
-                value={settings.general.landing_video_url} 
-                onChange={(n, v) => handleChange('general', n, v)} 
-                placeholder="Enter video URL (e.g. /k9_bg_vdo.mp4 or a hosted video link)" 
-              />
-           </div>
-        </SectionCard>
+
 
         {/* Extra Metadata */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-12 pt-4">

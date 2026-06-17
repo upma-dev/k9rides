@@ -21,7 +21,7 @@ export default function Ecosystem() {
       name: "Ride Hailing",
       description: "Book safe and reliable rides instantly",
       icon: Car,
-      color: "bg-[#F38F24]",
+      color: "bg-[#C5902A]",
       path: "/taxi/user"
     }
   ]
@@ -37,7 +37,7 @@ export default function Ecosystem() {
           <div className="md:w-[45%] lg:w-[50%] bg-[#1A1A1A] p-10 sm:p-12 text-white flex flex-col justify-between text-left relative overflow-hidden">
             {/* Ambient gradients */}
             <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
-              <div className="absolute -top-[20%] -left-[10%] w-[70%] h-[70%] bg-[#F38F24]/10 rounded-full blur-[100px]" />
+              <div className="absolute -top-[20%] -left-[10%] w-[70%] h-[70%] bg-[#C5902A]/10 rounded-full blur-[100px]" />
               <div className="absolute top-[60%] right-[10%] w-[50%] h-[50%] bg-white/5 rounded-full blur-[90px]" />
             </div>
 
@@ -54,7 +54,7 @@ export default function Ecosystem() {
               <div className="space-y-6">
                 <h3 className="text-4xl sm:text-5xl font-extrabold tracking-tight leading-[1.1] text-white">
                   The unified <br />
-                  <span className="text-[#F38F24]">ecosystem</span> <br />
+                  <span className="text-[#C5902A]">ecosystem</span> <br />
                   for everything.
                 </h3>
                 <p className="text-slate-400 text-base leading-relaxed">
@@ -66,7 +66,7 @@ export default function Ecosystem() {
             {/* Footer tags */}
             <div className="relative z-10 flex gap-4 text-[11px] font-bold text-slate-500 uppercase tracking-widest mt-8">
               <span>Food</span>
-              <span className="text-[#F38F24]">•</span>
+              <span className="text-[#C5902A]">•</span>
               <span>Rides</span>
               <span className="text-slate-700">•</span>
               <span>Logistics</span>
@@ -93,11 +93,11 @@ export default function Ecosystem() {
                     <div
                       key={opt.id}
                       onClick={() => navigate(opt.path)}
-                      className="group cursor-pointer bg-white border border-slate-200 hover:border-[#F38F24]/30 rounded-[24px] p-5 shadow-sm hover:shadow-md transition-all duration-300 flex items-center justify-between"
+                      className="group cursor-pointer bg-white border border-slate-200 hover:border-[#C5902A]/30 rounded-[24px] p-5 shadow-sm hover:shadow-md transition-all duration-300 flex items-center justify-between"
                     >
                       <div className="flex gap-4 items-center">
                         <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-white shadow-sm transition-transform duration-300 group-hover:scale-105 ${
-                          opt.id === 'food' ? 'bg-[#1A1A1A]' : 'bg-[#F38F24]'
+                          opt.id === 'food' ? 'bg-[#1A1A1A]' : 'bg-[#C5902A]'
                         }`}>
                           <Icon className="w-5 h-5" />
                         </div>
@@ -106,8 +106,8 @@ export default function Ecosystem() {
                           <p className="text-slate-500 text-[12px] font-medium leading-tight max-w-[22ch]">{opt.description}</p>
                         </div>
                       </div>
-                      <div className="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center group-hover:bg-[#F38F24]/10 transition-colors shrink-0">
-                        <ArrowRight className="w-4 h-4 text-slate-400 group-hover:text-[#F38F24] transition-colors" />
+                      <div className="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center group-hover:bg-[#C5902A]/10 transition-colors shrink-0">
+                        <ArrowRight className="w-4 h-4 text-slate-400 group-hover:text-[#C5902A] transition-colors" />
                       </div>
                     </div>
                   )
