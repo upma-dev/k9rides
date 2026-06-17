@@ -12,8 +12,15 @@ const AboutPage = () => {
     const fetchContent = async () => {
       try {
         const res = await api.get('/common/landing-page/settings');
-        if (res?.data?.success && res?.data?.data?.pages?.about_us) {
-          setDynamicContent(res.data.data.pages.about_us);
+        if (res?.success && res?.data?.pages?.about_us) {
+          const unescapedHtml = res.data.pages.about_us
+            .replace(/&lt;/g, '<')
+            .replace(/&gt;/g, '>')
+            .replace(/&amp;/g, '&')
+            .replace(/&quot;/g, '"')
+            .replace(/&#39;/g, "'")
+            .replace(/&#x2F;/g, '/');
+          setDynamicContent(unescapedHtml);
         }
       } catch (err) {
         console.error('Error fetching about us page content:', err);

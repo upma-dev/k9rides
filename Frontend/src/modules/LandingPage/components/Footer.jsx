@@ -7,9 +7,9 @@ export default function Footer({ settings }) {
 
   const links = {
     company: [
-      { name: 'About Us', href: '/about' },
-      { name: 'Careers', href: '/careers' },
-      { name: 'Newsroom', href: '/newsroom' }
+      { name: 'About Us', href: '/taxi/about' },
+      { name: 'Careers', href: '/taxi/careers' },
+      { name: 'Newsroom', href: '/taxi/newsroom' }
     ],
     services: [
       { name: 'Ride Hailing', href: '/login/services' },
@@ -18,11 +18,11 @@ export default function Footer({ settings }) {
       { name: 'Airport Transfers', href: '/login/services' }
     ],
     legal: [
-      { name: 'Terms of Service', href: '/terms' },
-      { name: 'Privacy Policy', href: '/privacy' },
-      { name: 'Refund Policy', href: '/refund' },
-      { name: 'Cancellation Policy', href: '/cancellation' },
-      { name: 'FAQs', href: '#faq' }
+      { name: 'Terms of Service', href: '/taxi/terms' },
+      { name: 'Privacy Policy', href: '/taxi/privacy' },
+      { name: 'Refund Policy', href: '/taxi/refund' },
+      { name: 'Cancellation Policy', href: '/taxi/cancellation' },
+      { name: 'FAQs', href: '/taxi/faq' }
     ]
   }
 
@@ -160,9 +160,9 @@ export default function Footer({ settings }) {
       <div className="max-w-7xl mx-auto px-6 border-t border-slate-900 pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs">
         <p>© {currentYear} K9 Rides Inc. All rights reserved.</p>
         <div className="flex gap-6">
-          <a href="/terms" className="hover:text-white transition-colors duration-200">Terms</a>
-          <a href="/privacy" className="hover:text-white transition-colors duration-200">Privacy</a>
-          <a href="/support" className="hover:text-white transition-colors duration-200">Support</a>
+          <a href="/taxi/terms" className="hover:text-white transition-colors duration-200">Terms</a>
+          <a href="/taxi/privacy" className="hover:text-white transition-colors duration-200">Privacy</a>
+          <a href="/taxi/support" className="hover:text-white transition-colors duration-200">Support</a>
         </div>
       </div>
     </footer>

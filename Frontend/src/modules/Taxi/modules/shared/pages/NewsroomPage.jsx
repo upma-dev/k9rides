@@ -27,8 +27,15 @@ const NewsroomPage = () => {
     const fetchContent = async () => {
       try {
         const res = await api.get('/common/landing-page/settings');
-        if (res?.data?.success && res?.data?.data?.pages?.newsroom) {
-          setDynamicContent(res.data.data.pages.newsroom);
+        if (res?.success && res?.data?.pages?.newsroom) {
+          const unescapedHtml = res.data.pages.newsroom
+            .replace(/&lt;/g, '<')
+            .replace(/&gt;/g, '>')
+            .replace(/&amp;/g, '&')
+            .replace(/&quot;/g, '"')
+            .replace(/&#39;/g, "'")
+            .replace(/&#x2F;/g, '/');
+          setDynamicContent(unescapedHtml);
         }
       } catch (err) {
         console.error('Error fetching newsroom content:', err);

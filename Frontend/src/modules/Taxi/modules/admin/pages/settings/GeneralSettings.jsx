@@ -407,6 +407,19 @@ const GeneralSettings = () => {
            <InputField label="Footer Content 2" name="footer_2" value={settings.general.footer_2} onChange={(n, v) => handleChange('general', n, v)} placeholder={`Design & Develop by ${configuredAppName}`} />
         </div>
 
+        {/* Landing Page Content Redirect */}
+        <SectionCard title="Landing Page Content">
+           <div className="flex flex-col sm:flex-row items-center justify-between gap-6 p-4 rounded-xl border border-indigo-100 bg-indigo-50/50">
+             <div>
+               <h4 className="text-sm font-bold text-gray-800">Manage Landing Page & Footer Pages</h4>
+               <p className="text-xs text-gray-500 mt-1">Edit content for About Us, Careers, Newsroom, Terms & Conditions, Privacy, Refund & Cancellation Policy.</p>
+             </div>
+             <a href="/taxi/admin/settings/cms/home" className="shrink-0 bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2.5 rounded-lg text-sm font-bold shadow-sm transition-colors">
+               Open Landing Page CMS
+             </a>
+           </div>
+        </SectionCard>
+
         {/* Operational Styling */}
         <SectionCard title="Dispatcher Panel Section">
            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-8">

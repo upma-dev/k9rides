@@ -226,8 +226,16 @@ const LandingPageSettings = ({ defaultTab = 'general', defaultPage = 'about_us' 
     try {
       setLoading(true);
       const res = await adminService.getLandingPageSettings();
-      if (res?.data?.success && res?.data?.data) {
-        const data = res.data.data;
+      if (res?.success && res?.data) {
+        const data = res.data;
+        const unescapeHtml = (text) => text ? text
+          .replace(/&lt;/g, '<')
+          .replace(/&gt;/g, '>')
+          .replace(/&amp;/g, '&')
+          .replace(/&quot;/g, '"')
+          .replace(/&#39;/g, "'")
+          .replace(/&#x2F;/g, '/') : '';
+          
         setSettings({
           video_url: data.video_url || '',
           logo_url: data.logo_url || '',
@@ -253,13 +261,13 @@ const LandingPageSettings = ({ defaultTab = 'general', defaultPage = 'about_us' 
           app_store_url: data.app_store_url || '',
           faqs: data.faqs || [],
           pages: {
-            about_us: data.pages?.about_us || '',
-            careers: data.pages?.careers || '',
-            newsroom: data.pages?.newsroom || '',
-            terms_conditions: data.pages?.terms_conditions || '',
-            privacy_policy: data.pages?.privacy_policy || '',
-            refund_policy: data.pages?.refund_policy || '',
-            cancellation_policy: data.pages?.cancellation_policy || ''
+            about_us: unescapeHtml(data.pages?.about_us),
+            careers: unescapeHtml(data.pages?.careers),
+            newsroom: unescapeHtml(data.pages?.newsroom),
+            terms_conditions: unescapeHtml(data.pages?.terms_conditions),
+            privacy_policy: unescapeHtml(data.pages?.privacy_policy),
+            refund_policy: unescapeHtml(data.pages?.refund_policy),
+            cancellation_policy: unescapeHtml(data.pages?.cancellation_policy)
           }
         });
       }

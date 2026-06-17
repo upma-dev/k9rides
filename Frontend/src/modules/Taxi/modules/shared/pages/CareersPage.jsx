@@ -28,8 +28,15 @@ const CareersPage = () => {
     const fetchContent = async () => {
       try {
         const res = await api.get('/common/landing-page/settings');
-        if (res?.data?.success && res?.data?.data?.pages?.careers) {
-          setDynamicContent(res.data.data.pages.careers);
+        if (res?.success && res?.data?.pages?.careers) {
+          const unescapedHtml = res.data.pages.careers
+            .replace(/&lt;/g, '<')
+            .replace(/&gt;/g, '>')
+            .replace(/&amp;/g, '&')
+            .replace(/&quot;/g, '"')
+            .replace(/&#39;/g, "'")
+            .replace(/&#x2F;/g, '/');
+          setDynamicContent(unescapedHtml);
         }
       } catch (err) {
         console.error('Error fetching careers content:', err);

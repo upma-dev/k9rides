@@ -32,8 +32,8 @@ export default function LandingPage() {
     const fetchLandingSettings = async () => {
       try {
         const res = await api.get('/common/landing-page/settings')
-        if (res?.data?.success && res?.data?.data) {
-          setLandingSettings(res.data.data)
+        if (res?.success && res?.data) {
+          setLandingSettings(res.data)
         }
       } catch (err) {
         console.error('Error loading landing page settings:', err)

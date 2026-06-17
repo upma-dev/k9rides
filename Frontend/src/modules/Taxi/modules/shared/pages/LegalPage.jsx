@@ -240,14 +240,21 @@ const LegalPage = () => {
     const fetchContent = async () => {
       try {
         const res = await api.get('/common/landing-page/settings');
-        if (res?.data?.success && res?.data?.data) {
+        if (res?.success && res?.data) {
           let pageKey = 'terms_conditions';
           if (docType === 'privacy') pageKey = 'privacy_policy';
           if (docType === 'refund') pageKey = 'refund_policy';
           if (docType === 'cancellation') pageKey = 'cancellation_policy';
           
-          if (res.data.data.pages?.[pageKey]) {
-            setDynamicContent(res.data.data.pages[pageKey]);
+          if (res.data.pages?.[pageKey]) {
+            const unescapedHtml = res.data.pages[pageKey]
+              .replace(/&lt;/g, '<')
+              .replace(/&gt;/g, '>')
+              .replace(/&amp;/g, '&')
+              .replace(/&quot;/g, '"')
+              .replace(/&#39;/g, "'")
+              .replace(/&#x2F;/g, '/');
+            setDynamicContent(unescapedHtml);
           }
         }
       } catch (err) {
