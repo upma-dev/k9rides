@@ -11,3 +11,4 @@ commonRouter.get('/common/referrals/settings', commonController.getReferralSetti
 commonRouter.get('/common/settings', commonController.getPublicSettingsBootstrap);
 commonRouter.get('/common/payment-gateway', commonController.getPaymentGatewayConfig);
 commonRouter.post('/common/payment-gateway/phonepe/callback', commonController.acknowledgePhonePeCallback);
+commonRouter.get('/common/landing-page/settings', commonController.getLandingPageSettings);

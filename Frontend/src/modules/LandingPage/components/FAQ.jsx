@@ -2,10 +2,10 @@ import React, { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Plus, Minus } from 'lucide-react'
 
-export default function FAQ() {
+export default function FAQ({ settings }) {
   const [openIdx, setOpenIdx] = useState(null)
 
-  const faqs = [
+  const defaultFaqs = [
     {
       question: 'What services are supported by K9 Rides?',
       answer: 'K9 Rides is an all-in-one super-app supporting Ride Hailing (Taxi & Cab Sharing), Food & Dining Delivery, secure Parcel Courier Services, pre-scheduled Airport Transfers, Hourly Vehicle Rentals, and commercial Cargo/Logistics.'
@@ -16,17 +16,19 @@ export default function FAQ() {
     },
     {
       question: 'How do restaurant partners get paid?',
-      answer: 'Listings and orders are managed through our advanced Restaurant Dashboard. Payments are calculated daily and can be paid directly into your verified bank account or digital wallet with transparent ledger records.'
+      answer: 'Restaurant orders are managed through our advanced Restaurant Dashboard. Payments are calculated daily and paid directly into your verified bank account or digital wallet.'
     },
     {
       question: 'Is in-app payment secure?',
-      answer: 'Yes. K9 Rides utilizes certified SSL encryption and standard integrated payment gateways (like Stripe or Razorpay) to secure card transactions, digital wallets, and bank transfers.'
+      answer: 'Yes. K9 Rides utilizes secure SSL encryption and integrated payment gateways to secure credit cards, digital wallets, UPI, and bank transfers.'
     },
     {
       question: 'Can I schedule airport transfers in advance?',
-      answer: 'Absolutely. The Airport Transfer module allows you to pre-schedule rides hours or days in advance. Simply select the transfer option, select your flight schedule, and a driver will be dispatched to match your flight timing.'
+      answer: 'Absolutely. The Airport Transfer module allows you to pre-schedule rides hours or days in advance. Simply select the transfer option, specify your flight details, and a driver will be dispatched to match your schedule.'
     }
   ]
+
+  const faqs = settings?.faqs && settings.faqs.length > 0 ? settings.faqs : defaultFaqs;
 
   const toggleFaq = (idx) => {
     setOpenIdx(openIdx === idx ? null : idx)

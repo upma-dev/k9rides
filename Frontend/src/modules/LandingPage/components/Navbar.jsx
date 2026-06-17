@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Menu, X, ArrowRight } from 'lucide-react'
 import k9Logo from '../assets/k9-logo.jpg'
 
-export default function Navbar() {
+export default function Navbar({ settings }) {
   const [isScrolled, setIsScrolled] = useState(false)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 
@@ -47,7 +47,7 @@ export default function Navbar() {
           {/* Brand Logo */}
           <a href="#" className="flex items-center gap-3 group">
             <div className="h-10 w-10 rounded-xl overflow-hidden shadow-lg shadow-[#C5902A]/20 group-hover:scale-105 transition-transform duration-300 bg-white">
-              <img src={k9Logo} alt="K9 Rides" className="w-full h-full object-cover" />
+              <img src={settings?.logo_url || k9Logo} alt="K9 Rides" className="w-full h-full object-cover" />
             </div>
             <span className="font-extrabold text-xl tracking-tight text-slate-900 dark:text-white group-hover:text-[#C5902A] transition-colors duration-300">
               K9 Rides

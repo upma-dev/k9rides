@@ -1,9 +1,28 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Target, Award, Users, ShieldCheck } from 'lucide-react';
+import api from '../../../shared/api/axiosInstance';
 
 const AboutPage = () => {
   const navigate = useNavigate();
+  const [dynamicContent, setDynamicContent] = useState('');
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchContent = async () => {
+      try {
+        const res = await api.get('/common/landing-page/settings');
+        if (res?.data?.success && res?.data?.data?.pages?.about_us) {
+          setDynamicContent(res.data.data.pages.about_us);
+        }
+      } catch (err) {
+        console.error('Error fetching about us page content:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchContent();
+  }, []);
 
   return (
     <div className="min-h-screen bg-gray-50 font-sans text-gray-900">
@@ -31,39 +50,46 @@ const AboutPage = () => {
 
       {/* Main Content */}
       <div className="max-w-6xl mx-auto px-6 py-20">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
-            <div>
-                <h2 className="text-3xl font-bold mb-6">Our Mission</h2>
-                <p className="text-lg text-gray-600 leading-relaxed mb-6">
-                    Our mission is to transform the way people move by connecting them with professional drivers and efficient services. We believe that transportation should be seamless, secure, and accessible to all.
-                </p>
-                <p className="text-lg text-gray-600 leading-relaxed">
-                    Whether you need a quick city ride, a comfortable outstation trip, or fast parcel delivery, our technology-driven approach ensures every journey is a great experience.
-                </p>
-            </div>
-            <div className="grid grid-cols-2 gap-6">
-                <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-                    <Target className="text-[#FFB300] mb-4" size={32} />
-                    <h3 className="font-bold text-lg mb-2">Reliability</h3>
-                    <p className="text-gray-500 text-sm">Always on time, every time you ride.</p>
-                </div>
-                <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-                    <ShieldCheck className="text-[#FFB300] mb-4" size={32} />
-                    <h3 className="font-bold text-lg mb-2">Safety First</h3>
-                    <p className="text-gray-500 text-sm">Verified drivers and secure tracking.</p>
-                </div>
-                <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-                    <Users className="text-[#FFB300] mb-4" size={32} />
-                    <h3 className="font-bold text-lg mb-2">Community</h3>
-                    <p className="text-gray-500 text-sm">Empowering riders and drivers alike.</p>
-                </div>
-                <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-                    <Award className="text-[#FFB300] mb-4" size={32} />
-                    <h3 className="font-bold text-lg mb-2">Excellence</h3>
-                    <p className="text-gray-500 text-sm">Top-tier service quality guaranteed.</p>
-                </div>
-            </div>
-        </div>
+        {dynamicContent ? (
+          <div 
+            className="rounded-2xl border border-gray-200 bg-white p-8 md:p-12 shadow-sm text-gray-700 leading-relaxed [&_h1]:text-2xl [&_h1]:font-black [&_h1]:mb-4 [&_h1]:text-gray-900 [&_h2]:text-xl [&_h2]:font-bold [&_h2]:mb-3 [&_h2]:text-gray-900 [&_p]:text-base [&_p]:text-gray-600 [&_p]:mb-4 [&_ul]:list-disc [&_ul]:pl-5 [&_ul]:mb-4 [&_li]:mb-1"
+            dangerouslySetInnerHTML={{ __html: dynamicContent }}
+          />
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
+              <div>
+                  <h2 className="text-3xl font-bold mb-6">Our Mission</h2>
+                  <p className="text-lg text-gray-600 leading-relaxed mb-6">
+                      Our mission is to transform the way people move by connecting them with professional drivers and efficient services. We believe that transportation should be seamless, secure, and accessible to all.
+                  </p>
+                  <p className="text-lg text-gray-600 leading-relaxed">
+                      Whether you need a quick city ride, a comfortable outstation trip, or fast parcel delivery, our technology-driven approach ensures every journey is a great experience.
+                  </p>
+              </div>
+              <div className="grid grid-cols-2 gap-6">
+                  <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                      <Target className="text-[#FFB300] mb-4" size={32} />
+                      <h3 className="font-bold text-lg mb-2">Reliability</h3>
+                      <p className="text-gray-500 text-sm">Always on time, every time you ride.</p>
+                  </div>
+                  <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                      <ShieldCheck className="text-[#FFB300] mb-4" size={32} />
+                      <h3 className="font-bold text-lg mb-2">Safety First</h3>
+                      <p className="text-gray-500 text-sm">Verified drivers and secure tracking.</p>
+                  </div>
+                  <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                      <Users className="text-[#FFB300] mb-4" size={32} />
+                      <h3 className="font-bold text-lg mb-2">Community</h3>
+                      <p className="text-gray-500 text-sm">Empowering riders and drivers alike.</p>
+                  </div>
+                  <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                      <Award className="text-[#FFB300] mb-4" size={32} />
+                      <h3 className="font-bold text-lg mb-2">Excellence</h3>
+                      <p className="text-gray-500 text-sm">Top-tier service quality guaranteed.</p>
+                  </div>
+              </div>
+          </div>
+        )}
       </div>
     </div>
   );

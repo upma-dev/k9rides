@@ -2,8 +2,9 @@ import React from 'react'
 import { motion } from 'framer-motion'
 import { Play } from 'lucide-react'
 
-export default function VideoSection({ videoUrl }) {
-  const resolvedUrl = videoUrl || '/k9_bg_vdo.mp4'
+export default function VideoSection({ settings }) {
+  const resolvedUrl = settings?.video_url || '/k9_bg_vdo.mp4'
+  const isEmbedUrl = resolvedUrl.includes('youtube.com') || resolvedUrl.includes('youtu.be') || resolvedUrl.includes('vimeo.com') || resolvedUrl.includes('embed')
 
   const containerVariants = {
     hidden: { opacity: 0, y: 40 },
@@ -53,19 +54,30 @@ export default function VideoSection({ videoUrl }) {
             {/* Inner Glow Border */}
             <div className="absolute inset-0 rounded-[22px] border border-white/5 pointer-events-none z-10" />
 
-            {/* Premium HTML5 Video Player */}
-            <video
-              key={resolvedUrl}
-              src={resolvedUrl}
-              controls
-              autoPlay
-              muted
-              loop
-              playsInline
-              className="w-full h-full rounded-[18px] object-cover shadow-inner"
-            >
-              Your browser does not support the video tag.
-            </video>
+            {/* Premium Video Player */}
+            {isEmbedUrl ? (
+              <iframe
+                src={resolvedUrl}
+                title="K9 Rides Video"
+                frameBorder="0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+                className="w-full h-full rounded-[18px] object-cover shadow-inner"
+              />
+            ) : (
+              <video
+                key={resolvedUrl}
+                src={resolvedUrl}
+                controls
+                autoPlay
+                muted
+                loop
+                playsInline
+                className="w-full h-full rounded-[18px] object-cover shadow-inner"
+              >
+                Your browser does not support the video tag.
+              </video>
+            )}
             
           </div>
         </motion.div>

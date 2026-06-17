@@ -2,14 +2,14 @@ import React from 'react'
 import { Facebook, Twitter, Instagram, Linkedin, Mail, Phone, MapPin } from 'lucide-react'
 import k9Logo from '../assets/k9-logo.jpg'
 
-export default function Footer() {
+export default function Footer({ settings }) {
   const currentYear = new Date().getFullYear()
 
   const links = {
     company: [
-      { name: 'About Us', href: '/landing-page' },
-      { name: 'Careers', href: '/landing-page' },
-      { name: 'Newsroom', href: '/landing-page' }
+      { name: 'About Us', href: '/about' },
+      { name: 'Careers', href: '/careers' },
+      { name: 'Newsroom', href: '/newsroom' }
     ],
     services: [
       { name: 'Ride Hailing', href: '/login/services' },
@@ -20,16 +20,25 @@ export default function Footer() {
     legal: [
       { name: 'Terms of Service', href: '/terms' },
       { name: 'Privacy Policy', href: '/privacy' },
+      { name: 'Refund Policy', href: '/refund' },
+      { name: 'Cancellation Policy', href: '/cancellation' },
       { name: 'FAQs', href: '#faq' }
     ]
   }
 
   const socialLinks = [
-    { icon: Facebook, href: '#' },
-    { icon: Twitter, href: '#' },
-    { icon: Instagram, href: '#' },
-    { icon: Linkedin, href: '#' }
+    { icon: Facebook, href: settings?.social_links?.facebook || '#' },
+    { icon: Twitter, href: settings?.social_links?.twitter || '#' },
+    { icon: Instagram, href: settings?.social_links?.instagram || '#' },
+    { icon: Linkedin, href: settings?.social_links?.linkedin || '#' }
   ]
+
+  const playStoreUrl = settings?.play_store_url || '/login/services'
+  const appStoreUrl = settings?.app_store_url || '/login/services'
+
+  const contactAddress = settings?.contact_address || 'K9 Village, Siliguri, West Bengal, India'
+  const contactPhone = settings?.contact_phone || '+91 7358789910'
+  const contactEmail = settings?.contact_email || 'k9bharatrides@gmail.com'
 
   return (
     <footer className="bg-slate-950 text-slate-400 py-16 border-t border-slate-900">
@@ -39,7 +48,7 @@ export default function Footer() {
         <div className="lg:col-span-4 text-left space-y-6">
           <a href="#" className="flex items-center gap-3">
             <div className="h-10 w-10 rounded-xl overflow-hidden shadow-lg bg-white">
-              <img src={k9Logo} alt="K9 Rides" className="w-full h-full object-cover" />
+              <img src={settings?.logo_url || k9Logo} alt="K9 Rides" className="w-full h-full object-cover" />
             </div>
             <span className="font-extrabold text-xl tracking-tight text-white">
               K9 Rides
@@ -67,7 +76,7 @@ export default function Footer() {
           {/* App Download Buttons */}
           <div className="flex flex-wrap gap-3 pt-2">
             <a
-              href="/login/services"
+              href={playStoreUrl}
               className="transition-transform duration-200 hover:scale-[1.03]"
             >
               <img 
@@ -79,7 +88,7 @@ export default function Footer() {
             </a>
 
             <a
-              href="/login/services"
+              href={appStoreUrl}
               className="transition-transform duration-200 hover:scale-[1.03]"
             >
               <img 
@@ -132,15 +141,15 @@ export default function Footer() {
           <ul className="space-y-3 text-sm">
             <li className="flex items-start gap-2.5">
               <MapPin className="w-4 h-4 text-[#C5902A] dark:text-[#F5D476] shrink-0 mt-0.5" />
-              <span>K9 Village , Siliguri,West Bengal.India</span>
+              <span>{contactAddress}</span>
             </li>
             <li className="flex items-center gap-2.5">
               <Phone className="w-4 h-4 text-[#C5902A] dark:text-[#F5D476] shrink-0" />
-              <span>+91 7358789910</span>
+              <span>{contactPhone}</span>
             </li>
             <li className="flex items-center gap-2.5">
               <Mail className="w-4 h-4 text-[#C5902A] dark:text-[#F5D476] shrink-0" />
-              <span>k9bharatrides@gmail.com</span>
+              <span>{contactEmail}</span>
             </li>
           </ul>
         </div>

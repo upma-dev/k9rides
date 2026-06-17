@@ -12,7 +12,8 @@ import Footer from './components/Footer'
 import api from '../Taxi/shared/api/axiosInstance'
 
 export default function LandingPage() {
-  const [videoUrl, setVideoUrl] = useState('')
+  const [landingSettings, setLandingSettings] = useState(null)
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     // Dynamic SEO Title & Meta tags for better discoverability
@@ -27,53 +28,53 @@ export default function LandingPage() {
     }
     metaDesc.setAttribute('content', 'K9 Rides is the ultimate multi-service super-app for Ride Hailing (Taxi & Shares), Food & Dining Delivery, secure Courier Parcels, Airport Transfers, Hourly rentals, and Logistics cargo.')
 
-    // Fetch dynamic video settings
-    const fetchVideoSettings = async () => {
+    // Fetch dynamic landing settings
+    const fetchLandingSettings = async () => {
       try {
-        const res = await api.get('/common/settings')
-        const settingsData = res?.data || res || {}
-        const url = settingsData.general?.landing_video_url || settingsData.data?.general?.landing_video_url
-        if (url) {
-          setVideoUrl(url)
+        const res = await api.get('/common/landing-page/settings')
+        if (res?.data?.success && res?.data?.data) {
+          setLandingSettings(res.data.data)
         }
       } catch (err) {
-        console.error('Error loading landing page video setting:', err)
+        console.error('Error loading landing page settings:', err)
+      } finally {
+        setLoading(false)
       }
     }
-    fetchVideoSettings()
+    fetchLandingSettings()
   }, [])
 
   return (
     <div className="min-h-screen bg-white text-slate-900 dark:bg-slate-900 dark:text-slate-100 font-sans antialiased overflow-x-hidden selection:bg-[#C5902A] selection:text-white">
       {/* Navigation Header */}
-      <Navbar />
+      <Navbar settings={landingSettings} />
 
       {/* Hero Section */}
-      <Hero />
+      <Hero settings={landingSettings} />
 
       {/* Unified Services Selector Ecosystem */}
-      <Ecosystem />
+      <Ecosystem settings={landingSettings} />
 
       {/* Key Super-App Services */}
-      <Services />
+      <Services settings={landingSettings} />
 
       {/* Platform Value Propositions & Count Stats */}
-      <WhyUs />
+      <WhyUs settings={landingSettings} />
 
       {/* Premium Fleet Showcase */}
-      <Showcase />
+      <Showcase settings={landingSettings} />
 
       {/* Dynamic Video Section */}
-      <VideoSection videoUrl={videoUrl} />
+      <VideoSection settings={landingSettings} />
 
       {/* Driver and Merchant Partners Portals */}
-      <Partners />
+      <Partners settings={landingSettings} />
 
       {/* Frequently Asked Questions */}
-      <FAQ />
+      <FAQ settings={landingSettings} />
 
       {/* SEO Optimized Footer Links */}
-      <Footer />
+      <Footer settings={landingSettings} />
     </div>
   )
 }

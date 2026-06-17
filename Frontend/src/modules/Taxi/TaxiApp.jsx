@@ -50,6 +50,8 @@ const ComingSoon = lazy(() => import('./modules/shared/pages/ComingSoon'));
 const LegalPage = lazy(() => import('./modules/shared/pages/LegalPage'));
 const LandingPage = lazy(() => import('./modules/shared/pages/LandingPage'));
 const AboutPage = lazy(() => import('./modules/shared/pages/AboutPage'));
+const CareersPage = lazy(() => import('./modules/shared/pages/CareersPage'));
+const NewsroomPage = lazy(() => import('./modules/shared/pages/NewsroomPage'));
 const ContactPage = lazy(() => import('./modules/shared/pages/ContactPage'));
 const FaqPage = lazy(() => import('./modules/shared/pages/FaqPage'));
 const ServicesPage = lazy(() => import('./modules/shared/pages/ServicesPage'));
@@ -277,6 +279,7 @@ const AdminFareConfig = lazy(() => import('./modules/admin/pages/finance/FareCon
 const AdminSafetyCenter = lazy(() => import('./modules/admin/pages/safety/SafetyCenter'));
 const AdminCMSBuilder = lazy(() => import('./modules/admin/pages/cms/CMSBuilder'));
 const AdminHeaderFooter = lazy(() => import('./modules/admin/pages/cms/HeaderFooter'));
+const AdminLandingSettings = lazy(() => import('./modules/admin/pages/cms/LandingPageSettings'));
 const AdminGlobalSettings = lazy(() => import('./modules/admin/pages/settings/GlobalSettings'));
 const AdminGeneralSettings = lazy(() => import('./modules/admin/pages/settings/GeneralSettings'));
 const AdminCustomizationSettings = lazy(() => import('./modules/admin/pages/settings/CustomizationSettings'));
@@ -672,6 +675,8 @@ function TaxiApp() {
               {/* Static / Public routes */}
               <Route index element={<LandingPage />} />
               <Route path="about" element={<AboutPage />} />
+              <Route path="careers" element={<CareersPage />} />
+              <Route path="newsroom" element={<NewsroomPage />} />
               <Route path="contact" element={<ContactPage />} />
               <Route path="faq" element={<FaqPage />} />
               <Route path="services" element={<ServicesPage />} />
@@ -1508,10 +1513,13 @@ function TaxiApp() {
                 </Route>
                 <Route path="safety" element={<AdminSafetyCenter />} />
                 <Route path="cms" element={<AdminCMSBuilder />} />
-                <Route
-                  path="settings/cms/header-footer"
-                  element={<AdminHeaderFooter />}
-                />
+                <Route path="settings/cms/home" element={<AdminLandingSettings defaultTab="general" />} />
+                <Route path="settings/cms/about" element={<AdminLandingSettings defaultTab="pages" defaultPage="about_us" />} />
+                <Route path="settings/cms/driver" element={<AdminLandingSettings defaultTab="pages" defaultPage="about_us" />} />
+                <Route path="settings/cms/user" element={<AdminLandingSettings defaultTab="pages" defaultPage="about_us" />} />
+                <Route path="settings/cms/contact" element={<AdminLandingSettings defaultTab="contact" />} />
+                <Route path="settings/cms/legal" element={<AdminLandingSettings defaultTab="pages" defaultPage="terms_conditions" />} />
+                <Route path="settings/cms/header-footer" element={<AdminLandingSettings defaultTab="general" />} />
                 <Route
                   path="support/ticket-title"
                   element={<AdminSupportTicketTitle />}

@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { ArrowLeft, FileText, IndianRupee, ReceiptText, Scale, ScrollText, ShieldCheck } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import api from '../../../shared/api/axiosInstance';
 
 const vehiclePricing = [
   { type: 'Bike', capacity: 'Up to 2 riders', price: 'Starts at Rs 49', cancellationCut: 'Admin cut up to Rs 10', note: 'Best for quick solo rides and short-distance travel.' },
@@ -228,8 +229,35 @@ const getDocumentType = (pathname = '') => {
 const LegalPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const content = legalContent[getDocumentType(location.pathname)];
+  const docType = getDocumentType(location.pathname);
+  const content = legalContent[docType];
   const Icon = content.icon || FileText;
+
+  const [dynamicContent, setDynamicContent] = useState('');
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchContent = async () => {
+      try {
+        const res = await api.get('/common/landing-page/settings');
+        if (res?.data?.success && res?.data?.data) {
+          let pageKey = 'terms_conditions';
+          if (docType === 'privacy') pageKey = 'privacy_policy';
+          if (docType === 'refund') pageKey = 'refund_policy';
+          if (docType === 'cancellation') pageKey = 'cancellation_policy';
+          
+          if (res.data.data.pages?.[pageKey]) {
+            setDynamicContent(res.data.data.pages[pageKey]);
+          }
+        }
+      } catch (err) {
+        console.error('Error fetching legal content:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchContent();
+  }, [docType]);
 
   return (
     <div className="min-h-screen bg-stone-50 text-slate-900">
@@ -262,56 +290,65 @@ const LegalPage = () => {
       </section>
 
       <section className="px-6 py-16">
-        <div className="mx-auto max-w-6xl space-y-8">
-          {content.sections.map((section) => (
-            <div key={section.title} className="rounded-[28px] border border-stone-200 bg-white p-8 shadow-sm">
-              <h2 className="text-xl font-black tracking-tight text-slate-900 md:text-2xl">
-                {section.title}
-              </h2>
+        <div className="mx-auto max-w-6xl">
+          {dynamicContent ? (
+            <div 
+              className="rounded-[28px] border border-stone-200 bg-white p-8 md:p-12 shadow-sm text-slate-700 leading-relaxed [&_h1]:text-2xl [&_h1]:font-black [&_h1]:mb-4 [&_h1]:text-slate-900 [&_h2]:text-xl [&_h2]:font-bold [&_h2]:mb-3 [&_h2]:text-slate-900 [&_p]:text-base [&_p]:text-slate-600 [&_p]:mb-4 [&_ul]:list-disc [&_ul]:pl-5 [&_ul]:mb-4 [&_li]:mb-1"
+              dangerouslySetInnerHTML={{ __html: dynamicContent }}
+            />
+          ) : (
+            <div className="space-y-8">
+              {content.sections.map((section) => (
+                <div key={section.title} className="rounded-[28px] border border-stone-200 bg-white p-8 shadow-sm">
+                  <h2 className="text-xl font-black tracking-tight text-slate-900 md:text-2xl">
+                    {section.title}
+                  </h2>
 
-              {section.body ? (
-                <p className="mt-4 text-base leading-8 text-slate-600">{section.body}</p>
-              ) : null}
+                  {section.body ? (
+                    <p className="mt-4 text-base leading-8 text-slate-600">{section.body}</p>
+                  ) : null}
 
-              {section.bullets ? (
-                <ul className="mt-4 space-y-3 text-base leading-7 text-slate-600">
-                  {section.bullets.map((item) => (
-                    <li key={item} className="flex gap-3">
-                      <span className="mt-2 h-2 w-2 rounded-full bg-[#f4b400]" />
-                      <span>{item}</span>
-                    </li>
-                  ))}
-                </ul>
-              ) : null}
+                  {section.bullets ? (
+                    <ul className="mt-4 space-y-3 text-base leading-7 text-slate-600">
+                      {section.bullets.map((item) => (
+                        <li key={item} className="flex gap-3">
+                          <span className="mt-2 h-2 w-2 rounded-full bg-[#f4b400]" />
+                          <span>{item}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : null}
 
-              {section.table ? (
-                <div className="mt-6 overflow-hidden rounded-[24px] border border-stone-200">
-                  <div className="grid grid-cols-1 gap-px bg-stone-200 md:grid-cols-5">
-                    <div className="bg-stone-100 px-5 py-4 text-xs font-black uppercase tracking-[0.25em] text-stone-500">Vehicle Type</div>
-                    <div className="bg-stone-100 px-5 py-4 text-xs font-black uppercase tracking-[0.25em] text-stone-500">Capacity</div>
-                    <div className="bg-stone-100 px-5 py-4 text-xs font-black uppercase tracking-[0.25em] text-stone-500">Starting Price</div>
-                    <div className="bg-stone-100 px-5 py-4 text-xs font-black uppercase tracking-[0.25em] text-stone-500">Cancellation Cut</div>
-                    <div className="bg-stone-100 px-5 py-4 text-xs font-black uppercase tracking-[0.25em] text-stone-500">Use Case</div>
-                  </div>
-
-                  {section.table.map((row) => (
-                    <div key={row.type} className="grid grid-cols-1 gap-px border-t border-stone-200 bg-stone-200 md:grid-cols-5">
-                      <div className="bg-white px-5 py-5">
-                        <div className="flex items-center gap-2 text-base font-bold text-slate-900">
-                          <IndianRupee size={16} className="text-[#f4b400]" />
-                          {row.type}
-                        </div>
+                  {section.table ? (
+                    <div className="mt-6 overflow-hidden rounded-[24px] border border-stone-200">
+                      <div className="grid grid-cols-1 gap-px bg-stone-200 md:grid-cols-5">
+                        <div className="bg-stone-100 px-5 py-4 text-xs font-black uppercase tracking-[0.25em] text-stone-500">Vehicle Type</div>
+                        <div className="bg-stone-100 px-5 py-4 text-xs font-black uppercase tracking-[0.25em] text-stone-500">Capacity</div>
+                        <div className="bg-stone-100 px-5 py-4 text-xs font-black uppercase tracking-[0.25em] text-stone-500">Starting Price</div>
+                        <div className="bg-stone-100 px-5 py-4 text-xs font-black uppercase tracking-[0.25em] text-stone-500">Cancellation Cut</div>
+                        <div className="bg-stone-100 px-5 py-4 text-xs font-black uppercase tracking-[0.25em] text-stone-500">Use Case</div>
                       </div>
-                      <div className="bg-white px-5 py-5 text-sm text-slate-600">{row.capacity}</div>
-                      <div className="bg-white px-5 py-5 text-sm font-bold text-slate-900">{row.price}</div>
-                      <div className="bg-white px-5 py-5 text-sm font-bold text-slate-900">{row.cancellationCut}</div>
-                      <div className="bg-white px-5 py-5 text-sm text-slate-600">{row.note}</div>
+
+                      {section.table.map((row) => (
+                        <div key={row.type} className="grid grid-cols-1 gap-px border-t border-stone-200 bg-stone-200 md:grid-cols-5">
+                          <div className="bg-white px-5 py-5">
+                            <div className="flex items-center gap-2 text-base font-bold text-slate-900">
+                              <IndianRupee size={16} className="text-[#f4b400]" />
+                              {row.type}
+                            </div>
+                          </div>
+                          <div className="bg-white px-5 py-5 text-sm text-slate-600">{row.capacity}</div>
+                          <div className="bg-white px-5 py-5 text-sm font-bold text-slate-900">{row.price}</div>
+                          <div className="bg-white px-5 py-5 text-sm font-bold text-slate-900">{row.cancellationCut}</div>
+                          <div className="bg-white px-5 py-5 text-sm text-slate-600">{row.note}</div>
+                        </div>
+                      ))}
                     </div>
-                  ))}
+                  ) : null}
                 </div>
-              ) : null}
+              ))}
             </div>
-          ))}
+          )}
         </div>
       </section>
     </div>

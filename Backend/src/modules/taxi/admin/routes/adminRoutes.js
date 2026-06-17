@@ -91,9 +91,10 @@ import {
   getFirebaseSettings,
   getGoodsTypes,
   getIntercityTrips,
-  getRentalPackageTypes,
   getReferralTranslations,
   getGeneralSettingsCategory,
+  getLandingPageSettings,
+  getRentalPackageTypes,
   getLanguages,
   getMailSettings,
   getMapSettings,
@@ -169,10 +170,11 @@ import {
   updateDriverNeededDocument,
   updateDriverPassword,
   updateFirebaseSettings,
-  updateOnboardingScreen,
   updateGoodsType,
   updateRentalPackageType,
+  updateOnboardingScreen,
   updateGeneralSettingsCategory,
+  updateLandingPageSettings,
   updateLanguageStatus,
   updateMailSettings,
   updateMapSettings,
@@ -451,6 +453,8 @@ adminRouter.get('/admin/integration-settings/mail', getMailSettings);
 adminRouter.patch('/admin/integration-settings/mail', updateMailSettings);
 
 adminRouter.patch('/admin/general-settings/:category', updateGeneralSettingsCategory);
+adminRouter.get('/admin/landing-page/settings', authenticate(['admin']), getLandingPageSettings);
+adminRouter.patch('/admin/landing-page/settings', authenticate(['admin']), updateLandingPageSettings);
 
 adminRouter.get('/on-boarding', getUserOnboarding);
 adminRouter.post('/on-boarding', createOnboardingScreen);

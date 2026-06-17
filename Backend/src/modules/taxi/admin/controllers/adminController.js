@@ -4,6 +4,8 @@ import ExcelJS from 'exceljs';
 import { BusBooking } from '../../user/models/BusBooking.js';
 import { BusService } from '../models/BusService.js';
 import { BusSeatHold } from '../../user/models/BusSeatHold.js';
+import { LandingPageSetting } from '../models/LandingPageSetting.js';
+import { ApiError } from '../../../../utils/ApiError.js';
 
 const ok = (res, data, extra = {}) =>
   res.json({ success: true, data, ...extra });
@@ -1571,6 +1573,167 @@ export const updateGeneralSettingsCategory = asyncHandler(async (req, res) =>
     await adminService.updateGeneralSettings(req.params.category, req.body),
   ),
 );
-export const getTransportTypes = asyncHandler(async (_req, res) =>
-  ok(res, await adminService.listTransportTypes()),
-);
+export const getTransportTypes = asyncHandler(async (_req, res) => {
+  ok(res, await adminService.listTransportTypes());
+});
+
+export const getLandingPageSettings = asyncHandler(async (req, res) => {
+  let settings = await LandingPageSetting.findOne({ scope: 'default' });
+  if (!settings) {
+    settings = await LandingPageSetting.create({
+      scope: 'default',
+      video_url: 'https://www.youtube.com/embed/dQw4w9WgXcQ',
+      logo_url: '',
+      hero_title: 'All-in-One Platform for Rides, Food & Logistics',
+      hero_description: 'K9 Rides is the multi-service super-app designed for modern cities. Easily book a taxi, order from your favorite local restaurants, ship parcels, arrange airport transfers, rent vehicles, and coordinate complex supply chains.',
+      hero_image_url: '',
+      why_us_image_url: '',
+      social_links: {
+        facebook: 'https://facebook.com/k9rides',
+        twitter: 'https://twitter.com/k9rides',
+        instagram: 'https://instagram.com/k9rides',
+        linkedin: 'https://linkedin.com/company/k9rides',
+        youtube: 'https://youtube.com/k9rides'
+      },
+      contact_email: 'k9bharatrides@gmail.com',
+      contact_phone: '+91 7358789910',
+      contact_address: 'K9 Village, Siliguri, West Bengal, India',
+      contact_location: { lat: 26.7271, lng: 88.3953 },
+      play_store_url: '/login/services',
+      app_store_url: '/login/services',
+      faqs: [
+        {
+          question: 'What is K9 Rides?',
+          answer: 'K9 Rides is a unified multi-service super-app offering on-demand taxi bookings, local food ordering, courier deliveries, rentals, and airport transfers.',
+          order: 0
+        },
+        {
+          question: 'How do I book a ride?',
+          answer: 'Simply log in with your phone number, select your pickup and drop locations, choose a vehicle class, and confirm your booking. A driver will be assigned immediately.',
+          order: 1
+        },
+        {
+          question: 'What payment methods are supported?',
+          answer: 'We support digital payments via UPI, Credit/Debit Cards, Net Banking, and Mobile Wallets, as well as Cash on delivery/ride.',
+          order: 2
+        },
+        {
+          question: 'How are surge prices calculated?',
+          answer: 'Surge pricing is dynamically applied during peak demand hours, bad weather, or heavy traffic, to balance driver supply with passenger demand.',
+          order: 3
+        }
+      ],
+      pages: {
+        about_us: '<h1>About K9 Rides</h1><p>K9 Rides is a leading technology platform dedicated to providing safe, reliable, and affordable mobility solutions for everyone. Our mission is to transform urban transportation and logistics by connecting people with professional drivers and efficient services.</p>',
+        careers: '<h1>Careers at K9 Rides</h1><p>Join our team and build the future of urban mobility. We are constantly looking for talented software engineers, product managers, driver relationship experts, and support specialists to join our journey.</p>',
+        newsroom: '<h1>K9 Rides Newsroom</h1><p>Stay updated with our latest press releases, company announcements, service launches, and regulatory breakthroughs. K9 Rides is growing quickly to serve more cities across Bharat.</p>',
+        terms_conditions: '<h1>Terms of Service</h1><p>By using K9 Rides app or website, you agree to these Terms of Service. K9 Rides acts as a technology platform connecting users with third-party service providers. You must provide accurate details and use the platform lawfully.</p>',
+        privacy_policy: '<h1>Privacy Policy</h1><p>We value your privacy. K9 Rides collects your personal information (name, contact, location) solely to match and execute rides, deliveries, and orders. We do not sell your personal data to advertisers.</p>',
+        refund_policy: '<h1>Refund Policy</h1><p>Refunds are processed for verified overcharges or cancelled bookings prior to partner dispatch. UPI and wallet refunds settle within 1 to 3 days, and bank cards settle in 5 to 10 days.</p>',
+        cancellation_policy: '<h1>Cancellation Policy</h1><p>Users may cancel bookings free of charge before a driver accepts. Nominal cancellation charges apply once a driver is assigned or dispatch preparation has already started.</p>'
+      }
+    });
+  }
+  return ok(res, settings);
+});
+
+export const updateLandingPageSettings = asyncHandler(async (req, res) => {
+  const {
+    video_url,
+    logo_url,
+    hero_title,
+    hero_description,
+    hero_image_url,
+    why_us_image_url,
+    social_links,
+    contact_email,
+    contact_phone,
+    contact_address,
+    contact_location,
+    play_store_url,
+    app_store_url,
+    faqs,
+    pages
+  } = req.body;
+
+  // 1. Email format validation
+  if (contact_email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contact_email)) {
+    throw new ApiError(400, 'Invalid contact email format');
+  }
+
+  // 2. Phone number validation
+  if (contact_phone && !/^\+?[1-9]\d{1,14}$|^[0-9-\s\+\(\)]+$/.test(contact_phone)) {
+    throw new ApiError(400, 'Invalid contact phone format');
+  }
+
+  // 3. URL format validation
+  const urlPattern = /^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$/i;
+  const validateUrl = (url, fieldName) => {
+    if (url && !url.startsWith('/') && !urlPattern.test(url)) {
+      throw new ApiError(400, `Invalid URL format for ${fieldName}`);
+    }
+  };
+
+  validateUrl(video_url, 'Video Link');
+  validateUrl(play_store_url, 'Google Play Store Link');
+  validateUrl(app_store_url, 'Apple App Store Link');
+  if (social_links) {
+    validateUrl(social_links.facebook, 'Facebook Link');
+    validateUrl(social_links.twitter, 'Twitter Link');
+    validateUrl(social_links.instagram, 'Instagram Link');
+    validateUrl(social_links.linkedin, 'LinkedIn Link');
+    validateUrl(social_links.youtube, 'YouTube Link');
+  }
+
+  // 4. Required FAQ question/answer check
+  if (faqs) {
+    for (const faq of faqs) {
+      if (!faq.question?.trim() || !faq.answer?.trim()) {
+        throw new ApiError(400, 'FAQ question and answer are required');
+      }
+    }
+  }
+
+  // 5. Max upload size validation for inline base64 if sent directly (5MB limit)
+  const validateBase64Size = (dataUrl, fieldName) => {
+    if (dataUrl && dataUrl.startsWith('data:image')) {
+      const approxBytes = (dataUrl.length * 3) / 4;
+      if (approxBytes > 5 * 1024 * 1024) {
+        throw new ApiError(400, `Image for ${fieldName} exceeds the 5MB size limit`);
+      }
+    }
+  };
+
+  validateBase64Size(logo_url, 'Logo');
+  validateBase64Size(hero_image_url, 'Hero Image');
+  validateBase64Size(why_us_image_url, 'Why Us Graphics');
+
+  let settings = await LandingPageSetting.findOne({ scope: 'default' });
+  if (!settings) {
+    settings = new LandingPageSetting({ scope: 'default' });
+  }
+
+  if (video_url !== undefined) settings.video_url = video_url;
+  if (logo_url !== undefined) settings.logo_url = logo_url;
+  if (hero_title !== undefined) settings.hero_title = hero_title;
+  if (hero_description !== undefined) settings.hero_description = hero_description;
+  if (hero_image_url !== undefined) settings.hero_image_url = hero_image_url;
+  if (why_us_image_url !== undefined) settings.why_us_image_url = why_us_image_url;
+  if (social_links !== undefined) settings.social_links = social_links;
+  if (contact_email !== undefined) settings.contact_email = contact_email;
+  if (contact_phone !== undefined) settings.contact_phone = contact_phone;
+  if (contact_address !== undefined) settings.contact_address = contact_address;
+  if (contact_location !== undefined) settings.contact_location = contact_location;
+  if (play_store_url !== undefined) settings.play_store_url = play_store_url;
+  if (app_store_url !== undefined) settings.app_store_url = app_store_url;
+  if (faqs !== undefined) settings.faqs = faqs;
+  if (pages !== undefined) settings.pages = pages;
+
+  settings.markModified('social_links');
+  settings.markModified('contact_location');
+  settings.markModified('faqs');
+  settings.markModified('pages');
+
+  await settings.save();
+  return ok(res, settings);
+});

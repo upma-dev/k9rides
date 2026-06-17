@@ -344,4 +344,7 @@ export const adminService = {
   createOnboardingScreen: (payload) => api.post('/on-boarding', payload),
   updateOnboardingScreen: (id, payload) => api.patch(`/on-boarding/${id}`, payload),
   deleteOnboardingScreen: (id) => api.delete(`/on-boarding/${id}`),
+
+  getLandingPageSettings: () => api.get('/admin/landing-page/settings'),
+  updateLandingPageSettings: (data) => api.patch('/admin/landing-page/settings', data),
 };
