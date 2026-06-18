@@ -334,7 +334,7 @@ export default function HomeHeader({
         </div>
         
         {/* Mobile Option Buttons (Food & Taxi) */}
-        <div className="absolute top-[80px] inset-x-0 z-20 px-4 md:hidden flex gap-3 pointer-events-auto">
+        <div className="absolute top-[68px] inset-x-0 z-20 px-4 md:hidden flex gap-3 pointer-events-auto">
           {/* Food Button */}
           <Link
             to="/food/user"
@@ -367,7 +367,7 @@ export default function HomeHeader({
 
       {/* Sticky Search Bar wrapper — position adjusts when categories are also stuck (sticky only on mobile/tablet) */}
       <div
-        className={`relative sticky md:relative z-[60] px-3 pb-0 md:-mt-[256px] -mt-[196px] md:mb-[210px] mb-[150px] pointer-events-none transition-all duration-300 ${
+        className={`relative sticky md:relative z-[60] px-3 pb-0 md:-mt-[256px] -mt-[216px] md:mb-[210px] mb-[170px] pointer-events-none transition-all duration-300 ${
           isCategoryStuck ? 'top-0 pt-2 md:top-auto' : 'top-2 md:top-auto'
         }`}
       >
