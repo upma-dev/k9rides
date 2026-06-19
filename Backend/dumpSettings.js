@@ -1,8 +1,10 @@
 import mongoose from 'mongoose';
 import { FoodRestaurant } from './src/modules/food/restaurant/models/restaurant.model.js';
+import dotenv from 'dotenv';
+dotenv.config();
 
 async function checkDB() {
-    await mongoose.connect('mongodb+srv://k9bharatrides_db_user:GbrJeMWDJqoFnuWI@k9.spowyus.mongodb.net/?appName=k9', {
+    await mongoose.connect(process.env.MONGODB_URI, {
     }).catch(err => {
         console.log("Error connecting to DB", err);
     });

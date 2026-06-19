@@ -1,8 +1,10 @@
 import mongoose from 'mongoose';
 import { LandingPageSetting } from './src/modules/taxi/admin/models/LandingPageSetting.js';
+import dotenv from 'dotenv';
+dotenv.config();
 
 async function restore() {
-  await mongoose.connect('mongodb+srv://k9bharatrides_db_user:GbrJeMWDJqoFnuWI@k9.spowyus.mongodb.net/test?appName=k9');
+  await mongoose.connect(process.env.MONGODB_URI);
   
   const existing = await LandingPageSetting.findOne({ scope: 'default' });
   if (existing) {
