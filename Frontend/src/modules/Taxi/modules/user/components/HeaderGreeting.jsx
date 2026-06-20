@@ -137,10 +137,17 @@ const HeaderGreeting = () => {
         <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="flex-1">
           <button
             onClick={() => navigate('/food/user')}
-            className={`w-full flex flex-row items-center justify-center gap-2 h-[48px] rounded-full backdrop-blur-md font-bold text-[14px] shadow-sm transition-colors cursor-pointer ${window.location.pathname.includes('/food') ? 'bg-slate-900 text-white border border-slate-900' : 'bg-white border border-slate-200 text-slate-800'}`}
+            className={`relative overflow-hidden w-full flex flex-row items-center justify-center gap-2 h-[48px] rounded-full backdrop-blur-md font-bold text-[14px] shadow-sm transition-colors cursor-pointer border ${window.location.pathname.includes('/food') ? 'text-white border-transparent' : 'bg-white border-slate-200 text-slate-800'}`}
           >
-            <img src={foodIcon} alt="Food" className="w-6 h-6 object-contain drop-shadow-sm" />
-            <span className="tracking-wide">Food</span>
+            {window.location.pathname.includes('/food') && (
+              <motion.span
+                layoutId="activeModuleHighlight"
+                className="absolute inset-0 bg-slate-900"
+                transition={{ type: "spring", stiffness: 380, damping: 30 }}
+              />
+            )}
+            <img src={foodIcon} alt="Food" className="relative z-10 w-6 h-6 object-contain drop-shadow-sm" />
+            <span className="relative z-10 tracking-wide">Food</span>
           </button>
         </motion.div>
 
@@ -148,10 +155,17 @@ const HeaderGreeting = () => {
         <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="flex-1">
           <button
             onClick={() => navigate('/taxi/user')}
-            className={`w-full flex flex-row items-center justify-center gap-2 h-[48px] rounded-full backdrop-blur-md font-bold text-[14px] shadow-sm transition-colors cursor-pointer ${window.location.pathname.includes('/taxi') ? 'bg-slate-900 text-white border border-slate-900' : 'bg-white border border-slate-200 text-slate-800'}`}
+            className={`relative overflow-hidden w-full flex flex-row items-center justify-center gap-2 h-[48px] rounded-full backdrop-blur-md font-bold text-[14px] shadow-sm transition-colors cursor-pointer border ${window.location.pathname.includes('/taxi') ? 'text-white border-transparent' : 'bg-white border-slate-200 text-slate-800'}`}
           >
-            <img src={taxiIcon} alt="Taxi" className="w-6 h-6 object-contain drop-shadow-sm" />
-            <span className="tracking-wide">Taxi</span>
+            {window.location.pathname.includes('/taxi') && (
+              <motion.span
+                layoutId="activeModuleHighlight"
+                className="absolute inset-0 bg-slate-900"
+                transition={{ type: "spring", stiffness: 380, damping: 30 }}
+              />
+            )}
+            <img src={taxiIcon} alt="Taxi" className="relative z-10 w-6 h-6 object-contain drop-shadow-sm" />
+            <span className="relative z-10 tracking-wide">Taxi</span>
           </button>
         </motion.div>
       </div>
