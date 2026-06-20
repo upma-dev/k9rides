@@ -1746,10 +1746,10 @@ export default function Home() {
           params.trusted = "true";
         }
 
-        // Allow fetching global restaurants when zone is not detected yet.
-        if (zoneId) {
-          params.zoneId = zoneId;
-        }
+        // Allow fetching global restaurants on the homepage regardless of detected zone.
+        // if (zoneId) {
+        //   params.zoneId = zoneId;
+        // }
 
         debugLog("Fetching restaurants with params:", params);
         const response = await restaurantAPI.getRestaurants(params);
