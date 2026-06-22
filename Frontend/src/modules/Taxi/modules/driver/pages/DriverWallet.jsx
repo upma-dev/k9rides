@@ -511,6 +511,18 @@ const DriverWallet = () => {
                 },
             };
 
+            if (orderData.orderId?.startsWith('mock_order_')) {
+                console.warn('⚠️ Bypassing Razorpay checkout due to mock order ID (development fallback)');
+                setTimeout(async () => {
+                    await options.handler({
+                        razorpay_payment_id: `mock_pay_${Date.now()}`,
+                        razorpay_order_id: orderData.orderId,
+                        razorpay_signature: 'mock_signature_bypass'
+                    });
+                }, 1000);
+                return;
+            }
+
             const rzp = new window.Razorpay(options);
             rzp.on('payment.failed', (response) => {
                 setError(response.error?.description || 'Payment failed.');
