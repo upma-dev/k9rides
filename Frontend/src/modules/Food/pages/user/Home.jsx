@@ -1297,12 +1297,19 @@ export default function Home() {
             const coverImages = Array.isArray(rest.coverImages)
               ? rest.coverImages
               : [rest.coverImage || rest.profileImage].filter(Boolean);
+            const allImages = extractImages([
+              ...coverImages,
+              rest.profileImage,
+              rest.image
+            ].filter(Boolean));
             map.set(rest._id, {
               id: rest.restaurantId || rest._id,
               mongoId: rest._id,
               name: getRestaurantDisplayName(rest),
               coverImages: coverImages,
               profileImage: rest.profileImage || rest.image || "",
+              images: allImages,
+              image: allImages[0] || "",
               rating: Number(rest.rating) || 0,
               deliveryTime: deliveryTime,
               slug: rest.slug || rest._id,

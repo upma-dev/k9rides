@@ -168,21 +168,20 @@ export function useZone(location, options = {}) {
     debugLog("coordsChanged evaluated to:", coordsChanged, "zoneStatus is:", zoneStatus);
 
     if (Number.isFinite(lat) && Number.isFinite(lng)) {
-      // Only detect zone if coordinates changed significantly
-      if (coordsChanged) {
+      // Detect zone if coordinates changed significantly OR if we are still in loading state
+      if (coordsChanged || zoneStatus === 'loading') {
         prevCoordsRef.current = { latitude: lat, longitude: lng }
-        if (!debounceTimerRef.current) {
-          debugLog("Scheduling detectZone in 350ms");
-          debounceTimerRef.current = setTimeout(() => {
-            debugLog("Debounce timeout fired! Executing detectZone");
-            debounceTimerRef.current = null;
-            detectZone(lat, lng)
-          }, 350)
-        } else {
-          debugLog("Debounce timer already running. Skipping scheduling.");
+        if (debounceTimerRef.current) {
+          clearTimeout(debounceTimerRef.current);
         }
+        debugLog("Scheduling detectZone in 350ms");
+        debounceTimerRef.current = setTimeout(() => {
+          debugLog("Debounce timeout fired! Executing detectZone");
+          debounceTimerRef.current = null;
+          detectZone(lat, lng)
+        }, 350)
       } else {
-        debugLog("Coords did not change significantly. Skipping scheduling.");
+        debugLog("Coords did not change significantly and not loading. Skipping scheduling.");
       }
     } else {
       // Try to use cached zone if location not available
@@ -199,7 +198,7 @@ export function useZone(location, options = {}) {
         setZone(null);
       }
     }
-  }, [location?.latitude, location?.longitude, detectZone])
+  }, [location?.latitude, location?.longitude, detectZone, zoneStatus])
 
   // Manual refresh zone
   const refreshZone = useCallback(() => {
