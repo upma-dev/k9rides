@@ -69,11 +69,21 @@ const startServer = async () => {
         }
 
         // 5a. Watchdog: Recover stuck orders from previous run
-        try {
-            const { recoverStuckOrders } = await import('./src/modules/food/orders/services/order.service.js');
-            await recoverStuckOrders();
-        } catch (err) {
-            logger.error(`Watchdog startup error: ${err.message}`);
+        const runWatchdog = async () => {
+            try {
+                const { recoverStuckOrders } = await import('./src/modules/food/orders/services/order.service.js');
+                await recoverStuckOrders();
+            } catch (err) {
+                logger.error(`Watchdog startup error: ${err.message}`);
+            }
+        };
+
+        if (mongoose.connection.readyState === 1) {
+            runWatchdog();
+        } else {
+            mongoose.connection.once('connected', () => {
+                runWatchdog();
+            });
         }
 
         // 5. Conditionally initialize BullMQ queues.
@@ -136,8 +146,6 @@ const startServer = async () => {
                 logger.error(`Expire offers error: ${err.message}`);
             }
         };
-        runExpire();
-        expireOffersInterval = setInterval(runExpire, 5 * 60 * 1000);
 
         const runFssaiExpirySync = async () => {
             try {
@@ -146,8 +154,22 @@ const startServer = async () => {
                 logger.error(`FSSAI expiry sync error: ${err.message}`);
             }
         };
-        runFssaiExpirySync();
-        fssaiExpiryInterval = setInterval(runFssaiExpirySync, 60 * 60 * 1000);
+
+        const startIntervals = () => {
+            runExpire();
+            expireOffersInterval = setInterval(runExpire, 5 * 60 * 1000);
+
+            runFssaiExpirySync();
+            fssaiExpiryInterval = setInterval(runFssaiExpirySync, 60 * 60 * 1000);
+        };
+
+        if (mongoose.connection.readyState === 1) {
+            startIntervals();
+        } else {
+            mongoose.connection.once('connected', () => {
+                startIntervals();
+            });
+        }
 
         process.on('SIGINT', () => gracefulShutdown('SIGINT'));
         process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));

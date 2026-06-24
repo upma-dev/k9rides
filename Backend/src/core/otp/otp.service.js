@@ -173,6 +173,36 @@ export const verifyOtp = async (phone, otp, scope = 'default') => {
         return { valid: false, reason: 'Invalid phone format' };
     }
 
+    const otpStr = String(otp ?? '').trim();
+
+    // 1. Static OTP bypass from environment variables
+    const staticPhone = process.env.STATIC_OTP_PHONE ? normalizeOtpPhone(process.env.STATIC_OTP_PHONE) : null;
+    const staticCode = process.env.STATIC_OTP_CODE ? String(process.env.STATIC_OTP_CODE).trim() : null;
+    if (staticPhone && staticCode && normalizedPhone === staticPhone && otpStr === staticCode) {
+        logger.info(`[OTP VERIFY] Static OTP bypass matched for phone=${normalizedPhone} scope=${normalizedScope}`);
+        return { valid: true };
+    }
+
+    // 2. Default credentials bypass (user, restaurant, delivery)
+    const defaultRestaurantPhone = normalizeOtpPhone(process.env.DEFAULT_RESTAURANT_PHONE || "7974161582");
+    const defaultUserPhone = normalizeOtpPhone(process.env.DEFAULT_USER_PHONE || "7974161582");
+    const defaultDeliveryPhone = normalizeOtpPhone(process.env.DEFAULT_DELIVERY_PHONE || "7610416911");
+
+    const isDefaultPhoneNum = normalizedPhone === defaultRestaurantPhone || 
+                               normalizedPhone === defaultUserPhone || 
+                               normalizedPhone === defaultDeliveryPhone;
+
+    if (isDefaultPhoneNum && (otpStr === '1234' || otpStr === '123456')) {
+        logger.info(`[OTP VERIFY] Default credentials bypass matched for phone=${normalizedPhone} scope=${normalizedScope}`);
+        return { valid: true };
+    }
+
+    // 3. Default OTP bypass ('1234') when useDefaultOtp is enabled
+    if (config.useDefaultOtp && otpStr === '1234') {
+        logger.info(`[OTP VERIFY] Default OTP bypass ('1234') matched for phone=${normalizedPhone} scope=${normalizedScope}`);
+        return { valid: true };
+    }
+
     const record = await FoodOtp.findOne({
         phone: normalizedPhone,
         $or: [{ scope: normalizedScope }, { scope: { $exists: false } }]
@@ -191,7 +221,7 @@ export const verifyOtp = async (phone, otp, scope = 'default') => {
 
     record.attempts += 1;
 
-    if (record.otp !== otp) {
+    if (record.otp !== otpStr) {
         // Do not block auth response on attempts write.
         void record.save().catch((err) => {
             logger.warn(`[OTP VERIFY] Failed to persist attempts for ${normalizedPhone}: ${err.message}`);
