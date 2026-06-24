@@ -173,11 +173,19 @@ const normalizePhoneDigits = (value) => {
   return digits.slice(-10);
 }
 
+const handleRawPhoneInput = (value) => {
+  const digits = String(value || "").replace(/\D/g, "");
+  if (digits.length >= 11 && digits.startsWith("91")) {
+    return digits.slice(-10);
+  }
+  return digits.slice(0, 10);
+}
+
 const getVerifiedPhoneFromStoredRestaurant = () => {
   try {
     const pending = localStorage.getItem("restaurant_pendingPhone")
     if (pending && pending.trim()) {
-      return formatDisplayPhone(pending.trim())
+      return normalizePhoneDigits(pending.trim())
     }
 
     const storedUser = localStorage.getItem("restaurant_user")
@@ -195,7 +203,7 @@ const getVerifiedPhoneFromStoredRestaurant = () => {
       user?.restaurant?.phone,
     ]
     const phone = candidates.find((value) => typeof value === "string" && value.trim())
-    return phone ? formatDisplayPhone(phone.trim()) : ""
+    return phone ? normalizePhoneDigits(phone.trim()) : ""
   } catch {
     return ""
   }
@@ -864,8 +872,8 @@ export default function RestaurantOnboarding() {
                   : null,
               ownerName: localData.step1.ownerName || "",
               ownerEmail: localData.step1.ownerEmail || "",
-              ownerPhone: formatDisplayPhone(localData.step1.ownerPhone || ""),
-              primaryContactNumber: formatDisplayPhone(localData.step1.primaryContactNumber || ""),
+              ownerPhone: normalizePhoneDigits(localData.step1.ownerPhone || ""),
+              primaryContactNumber: normalizePhoneDigits(localData.step1.primaryContactNumber || ""),
               zoneId: localData.step1.zoneId || "",
               location: {
                 formattedAddress: localData.step1.location?.formattedAddress || "",
@@ -1050,8 +1058,8 @@ export default function RestaurantOnboarding() {
               pureVegRestaurant: typeof step1Data.pureVegRestaurant === 'boolean' ? step1Data.pureVegRestaurant : (typeof data.pureVegRestaurant === 'boolean' ? data.pureVegRestaurant : null),
               ownerName: step1Data.ownerName || data.ownerName || "",
               ownerEmail: step1Data.ownerEmail || data.ownerEmail || data.email || "",
-              ownerPhone: formatDisplayPhone(step1Data.ownerPhone || data.ownerPhone || data.phone || loginPhone || ""),
-              primaryContactNumber: formatDisplayPhone(step1Data.primaryContactNumber || data.primaryContactNumber || data.ownerPhone || data.phone || ""),
+              ownerPhone: normalizePhoneDigits(step1Data.ownerPhone || data.ownerPhone || data.phone || loginPhone || ""),
+              primaryContactNumber: normalizePhoneDigits(step1Data.primaryContactNumber || data.primaryContactNumber || data.ownerPhone || data.phone || ""),
               zoneId: step1Data.zoneId || data.zoneId || "",
               location: {
                 addressLine1: locationData.addressLine1 || data.addressLine1 || "",
@@ -1069,7 +1077,7 @@ export default function RestaurantOnboarding() {
             
             // Set verified phone number based on login phone, format it
             if (loginPhone) {
-              setVerifiedPhoneNumber(formatDisplayPhone(loginPhone))
+              setVerifiedPhoneNumber(normalizePhoneDigits(loginPhone))
             }
             
             setStep1(normalizedData)
@@ -1551,14 +1559,19 @@ export default function RestaurantOnboarding() {
           </div>
           <div>
             <Label className="text-xs text-gray-700">Phone number*</Label>
-            <Input
-              value={formatDisplayPhone(step1.ownerPhone)}
-              onChange={(e) => setStep1({ ...step1, ownerPhone: handlePhoneInput(e.target.value) })}
-              readOnly={Boolean(verifiedPhoneNumber)}
-              className="mt-1 bg-white text-sm text-black placeholder-black"
-              placeholder="+91 XXXXXXXXXX"
-              disabled={!isEditing}
-            />
+            <div className="relative flex items-center mt-1">
+              <span className="absolute left-3 text-sm text-gray-500 font-medium select-none">+91</span>
+              <Input
+                type="text"
+                value={step1.ownerPhone ? normalizePhoneDigits(step1.ownerPhone) : ""}
+                onChange={(e) => setStep1({ ...step1, ownerPhone: handleRawPhoneInput(e.target.value) })}
+                readOnly={Boolean(verifiedPhoneNumber)}
+                className="pl-12 bg-white text-sm text-black placeholder-gray-400 w-full animate-none"
+                placeholder="XXXXXXXXXX"
+                maxLength={10}
+                disabled={!isEditing}
+              />
+            </div>
           </div>
         </div>
       </section>
@@ -1567,15 +1580,20 @@ export default function RestaurantOnboarding() {
         <h2 className="text-lg font-semibold text-black">Restaurant contact & location</h2>
         <div>
           <Label className="text-xs text-gray-700">Primary contact number*</Label>
-          <Input
-            value={formatDisplayPhone(step1.primaryContactNumber)}
-            onChange={(e) => {
-              setStep1({ ...step1, primaryContactNumber: handlePhoneInput(e.target.value) })
-            }}
-            className="mt-1 bg-white text-sm text-black placeholder-black"
-            placeholder="+91 XXXXXXXXXX"
-            disabled={!isEditing}
-          />
+          <div className="relative flex items-center mt-1">
+            <span className="absolute left-3 text-sm text-gray-500 font-medium select-none">+91</span>
+            <Input
+              type="text"
+              value={step1.primaryContactNumber ? normalizePhoneDigits(step1.primaryContactNumber) : ""}
+              onChange={(e) => {
+                setStep1({ ...step1, primaryContactNumber: handleRawPhoneInput(e.target.value) })
+              }}
+              className="pl-12 bg-white text-sm text-black placeholder-gray-400 w-full animate-none"
+              placeholder="XXXXXXXXXX"
+              maxLength={10}
+              disabled={!isEditing}
+            />
+          </div>
           <p className="text-[11px] text-gray-500 mt-1">
             Customers, delivery partners and {companyName} may call on this number for order
             support.
