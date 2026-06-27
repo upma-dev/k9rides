@@ -1,130 +1,167 @@
-import React from 'react'
+import React, { useEffect, useRef } from 'react'
 import { motion } from 'framer-motion'
-import { Music, Mic, Navigation, Sparkles, ShieldCheck, Mail, Globe } from 'lucide-react'
+import { Music, Mic, Navigation, ShieldCheck, Mail, Globe, Zap, Star } from 'lucide-react'
+import { gsap } from 'gsap'
+import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import marketingCar from '../assets/marketing-car.jpg'
 
+gsap.registerPlugin(ScrollTrigger)
+
+const features = [
+  {
+    icon: Music, title: 'Personalized Content',
+    description: 'Stream music, play podcasts, or join premium mobile games directly on the in-car console.',
+    color: '#ff5100'
+  },
+  {
+    icon: Mic, title: 'Interactive Voice Assistant',
+    description: 'Adjust cabin temperature, set destination routes, or change music tracks hands-free.',
+    color: '#e11d48'
+  },
+  {
+    icon: Navigation, title: 'Real-Time Recommendations',
+    description: 'Receive traffic-optimized navigation guides and localized tips during your transit.',
+    color: '#1d4ed8'
+  },
+  {
+    icon: Zap, title: 'Instant Booking Engine',
+    description: 'Our smart dispatch matches you to the nearest driver in under 60 seconds, 24/7.',
+    color: '#10b981'
+  },
+]
+
 export default function Showcase() {
-  const features = [
-    {
-      icon: Music,
-      title: 'Personalized Content',
-      description: 'Stream music, play podcasts, or join premium mobile games directly on the in-car console.'
-    },
-    {
-      icon: Mic,
-      title: 'Interactive Voice Assistant',
-      description: 'Adjust cabin temperature, set destination routes, or change music tracks hands-free.'
-    },
-    {
-      icon: Navigation,
-      title: 'Real-Time Recommendations',
-      description: 'Receive traffic-optimized navigation guides and localized tips during your transit.'
-    },
-    {
-      icon: Sparkles,
-      title: 'Ambient AI Adjustments',
-      description: 'Cabin lighting and sound levels adapt automatically based on passenger preferences.'
-    }
-  ]
+  const sectionRef = useRef(null)
+  const leftRef = useRef(null)
+  const imageRef = useRef(null)
+
+  useEffect(() => {
+    const ctx = gsap.context(() => {
+      gsap.from(leftRef.current?.children, {
+        x: -40, opacity: 0, duration: 0.8, stagger: 0.12, ease: 'power3.out',
+        scrollTrigger: { trigger: leftRef.current, start: 'top 80%', once: true }
+      })
+      gsap.from(imageRef.current, {
+        x: 50, opacity: 0, scale: 0.95, duration: 1.0, ease: 'power3.out',
+        scrollTrigger: { trigger: imageRef.current, start: 'top 82%', once: true }
+      })
+    }, sectionRef)
+    return () => ctx.revert()
+  }, [])
 
   return (
-    <section className="py-24 bg-[#1A1A1A] text-white overflow-hidden border-t border-slate-900">
-      <div className="max-w-7xl mx-auto px-6">
-        
-        {/* Header */}
-        <div className="text-center max-w-3xl mx-auto mb-20 space-y-4">
-          <h2 className="text-xs font-black tracking-widest text-[#C5902A] dark:text-[#F5D476] uppercase flex items-center justify-center gap-1.5">
-            <Sparkles className="w-3.5 h-3.5 fill-current text-[#F5D476]" />
-            K9 RIDES • POWERED BY MEKING TECHNOLOGY
-          </h2>
-          <h3 className="text-3xl sm:text-5xl font-extrabold text-white tracking-tight">
-            Comfort • Convenience • Safety
-          </h3>
-          <p className="text-slate-400 max-w-xl mx-auto text-sm sm:text-base">
-            Enrolling 1 Lac+ Drivers in India. Enjoy premium smart ride features tailored to your journey. You are 100% insured.
-          </p>
-        </div>
+    <section
+      ref={sectionRef}
+      className="py-20 overflow-hidden relative border-t border-slate-800"
+      style={{ fontFamily: "'Poppins', sans-serif", background: '#060B0A' }}
+    >
+      {/* Background effects */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+        <div className="absolute top-1/4 left-0 w-[500px] h-[500px] rounded-full bg-[#ff5100]/[0.04] blur-[140px]" />
+        <div className="absolute bottom-0 right-0 w-[600px] h-[400px] rounded-full bg-[#1d4ed8]/[0.04] blur-[120px]" />
+        <div
+          className="absolute inset-0 opacity-[0.025]"
+          style={{
+            backgroundImage: 'linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)',
+            backgroundSize: '50px 50px'
+          }}
+        />
+      </div>
 
-        {/* Content Layout */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
-          
-          {/* Left Column: Key Features */}
-          <div className="lg:col-span-5 text-left space-y-8 order-2 lg:order-1">
+      <div className="max-w-7xl mx-auto px-6 relative z-10">
+
+        {/* Single unified two-column layout — text left, image right, same row */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 xl:gap-20 items-center">
+
+          {/* Left Column: All text + features */}
+          <div ref={leftRef} className="text-left space-y-8">
+
+            {/* Section label */}
+            <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-500 mb-1">
+              Smart Transit
+            </p>
+
+            {/* Main heading */}
             <div className="space-y-4">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#C5902A]/10 border border-[#C5902A]/20 text-[#C5902A] dark:text-[#F5D476] text-[10px] font-black uppercase tracking-wider">
-                <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
+              <h2 className="text-3xl sm:text-4xl xl:text-5xl font-black text-white tracking-tight leading-tight">
+                Comfort <span className="text-slate-600">•</span> Convenience <span className="text-slate-600">•</span> Safety
+              </h2>
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#10b981]/10 border border-[#10b981]/20 text-[#10b981] text-[10px] font-black uppercase tracking-wider">
+                <ShieldCheck className="w-3.5 h-3.5" />
                 Passenger Insurance Included
-              </span>
-              <h4 className="text-2xl font-black text-white">
-                Next-Gen Smart In-Car Experience
-              </h4>
-              <p className="text-slate-400 text-sm leading-relaxed">
-                K9 Rides does more than just drive you. We bring interactive voice controls, customized media playlists, and local insights directly to your ride.
+              </div>
+              <p className="text-slate-400 text-sm sm:text-base leading-relaxed max-w-lg">
+                Enrolling 1 Lac+ Drivers across India. K9 Rides does more than just drive you — interactive voice controls, media playlists, and local insights directly to your ride.
               </p>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            {/* Feature Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {features.map((feature, index) => {
                 const Icon = feature.icon
                 return (
-                  <div key={index} className="space-y-2 group">
-                    <div className="w-10 h-10 rounded-xl bg-slate-800 text-[#C5902A] dark:text-[#F5D476] group-hover:bg-[#C5902A] group-hover:text-black flex items-center justify-center transition-all duration-300">
-                      <Icon className="w-5 h-5" />
+                  <div
+                    key={index}
+                    className="group p-4 rounded-2xl border border-slate-800 hover:border-slate-700 bg-slate-900/40 hover:bg-slate-900/70 transition-all duration-300 cursor-default"
+                  >
+                    <div
+                      className="w-8 h-8 rounded-lg flex items-center justify-center mb-3 transition-all duration-300 group-hover:scale-110"
+                      style={{ background: `${feature.color}15`, border: `1px solid ${feature.color}25`, color: feature.color }}
+                    >
+                      <Icon className="w-4 h-4" />
                     </div>
-                    <h5 className="text-sm font-extrabold text-white">
-                      {feature.title}
-                    </h5>
-                    <p className="text-xs text-slate-400 leading-relaxed">
-                      {feature.description}
-                    </p>
+                    <h5 className="text-xs font-bold text-white mb-1 group-hover:text-slate-100 transition-colors">{feature.title}</h5>
+                    <p className="text-[11px] text-slate-500 leading-relaxed group-hover:text-slate-400 transition-colors">{feature.description}</p>
                   </div>
                 )
               })}
             </div>
 
-            <div className="pt-6 border-t border-slate-800 flex flex-col sm:flex-row gap-4 text-xs text-slate-500">
-              <a href="mailto:k9bharatrides@gmail.com" className="flex items-center gap-1.5 hover:text-[#C5902A] dark:hover:text-[#F5D476] transition-colors">
-                <Mail className="w-4 h-4 text-[#C5902A] dark:text-[#F5D476]" />
+            {/* Contact links */}
+            <div className="pt-6 border-t border-slate-800/60 flex flex-col sm:flex-row gap-4 text-xs text-slate-500">
+              <a href="mailto:k9bharatrides@gmail.com" className="flex items-center gap-1.5 hover:text-[#10b981] transition-colors">
+                <Mail className="w-4 h-4 text-[#10b981]" />
                 k9bharatrides@gmail.com
               </a>
-              <a href="https://www.k9rides.com" target="_blank" rel="noreferrer" className="flex items-center gap-1.5 hover:text-[#C5902A] dark:hover:text-[#F5D476] transition-colors">
-                <Globe className="w-4 h-4 text-[#C5902A] dark:text-[#F5D476]" />
+              <a href="https://www.k9rides.com" target="_blank" rel="noreferrer" className="flex items-center gap-1.5 hover:text-[#10b981] transition-colors">
+                <Globe className="w-4 h-4 text-[#10b981]" />
                 www.k9rides.com
               </a>
             </div>
           </div>
 
-          {/* Right Column: Visual Showcase */}
-          <motion.div
-            initial={{ opacity: 0, x: 50 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true, margin: '-50px' }}
-            transition={{ type: 'spring', stiffness: 70, damping: 15 }}
-            className="lg:col-span-7 order-1 lg:order-2"
-          >
-            <div className="relative rounded-[32px] overflow-hidden shadow-2xl border border-slate-800 bg-white group h-[320px] sm:h-[420px] flex items-center justify-center p-4">
-              {/* Ensure flyer image fits completely inside the container */}
+          {/* Right Column: Showcase Image */}
+          <div ref={imageRef} className="relative">
+            {/* Animated glow ring */}
+            <div
+              className="absolute inset-0 rounded-[36px] blur-xl opacity-20 animate-pulse"
+              style={{ background: 'linear-gradient(135deg, #1d4ed8, #10b981)', animationDuration: '4s' }}
+            />
+
+            <div className="relative rounded-[32px] overflow-hidden border border-slate-700/60 shadow-2xl group h-[320px] sm:h-[460px] flex items-center justify-center bg-slate-900/50">
+              {/* Inner mesh */}
+              <div className="absolute inset-0 bg-gradient-to-t from-[#060B0A]/60 via-transparent to-transparent z-10 pointer-events-none" />
+
               <img
                 src={marketingCar}
-                alt="K9 Rides Premium Vehicle standard"
-                className="w-full h-full object-contain group-hover:scale-[1.02] transition-all duration-[800ms] pointer-events-none"
+                alt="K9 Rides Premium Vehicle"
+                className="w-full h-full object-contain z-0 group-hover:scale-[1.04] transition-all duration-[1200ms] pointer-events-none"
                 loading="lazy"
               />
-              
-              {/* Subtle overlay elements positioned carefully to avoid overlapping text */}
-              <div className="absolute top-4 left-4 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#1A1A1A]/95 backdrop-blur-md border border-slate-800 text-white text-[9px] font-black uppercase tracking-wider shadow-lg">
-                <ShieldCheck className="w-3.5 h-3.5 text-[#F5D476]" />
+
+              {/* Float badges */}
+              <div className="absolute top-5 left-5 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/10 backdrop-blur-md border border-white/10 text-white text-[9px] font-black uppercase tracking-wider shadow-lg z-20">
+                <ShieldCheck className="w-3.5 h-3.5 text-[#10b981]" />
                 100% Insured
               </div>
 
-              <div className="absolute bottom-4 right-4 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#C5902A] text-black text-[9px] font-black uppercase tracking-wider shadow-lg">
+              <div className="absolute bottom-5 right-5 inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-[#1d4ed8] to-[#10b981] text-white text-[10px] font-black uppercase tracking-wider shadow-lg z-20">
                 Comfort Fleet
               </div>
             </div>
-          </motion.div>
+          </div>
 
         </div>
-
       </div>
     </section>
   )

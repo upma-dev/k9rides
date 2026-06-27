@@ -6,6 +6,10 @@ const FaqPage = () => {
   const navigate = useNavigate();
   const [openIndex, setOpenIndex] = useState(0);
 
+  React.useEffect(() => {
+    document.title = "FAQs | K9 Rides";
+  }, []);
+
   const faqs = [
     { q: "How do I book a ride?", a: "You can book a ride by logging into our app, entering your pickup and drop-off locations, selecting your vehicle type, and confirming the ride." },
     { q: "Are your drivers verified?", a: "Yes, all our drivers undergo a strict background check, vehicle inspection, and training before they start driving with us." },

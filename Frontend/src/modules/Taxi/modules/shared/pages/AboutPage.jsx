@@ -9,6 +9,7 @@ const AboutPage = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    document.title = "About Us | K9 Rides";
     const fetchContent = async () => {
       try {
         const res = await api.get('/common/landing-page/settings');

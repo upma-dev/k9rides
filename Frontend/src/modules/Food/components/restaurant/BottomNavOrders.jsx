@@ -50,45 +50,35 @@ export default function BottomNavOrders() {
   }
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-[60] px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
-      <div className="mx-auto w-full max-w-md">
-        <div className="relative overflow-hidden rounded-[24px] bg-gray-900/95 backdrop-blur-xl py-2 px-2 shadow-[0_20px_50px_rgba(0,0,0,0.3)] border border-white/10">
-          <div className="relative flex items-center justify-around gap-1">
-            {tabs.map((tab) => {
-              const Icon = tab.icon
-              const isActive = activeTab === tab.id
+    <div className="fixed bottom-0 left-0 right-0 w-full z-[60] select-none">
+      <div className="flex items-center justify-around h-16 bg-gray-950 dark:bg-zinc-950 border-t border-zinc-800 shadow-[0_-8px_30px_rgba(0,0,0,0.35)] px-2 py-1">
+        {tabs.map((tab) => {
+          const Icon = tab.icon
+          const isActive = activeTab === tab.id
 
-              return (
-                <motion.button
-                  key={tab.id}
-                  onClick={() => handleTabClick(tab)}
-                  aria-current={isActive ? "page" : undefined}
-                  className="relative z-10 flex min-w-0 flex-1 flex-col items-center justify-center gap-1.5 py-2.5 rounded-2xl transition-colors duration-200"
-                  whileTap={{ scale: 0.95 }}
-                >
-                  {isActive && (
-                    <motion.div
-                      layoutId="bottomNavActive"
-                      className="absolute inset-x-1 inset-y-1 bg-white/10 rounded-xl"
-                      initial={false}
-                      transition={{ type: "spring", stiffness: 400, damping: 30 }}
-                    />
-                  )}
-                  <Icon
-                    className={`relative z-10 h-[19px] w-[19px] transition-all duration-300 ${isActive ? "text-white scale-110" : "text-white/40"
-                      }`}
-                  />
-                  <span
-                    className={`relative z-10 whitespace-nowrap text-[10px] font-bold tracking-tight transition-colors duration-300 ${isActive ? "text-white" : "text-white/40"
-                      }`}
-                  >
-                    {tab.label}
-                  </span>
-                </motion.button>
-              )
-            })}
-          </div>
-        </div>
+          return (
+            <button
+              key={tab.id}
+              onClick={() => handleTabClick(tab)}
+              aria-current={isActive ? "page" : undefined}
+              className={`flex flex-1 flex-col items-center justify-center gap-1.5 py-1.5 transition-all duration-300 relative ${isActive
+                  ? "text-[#ff6d00]"
+                  : "text-zinc-500 hover:text-zinc-400"
+                }`}
+            >
+              <div className="relative">
+                <Icon
+                  className={`h-5.5 w-5.5 transition-all duration-300 ${isActive ? "text-[#ff6d00] scale-110" : "text-zinc-500"}`}
+                />
+              </div>
+              <span
+                className={`text-[10px] font-extrabold tracking-wide transition-all ${isActive ? "text-[#ff6d00]" : "text-zinc-500"}`}
+              >
+                {tab.label}
+              </span>
+            </button>
+          )
+        })}
       </div>
     </div>
   )

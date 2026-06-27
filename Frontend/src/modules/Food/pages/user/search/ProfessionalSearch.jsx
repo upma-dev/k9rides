@@ -263,10 +263,10 @@ export default function ProfessionalSearch() {
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-zinc-950">
       {/* Header */}
-      <div className="sticky top-0 z-50 bg-white dark:bg-zinc-900 border-b border-slate-200 dark:border-zinc-800 px-4 py-3 md:hidden">
+      <div className="sticky top-0 z-50 bg-white dark:bg-zinc-900 border-b border-slate-150 dark:border-zinc-850 px-4 py-3 md:hidden shadow-sm">
         <div className="max-w-3xl mx-auto flex items-center gap-3">
-          <button type="button" onClick={() => navigate('/food/user')} className="p-2 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-full transition-colors">
-            <ArrowLeft className="w-5 h-5" />
+          <button type="button" onClick={() => navigate('/food/user')} className="p-2 hover:bg-slate-50 dark:hover:bg-zinc-800 rounded-full transition-colors active:scale-95">
+            <ArrowLeft className="w-5 h-5 text-gray-700 dark:text-gray-300" />
           </button>
           
           <form onSubmit={(e) => {
@@ -282,17 +282,17 @@ export default function ProfessionalSearch() {
               placeholder="Search for restaurants or dishes..." 
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              className="pl-10 pr-10 h-11 bg-slate-100 dark:bg-zinc-800 border-none focus:ring-2 focus:ring-rose-500 rounded-xl"
+              className="pl-10 pr-10 h-11 bg-slate-50 dark:bg-zinc-800/60 border border-slate-200 dark:border-zinc-700/60 focus:ring-2 focus:ring-[#ff6d00] focus:border-transparent rounded-xl shadow-sm text-sm transition-all"
             />
             {query && (
-              <button type="button" onClick={handleClear} className="absolute right-10 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-600 z-10">
+              <button type="button" onClick={handleClear} className="absolute right-10 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-600 z-10 active:scale-90">
                 <X className="w-4 h-4" />
               </button>
             )}
             <button 
               type="button"
               onClick={handleVoiceSearch}
-              className={`absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-full transition-all z-10 ${isListening ? 'text-rose-500 scale-125 animate-pulse' : 'text-slate-400'}`}
+              className={`absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-full transition-all z-10 ${isListening ? 'text-[#ff6d00] scale-125 animate-pulse' : 'text-slate-400'}`}
             >
               <Mic className="w-5 h-5" />
             </button>
@@ -308,7 +308,7 @@ export default function ProfessionalSearch() {
             setSearchParams({ q: query, ...(selectedCategoryId ? { cat: selectedCategoryId } : {}) }, { replace: true })
             performSearch(query, selectedCategoryId)
           }} className="relative">
-            <button type="submit" className="absolute left-4 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-rose-500 z-10 transition-colors">
+            <button type="submit" className="absolute left-4 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-[#ff6d00] z-10 transition-colors">
               <Search className="w-5 h-5" />
             </button>
             <Input 
@@ -316,24 +316,57 @@ export default function ProfessionalSearch() {
               placeholder="Search for restaurants or dishes..." 
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              className="pl-12 pr-12 h-12 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 focus:ring-2 focus:ring-rose-500 rounded-2xl shadow-sm text-sm"
+              className="pl-12 pr-12 h-12 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800/80 focus:ring-2 focus:ring-[#ff6d00] focus:border-transparent rounded-2xl shadow-sm text-sm transition-all hover:border-slate-350"
             />
             {query && (
-              <button type="button" onClick={handleClear} className="absolute right-12 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-600 transition-colors z-10">
+              <button type="button" onClick={handleClear} className="absolute right-12 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-600 transition-colors z-10 active:scale-90">
                 <X className="w-4 h-4" />
               </button>
             )}
             <button 
               type="button"
               onClick={handleVoiceSearch}
-              className={`absolute right-4 top-1/2 -translate-y-1/2 p-1 rounded-full transition-all z-10 ${isListening ? 'text-rose-500 scale-125 animate-pulse' : 'text-slate-400'}`}
+              className={`absolute right-4 top-1/2 -translate-y-1/2 p-1 rounded-full transition-all z-10 ${isListening ? 'text-[#ff6d00] scale-125 animate-pulse' : 'text-slate-400'}`}
             >
               <Mic className="w-5 h-5" />
             </button>
           </form>
         </div>
 
-        {/* Categories (Admin only) */}
+        {/* Popular Searches (Main Page Style) */}
+        {!query && !loading && (
+          <div className="mb-8">
+            <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-4 px-1">Popular Searches</h3>
+            <div className="relative w-full overflow-hidden">
+              <div className="flex items-center gap-2.5 overflow-x-auto scrollbar-hide py-1 px-0.5 pointer-events-auto pr-8">
+                {[
+                  { name: 'Pizza', emoji: '🍕', style: 'bg-red-50 dark:bg-red-950/20 border-red-100 dark:border-red-900/30 text-red-600 dark:text-red-400 hover:bg-red-100/50' },
+                  { name: 'Biryani', emoji: '🍛', style: 'bg-amber-50 dark:bg-amber-950/20 border-amber-100 dark:border-amber-900/30 text-amber-700 dark:text-amber-400 hover:bg-amber-100/50' },
+                  { name: 'Burger', emoji: '🍔', style: 'bg-orange-50 dark:bg-orange-950/20 border-orange-100 dark:border-orange-900/30 text-orange-600 dark:text-orange-400 hover:bg-orange-100/50' },
+                  { name: 'Momos', emoji: '🥟', style: 'bg-yellow-50/60 dark:bg-yellow-950/10 border-yellow-100/80 dark:border-yellow-900/20 text-yellow-755 dark:text-yellow-400 hover:bg-yellow-100/40' },
+                  { name: 'Thali', emoji: '🍲', style: 'bg-emerald-50 dark:bg-emerald-950/20 border-emerald-100 dark:border-emerald-900/30 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-100/50' },
+                  { name: 'Desserts', emoji: '🍰', style: 'bg-rose-50 dark:bg-rose-950/20 border-rose-100 dark:border-rose-900/30 text-rose-600 dark:text-rose-400 hover:bg-rose-100/50' }
+                ].map((chip) => (
+                  <button
+                    key={chip.name}
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setQuery(chip.name);
+                      addToHistory(chip.name);
+                      performSearch(chip.name, selectedCategoryId);
+                    }}
+                    className={`flex items-center gap-1 flex-shrink-0 px-4 py-2 border rounded-full text-xs font-bold transition-all duration-200 shadow-sm hover:shadow active:scale-95 ${chip.style}`}
+                  >
+                    <span className="text-sm leading-none">{chip.emoji}</span>
+                    <span>{chip.name}</span>
+                  </button>
+                ))}
+              </div>
+              <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-slate-50 to-transparent dark:from-zinc-950 pointer-events-none z-10" />
+            </div>
+          </div>
+        )}
         {!query && !loading && (
           <div className="mb-8">
             <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-4 px-1">Top Categories</h3>

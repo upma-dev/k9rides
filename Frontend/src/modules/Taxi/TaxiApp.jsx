@@ -880,7 +880,8 @@ function TaxiApp() {
                   element={<IntercityConfirm />}
                 />
                 <Route path="user/cab-sharing" element={<CabSharing />} />
-                <Route path="user/cab" element={<CabHome />} />
+                <Route path="user/cab" element={<Navigate to="/taxi/user/ride/select-location" replace />} />
+                {/* <Route path="user/cab" element={<CabHome />} />
                 <Route path="user/cab/shared" element={<SharedTaxi />} />
                 <Route
                   path="user/cab/shared/seats"
@@ -906,7 +907,7 @@ function TaxiApp() {
                 <Route
                   path="user/cab/spiritual-confirm"
                   element={<SpiritualTripConfirm />}
-                />
+                /> */}
                 <Route path="user/bus" element={<BusHome />} />
                 <Route path="user/bus/list" element={<BusList />} />
                 <Route path="user/bus/seats" element={<BusSeats />} />

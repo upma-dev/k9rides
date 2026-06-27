@@ -55,6 +55,7 @@ const ZoneManagement = ({ mode: initialMode = "list" }) => {
   const [enablePeakZoneGlobal, setEnablePeakZoneGlobal] = useState(true);
   const [editingId, setEditingId] = useState(id || null);
   const [mapCenter, setMapCenter] = useState({ lat: 21.1458, lng: 79.0882 }); 
+  const [zoom, setZoom] = useState(12);
   const [autocomplete, setAutocomplete] = useState(null);
   const [countryBoundaryPaths, setCountryBoundaryPaths] = useState([]);
   const [boundaryLoading, setBoundaryLoading] = useState(false);
@@ -417,11 +418,21 @@ const ZoneManagement = ({ mode: initialMode = "list" }) => {
       polygonRef.current.setMap(null);
       polygonRef.current = null;
     }
+    if (circleRef.current) {
+      circleRef.current.setMap(null);
+      circleRef.current = null;
+    }
     pathMarkersRef.current?.forEach(m => m.setMap(null));
     pathMarkersRef.current = [];
     setPolygonCoords([]);
     setCircleCenter(null);
     setCircleRadiusMeters('');
+    initialDrawDoneRef.current = false;
+    isDrawingRef.current = false;
+    setIsDrawing(false);
+    if (mapRef.current) {
+      mapRef.current.setOptions({ draggableCursor: null });
+    }
   };
 
   const handleMapClick = (event) => {
@@ -516,7 +527,12 @@ const ZoneManagement = ({ mode: initialMode = "list" }) => {
           lng: place.geometry.location.lng()
         };
         setMapCenter(loc);
-        mapRef.current?.panTo(loc);
+        if (place.geometry.viewport) {
+          mapRef.current?.fitBounds(place.geometry.viewport);
+        } else {
+          mapRef.current?.panTo(loc);
+          setZoom(16);
+        }
       }
     }
   };
@@ -1117,14 +1133,19 @@ const ZoneManagement = ({ mode: initialMode = "list" }) => {
                           Clear Map
                         </button>
                       </div>
-                   </div>
+                    </div>
 
-                   <div className="h-[620px] p-2">
+                    <div className="h-[620px] p-2">
                      {isLoaded ? (
                        <div className="w-full h-full rounded-lg overflow-hidden relative">
                          <GoogleMap
                            mapContainerStyle={{ width: '100%', height: '100%' }}
-                           center={mapCenter} zoom={12}
+                           center={mapCenter} zoom={zoom}
+                           onZoomChanged={() => {
+                             if (mapRef.current) {
+                               setZoom(mapRef.current.getZoom());
+                             }
+                           }}
                            onLoad={m => {
                              mapRef.current = m;
                              window.google.maps.event.addListener(m, 'click', (event) => {

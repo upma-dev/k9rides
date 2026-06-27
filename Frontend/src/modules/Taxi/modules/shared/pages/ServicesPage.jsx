@@ -5,6 +5,10 @@ import { ArrowLeft, Car, Plane, MapPin, Package, Bike, HeadphonesIcon, ChevronRi
 const ServicesPage = () => {
   const navigate = useNavigate();
 
+  React.useEffect(() => {
+    document.title = "Our Services | K9 Rides";
+  }, []);
+
   const services = [
     { title: "City Rides", desc: "Comfortable and safe city rides to any destination.", icon: <Car className="text-[#1a1a1a]" size={28} /> },
     { title: "Airport Transfers", desc: "Punctual drops and pickups from the airport.", icon: <Plane className="text-[#1a1a1a]" size={28} /> },

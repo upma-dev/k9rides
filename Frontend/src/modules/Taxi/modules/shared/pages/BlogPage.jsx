@@ -5,6 +5,10 @@ import { ArrowLeft, Calendar, User, ArrowRight } from 'lucide-react';
 const BlogPage = () => {
   const navigate = useNavigate();
 
+  React.useEffect(() => {
+    document.title = "Our Blog | K9 Rides";
+  }, []);
+
   const blogPosts = [
     {
       id: 1,

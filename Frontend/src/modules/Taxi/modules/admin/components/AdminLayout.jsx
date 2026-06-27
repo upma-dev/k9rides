@@ -282,9 +282,8 @@ const SidebarBadge = ({ count, isActive = false }) => {
 
   return (
     <span
-      className={`ml-auto inline-flex min-w-[1.5rem] items-center justify-center rounded-full px-2 py-0.5 text-[10px] font-black ${
-        isActive ? 'bg-white/20 text-white' : 'bg-primary-orange/50 text-white'
-      }`}
+      className={`ml-auto inline-flex min-w-[1.5rem] items-center justify-center rounded-full px-2 py-0.5 text-[10px] font-black ${isActive ? 'bg-white/20 text-white' : 'bg-primary-orange/50 text-white'
+        }`}
     >
       {count > 99 ? '99+' : count}
     </span>
@@ -517,14 +516,12 @@ const ModeSwitcher = ({ mode, setMode }) => {
                   setMode(option.id);
                   setIsOpen(false);
                 }}
-                className={`flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left transition-all ${
-                  selected ? 'bg-[#f8fafc] dark:bg-slate-900mber-600 text-white shadow-lg shadow-amber-200' : 'hover:bg-neutral-50 dark:bg-slate-900'
-                }`}
+                className={`flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left transition-all ${selected ? 'bg-[#f8fafc] dark:bg-slate-900mber-600 text-white shadow-lg shadow-amber-200' : 'hover:bg-neutral-50 dark:bg-slate-900'
+                  }`}
               >
                 <span
-                  className={`h-2.5 w-2.5 rounded-full transition-all ${
-                    selected ? 'bg-white dark:bg-slate-900' : 'bg-neutral-300'
-                  }`}
+                  className={`h-2.5 w-2.5 rounded-full transition-all ${selected ? 'bg-white dark:bg-slate-900' : 'bg-neutral-300'
+                    }`}
                 />
                 <span className="flex-1">
                   <span className={`block text-[13px] font-bold ${selected ? 'text-white' : 'text-neutral-900 dark:text-neutral-100'}`}>
@@ -1400,9 +1397,8 @@ const AdminLayout = () => {
                 </button>
 
                 <div
-                  className={`absolute right-0 top-full z-50 mt-2 w-[360px] overflow-hidden rounded-[24px] border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xl transition-all ${
-                    isNotificationsOpen ? 'pointer-events-auto scale-100 opacity-100' : 'pointer-events-none scale-95 opacity-0'
-                  }`}
+                  className={`absolute right-0 top-full z-50 mt-2 w-[360px] overflow-hidden rounded-[24px] border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xl transition-all ${isNotificationsOpen ? 'pointer-events-auto scale-100 opacity-100' : 'pointer-events-none scale-95 opacity-0'
+                    }`}
                 >
                   <div className="border-b border-slate-100 dark:border-slate-800 px-4 py-4">
                     <div className="flex items-center justify-between gap-3">
@@ -1435,11 +1431,10 @@ const AdminLayout = () => {
                           setNotificationTab('ride_requests');
                           setRideRequestPage(1);
                         }}
-                        className={`rounded-xl px-3 py-2 text-xs font-bold transition-all ${
-                          notificationTab === 'ride_requests'
+                        className={`rounded-xl px-3 py-2 text-xs font-bold transition-all ${notificationTab === 'ride_requests'
                             ? 'bg-white dark:bg-slate-900 text-slate-900 shadow-sm'
                             : 'text-slate-500 dark:text-slate-400 dark:text-slate-500 hover:text-slate-900'
-                        }`}
+                          }`}
                       >
                         Ride Requests
                       </button>
@@ -1449,11 +1444,10 @@ const AdminLayout = () => {
                           setNotificationTab('bookings');
                           setBookingPage(1);
                         }}
-                        className={`rounded-xl px-3 py-2 text-xs font-bold transition-all ${
-                          notificationTab === 'bookings'
+                        className={`rounded-xl px-3 py-2 text-xs font-bold transition-all ${notificationTab === 'bookings'
                             ? 'bg-white dark:bg-slate-900 text-slate-900 shadow-sm'
                             : 'text-slate-500 dark:text-slate-400 dark:text-slate-500 hover:text-slate-900'
-                        }`}
+                          }`}
                       >
                         Bookings
                       </button>
@@ -1462,11 +1456,10 @@ const AdminLayout = () => {
                         onClick={() => {
                           setNotificationTab('chats');
                         }}
-                        className={`rounded-xl px-3 py-2 text-xs font-bold transition-all ${
-                          notificationTab === 'chats'
+                        className={`rounded-xl px-3 py-2 text-xs font-bold transition-all ${notificationTab === 'chats'
                             ? 'bg-white dark:bg-slate-900 text-slate-900 shadow-sm'
                             : 'text-slate-500 dark:text-slate-400 dark:text-slate-500 hover:text-slate-900'
-                        }`}
+                          }`}
                       >
                         Chats
                       </button>
@@ -1509,33 +1502,33 @@ const AdminLayout = () => {
                                   {item.tripStatus || 'Upcoming'}
                                 </span>
                               </div>
-                            <div className="mt-2 flex items-center justify-between gap-3 text-[11px] font-semibold text-slate-400 dark:text-slate-500">
-                              <span>
-                                Destination: {formatAdminNotificationLocation(item.dropLabel, 'Destination set')}
-                              </span>
-                              <span>{formatRelativeAdminTime(item.date)}</span>
-                            </div>
-                            <span
-                              role="button"
-                              tabIndex={0}
-                              onClick={(event) => {
-                                event.preventDefault();
-                                event.stopPropagation();
-                                dismissNotification('ride_requests', item);
-                              }}
-                              onKeyDown={(event) => {
-                                if (event.key === 'Enter' || event.key === ' ') {
+                              <div className="mt-2 flex items-center justify-between gap-3 text-[11px] font-semibold text-slate-400 dark:text-slate-500">
+                                <span>
+                                  Destination: {formatAdminNotificationLocation(item.dropLabel, 'Destination set')}
+                                </span>
+                                <span>{formatRelativeAdminTime(item.date)}</span>
+                              </div>
+                              <span
+                                role="button"
+                                tabIndex={0}
+                                onClick={(event) => {
                                   event.preventDefault();
                                   event.stopPropagation();
                                   dismissNotification('ride_requests', item);
-                                }
-                              }}
-                              className="absolute right-3 top-3 inline-flex rounded-lg p-1.5 text-slate-400 dark:text-slate-500 transition-all hover:bg-rose-50 hover:text-rose-600"
-                              aria-label="Delete notification"
-                            >
-                              <Trash2 size={14} />
-                            </span>
-                          </button>
+                                }}
+                                onKeyDown={(event) => {
+                                  if (event.key === 'Enter' || event.key === ' ') {
+                                    event.preventDefault();
+                                    event.stopPropagation();
+                                    dismissNotification('ride_requests', item);
+                                  }
+                                }}
+                                className="absolute right-3 top-3 inline-flex rounded-lg p-1.5 text-slate-400 dark:text-slate-500 transition-all hover:bg-rose-50 hover:text-rose-600"
+                                aria-label="Delete notification"
+                              >
+                                <Trash2 size={14} />
+                              </span>
+                            </button>
                           ))}
                         </div>
                       )
@@ -1712,9 +1705,8 @@ const AdminLayout = () => {
               </button>
 
               <div
-                className={`absolute right-0 top-full z-50 mt-2 w-48 rounded-2xl border border-gray-100 bg-white dark:bg-slate-900 p-2 shadow-xl transition-all ${
-                  isUserMenuOpen ? 'pointer-events-auto scale-100 opacity-100' : 'pointer-events-none scale-95 opacity-0'
-                }`}
+                className={`absolute right-0 top-full z-50 mt-2 w-48 rounded-2xl border border-gray-100 bg-white dark:bg-slate-900 p-2 shadow-xl transition-all ${isUserMenuOpen ? 'pointer-events-auto scale-100 opacity-100' : 'pointer-events-none scale-95 opacity-0'
+                  }`}
               >
                 <button
                   type="button"

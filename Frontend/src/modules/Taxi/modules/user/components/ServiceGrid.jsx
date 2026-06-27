@@ -62,7 +62,7 @@ const ServiceGrid = () => {
     
     // Default taxi paths based on name/keywords if needed, or just generic select-location
     if (module.name.toLowerCase().includes('cab') || module.name.toLowerCase().includes('taxi')) {
-        return '/taxi/user/cab';
+        return '/taxi/user/ride/select-location';
     }
     return '/taxi/user/ride/select-location';
   };

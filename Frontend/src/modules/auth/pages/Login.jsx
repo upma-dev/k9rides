@@ -5,7 +5,9 @@ import { Phone, Lock, ArrowRight, ArrowLeft, ShieldCheck, Loader2, UtensilsCross
 import { toast } from "sonner"
 import apiClient, { authAPI } from "@food/api"
 import { setUnifiedAuthData, isUnifiedAuthenticated } from "@food/utils/auth"
-import { getDynamicLogo, getCompanyName } from "@food/utils/businessSettings"
+
+const K9_LOGO = "/k9 logo.png"
+const COMPANY_NAME = "K9 Rides"
 
 export default function UnifiedOTPFastLogin({ viewType = "auth" }) {
   const RESEND_COOLDOWN_SECONDS = 60
@@ -82,13 +84,17 @@ export default function UnifiedOTPFastLogin({ viewType = "auth" }) {
     return normalizedToken
   }
 
-  // Check if already logged in on mount - if at login page, redirect to default authenticated path
+  // Check if already logged in on mount - commented out so the Sign In screen always shows for testing
+  // useEffect(() => {
+  //   if (isUnifiedAuthenticated() && viewType === "auth") {
+  //     const from = location.state?.from?.pathname === "/" ? "/food/user" : (location.state?.from?.pathname || "/food/user");
+  //     navigate(from, { replace: true })
+  //   }
+  // }, [viewType, navigate, location])
+
   useEffect(() => {
-    if (isUnifiedAuthenticated() && viewType === "auth") {
-      const from = location.state?.from?.pathname || "/";
-      navigate(from, { replace: true })
-    }
-  }, [viewType, navigate, location])
+    document.title = "Login | K9 Rides"
+  }, [])
 
   const normalizedPhone = () => {
     const digits = String(phoneNumber).replace(/\D/g, "").slice(-15)
@@ -277,7 +283,7 @@ export default function UnifiedOTPFastLogin({ viewType = "auth" }) {
         console.warn("[Auth] FCM save route failed after login:", fcmSaveError?.message || fcmSaveError)
       }
       toast.success("Authentication successful!")
-      const from = location.state?.from?.pathname || "/";
+      const from = location.state?.from?.pathname === "/" ? "/food/user" : (location.state?.from?.pathname || "/food/user");
       navigate(from, { replace: true })
     } catch (err) {
       const status = err?.response?.status
@@ -336,7 +342,7 @@ export default function UnifiedOTPFastLogin({ viewType = "auth" }) {
 
       setUnifiedAuthData(nextData)
       toast.success("Profile completed successfully!")
-      const from = location.state?.from?.pathname || "/";
+      const from = location.state?.from?.pathname === "/" ? "/food/user" : (location.state?.from?.pathname || "/food/user");
       navigate(from, { replace: true })
     } catch (err) {
       const msg =
@@ -387,10 +393,10 @@ export default function UnifiedOTPFastLogin({ viewType = "auth" }) {
             transition={{ delay: 0.1 }}
             className="flex items-center gap-4 mb-16"
           >
-            <div className="w-12 h-12 flex items-center justify-center bg-white rounded-xl shadow-lg">
-              <img src={getDynamicLogo()} alt={getCompanyName()} className="w-8 h-8 object-contain" />
+            <div className="w-12 h-12 flex items-center justify-center bg-white rounded-xl shadow-lg overflow-hidden">
+              <img src={K9_LOGO} alt={COMPANY_NAME} className="w-full h-full object-cover" />
             </div>
-            <h1 className="text-3xl font-black tracking-tight">{getCompanyName()}</h1>
+            <h1 className="text-3xl font-black tracking-tight">{COMPANY_NAME}</h1>
           </motion.div>
 
           <motion.div
@@ -456,16 +462,16 @@ export default function UnifiedOTPFastLogin({ viewType = "auth" }) {
               exit={{ opacity: 0, y: -10 }}
               className="w-full flex flex-col items-center"
             >
-              {/* Circular Logo */}
+              {/* K9 Logo */}
               <img 
-                src={getDynamicLogo()} 
-                alt={getCompanyName()} 
+                src={K9_LOGO} 
+                alt={COMPANY_NAME} 
                 className="w-[84px] h-[84px] rounded-full object-cover shadow-lg mb-6" 
               />
 
               <div className="text-center mb-8">
                 <h2 className="text-[32px] leading-tight font-black text-[#1A1A1A] tracking-tight mb-2">
-                  Welcome to {getCompanyName()}
+                  Welcome to {COMPANY_NAME}
                 </h2>
                 <p className="text-[#1A1A1A] text-[15px] font-medium max-w-[28ch] mx-auto">
                   Enter your phone number to<br />access the unified ecosystem.

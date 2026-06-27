@@ -25,6 +25,7 @@ const CareersPage = () => {
   `;
 
   useEffect(() => {
+    document.title = "Careers | K9 Rides";
     const fetchContent = async () => {
       try {
         const res = await api.get('/common/landing-page/settings');

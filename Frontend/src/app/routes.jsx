@@ -103,10 +103,10 @@ const AppRoutes = () => {
   return (
     <Routes>
       {/* Root → Master Landing Page */}
-      <Route path="/" element={<Navigate to="/food/user" replace />} />
+      <Route path="/" element={<Suspense fallback={<PageLoader />}><LandingPage /></Suspense>} />
 
-      {/* Landing Page Module */}
-      <Route path="/landing-page" element={<Suspense fallback={<PageLoader />}><LandingPage /></Suspense>} />
+      {/* Landing Page Module - Redirect to root */}
+      <Route path="/landing-page" element={<Navigate to="/" replace />} />
 
       {/* Auth Module */}
       <Route path="/login/*" element={<Suspense fallback={<PageLoader />}><AuthApp /></Suspense>} />

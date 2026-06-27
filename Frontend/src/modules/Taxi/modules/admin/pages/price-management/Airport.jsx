@@ -64,18 +64,21 @@ const Airport = ({ mode: initialMode = "list" }) => {
   const [selectedAirportId, setSelectedAirportId] = useState(id || null);
   const [formData, setFormData] = useState(defaultFormData);
   const [mapCenter, setMapCenter] = useState(DELHI_CENTER);
+  const [zoom, setZoom] = useState(13);
   const [autocomplete, setAutocomplete] = useState(null);
   const [boundaryCoords, setBoundaryCoords] = useState([]);
+  const [isDrawingBoundary, setIsDrawingBoundary] = useState(false);
   const [filters, setFilters] = useState({
     service_location_id: '',
     status: '',
   });
   const mapRef = useRef(null);
+  const searchInputRef = useRef(null);
   const { isLoaded, loadError } = useAppGoogleMapsLoader();
 
   useEffect(() => {
     setView(initialMode);
-    if (initialMode === 'list') {
+    if (initialMode === 'list' || initialMode === 'create') {
       resetFormState();
     }
   }, [initialMode]);
@@ -84,6 +87,7 @@ const Airport = ({ mode: initialMode = "list" }) => {
     setSelectedAirportId(null);
     setFormData({ ...defaultFormData, service_location_id: serviceLocationId });
     setBoundaryCoords([]);
+    setIsDrawingBoundary(false);
     if (serviceLocation) {
       const lat = Number(serviceLocation.latitude);
       const lng = Number(serviceLocation.longitude);
@@ -161,7 +165,13 @@ const Airport = ({ mode: initialMode = "list" }) => {
     setMapCenter({ lat: nextLat, lng: nextLng });
   };
 
-  const handleMapClick = (event) => updatePinnedLocation(event.latLng?.lat(), event.latLng?.lng());
+  const handleMapClick = (event) => {
+    if (isDrawingBoundary) {
+      setBoundaryCoords(prev => [...prev, { lat: event.latLng.lat(), lng: event.latLng.lng() }]);
+    } else {
+      updatePinnedLocation(event.latLng?.lat(), event.latLng?.lng());
+    }
+  };
   const handleMarkerDragEnd = (event) => updatePinnedLocation(event.latLng?.lat(), event.latLng?.lng());
 
   const handlePlaceChanged = () => {
@@ -171,9 +181,34 @@ const Airport = ({ mode: initialMode = "list" }) => {
     const lng = place.geometry?.location?.lng?.();
     if (Number.isFinite(lat) && Number.isFinite(lng)) {
       updatePinnedLocation(lat, lng);
-      mapRef.current?.panTo({ lat, lng });
-      mapRef.current?.setZoom(15);
+      if (place.geometry.viewport) {
+        mapRef.current?.fitBounds(place.geometry.viewport);
+      } else {
+        mapRef.current?.panTo({ lat, lng });
+        setZoom(16);
+      }
     }
+  };
+
+  const triggerManualSearch = () => {
+    const query = searchInputRef.current?.value;
+    if (!query || !window.google) return;
+
+    const geocoder = new window.google.maps.Geocoder();
+    geocoder.geocode({ address: query }, (results, status) => {
+      if (status === 'OK' && results && results[0]?.geometry) {
+        const place = results[0];
+        const lat = place.geometry.location.lat();
+        const lng = place.geometry.location.lng();
+        updatePinnedLocation(lat, lng);
+        if (place.geometry.viewport) {
+          mapRef.current?.fitBounds(place.geometry.viewport);
+        } else {
+          mapRef.current?.panTo({ lat, lng });
+          setZoom(16);
+        }
+      }
+    });
   };
 
   const handleSave = async () => {
@@ -190,7 +225,7 @@ const Airport = ({ mode: initialMode = "list" }) => {
       };
       const res = selectedAirportId ? await adminService.updateAirport(selectedAirportId, payload) : await adminService.createAirport(payload);
       if (res?.success || res?.status === 200 || res?.status === 201) {
-        navigate("/admin/pricing/airport");
+        navigate("/taxi/admin/pricing/airport");
         fetchData();
         resetFormState();
       } else {
@@ -280,7 +315,7 @@ const Airport = ({ mode: initialMode = "list" }) => {
               <div className="flex items-center justify-between">
                 <h1 className="text-xl font-semibold text-gray-900">Airport Management</h1>
                 <button 
-                  onClick={() => navigate("create")}
+                  onClick={() => navigate("/taxi/admin/pricing/airport/create")}
                   className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 transition-colors shadow-sm"
                 >
                   <Plus size={16} /> Add Airport
@@ -420,7 +455,7 @@ const Airport = ({ mode: initialMode = "list" }) => {
                           </td>
                           <td className="px-6 py-4 text-right">
                             <div className="flex justify-end gap-2 text-gray-400">
-                              <button onClick={() => navigate(`edit/${airport._id || airport.id}`)} className="p-1.5 hover:text-indigo-600 transition-colors"><Edit2 size={14} /></button>
+                              <button onClick={() => navigate(`/taxi/admin/pricing/airport/edit/${airport._id || airport.id}`)} className="p-1.5 hover:text-indigo-600 transition-colors"><Edit2 size={14} /></button>
                               <button onClick={() => handleDelete(airport._id || airport.id)} className="p-1.5 hover:text-rose-600 transition-colors"><Trash2 size={14} /></button>
                             </div>
                           </td>
@@ -456,7 +491,7 @@ const Airport = ({ mode: initialMode = "list" }) => {
               <div className="flex items-center justify-between">
                 <h1 className="text-xl font-semibold text-gray-900">{id ? 'Edit Airport' : 'Add Airport'}</h1>
                 <button 
-                  onClick={() => navigate("/admin/pricing/airport")}
+                  onClick={() => navigate("/taxi/admin/pricing/airport")}
                   className="flex items-center gap-2 px-4 py-2 text-sm text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
                 >
                   <ArrowLeft size={16} /> Back
@@ -577,7 +612,7 @@ const Airport = ({ mode: initialMode = "list" }) => {
                      {id ? 'Update Airport' : 'Save Airport'}
                    </button>
                    <button 
-                     onClick={() => navigate("/admin/pricing/airport")}
+                     onClick={() => navigate("/taxi/admin/pricing/airport")}
                      className="w-full py-3 bg-gray-50 text-gray-600 border border-gray-200 rounded-lg text-sm font-medium hover:bg-gray-100 transition-colors"
                    >
                      Cancel
@@ -589,38 +624,69 @@ const Airport = ({ mode: initialMode = "list" }) => {
                 <div className="bg-white rounded-xl border border-gray-200 p-2 h-[600px] shadow-sm relative overflow-hidden">
                   {isLoaded ? (
                     <div className="w-full h-full rounded-lg overflow-hidden relative">
-                       <div className="absolute inset-x-4 top-4 z-10 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                          <div className="w-full md:max-w-md">
-                            <div className="flex h-12 w-full items-center gap-3 rounded-2xl border border-gray-100 bg-white/95 px-4 shadow-xl backdrop-blur-sm">
-                              <Search className="text-gray-400" size={18} />
-                              <Autocomplete
-                                onLoad={(a) => setAutocomplete(a)}
-                                onPlaceChanged={handlePlaceChanged}
-                                className="flex-1"
-                              >
-                                <input
-                                  type="text"
-                                  placeholder="Search for a city or airport"
-                                  className="w-full bg-transparent text-sm font-semibold text-gray-800 outline-none placeholder:text-gray-400"
-                                />
-                              </Autocomplete>
-                            </div>
-                          </div>
-
-                          {boundaryCoords.length > 0 ? (
-                            <button
-                              type="button"
-                              onClick={clearBoundary}
-                              className="self-start rounded-xl bg-white px-4 py-2.5 text-[11px] font-black uppercase tracking-widest text-rose-600 shadow-xl transition-all border border-gray-100 hover:bg-rose-50 active:scale-95"
-                            >
-                              Clear Boundary
-                            </button>
-                          ) : null}
-                       </div>
+                           <div className="absolute inset-x-4 top-4 z-10 flex flex-wrap gap-3 items-center justify-between">
+                              <div className="w-full md:max-w-md">
+                                 <div className="flex h-12 w-full items-center gap-3 rounded-2xl border border-gray-100 bg-white/95 px-4 shadow-xl backdrop-blur-sm">
+                               <button 
+                                 type="button" 
+                                 onClick={triggerManualSearch}
+                                 className="text-gray-400 hover:text-indigo-600 transition-colors"
+                               >
+                                 <Search size={18} />
+                               </button>
+                               <Autocomplete
+                                 onLoad={(a) => setAutocomplete(a)}
+                                 onPlaceChanged={handlePlaceChanged}
+                                 className="flex-1"
+                               >
+                                 <input
+                                   ref={searchInputRef}
+                                   type="text"
+                                   placeholder="Search for a city or airport"
+                                   onKeyDown={(e) => {
+                                     if (e.key === 'Enter') {
+                                       e.preventDefault();
+                                       triggerManualSearch();
+                                     }
+                                   }}
+                                   className="w-full bg-transparent text-sm font-semibold text-gray-800 outline-none placeholder:text-gray-400"
+                                 />
+                               </Autocomplete>
+                             </div>
+                              </div>
+     
+                              <div className="flex gap-2">
+                                <button
+                                  type="button"
+                                  onClick={() => setIsDrawingBoundary(!isDrawingBoundary)}
+                                  className={`rounded-xl px-4 py-2.5 text-[11px] font-black uppercase tracking-widest shadow-xl transition-all border border-gray-100 active:scale-95 ${
+                                    isDrawingBoundary 
+                                      ? 'bg-indigo-600 text-white hover:bg-indigo-700' 
+                                      : 'bg-white text-indigo-600 hover:bg-indigo-50'
+                                  }`}
+                                >
+                                  {isDrawingBoundary ? 'Finish Drawing' : 'Draw Boundary'}
+                                </button>
+                                {boundaryCoords.length > 0 ? (
+                                  <button
+                                    type="button"
+                                    onClick={clearBoundary}
+                                    className="rounded-xl bg-white px-4 py-2.5 text-[11px] font-black uppercase tracking-widest text-rose-600 shadow-xl transition-all border border-gray-100 hover:bg-rose-50 active:scale-95"
+                                  >
+                                    Clear Boundary
+                                  </button>
+                                ) : null}
+                              </div>
+                           </div>
                        
                        <GoogleMap
                          mapContainerStyle={MAP_CONTAINER_STYLE}
-                         center={mapCenter} zoom={13}
+                         center={mapCenter} zoom={zoom}
+                         onZoomChanged={() => {
+                           if (mapRef.current) {
+                             setZoom(mapRef.current.getZoom());
+                           }
+                         }}
                          onLoad={m => { mapRef.current = m; }}
                          onClick={handleMapClick}
                          options={{
@@ -633,32 +699,37 @@ const Airport = ({ mode: initialMode = "list" }) => {
                             fullscreenControl: true
                          }}
                        >
-                         {boundaryCoords.length > 0 && <Polygon paths={boundaryCoords} options={{ fillColor: '#4f46e5', strokeColor: '#4f46e5', fillOpacity: 0.1, strokeWeight: 2 }} />}
-                         
-                         <MarkerF 
-                            position={{ lat: Number(formData.latitude || mapCenter.lat), lng: Number(formData.longitude || mapCenter.lng) }} 
-                            draggable onDragEnd={handleMarkerDragEnd}
-                            icon={window.google ? {
-                              path: window.google.maps.SymbolPath.CIRCLE,
-                              scale: 6,
-                              fillColor: "#4f46e5",
-                              fillOpacity: 1,
-                              strokeColor: "white",
-                              strokeWeight: 2
-                            } : undefined}
-                         />
+                          {boundaryCoords.length > 0 && <Polygon paths={boundaryCoords} options={{ fillColor: '#4f46e5', strokeColor: '#4f46e5', fillOpacity: 0.1, strokeWeight: 2 }} />}
+                          
+                          {window.google?.maps && (
+                            <MarkerF 
+                               position={{ lat: Number(formData.latitude || mapCenter.lat), lng: Number(formData.longitude || mapCenter.lng) }} 
+                               draggable onDragEnd={handleMarkerDragEnd}
+                               icon={{
+                                 path: window.google.maps.SymbolPath.CIRCLE,
+                                 scale: 6,
+                                 fillColor: "#4f46e5",
+                                 fillOpacity: 1,
+                                 strokeColor: "white",
+                                 strokeWeight: 2
+                               }}
+                            />
+                          )}
 
-                         <DrawingManager
-                            onPolygonComplete={handleBoundaryComplete}
-                            options={{
-                              drawingControl: true,
-                              drawingControlOptions: {
-                                position: window.google ? window.google.maps.ControlPosition.RIGHT_TOP : 6,
-                                drawingModes: ['polygon']
-                              },
-                              polygonOptions: { fillColor: '#4f46e5', strokeColor: '#4f46e5', fillOpacity: 0.1, strokeWeight: 2 }
-                            }}
-                         />
+                          {isDrawingBoundary && boundaryCoords.map((coord, idx) => (
+                            <MarkerF
+                              key={`vertex-${idx}`}
+                              position={coord}
+                              icon={window.google ? {
+                                path: window.google.maps.SymbolPath.CIRCLE,
+                                scale: 4,
+                                fillColor: "#e11d48",
+                                fillOpacity: 1,
+                                strokeColor: "white",
+                                strokeWeight: 1
+                              } : undefined}
+                            />
+                          ))}
                        </GoogleMap>
                     </div>
                   ) : (

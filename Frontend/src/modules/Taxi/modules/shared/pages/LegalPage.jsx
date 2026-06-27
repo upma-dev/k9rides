@@ -237,6 +237,12 @@ const LegalPage = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (content?.title) {
+      document.title = `${content.title} | K9 Rides`;
+    }
+  }, [content]);
+
+  useEffect(() => {
     const fetchContent = async () => {
       try {
         const res = await api.get('/common/landing-page/settings');

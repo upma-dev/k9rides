@@ -1,221 +1,250 @@
-import React from 'react'
-import { motion } from 'framer-motion'
-import { Car, Utensils, Box, Plane, Calendar, ShieldCheck, ArrowRight, Star } from 'lucide-react'
-import k9Logo from '../assets/k9-logo.jpg'
+import React, { Suspense, useEffect, useRef, useState, lazy } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { ArrowRight, Car, Utensils } from 'lucide-react'
+import { gsap } from 'gsap'
+
+import premiumCar from '../assets/premium-royal-car.png'
+import taxiHeroBg from '../../Taxi/assets/landing/hero-bg.png'
+
+const ThreeBackground = lazy(() => import('./ThreeBackground'))
 
 export default function Hero({ settings }) {
+  const statsRef = useRef(null)
+  const [bgIndex, setBgIndex] = useState(0)
+  const [isDesktop, setIsDesktop] = useState(false)
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsDesktop(window.innerWidth >= 768)
+    }
+    handleResize()
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [])
+
+  const slides = [
+    {
+      img: '/hero2.png',
+      line1: 'Your city,',
+      line2: 'at your fingertips.',
+      desc: settings?.hero_description || 'Order premium rides, track deliveries in real time, send couriers securely, and book logistics instantly. All in one super-app.'
+    },
+    {
+      img: taxiHeroBg,
+      line1: 'Your rides,',
+      line2: 'booked in seconds.',
+      desc: 'Travel in comfort with verified professional captains, real-time GPS tracking, and instant safety features.'
+    },
+    {
+      img: premiumCar,
+      line1: 'Your food,',
+      line2: 'delivered hot & fresh.',
+      desc: 'Order from local favorites or search top dining options with swift contactless cargo deliveries.'
+    }
+  ]
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setBgIndex((prev) => (prev + 1) % slides.length)
+    }, 6000)
+    return () => clearInterval(timer)
+  }, [])
+
+  useEffect(() => {
+    if (statsRef.current) {
+      gsap.fromTo(
+        statsRef.current.querySelectorAll('[data-stat]'),
+        { y: 20, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.5, stagger: 0.1, ease: 'power3.out', delay: 0.9 }
+      )
+    }
+  }, [])
+
   const containerVariants = {
     hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.15,
-        delayChildren: 0.1
-      }
-    }
+    visible: { opacity: 1, transition: { staggerChildren: 0.1, delayChildren: 0.1 } }
   }
 
   const itemVariants = {
     hidden: { y: 30, opacity: 0 },
-    visible: {
-      y: 0,
-      opacity: 1,
-      transition: { type: 'spring', stiffness: 100 }
-    }
+    visible: { y: 0, opacity: 1, transition: { type: 'spring', stiffness: 75, damping: 18 } }
+  }
+
+  const textTransitionVariants = {
+    initial: { opacity: 0, y: 15 },
+    animate: { opacity: 1, y: 0, transition: { duration: 0.5, ease: 'easeOut' } },
+    exit: { opacity: 0, y: -15, transition: { duration: 0.4, ease: 'easeIn' } }
   }
 
   return (
-    <section className="relative min-h-screen pt-32 pb-20 flex items-center justify-center overflow-hidden bg-gradient-to-b from-[#C5902A]/5 via-white to-white dark:from-slate-950 dark:via-slate-900 dark:to-slate-900">
-      {/* Decorative Blur Orbs */}
-      <div className="absolute top-20 right-10 w-96 h-96 rounded-full bg-[#C5902A]/5 dark:bg-[#C5902A]/2 blur-3xl pointer-events-none" />
-      <div className="absolute bottom-10 left-10 w-80 h-80 rounded-full bg-[#C5902A]/10 dark:bg-[#C5902A]/2 blur-3xl pointer-events-none" />
+    <section
+      className="relative min-h-screen flex items-center justify-center overflow-hidden z-10"
+      style={{
+        fontFamily: "'Poppins', sans-serif",
+        background: '#FAFBFC'
+      }}
+    >
+      {/* Background Slideshow with white-washed light overlays */}
+      {slides.map((slide, idx) => {
+        // Only load background image if it is current active or next in queue to prevent massive initial download size on load!
+        const shouldLoad = bgIndex === idx || (bgIndex + 1) % slides.length === idx;
+        return (
+          <div
+            key={idx}
+            className="absolute inset-0 transition-opacity duration-[1500ms] ease-in-out pointer-events-none"
+            style={{
+              backgroundImage: shouldLoad ? `linear-gradient(rgba(250, 251, 252, 0.40), rgba(250, 251, 252, 0.55)), url(${slide.img})` : 'none',
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+              opacity: bgIndex === idx ? 0.85 : 0,
+              zIndex: 0
+            }}
+          />
+        )
+      })}
 
-      <div className="max-w-7xl mx-auto px-6 w-full grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8 items-center relative z-10">
-        
-        {/* Left: Headline & Actions */}
-        <motion.div 
+      {/* Three.js 3D background */}
+      {isDesktop && (
+        <Suspense fallback={null}>
+          <div style={{ opacity: 0.04 }} className="absolute inset-0 z-0 pointer-events-none">
+            <ThreeBackground />
+          </div>
+        </Suspense>
+      )}
+
+      {/* Animated drifting glowing orbs behind copy */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
+        <div className="absolute -top-[10%] left-[20%] w-[350px] h-[350px] rounded-full bg-gradient-to-br from-[#ff5100] to-[#e11d48] opacity-5 blur-[110px] animate-drift-orange" />
+        <div className="absolute top-[40%] left-[5%] w-[400px] h-[400px] rounded-full bg-gradient-to-br from-[#1d4ed8] to-[#10b981] opacity-5 blur-[120px] animate-drift-blue" />
+      </div>
+
+      <div className="max-w-4xl mx-auto px-6 lg:px-8 w-full pt-32 pb-20 relative z-10 flex flex-col items-center justify-center">
+        <motion.div
           variants={containerVariants}
           initial="hidden"
           animate="visible"
-          className="lg:col-span-7 text-left space-y-8"
+          className="space-y-8 text-center max-w-3xl"
         >
-          {/* Badge */}
-          <motion.div 
-            variants={itemVariants}
-            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#C5902A]/10 border border-[#C5902A]/20 dark:bg-[#C5902A]/5 dark:border-[#C5902A]/15"
-          >
-            <span className="flex h-2 w-2 rounded-full bg-[#C5902A] animate-pulse" />
-            <span className="text-xs font-bold tracking-wide text-[#C5902A] dark:text-[#F5D476] uppercase">
-              All-In-One Platform Launched
-            </span>
-          </motion.div>
+          {/* Section Heading Name */}
+          <p className="text-xs font-black uppercase tracking-[0.2em] text-transparent bg-clip-text bg-gradient-to-r from-[#d94600] via-[#be123c] to-[#1e40af]">
+            Welcome to K9 Rides
+          </p>
 
-          {/* Main Title */}
-          <motion.h1 
-            variants={itemVariants}
-            className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-slate-900 dark:text-white leading-[1.1]"
-          >
-            {settings?.hero_title || (
-              <>
-                All-in-One Platform for{' '}
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#C5902A] to-[#F5D476] dark:from-[#C5902A] dark:to-[#F5D476]">
-                  Rides, Food & Logistics
-                </span>
-              </>
-            )}
-          </motion.h1>
+          {/* Headline Slogans Carousel wrapper */}
+          <div className="min-h-[140px] sm:min-h-[180px] flex items-center justify-center">
+            <AnimatePresence mode="wait">
+              <motion.h1
+                key={bgIndex}
+                variants={textTransitionVariants}
+                initial="initial"
+                animate="animate"
+                exit="exit"
+                className="text-5xl sm:text-6xl lg:text-7.5xl font-black tracking-tight text-slate-900 leading-[1.08] select-none"
+                style={{
+                  textShadow: '0 4px 20px rgba(15,23,42,0.03)'
+                }}
+              >
+                {slides[bgIndex].line1}<br />
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#d94600] via-[#be123c] via-[#1e40af] to-[#047857]">
+                  {slides[bgIndex].line2.split(' ')[0]} {slides[bgIndex].line2.split(' ')[1] || ''}
+                </span>{' '}
+                {slides[bgIndex].line2.split(' ').slice(2).join(' ')}
+              </motion.h1>
+            </AnimatePresence>
+          </div>
 
-          {/* Supporting Text */}
-          <motion.p 
-            variants={itemVariants}
-            className="text-lg text-slate-600 dark:text-slate-300 max-w-xl leading-relaxed"
-          >
-            {settings?.hero_description || 'K9 Rides is the multi-service super-app designed for modern cities. Easily book a taxi, order from your favorite local restaurants, ship parcels, arrange airport transfers, rent vehicles, and coordinate complex supply chains.'}
-          </motion.p>
+          {/* Description Carousel wrapper */}
+          <div className="min-h-[60px] flex items-center justify-center max-w-2xl mx-auto">
+            <AnimatePresence mode="wait">
+              <motion.p
+                key={bgIndex}
+                variants={textTransitionVariants}
+                initial="initial"
+                animate="animate"
+                exit="exit"
+                className="text-slate-900 text-lg sm:text-xl leading-relaxed font-bold"
+              >
+                {slides[bgIndex].desc}
+              </motion.p>
+            </AnimatePresence>
+          </div>
 
-          {/* Actions */}
-          <motion.div 
-            variants={itemVariants}
-            className="flex flex-col sm:flex-row gap-4 pt-2"
-          >
+          {/* CTA Buttons - App Download Badges */}
+          <motion.div variants={itemVariants} className="flex flex-wrap gap-4 justify-center pt-6">
             <a
-              href="/login"
-              className="inline-flex items-center justify-center gap-2 bg-[#F5D476] hover:bg-[#C5902A] text-slate-950 hover:text-white font-bold px-8 py-4 rounded-2xl shadow-xl shadow-[#C5902A]/20 transition-all duration-300 hover:-translate-y-1 hover:shadow-[#C5902A]/30 text-base"
+              href="https://play.google.com/store/apps/details?id=com.k9bharat.user"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="transition-transform duration-200 hover:scale-[1.04]"
             >
-              Get Started Now
-              <ArrowRight className="w-5 h-5" />
-            </a>
-            
-            <a
-              href="#partners"
-              className="inline-flex items-center justify-center bg-white hover:bg-slate-50 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-900 dark:text-white font-bold px-8 py-4 rounded-2xl shadow-md border border-slate-200 dark:border-slate-700 transition-all duration-300 hover:-translate-y-1 text-base"
-            >
-              Partner with Us
-            </a>
-          </motion.div>
-
-          {/* Fast Features */}
-          <motion.div 
-            variants={itemVariants}
-            className="grid grid-cols-3 gap-6 pt-6 border-t border-slate-100 dark:border-slate-800"
-          >
-            <div className="flex items-center gap-2.5">
-              <div className="p-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/20 text-emerald-600 dark:text-emerald-400">
-                <ShieldCheck className="w-5 h-5" />
-              </div>
-              <span className="text-xs font-bold text-slate-700 dark:text-slate-300">100% Secure</span>
-            </div>
-            
-            <div className="flex items-center gap-2.5">
-              <div className="p-1.5 rounded-lg bg-amber-50 dark:bg-amber-950/20 text-amber-600 dark:text-amber-400">
-                <Star className="w-5 h-5 fill-current" />
-              </div>
-              <span className="text-xs font-bold text-slate-700 dark:text-slate-300">4.9 Star Rating</span>
-            </div>
-            
-            <div className="flex items-center gap-2.5">
-              <div className="p-1.5 rounded-lg bg-[#C5902A]/10 dark:bg-[#C5902A]/15 text-[#C5902A] dark:text-[#F5D476]">
-                <Star className="w-5 h-5 fill-current" />
-              </div>
-              <span className="text-xs font-bold text-slate-700 dark:text-slate-300">Fast Deliveries</span>
-            </div>
-          </motion.div>
-        </motion.div>
-
-        {/* Right: Premium Dynamic Card Dashboard Mockup */}
-        <motion.div
-          initial={{ opacity: 0, scale: 0.9, rotateY: 15 }}
-          animate={{ opacity: 1, scale: 1, rotateY: 0 }}
-          transition={{ duration: 0.85, ease: [0.16, 1, 0.3, 1] }}
-          className="lg:col-span-5 hidden lg:block"
-        >
-          {settings?.hero_image_url ? (
-            <div className="flex justify-center items-center h-full">
-              <img 
-                src={settings.hero_image_url} 
-                alt="K9 Rides Hero" 
-                className="w-full max-w-[450px] h-auto object-contain rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 animate-in fade-in zoom-in-95 duration-500" 
+              <img
+                src="https://upload.wikimedia.org/wikipedia/commons/7/78/Google_Play_Store_badge_EN.svg"
+                alt="Get it on Google Play"
+                className="h-12 w-auto"
               />
-            </div>
-          ) : (
-            <div className="relative mx-auto w-[340px] h-[640px] bg-slate-950 rounded-[48px] p-4 shadow-2xl border-4 border-slate-800 ring-12 ring-slate-900/50">
-              {/* Phone Speaker & Camera cutouts */}
-              <div className="absolute top-0 left-1/2 transform -translate-x-1/2 h-6 w-36 bg-slate-950 rounded-b-2xl z-30 flex items-center justify-center">
-                <div className="w-16 h-1.5 bg-slate-800 rounded-full" />
-              </div>
-
-              {/* Inner Content */}
-              <div className="w-full h-full bg-slate-900 rounded-[38px] overflow-hidden p-5 flex flex-col justify-between relative">
-                {/* Header inside mockup */}
-                <div className="flex items-center justify-between pt-4 pb-2">
-                  <div className="flex items-center gap-2">
-                    <div className="h-7 w-7 rounded-lg overflow-hidden flex items-center justify-center bg-white">
-                      <img src={settings?.logo_url || k9Logo} alt="K9 Rides" className="w-full h-full object-cover" />
-                    </div>
-                    <span className="text-xs font-black text-white">K9 Rides</span>
-                  </div>
-                  <div className="h-6 w-6 rounded-full bg-slate-800 flex items-center justify-center">
-                    <span className="w-1.5 h-1.5 rounded-full bg-[#C5902A]" />
-                  </div>
-                </div>
-
-                {/* Main screen inside mockup */}
-                <div className="flex-1 my-4 overflow-y-auto space-y-4 pr-1 scrollbar-hide">
-                  <div className="p-4 bg-[#1A1A1A] border border-slate-800/80 rounded-2xl text-left space-y-1 relative overflow-hidden">
-                    <div className="absolute right-[-10px] bottom-[-10px] w-24 h-24 rounded-full bg-[#C5902A]/5 blur-xl" />
-                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Available Balance</p>
-                    <p className="text-2xl font-black text-white">₹142.50</p>
-                    <p className="text-[9px] font-semibold text-[#F5D476]">Instant Cashout Enabled</p>
-                  </div>
-
-                  <p className="text-left text-xs font-black text-slate-400 tracking-wide uppercase">Our Services</p>
-
-                  {/* Service Quick-Buttons */}
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="p-3 bg-slate-800 hover:bg-slate-700 rounded-xl flex flex-col justify-between h-20 text-left cursor-pointer transition-colors duration-200">
-                      <Car className="w-5 h-5 text-[#F5D476]" />
-                      <span className="text-[10px] font-bold text-white">Taxi Booking</span>
-                    </div>
-                    
-                    <div className="p-3 bg-slate-800 hover:bg-slate-700 rounded-xl flex flex-col justify-between h-20 text-left cursor-pointer transition-colors duration-200">
-                      <Utensils className="w-5 h-5 text-[#F5D476]" />
-                      <span className="text-[10px] font-bold text-white">Food Order</span>
-                    </div>
-                    
-                    <div className="p-3 bg-slate-800 hover:bg-slate-700 rounded-xl flex flex-col justify-between h-20 text-left cursor-pointer transition-colors duration-200">
-                      <Box className="w-5 h-5 text-emerald-400" />
-                      <span className="text-[10px] font-bold text-white">Courier Delivery</span>
-                    </div>
-                    
-                    <div className="p-3 bg-slate-800 hover:bg-slate-700 rounded-xl flex flex-col justify-between h-20 text-left cursor-pointer transition-colors duration-200">
-                      <Plane className="w-5 h-5 text-sky-400" />
-                      <span className="text-[10px] font-bold text-white">Airport Transfer</span>
-                    </div>
-                  </div>
-
-                  {/* Banner inside mock */}
-                  <div className="p-3 bg-slate-800/50 rounded-xl border border-slate-700/50 flex items-center gap-3 text-left">
-                    <div className="p-2 bg-[#C5902A]/10 rounded-lg text-[#F5D476]">
-                      <Calendar className="w-4 h-4" />
-                    </div>
-                    <div>
-                      <p className="text-[10px] font-bold text-white">Hourly Rentals</p>
-                      <p className="text-[8px] text-slate-400">Rent a vehicle dynamically</p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Bottom Nav inside mockup */}
-                <div className="h-12 border-t border-slate-800 flex items-center justify-around text-slate-500 pt-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#C5902A]" />
-                  <span className="w-1.5 h-1.5 rounded-full bg-slate-700" />
-                  <span className="w-1.5 h-1.5 rounded-full bg-slate-700" />
-                </div>
-              </div>
-            </div>
-          )}
+            </a>
+            <a
+              href="https://www.apple.com/app-store/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="transition-transform duration-200 hover:scale-[1.04]"
+            >
+              <img
+                src="https://upload.wikimedia.org/wikipedia/commons/3/3c/Download_on_the_App_Store_Badge.svg"
+                alt="Download on the App Store"
+                className="h-12 w-auto"
+              />
+            </a>
+          </motion.div>
         </motion.div>
 
+        {/* Services pill strip */}
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.8, duration: 0.7 }}
+          className="mt-20 flex flex-wrap justify-center gap-3"
+        >
+          {['🚕 Ride Hailing', '🍔 Food Delivery', '📦 Courier', '✈️ Airport Transfer', '🏍️ Hourly Rentals', '🚛 Cargo'].map((s) => {
+            const isFood = s.includes('Food') || s.includes('Courier') || s.includes('Rentals');
+            const isRide = s.includes('Ride') || s.includes('Airport') || s.includes('Cargo');
+            let borderColor = 'rgba(15,23,42,0.1)';
+            let textColor = 'rgba(15,23,42,0.7)';
+            let bg = 'rgba(15,23,42,0.02)';
+            let scaleClass = '';
+
+            if (isFood) {
+              borderColor = 'rgba(255,81,0,0.3)';
+              textColor = '#ff5100';
+              bg = 'rgba(255,81,0,0.06)';
+              scaleClass = 'scale-105 shadow-md shadow-[#ff5100]/5';
+            } else if (isRide) {
+              borderColor = 'rgba(29,78,216,0.3)';
+              textColor = '#1d4ed8';
+              bg = 'rgba(29,78,216,0.06)';
+              scaleClass = 'scale-105 shadow-md shadow-[#1d4ed8]/5';
+            }
+
+            return (
+              <span key={s}
+                className={`px-4 py-2 rounded-full text-sm font-semibold border transition-all duration-300 ${scaleClass}`}
+                style={{
+                  borderColor,
+                  color: textColor,
+                  background: bg
+                }}>
+                {s}
+              </span>
+            );
+          })}
+        </motion.div>
+      </div>
+
+      {/* Wave bottom transition */}
+      <div className="absolute bottom-0 left-0 right-0 pointer-events-none">
+        <svg viewBox="0 0 1440 80" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none" className="w-full h-16 sm:h-20">
+          <path d="M0,40 C360,80 1080,0 1440,40 L1440,80 L0,80 Z" fill="#F8FAFC" />
+        </svg>
       </div>
     </section>
   )

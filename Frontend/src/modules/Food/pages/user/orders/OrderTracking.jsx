@@ -294,6 +294,7 @@ const transformOrderForTracking = (apiOrder, previousOrder = null, explicitResta
       previousOrder?.restaurantPhone ||
       '',
     restaurantAddress,
+    restaurantLogo: apiOrder?.restaurantLogo || apiOrder?.restaurantImage || apiOrder?.restaurantId?.logo || apiOrder?.restaurantId?.profileImage || apiOrder?.restaurant?.logo || apiOrder?.restaurant?.profileImage || previousOrder?.restaurantLogo || null,
     restaurantId: apiOrder?.restaurantId || previousOrder?.restaurantId || null,
     userId: apiOrder?.userId || previousOrder?.userId || null,
     userName: apiOrder?.userName || apiOrder?.userId?.name || apiOrder?.userId?.fullName || previousOrder?.userName || '',

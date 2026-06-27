@@ -11,6 +11,7 @@ import {
 import io from 'socket.io-client';
 import { API_BASE_URL } from '@food/api/config';
 import bikeLogo from '@food/assets/bikelogo.png';
+import k9Logo from '@food/assets/k9-logo.jpg';
 import { subscribeOrderTracking } from '@food/realtimeTracking';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Play, Navigation, Info, Circle } from 'lucide-react';
@@ -52,8 +53,19 @@ const DeliveryTrackingMap = ({
   const [currentEta, setCurrentEta] = useState(null);
   const [cloudPolyline, setCloudPolyline] = useState(null);
   const [smoothLocation, setSmoothLocation] = useState(null);
+  const [lineOffset, setLineOffset] = useState(0);
   const socketRef = useRef(null);
   const interpStateRef = useRef({ lastPos: null, nextPos: null, startTime: 0 });
+
+  // Animated polyline flow offset
+  useEffect(() => {
+    let count = 0;
+    const interval = setInterval(() => {
+      count = (count + 1) % 100;
+      setLineOffset(count);
+    }, 80);
+    return () => clearInterval(interval);
+  }, []);
 
   const { isLoaded } = useJsApiLoader({
     googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY,
@@ -221,38 +233,83 @@ const DeliveryTrackingMap = ({
     debugLog(`[Camera] Focusing on ${isOrderPickedUp ? 'Delivery' : 'Pickup'} leg`);
   }, [map, riderLocation, restaurantCoords, customerCoords, isOrderPickedUp, isLoaded]);
 
-  // 3. Directions Management
-  const directionsCallback = useCallback((result, status) => {
-    if (status === 'OK' && result) {
-      setDirections(result);
-      setLastDirectionsAt(Date.now());
-      
-      // Extract ETA from directions
-      const durationText = result?.routes?.[0]?.legs?.[0]?.duration?.text;
-      if (durationText) {
-        setCurrentEta(durationText);
-        if (onEtaUpdate) {
-          onEtaUpdate(durationText);
+  // 3. Helper to format absolute or relative image URLs
+  const getImageUrl = useCallback((img) => {
+    if (!img) return null;
+    if (typeof img === 'string') {
+      if (img.startsWith('http://') || img.startsWith('https://') || img.startsWith('data:')) {
+        return img;
+      }
+      return `${backendUrl}${img.startsWith('/') ? '' : '/'}${img}`;
+    }
+    if (img.url) {
+      if (img.url.startsWith('http://') || img.url.startsWith('https://') || img.url.startsWith('data:')) {
+        return img.url;
+      }
+      return `${backendUrl}${img.url.startsWith('/') ? '' : '/'}${img.url}`;
+    }
+    return null;
+  }, [backendUrl]);
+
+  // Directions Management using JS Service to avoid infinite loops and re-render hammering
+  useEffect(() => {
+    if (!isLoaded || !riderLocation || cloudPolyline) return;
+    const dest = isOrderPickedUp ? customerCoords : restaurantCoords;
+    if (!dest) return;
+
+    const now = Date.now();
+    if (now - lastDirectionsAt < 15000 && directions) return;
+
+    try {
+      const directionsService = new window.google.maps.DirectionsService();
+      directionsService.route(
+        {
+          origin: riderLocation,
+          destination: dest,
+          travelMode: window.google.maps.TravelMode.DRIVING,
+        },
+        (result, status) => {
+          if (status === 'OK' && result) {
+            setDirections(result);
+            setLastDirectionsAt(Date.now());
+            const durationText = result?.routes?.[0]?.legs?.[0]?.duration?.text;
+            if (durationText) {
+              setCurrentEta(durationText);
+              if (onEtaUpdate) onEtaUpdate(durationText);
+            }
+          }
         }
+      );
+    } catch (err) {
+      console.error('[DeliveryTrackingMap] Directions query failed:', err);
+    }
+  }, [isLoaded, riderLocation?.lat, riderLocation?.lng, isOrderPickedUp, restaurantCoords, customerCoords, cloudPolyline, lastDirectionsAt, directions, onEtaUpdate]);
+
+  const activeRoutePath = useMemo(() => {
+    if (cloudPolyline && window.google?.maps?.geometry?.encoding) {
+      try {
+        return window.google.maps.geometry.encoding.decodePath(
+          typeof cloudPolyline === 'string' ? cloudPolyline : (cloudPolyline.points || '')
+        );
+      } catch (e) {
+        console.error('[DeliveryTrackingMap] Failed to decode cloud polyline:', e);
       }
     }
-  }, [onEtaUpdate]);
+    if (directions?.routes?.[0]?.overview_path) {
+      return directions.routes[0].overview_path;
+    }
+    return null;
+  }, [cloudPolyline, directions]);
 
-  const shouldUpdateRoute = useMemo(() => {
-    if (!directions) return true;
-    return Date.now() - lastDirectionsAt > 15000;
-  }, [directions, lastDirectionsAt]);
+  const resolvedRestaurantLogo = useMemo(() => {
+    const rawLogo = order?.restaurantLogo || order?.restaurantImage || order?.restaurantId?.logo || order?.restaurantId?.profileImage || order?.restaurant?.logo || order?.restaurant?.profileImage;
+    return getImageUrl(rawLogo) || `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(RESTAURANT_PIN_SVG)}`;
+  }, [order, getImageUrl]);
 
-  const directionsServiceOptions = useMemo(() => {
-    if (!riderLocation) return null;
-    const dest = isOrderPickedUp ? customerCoords : restaurantCoords;
-    if (!dest) return null;
-    return {
-      origin: riderLocation,
-      destination: dest,
-      travelMode: 'DRIVING'
-    };
-  }, [riderLocation?.lat, riderLocation?.lng, isOrderPickedUp, restaurantCoords?.lat, restaurantCoords?.lng, customerCoords?.lat, customerCoords?.lng]);
+  const resolvedCustomerImage = useMemo(() => {
+    const rawImg = order?.customerImage || order?.userId?.profileImage || order?.userId?.avatar || order?.user?.profileImage || order?.user?.avatar;
+    return getImageUrl(rawImg) || `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(CUSTOMER_PIN_SVG)}`;
+  }, [order, getImageUrl]);
 
   const center = useMemo(() => {
     // Highly stable center: use restaurant or customer as anchor, not the moving rider
@@ -337,50 +394,58 @@ const DeliveryTrackingMap = ({
           />
         )}
 
-        {/* 2. LIVE RIDER LEG (From Rider's App: Current Rider Pos -> Target) */}
-        {cloudPolyline && window.google?.maps?.geometry?.encoding && (
+        {/* 2. LIVE RIDER LEG (Rider -> Target destination) */}
+        {/* Old single Polyline commented out:
+        {activeRoutePath && (
           <Polyline
-            path={(() => {
-              const decoded = window.google.maps.geometry.encoding.decodePath(
-                typeof cloudPolyline === 'string' ? cloudPolyline : (cloudPolyline.points || '')
-              );
-              debugLog(`?? Decoded Cloud Polyline with ${decoded?.length || 0} points`);
-              return decoded;
-            })()}
+            path={activeRoutePath}
             options={{
-              strokeColor: isOrderPickedUp ? '#3b82f6' : '#22c55e',
+              strokeColor: isOrderPickedUp ? '#3b82f6' : '#FF6B35', // Premium colors: high contrast blue/orange
               strokeWeight: 6,
-              strokeOpacity: 1,
+              strokeOpacity: 0.9,
               zIndex: 10
             }}
           />
         )}
-
-        {/* 2. LIVE RIDER LEG (Rider -> Target) */}
-        {!cloudPolyline && directionsServiceOptions && (
-          <DirectionsService
-            options={directionsServiceOptions}
-            callback={shouldUpdateRoute ? directionsCallback : undefined}
+        */}
+        {/* Glowing backdrop polyline */}
+        {activeRoutePath && (
+          <Polyline
+            path={activeRoutePath}
+            options={{
+              strokeColor: isOrderPickedUp ? '#3b82f6' : '#FF6B35',
+              strokeWeight: 10,
+              strokeOpacity: 0.25,
+              zIndex: 9
+            }}
           />
         )}
-
-        {directions && !cloudPolyline && (
-          <DirectionsRenderer
-            directions={directions}
+        {/* Main active polyline with flowing chevrons */}
+        {activeRoutePath && (
+          <Polyline
+            path={activeRoutePath}
             options={{
-              suppressMarkers: true,
-              preserveViewport: true,
-              polylineOptions: {
-                strokeColor: isOrderPickedUp ? '#3b82f6' : '#22c55e',
-                strokeWeight: 6,
-                strokeOpacity: 0.8,
-                zIndex: 10
-              }
+              strokeColor: isOrderPickedUp ? '#2563eb' : '#ff8100',
+              strokeWeight: 6,
+              strokeOpacity: 1,
+              zIndex: 10,
+              icons: [{
+                icon: {
+                  path: window.google?.maps?.SymbolPath?.FORWARD_CLOSED_ARROW,
+                  scale: 2.5,
+                  strokeColor: '#ffffff',
+                  fillColor: '#ffffff',
+                  fillOpacity: 1,
+                  strokeWeight: 1,
+                },
+                offset: `${lineOffset}%`,
+                repeat: '60px'
+              }]
             }}
           />
         )}
 
-        {/* RESTAURANT PIN (OVERLAY VIEW FOR CUSTOM STLYE) */}
+        {/* RESTAURANT PIN (OVERLAY VIEW FOR CUSTOM STYLE) */}
         <OverlayView
           position={restaurantCoords}
           mapPaneName={OverlayView.MARKER_LAYER}
@@ -392,13 +457,13 @@ const DeliveryTrackingMap = ({
                  <motion.div 
                    animate={{ scale: [1, 2], opacity: [0.5, 0] }}
                    transition={{ duration: 2, repeat: Infinity }}
-                   className="w-16 h-16 rounded-full border-4 border-primary-orange/50/50"
+                   className="w-16 h-16 rounded-full border-4 border-primary-orange/50"
                  />
                </div>
              )}
              <div className="relative w-11 h-11 rounded-full p-1 bg-white shadow-xl border-2 border-primary-orange/50 overflow-hidden group-hover:scale-110 transition-transform">
                 <img 
-                  src={order?.restaurantLogo || order?.restaurantId?.logo || order?.restaurantId?.profileImage || `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(RESTAURANT_PIN_SVG)}`}
+                  src={resolvedRestaurantLogo}
                   alt="Restaurant"
                   className="w-full h-full object-contain rounded-full bg-gray-50"
                   onError={(e) => { e.target.src = `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(RESTAURANT_PIN_SVG)}`; }}
@@ -427,7 +492,7 @@ const DeliveryTrackingMap = ({
              )}
              <div className="relative w-11 h-11 rounded-full p-1 bg-white shadow-xl border-2 border-green-500 overflow-hidden group-hover:scale-110 transition-transform">
                 <img 
-                  src={order?.customerImage || order?.userId?.profileImage || order?.userId?.avatar || `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(CUSTOMER_PIN_SVG)}`}
+                  src={resolvedCustomerImage}
                   alt="Me"
                   className="w-full h-full object-contain rounded-full bg-gray-50"
                   onError={(e) => { e.target.src = `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(CUSTOMER_PIN_SVG)}`; }}
@@ -444,6 +509,7 @@ const DeliveryTrackingMap = ({
             position={displayRiderLocation}
             mapPaneName={OverlayView.MARKER_LAYER}
           >
+            {/* Old rider marker code commented out:
             <div 
               style={{
                 transform: `translate(-50%, -50%) rotate(${displayRiderLocation.heading || 0}deg)`,
@@ -459,6 +525,37 @@ const DeliveryTrackingMap = ({
                   e.target.src = bikeLogo;
                 }}
               />
+            </div>
+            */}
+            
+            {/* Zomato-style brand themed rider marker with K9 logo and animated pulsing aura */}
+            <div className="relative -translate-x-1/2 -translate-y-1/2 group">
+              {/* Pulsing glow aura around rider */}
+              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none">
+                <motion.div 
+                  animate={{ scale: [1, 1.4, 1], opacity: [0.6, 0.2, 0.6] }}
+                  transition={{ duration: 2, repeat: Infinity }}
+                  className="w-14 h-14 rounded-full bg-amber-500/30 border border-amber-500/50"
+                />
+              </div>
+              
+              {/* Main Circular Ring containing K9 brand logo */}
+              <div className="relative w-11 h-11 rounded-full bg-white shadow-xl border-[3px] border-amber-500 flex items-center justify-center overflow-hidden">
+                <img 
+                  src={k9Logo}
+                  alt="K9 Rides"
+                  className="w-full h-full object-cover"
+                />
+              </div>
+              
+              {/* Bike / Delivery Badge */}
+              <div className="absolute -bottom-1.5 -right-1.5 w-6 h-6 rounded-full bg-amber-600 border-2 border-white shadow-md flex items-center justify-center">
+                <img 
+                  src={bikeLogo} 
+                  alt="Bike" 
+                  className="w-4 h-4 object-contain invert brightness-0" 
+                />
+              </div>
             </div>
           </OverlayView>
         )}

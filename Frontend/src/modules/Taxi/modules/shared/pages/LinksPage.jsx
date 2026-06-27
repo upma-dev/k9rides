@@ -26,6 +26,10 @@ const LinksPage = () => {
       color: '#2563EB'
     }
   ];
+  React.useEffect(() => {
+    document.title = "Download Apps | K9 Rides";
+  }, []);
+
   return (
     <div className="links-page-container">
       <nav className="links-nav">

@@ -5,6 +5,10 @@ import { ArrowLeft, Phone, Mail, MapPin, Clock } from 'lucide-react';
 const ContactPage = () => {
   const navigate = useNavigate();
 
+  React.useEffect(() => {
+    document.title = "Contact Us | K9 Rides";
+  }, []);
+
   return (
     <div className="min-h-screen bg-gray-50 font-sans text-gray-900">
       {/* Header */}

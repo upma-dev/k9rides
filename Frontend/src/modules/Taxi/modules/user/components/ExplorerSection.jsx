@@ -66,7 +66,7 @@ const ExplorerSection = () => {
   return (
     <div className="px-5 pb-8 flex flex-col gap-10">
       {/* Explore Indore Section */}
-      
+
 
       {/* Explore India Section */}
       <div>
@@ -109,7 +109,7 @@ const ExplorerSection = () => {
               </div>
             </button>
           ))}
-          
+
           <button
             type="button"
             onClick={() => handleExploreDestination(indiaCities[0])}

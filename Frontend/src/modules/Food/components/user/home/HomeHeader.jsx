@@ -1,17 +1,18 @@
 import { useState, useEffect, useMemo } from 'react';
+
 import { Link, useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { MapPin, ChevronDown, Search, Mic, Bell, CheckCircle2, Tag, Gift, AlertCircle, Clock, BellOff, X, ChevronRight, ShoppingBag, Sparkles, Utensils, Car } from 'lucide-react';
-import { 
-  Popover, 
-  PopoverContent, 
-  PopoverTrigger 
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger
 } from "@food/components/ui/popover";
 import { Badge } from "@food/components/ui/badge";
 import { Avatar, AvatarFallback } from "@food/components/ui/avatar";
 import foodIcon from "@food/assets/category-icons/food.png";
-import quickIcon from "@food/assets/category-icons/quick.png";
 import taxiIcon from "@food/assets/category-icons/taxi.png";
+import quickIcon from "@food/assets/category-icons/quick.png";
 import hotelIcon from "@food/assets/category-icons/hotel.png";
 import useNotificationInbox from "@food/hooks/useNotificationInbox";
 
@@ -24,14 +25,14 @@ const ICON_MAP = {
 
 
 
-export default function HomeHeader({ 
+export default function HomeHeader({
   activeTab,
   setActiveTab,
-  location, 
-  savedAddressText, 
-  handleLocationClick, 
-  handleSearchFocus, 
-  placeholderIndex, 
+  location,
+  savedAddressText,
+  handleLocationClick,
+  handleSearchFocus,
+  placeholderIndex,
   placeholders,
   handleVegModeChange,
   isVegMode,
@@ -39,12 +40,13 @@ export default function HomeHeader({
   isCategoryStuck = false,
 }) {
   const navigate = useNavigate();
+
   const isTaxi = window.location.pathname.includes('/taxi');
   const theme = {
-    activeBg: isTaxi ? 'bg-[#2563eb]' : 'bg-[#b81d24]',
-    activeHex: isTaxi ? '#2563eb' : '#b81d24',
-    inactiveHex: isTaxi ? '#09101d' : '#4a0b0e',
-    containerHex: isTaxi ? '#0b1528' : '#3b070a',
+    activeBg: isTaxi ? 'bg-[#2563eb]' : 'bg-[#e65100]',
+    activeHex: isTaxi ? '#2563eb' : '#e65100',
+    inactiveHex: isTaxi ? '#09101d' : '#4a1d0b',
+    containerHex: isTaxi ? '#0b1528' : '#301205',
   };
 
   const [notifications, setNotifications] = useState(() => {
@@ -68,7 +70,7 @@ export default function HomeHeader({
     // Also listen for new notifications being added via listeners in Notifications.jsx (indirectly via localStorage update)
     // But since localStorage doesn't fire events on same window, we can use a custom event or a simple interval if needed.
     // However, the Notifications.jsx already multi-dispatches.
-    
+
     return () => window.removeEventListener('notificationsUpdated', syncNotifications);
   }, []);
 
@@ -88,12 +90,12 @@ export default function HomeHeader({
       source: "broadcast",
       time: item.createdAt
         ? new Date(item.createdAt).toLocaleString("en-IN", {
-            day: "2-digit",
-            month: "short",
-            hour: "2-digit",
-            minute: "2-digit",
-            hour12: true,
-          })
+          day: "2-digit",
+          month: "short",
+          hour: "2-digit",
+          minute: "2-digit",
+          hour12: true,
+        })
         : "Just now",
       type: "broadcast",
       icon: "Bell",
@@ -131,49 +133,59 @@ export default function HomeHeader({
     return () => clearInterval(timer);
   }, []);
 
+  const [isScrolled, setIsScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 95);
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
   const slideBanners = [
     {
       id: 0,
-      bg: "bg-[#711313]",
+      bg: "bg-gradient-to-r from-[#ff5100]/40 to-[#e11d48]/40",
       content: (
-        <div className="flex justify-between items-center h-full px-4">
-          <div className="flex flex-col items-center justify-center w-[60%]">
-             <div className="text-[16px] font-bold text-white/80 tracking-widest uppercase mb-1">FLAT</div>
-             <div className="text-[34px] leading-[1] font-black text-white tracking-tight mb-1 drop-shadow-md">50% OFF</div>
-             <div className="text-[14px] font-medium text-white/90">with FREE delivery</div>
+        <div className="flex justify-between items-center h-full px-4 w-full">
+          <div className="flex flex-col items-start justify-center w-[60%]">
+            <div className="text-[12px] font-bold text-white/80 tracking-widest uppercase mb-0.5">FLAT</div>
+            <div className="text-[28px] leading-[1] font-black text-white tracking-tight mb-0.5 drop-shadow-md">50% OFF</div>
+            <div className="text-[11px] font-medium text-white/90">with FREE delivery</div>
           </div>
           <div className="w-[40%] flex justify-end">
-            <img src={foodIcon} alt="offer" className="w-[100px] h-[100px] object-contain drop-shadow-2xl scale-110" />
+            <img src={foodIcon} alt="offer" className="w-[85px] h-[85px] object-contain drop-shadow-2xl scale-110" />
           </div>
         </div>
       )
     },
     {
       id: 1,
-      bg: "bg-[#711313]",
+      bg: "bg-gradient-to-r from-[#e11d48]/40 to-[#b30707]/40",
       content: (
-        <div className="flex justify-between items-center h-full px-4">
+        <div className="flex justify-between items-center h-full px-4 w-full">
           <div className="flex flex-col items-start w-[65%]">
-            <div className="text-[28px] leading-[1.1] font-black text-white tracking-tight mb-1">Flat ₹150 OFF</div>
-            <div className="text-[12px] font-bold text-gray-200 mb-3 opacity-90">on Premium Dining restaurants</div>
+            <div className="text-[24px] leading-[1.1] font-black text-white tracking-tight mb-0.5">Flat ₹150 OFF</div>
+            <div className="text-[11px] font-bold text-gray-200 opacity-90">on Premium Dining restaurants</div>
           </div>
           <div className="w-[35%] flex justify-end">
-            <Sparkles className="w-[75px] h-[75px] text-white/30 fill-white/20 drop-shadow-2xl" strokeWidth={1} />
+            <Sparkles className="w-[60px] h-[60px] text-white/30 fill-white/20 drop-shadow-2xl" strokeWidth={1} />
           </div>
         </div>
       )
     },
     {
       id: 2,
-      bg: "bg-[#711313]",
+      bg: "bg-gradient-to-r from-[#ff5100]/40 to-[#b30707]/40",
       content: (
-        <div className="flex justify-between items-center h-full px-4">
+        <div className="flex justify-between items-center h-full px-4 w-full">
           <div className="flex flex-col items-start w-[65%]">
-            <div className="text-[28px] leading-[1.1] font-black text-white tracking-tight mb-1">Free Delivery</div>
-            <div className="text-[12px] font-bold text-gray-200 mb-3 opacity-90">on all fast food orders above ₹199</div>
+            <div className="text-[24px] leading-[1.1] font-black text-white tracking-tight mb-0.5">Free Delivery</div>
+            <div className="text-[11px] font-bold text-gray-200 opacity-90">on all fast food orders above ₹199</div>
           </div>
           <div className="w-[35%] flex justify-end">
-            <Gift className="w-[75px] h-[75px] text-white/30 fill-white/20 drop-shadow-2xl" strokeWidth={1} />
+            <Gift className="w-[60px] h-[60px] text-white/30 fill-white/20 drop-shadow-2xl" strokeWidth={1} />
           </div>
         </div>
       )
@@ -182,57 +194,54 @@ export default function HomeHeader({
 
   return (
     <>
-      <div className="relative h-[360px] md:h-[340px] w-full overflow-hidden rounded-b-[2rem] shadow-[0_10px_40px_rgba(113,19,19,0.3)] dark:shadow-[0_20px_60px_rgba(0,0,0,0.45)]">
-        
-        {/* Sliding Background Track */}
-        <div 
-          className="absolute inset-0 flex transition-transform duration-700 ease-in-out z-0"
-          style={{ transform: `translateX(-${currentSlide * 100}%)` }}
+      {/* Dynamic Header Wrapper */}
+      <div 
+        className="relative w-full rounded-b-[2.5rem] bg-gradient-to-br from-[#ff3d00] via-[#ee3f24] to-[#b30707] shadow-[0_12px_40px_rgba(238,63,36,0.22)] pb-6 flex flex-col overflow-hidden z-30"
+        style={{ fontFamily: "'Sora', sans-serif" }}
+      >
+        {/* Location / Bell / Veg bar */}
+        <motion.div
+          className="relative z-20 px-4 pt-5 flex items-center justify-between gap-3"
+          initial={{ opacity: 0, y: -12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, ease: 'easeOut' }}
         >
-          {slideBanners.map((banner) => (
-            <div key={banner.id} className={`relative w-full h-full shrink-0 ${banner.bg}`}>
-              {/* Decorative Glows inside Slide 1 */}
-              {banner.id === 0 && (
-                <>
-                  <div className="absolute top-0 left-1/4 w-32 h-32 bg-white/30 blur-[60px] rounded-full pointer-events-none" />
-                  <div className="absolute bottom-0 right-1/4 w-40 h-40 bg-white/20 blur-[80px] rounded-full pointer-events-none" />
-                </>
-              )}
-              
-              {/* Banner Graphic - Positioned safely at the bottom below where the search bar will be */}
-              <div className="absolute inset-x-0 bottom-2 h-[140px] px-2 flex flex-col justify-end">
-                {banner.content}
-              </div>
-            </div>
-          ))}
-        </div>
+          {(() => {
+            const addressToShow = savedAddressText || (location?.area && location?.city
+              ? `${location.area}, ${location.city}`
+              : location?.area || location?.city || "");
 
-        {/* Static Overlay Location Row */}
-        <div className="absolute top-0 inset-x-0 z-20 px-4 pt-5 flex items-center justify-between gap-3">
-          <div 
-            className="flex items-center gap-1.5 cursor-pointer group min-w-0 flex-1"
-            onClick={handleLocationClick}
-          >
-            <div className="bg-white/20 p-1.5 rounded-full backdrop-blur-md border border-white/20 hover:bg-white/30 transition-colors shadow-sm dark:bg-black/20 dark:border-white/10 dark:hover:bg-white/10 flex-shrink-0">
-              <MapPin className="h-4 w-4 text-white" />
-            </div>
-            <div className="flex flex-col min-w-0">
-              <div className="flex items-center gap-1 group-hover:translate-x-0.5 transition-transform">
-                <span className="text-[10px] font-bold text-white/90 uppercase tracking-wider drop-shadow-sm">Deliver to</span>
-                <ChevronDown className="h-2.5 w-2.5 text-white/90 drop-shadow-sm" />
+            return (
+              <div
+                className="flex items-center gap-2.5 cursor-pointer group min-w-0 flex-1 select-none"
+                onClick={handleLocationClick}
+              >
+                <div className="bg-white/15 p-2 rounded-xl backdrop-blur-md border border-white/25 hover:scale-105 active:scale-95 transition-all shadow-md flex-shrink-0 flex items-center justify-center">
+                  <MapPin className="h-5 w-5 text-white animate-bounce" style={{ animationDuration: '3s' }} />
+                </div>
+                <div className="flex flex-col min-w-0">
+                  <div className="flex items-center gap-1">
+                    <span className="text-[10px] font-extrabold text-white/80 uppercase tracking-widest drop-shadow-sm">Deliver to</span>
+                    <ChevronDown className="h-3 w-3 text-white/80 transition-transform duration-300 group-hover:rotate-180" />
+                  </div>
+                  {addressToShow ? (
+                    <span className="text-sm font-extrabold text-white truncate drop-shadow-md max-w-full">
+                      {addressToShow}
+                    </span>
+                  ) : (
+                    <span className="text-xs font-black text-yellow-305 hover:text-yellow-400 underline decoration-dotted transition-colors flex items-center gap-1 drop-shadow-md">
+                      Add delivery location
+                    </span>
+                  )}
+                </div>
               </div>
-              <span className="text-sm font-bold text-white truncate drop-shadow-md max-w-full">
-                {savedAddressText || (location?.area && location?.city 
-                  ? `${location.area}, ${location.city}` 
-                  : location?.area || location?.city || "Select Location")}
-              </span>
-            </div>
-          </div>
-          
-          <div className="flex items-center gap-2 flex-shrink-0">
+            );
+          })()}
+
+          <div className="flex items-center gap-2 flex-shrink-0 relative z-20">
             <Popover>
               <PopoverTrigger asChild>
-                <div className="h-10 w-10 relative flex items-center justify-center rounded-full bg-white/20 backdrop-blur-md border border-white/30 shadow-sm cursor-pointer active:scale-95 transition-all hover:bg-white/30 dark:bg-black/20 dark:border-white/10 dark:hover:bg-white/10 flex-shrink-0">
+                <div className="h-10 w-10 relative flex items-center justify-center rounded-full bg-white/15 backdrop-blur-md border border-white/25 shadow-sm cursor-pointer active:scale-95 transition-all hover:bg-white/25 flex-shrink-0">
                   <Bell className="h-[22px] w-[22px] text-white drop-shadow-sm" />
                   {unreadCount > 0 && (
                     <span className="absolute top-2 right-2 w-2.5 h-2.5 bg-yellow-400 rounded-full border-2 border-white animate-pulse" />
@@ -259,7 +268,7 @@ export default function HomeHeader({
                       mergedNotifications.slice(0, 5).map((notif) => {
                         const Icon = ICON_MAP[notif.icon] || Bell;
                         return (
-                          <div 
+                          <div
                             key={notif.id}
                             className={`p-4 flex items-start gap-3 border-b border-gray-50 dark:border-gray-800 last:border-0 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors cursor-pointer ${!notif.read ? 'bg-primary-orange/5/20' : ''}`}
                           >
@@ -306,10 +315,10 @@ export default function HomeHeader({
                 </div>
               </PopoverContent>
             </Popover>
- 
+
             {/* Veg Mode Toggle */}
-            <div 
-              className="flex items-center gap-1.5 h-10 bg-white/20 dark:bg-black/20 backdrop-blur-md rounded-full px-2.5 border border-white/30 shadow-sm cursor-pointer hover:bg-white/30 dark:border-white/10 dark:hover:bg-white/10 active:scale-95 transition-all flex-shrink-0"
+            <div
+              className="flex items-center gap-1.5 h-10 bg-white/15 backdrop-blur-md rounded-full px-2.5 border border-white/25 shadow-sm cursor-pointer hover:bg-white/25 active:scale-95 transition-all flex-shrink-0"
               onClick={() => handleVegModeChange && handleVegModeChange(!isVegMode)}
               ref={vegModeToggleRef}
             >
@@ -319,136 +328,83 @@ export default function HomeHeader({
               <span className={`text-[9px] font-black uppercase tracking-tight text-white drop-shadow-sm hidden xs:inline`}>
                 Veg
               </span>
-              <div className={`w-6 h-3.5 rounded-full relative transition-colors ml-0.5 flex-shrink-0 ${isVegMode ? 'bg-green-500' : 'bg-gray-400/80 dark:bg-gray-600'}`}>
+              <div className={`w-6 h-3.5 rounded-full relative transition-colors ml-0.5 flex-shrink-0 ${isVegMode ? 'bg-green-500' : 'bg-gray-450/80'}`}>
                 <div className={`absolute top-[1.5px] w-2.5 h-2.5 rounded-full bg-white transition-transform ${isVegMode ? 'translate-x-[11px]' : 'translate-x-[1.5px]'}`} />
               </div>
             </div>
           </div>
-        </div>
-        
-        {/* Mobile Option Buttons (Food & Taxi) */}
-        <div className="absolute top-[68px] inset-x-0 z-20 px-4 md:hidden flex flex-col pointer-events-auto overflow-visible">
-          <div 
-            className="custom-tab-container overflow-visible"
-            style={{ backgroundColor: theme.containerHex }}
+        </motion.div>
+
+        {/* Option Tabs (Food & Taxi) - animated entrance */}
+        <motion.div
+          className="relative mt-4 px-4 flex flex-col z-20"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.15, ease: 'easeOut' }}
+        >
+          <div
+            className="flex w-full bg-black/20 rounded-2xl p-1 border border-white/10"
           >
             {/* Food Button */}
             <button
               onClick={() => navigate('/food/user')}
-              className={`custom-tab overflow-visible ${
+              className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-xl text-xs font-black transition-all duration-300 ${
                 window.location.pathname.includes('/food')
-                  ? 'custom-tab-active'
-                  : 'custom-tab-inactive'
+                  ? 'bg-white text-[#ff5100] shadow-md'
+                  : 'text-white/70 hover:text-white'
               }`}
-              style={
-                !window.location.pathname.includes('/food')
-                  ? { backgroundColor: theme.inactiveHex }
-                  : {}
-              }
             >
-              {window.location.pathname.includes('/food') && (
-                <div
-                  className={`absolute inset-0 rounded-t-[16px] ${theme.activeBg}`}
-                />
-              )}
-              <img src={foodIcon} alt="K9Food" className="custom-tab-icon" />
-              <span className="relative z-10">K9Food</span>
+              <img src={foodIcon} alt="K9Food" className="w-5 h-5 object-contain" />
+              <span>K9Food</span>
             </button>
 
             {/* Taxi Button */}
             <button
               onClick={() => navigate('/taxi/user')}
-              className={`custom-tab overflow-visible ${
+              className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-xl text-xs font-black transition-all duration-300 ${
                 window.location.pathname.includes('/taxi')
-                  ? 'custom-tab-active'
-                  : 'custom-tab-inactive'
+                  ? 'bg-white text-[#ff5100] shadow-md'
+                  : 'text-white/70 hover:text-white'
               }`}
-              style={
-                !window.location.pathname.includes('/taxi')
-                  ? { backgroundColor: theme.inactiveHex }
-                  : {}
-              }
             >
-              {window.location.pathname.includes('/taxi') && (
-                <div
-                  className={`absolute inset-0 rounded-t-[16px] ${theme.activeBg}`}
-                />
-              )}
-              <img src={taxiIcon} alt="K9Rides" className="custom-tab-icon" />
-              <span className="relative z-10">K9Rides</span>
+              <img src={taxiIcon} alt="K9Rides" className="w-5 h-5 object-contain" />
+              <span>K9Rides</span>
             </button>
           </div>
-          <div className="flex w-full overflow-visible -mt-[1px] z-15">
-            <div 
-              className="h-[6px] flex-1 transition-colors duration-200" 
-              style={{
-                backgroundColor: window.location.pathname.includes('/food') ? theme.activeHex : theme.inactiveHex
-              }}
-            />
-            <div 
-              className="h-[6px] flex-1 transition-colors duration-200" 
-              style={{
-                backgroundColor: window.location.pathname.includes('/taxi') ? theme.activeHex : theme.inactiveHex
-              }}
-            />
+        </motion.div>
+
+        {/* Search bar moved to Home.jsx as a true viewport-sticky element */}
+
+        {/* Sliding Banners Card Overlay — animated entrance */}
+        <motion.div
+          className="relative mx-4 mt-4 overflow-hidden h-[120px] rounded-2xl shadow-lg border border-white/10 z-20"
+          initial={{ opacity: 0, scale: 0.96 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.45, delay: 0.25, ease: 'easeOut' }}
+        >
+          <div
+            className="flex h-full transition-transform duration-700 ease-in-out"
+            style={{ transform: `translateX(-${currentSlide * 100}%)` }}
+          >
+            {slideBanners.map((banner) => (
+              <div 
+                key={banner.id} 
+                className={`w-full h-full shrink-0 flex items-center justify-between ${banner.bg}`}
+              >
+                {banner.content}
+              </div>
+            ))}
           </div>
-        </div>
-        
+        </motion.div>
+
         {/* Carousel Pager Dots */}
-        <div className="absolute bottom-2 inset-x-0 flex justify-center gap-1.5 z-20">
+        <div className="relative mt-3 flex justify-center gap-1.5 z-20">
           {slideBanners.map((_, i) => (
-            <span 
-              key={i} 
-              className={`h-1 rounded-full transition-all duration-300 ${i === currentSlide ? 'bg-black/60 w-3 dark:bg-white/80' : 'bg-black/20 w-1.5 dark:bg-white/30'}`} 
+            <span
+              key={i}
+              className={`h-1 rounded-full transition-all duration-300 ${i === currentSlide ? 'bg-white w-4' : 'bg-white/40 w-1.5'}`}
             />
           ))}
-        </div>
-      </div>
-
-      {/* Sticky Search Bar wrapper — position adjusts when categories are also stuck (sticky only on mobile/tablet) */}
-      <div
-        className={`relative sticky md:relative z-[60] px-3 pb-0 md:-mt-[256px] -mt-[216px] md:mb-[210px] mb-[150px] pointer-events-none transition-all duration-300 ${
-          isCategoryStuck ? 'top-0 pt-2 md:top-auto' : 'top-2 md:top-auto'
-        }`}
-      >
-        <div 
-          className="relative z-[60] rounded-[1.5rem] flex items-center px-4 py-3.5 bg-white/95 dark:bg-[#1a1a1a]/95 backdrop-blur-xl border border-white dark:border-gray-800 shadow-[0_12px_36px_rgba(0,0,0,0.12)] dark:shadow-[0_12px_36px_rgba(0,0,0,0.4)] cursor-pointer active:scale-[0.98] transition-all duration-300 hover:shadow-[0_16px_48px_rgba(250,2,114,0.15)] group mx-1 pointer-events-auto"
-          onClick={handleSearchFocus}
-          onTouchStart={handleSearchFocus}
-          role="button"
-          tabIndex={0}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" || e.key === " ") {
-              e.preventDefault();
-              handleSearchFocus();
-            }
-          }}
-        >
-          <Search className="h-5 w-5 text-gray-400 mr-3 group-hover:text-[#FA0272] transition-colors duration-300 dark:text-gray-500" strokeWidth={2.5} />
-          <div className="flex-1 overflow-hidden relative h-5">
-            <input
-              type="text"
-              readOnly
-              aria-label="Search"
-              onFocus={handleSearchFocus}
-              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-            />
-            <AnimatePresence mode="wait">
-              <motion.span
-                key={placeholderIndex}
-                initial={{ y: 15, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                exit={{ y: -15, opacity: 0 }}
-                transition={{ duration: 0.25, ease: 'easeOut' }}
-                className="absolute inset-0 text-[14px] font-bold text-gray-500 dark:text-gray-400"
-              >
-                {placeholders?.[placeholderIndex] || 'Search "pizza"'}
-              </motion.span>
-            </AnimatePresence>
-          </div>
-          <div className="bg-[#FA0272]/5 dark:bg-[#FA0272]/10 p-2 rounded-full border border-[#FA0272]/10 ml-2 group-hover:bg-[#FA0272]/10 transition-all flex items-center justify-center">
-            <Mic className="h-4 w-4 text-[#FA0272]" strokeWidth={2.5} />
-          </div>
         </div>
       </div>
     </>

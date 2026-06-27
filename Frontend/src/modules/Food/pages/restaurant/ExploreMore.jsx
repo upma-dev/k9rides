@@ -870,13 +870,13 @@ export default function ExploreMore() {
                     navigate(item.route)
                   }
                 }}
-                className="group relative flex w-full flex-col items-center justify-center gap-2 overflow-hidden rounded-[20px] bg-white p-4 shadow-[0_2px_10px_rgb(0,0,0,0.02)] ring-1 ring-black/[0.04] transition-all duration-300 hover:shadow-[0_8px_30px_rgb(250,2,114,0.06)] hover:ring-[#FA0272]/10 hover:bg-[#FA0272]/[0.02] min-h-[105px]"
+                className="group relative flex w-full flex-col items-center justify-center gap-2 overflow-hidden rounded-[20px] bg-white p-4 shadow-[0_2px_10px_rgb(0,0,0,0.02)] ring-1 ring-black/[0.04] transition-all duration-300 hover:shadow-[0_8px_30px_rgb(255,109,0,0.06)] hover:ring-[#ff6d00]/10 hover:bg-[#ff6d00]/[0.02] min-h-[105px]"
               >
-                <div className="relative flex items-center justify-center h-11 w-11 rounded-full bg-gray-50 transition-colors group-hover:bg-[#FA0272]/10">
+                <div className="relative flex items-center justify-center h-11 w-11 rounded-full bg-gray-50 transition-colors group-hover:bg-[#ff6d00]/10">
                   {item.customIcon ? (
-                    <span className="text-lg font-bold text-gray-900 group-hover:text-[#FA0272] transition-colors">hp</span>
+                    <span className="text-lg font-bold text-gray-900 group-hover:text-[#ff6d00] transition-colors">hp</span>
                   ) : (
-                    <IconComponent className="relative z-10 w-[22px] h-[22px] text-gray-600 transition-colors group-hover:text-[#FA0272]" strokeWidth={1.75} />
+                    <IconComponent className="relative z-10 w-[22px] h-[22px] text-gray-600 transition-colors group-hover:text-[#ff6d00]" strokeWidth={1.75} />
                   )}
                   {item.badge && (
                     <motion.span
@@ -889,7 +889,7 @@ export default function ExploreMore() {
                     </motion.span>
                   )}
                 </div>
-                <span className="text-[11px] font-semibold tracking-tight text-gray-500 transition-colors group-hover:text-[#FA0272] text-center leading-tight">
+                <span className="text-[11px] font-semibold tracking-tight text-gray-500 transition-colors group-hover:text-[#ff6d00] text-center leading-tight">
                   {item.label}
                 </span>
               </motion.button>
@@ -965,10 +965,10 @@ export default function ExploreMore() {
           className="mb-8"
         >
           <div className="relative overflow-hidden rounded-[24px] bg-white p-5 shadow-[0_8px_30px_rgb(0,0,0,0.04)] ring-1 ring-black/5">
-            <div className="absolute -right-10 -top-10 h-32 w-32 rounded-full bg-[#FA0272]/5 blur-3xl pointer-events-none" />
+            <div className="absolute -right-10 -top-10 h-32 w-32 rounded-full bg-[#ff6d00]/5 blur-3xl pointer-events-none" />
             <div className="relative flex items-center gap-4">
-              <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-[18px] bg-gradient-to-br from-[#FA0272]/10 to-[#FA0272]/5 ring-1 ring-[#FA0272]/10">
-                <Store className="h-6 w-6 text-[#FA0272]" strokeWidth={1.5} />
+              <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-[18px] bg-gradient-to-br from-[#ff6d00]/10 to-[#ff6d00]/5 ring-1 ring-[#ff6d00]/10">
+                <Store className="h-6 w-6 text-[#ff6d00]" strokeWidth={1.5} />
               </div>
               <div className="flex-1 min-w-0 text-left">
                 <h2 className="text-[17px] font-extrabold text-gray-900 truncate tracking-tight mb-0.5">
