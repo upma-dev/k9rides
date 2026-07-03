@@ -8,15 +8,25 @@ import { authAPI } from "@food/api"
 import { useCompanyName } from "@food/hooks/useCompanyName"
 import { motion } from "framer-motion"
 import logoImg from "@food/assets/k9-logo.jpg"
-const debugLog = (...args) => { }
-const debugWarn = (...args) => { }
-const debugError = (...args) => { }
-
+import { getDynamicLogo, loadBusinessSettings } from "@food/utils/businessSettings"
 
 export default function SignIn() {
   const navigate = useNavigate()
   const companyName = useCompanyName()
   const [searchParams] = useSearchParams()
+  const [logoUrl, setLogoUrl] = useState(() => {
+    try {
+      return getDynamicLogo();
+    } catch (e) {
+      return logoImg;
+    }
+  })
+
+  useEffect(() => {
+    loadBusinessSettings().then(() => {
+      setLogoUrl(getDynamicLogo());
+    }).catch(() => {});
+  }, []);
 
   const [formData, setFormData] = useState({
     phone: "",
@@ -130,7 +140,7 @@ export default function SignIn() {
           className="relative z-10 flex flex-col items-center gap-4"
         >
           <div className="w-20 h-20 bg-white rounded-3xl flex items-center justify-center shadow-xl border-4 border-white/25 overflow-hidden">
-            <img src={logoImg} alt={`${companyName} logo`} className="w-full h-full object-cover scale-110" />
+            <img src={logoUrl} alt={`${companyName} logo`} className="w-full h-full object-cover scale-110" />
           </div>
           <div className="text-center">
             <h1 className="text-white font-black text-4xl tracking-tighter leading-none mb-1 italic">

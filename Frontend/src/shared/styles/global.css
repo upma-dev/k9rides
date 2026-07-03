@@ -291,7 +291,7 @@ html.dark {
 .custom-tab-container {
   display: flex;
   width: 100%;
-  background-color: #301205;
+  background-color: var(--tab-container-bg, #301205);
   /* dark base orange-brown background */
   border-top-left-radius: 20px;
   border-top-right-radius: 20px;
@@ -306,51 +306,97 @@ html.dark {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 8px 0 6px 0;
+  padding: 10px 0 8px 0;
   font-family: var(--font-poppins);
   font-weight: 800;
   font-size: 13px;
-  color: rgba(255, 255, 255, 0.55);
+  color: rgba(255, 255, 255, 0.6);
   transition: all 0.25s ease;
   position: relative;
-  border: none;
-  outline: none;
+  border: none !important;
+  outline: none !important;
   cursor: pointer;
   flex: 1;
+  box-shadow: none !important;
+}
+
+.custom-tab:focus,
+.custom-tab:focus-visible,
+.custom-tab:active {
+  outline: none !important;
+  border: none !important;
+  box-shadow: none !important;
 }
 
 .custom-tab-icon {
-  width: 22px;
-  height: 22px;
+  width: 30px;
+  height: 30px;
   object-fit: contain;
-  margin-bottom: 2px;
+  margin-bottom: 4px;
   z-index: 10;
+  filter: url(#remove-white);
 }
 
-/* Active tab styles */
+.custom-tab-icon-taxi {
+  width: 42px;
+  height: 42px;
+  margin-top: -6px;
+  margin-bottom: 0px;
+}
+
+/* Active tab styles with inverted corner curves */
 .custom-tab-active {
-  background-color: #e65100;
-  /* active premium orange */
+  background-color: var(--active-tab-bg, #e65100);
   color: #ffffff;
-  border-top-left-radius: 16px;
-  border-top-right-radius: 16px;
+  border-top-left-radius: 20px;
+  border-top-right-radius: 20px;
+  border-bottom-left-radius: 0px;
+  border-bottom-right-radius: 0px;
   z-index: 20;
 }
 
+.custom-tab-active::before {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: -20px;
+  width: 20px;
+  height: 20px;
+  background-color: transparent;
+  border-bottom-right-radius: 20px;
+  box-shadow: 10px 10px 0 10px var(--active-tab-bg, #e65100);
+  pointer-events: none;
+  z-index: 25;
+  clip-path: inset(-20px -20px 0px -20px);
+}
+
+.custom-tab-active::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  right: -20px;
+  width: 20px;
+  height: 20px;
+  background-color: transparent;
+  border-bottom-left-radius: 20px;
+  box-shadow: -10px 10px 0 10px var(--active-tab-bg, #e65100);
+  pointer-events: none;
+  z-index: 25;
+  clip-path: inset(-20px -20px 0px -20px);
+}
 
 /* Inactive tab style */
 .custom-tab-inactive {
-  background-color: #4a1d0b;
-  /* inactive dark orange-brown */
-  color: rgba(255, 255, 255, 0.55);
-  border-top-left-radius: 16px;
-  border-top-right-radius: 16px;
+  background-color: var(--inactive-tab-bg, #4a1d0b);
+  color: rgba(255, 255, 255, 0.6);
+  border-top-left-radius: 20px;
+  border-top-right-radius: 20px;
 }
 
 /* Bottom connecting strip matching active tab color */
 .custom-tab-strip {
   height: 6px;
-  background-color: #e65100;
+  background-color: var(--active-tab-bg, #e65100);
   width: 100%;
   margin-top: -1px;
   /* overlap to prevent sub-pixel gaps */
@@ -364,4 +410,17 @@ html.dark {
   top: 0;
   box-shadow: 0 -20px 60px rgba(0, 0, 0, 0.1);
   will-change: transform;
+}
+
+/* GPU-Accelerated Premium Gradient Animation for Orange Container background */
+@keyframes premiumOrangeGradient {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.animated-orange-container {
+  background: linear-gradient(-45deg, #d82c23, #ff5100, #ff7b00, #b30707);
+  background-size: 400% 400%;
+  animation: premiumOrangeGradient 12s ease infinite;
 }

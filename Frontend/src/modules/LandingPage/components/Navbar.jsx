@@ -2,10 +2,12 @@ import React, { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Menu, X } from 'lucide-react'
 import k9Logo from '../assets/k9-logo.png'
+import { useSettings } from '../../Taxi/shared/context/SettingsContext'
 
 export default function Navbar({ settings }) {
   const [isScrolled, setIsScrolled] = useState(false)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const { activeLogo } = useSettings()
 
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 40)
@@ -33,23 +35,28 @@ export default function Navbar({ settings }) {
         initial={{ y: -80, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-        className={`fixed top-0 left-0 right-0 z-[100] transition-all duration-400 ${
-          isScrolled
+        className={`fixed top-0 left-0 right-0 z-[100] transition-all duration-400 ${isScrolled
             ? 'bg-white/80 backdrop-blur-xl shadow-[0_4px_24px_rgba(0,0,0,0.03)] border-b border-slate-200/40 text-slate-900'
             : 'bg-transparent text-slate-800'
-        }`}
+          }`}
         style={{ fontFamily: "'Poppins', sans-serif" }}
       >
         <div className="w-full px-6 sm:px-12 lg:px-16">
           <div className="flex items-center justify-between h-20">
             {/* Logo */}
             <a href="#" className="flex items-center gap-3 group">
-              <div className="h-10 w-10 rounded-full overflow-hidden border-2 border-[#ff6d00]/40 group-hover:border-[#2563eb] transition-colors duration-300">
-                <img src={settings?.logo_url || k9Logo} alt="K9 Rides" className="w-full h-full object-cover scale-[1.2]" />
-              </div>
-              <span className="font-black text-xl tracking-tight text-slate-900">
-                K9 <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#ff5100] via-[#e11d48] via-[#1d4ed8] to-[#10b981]">Rides</span>
-              </span>
+              {settings?.logo_url ? (
+                <img src={settings.logo_url} alt="K9 Rides" className="h-10 w-auto object-contain" />
+              ) : (
+                <>
+                  <div className="h-10 w-10 rounded-full overflow-hidden border-2 border-[#ff6d00]/40 group-hover:border-[#2563eb] transition-colors duration-300">
+                    <img src={activeLogo || k9Logo} alt="K9 Rides" className="w-full h-full object-cover scale-[1.2]" />
+                  </div>
+                  <span className="font-black text-xl tracking-tight text-slate-900">
+                    K9 <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#ff5100] via-[#e11d48] via-[#1d4ed8] to-[#10b981]">Rides</span>
+                  </span>
+                </>
+              )}
             </a>
 
             {/* Desktop nav */}
@@ -79,7 +86,8 @@ export default function Navbar({ settings }) {
       </motion.header>
 
       {/* Global CSS Style tag injection */}
-      <style dangerouslySetInnerHTML={{ __html: `
+      <style dangerouslySetInnerHTML={{
+        __html: `
         @keyframes k9-glow-pulse {
           0%, 100% {
             transform: scale(1);
@@ -119,7 +127,11 @@ export default function Navbar({ settings }) {
               style={{ background: '#ffffff', fontFamily: "'Poppins', sans-serif" }}
             >
               <div className="flex items-center justify-between mb-10">
-                <span className="font-black text-xl text-slate-900">K9 <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#ff5100] via-[#e11d48] via-[#1d4ed8] to-[#10b981]">Rides</span></span>
+                {settings?.logo_url ? (
+                  <img src={settings.logo_url} alt="K9 Rides" className="h-10 w-auto object-contain" />
+                ) : (
+                  <span className="font-black text-xl text-slate-900">K9 <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#ff5100] via-[#e11d48] via-[#1d4ed8] to-[#10b981]">Rides</span></span>
+                )}
                 <button onClick={() => setIsMobileMenuOpen(false)} className="p-2 rounded-xl text-slate-800 hover:bg-slate-100">
                   <X className="w-5 h-5" />
                 </button>

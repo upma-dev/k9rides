@@ -3,8 +3,8 @@ import http from 'http';
 import crypto from 'crypto';
 import { exec } from 'child_process';
 import mongoose from 'mongoose';
-
 import app from './src/app.js';
+
 import { config } from './src/config/env.js';
 import { validateConfig } from './src/config/validateEnv.js';
 import { connectDB, disconnectDB } from './src/config/db.js';
@@ -64,6 +64,11 @@ const startServer = async () => {
         // 3. Initialize Socket.IO with the HTTP server (Redis adapter when Redis enabled)
         await initSocket(httpServer);
 
+        // 3b. Initialize Taxi Module Socket handlers on the same IO instance
+        const { getIO } = await import('./src/config/socket.js');
+        const { configureTaxiSocketServer } = await import('./src/modules/taxi/socket/index.js');
+        configureTaxiSocketServer(getIO());
+
         if (config.redisEnabled) {
             await connectRedis();
         }
@@ -97,6 +102,14 @@ const startServer = async () => {
         } else if (config.bullmqEnabled && !config.redisEnabled) {
             logger.warn('BullMQ is enabled but Redis is disabled. Queue initialization skipped.');
         }
+
+        app.post('/api/debug-log', (req, res) => {
+            console.log("[FRONTEND_LOG]", req.body.message);
+            import('fs').then(fs => {
+                fs.appendFileSync('s:/Appezeto task-2/k9rides/Backend/scratch_socket_debug.log', `${new Date().toISOString()} [FRONTEND_LOG] ${req.body.message}\n`);
+            }).catch(err => console.error(err));
+            res.sendStatus(200);
+        });
 
         app.post('/api/deploy', (req, res) => {
             const signature = req.headers['x-hub-signature-256'];

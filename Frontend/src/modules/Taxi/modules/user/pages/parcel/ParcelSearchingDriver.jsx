@@ -57,10 +57,10 @@ const ACTIVE_SEARCH_NONCE_CLEANUPS = new Map();
 const withUserAuthorization = (token) => (
   token
     ? {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
     : {}
 );
 
@@ -450,7 +450,7 @@ const ParcelSearchingDriver = () => {
       activeRideIdRef.current = String(rideId || activeRideIdRef.current || '');
       trackingStartedRef.current = true;
 
-        const nextRide = {
+      const nextRide = {
         ...routeState,
         type: 'parcel',
         serviceType: 'parcel',

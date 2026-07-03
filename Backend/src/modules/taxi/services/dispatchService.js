@@ -196,14 +196,37 @@ const settleUserCancellationFee = async (ride, session) => {
     feeValue: pricing?.user_cancellation_fee,
   });
 
-  if (feeAmount <= 0) {
-    return { feeAmount: 0, userDebitStatus: 'none', driverCreditStatus: 'none', driverWalletResult: null };
+  // Calculate waiting time charges if driver has arrived
+  let waitingCharge = 0;
+  let waitingTimeMinutes = 0;
+  if (ride.arrivedAt) {
+    const arrivedAt = new Date(ride.arrivedAt);
+    const diffMs = Date.now() - arrivedAt.getTime();
+    waitingTimeMinutes = Math.max(0, Math.ceil(diffMs / 60000));
+    const freeWaitingMinutes = ride.pricingSnapshot?.free_waiting_before || 0;
+    const billableWaitingTimeMinutes = Math.max(0, waitingTimeMinutes - freeWaitingMinutes);
+    const waitingRatePerMinute = ride.pricingSnapshot?.waiting_charge || 0;
+    waitingCharge = roundMoney(billableWaitingTimeMinutes * waitingRatePerMinute);
+  }
+
+  const totalFeeAmount = feeAmount + waitingCharge;
+
+  if (totalFeeAmount <= 0) {
+    return {
+      feeAmount: 0,
+      waitingTimeMinutes: 0,
+      waitingCharge: 0,
+      totalFeeAmount: 0,
+      userDebitStatus: 'none',
+      driverCreditStatus: 'none',
+      driverWalletResult: null
+    };
   }
 
   const feeReferenceBase = `ride-cancel:user:${String(ride._id)}`;
   const userDebit = await applyUserWalletAdjustment({
     userId: ride.userId,
-    amount: feeAmount,
+    amount: totalFeeAmount,
     kind: 'debit',
     title: `Ride cancellation fee for booking ${String(ride._id).slice(-6)}`,
     referenceKey: `${feeReferenceBase}:user-debit`,
@@ -220,7 +243,7 @@ const settleUserCancellationFee = async (ride, session) => {
   if (shouldCreditDriver) {
     driverCredit = await applyDriverWalletAdjustmentByReference({
       driverId: ride.driverId,
-      amount: feeAmount,
+      amount: totalFeeAmount,
       rideId: ride._id,
       description: `Cancellation fee received for booking ${String(ride._id).slice(-6)}`,
       referenceKey: `${feeReferenceBase}:driver-credit`,
@@ -236,9 +259,12 @@ const settleUserCancellationFee = async (ride, session) => {
 
   return {
     feeAmount,
+    waitingTimeMinutes,
+    waitingCharge,
+    totalFeeAmount,
     userDebitStatus: userDebit.status,
     driverCreditStatus: driverCredit.status,
-    driverWalletResult: driverCredit.walletResult || null,
+    driverWalletResult: driverCredit.walletResult,
   };
 };
 
@@ -358,6 +384,11 @@ export const emitToAdmins = (event, payload) => {
   emitToRoom(getAdminRoom(), event, payload);
 };
 
+export const emitToRideRoom = (rideId, event, payload) => {
+  emitToRoom(getRideRoom(rideId), event, payload);
+};
+
+
 const clearDispatchTimer = (rideId) => {
   const state = activeDispatches.get(String(rideId));
 
@@ -454,6 +485,7 @@ const emitRideRequestToDrivers = async ({
   const requestExpiresAt = new Date(Date.now() + dispatchConfig.retryDelayMs).toISOString();
 
   for (const driver of targetDrivers) {
+    console.log(`[emitRideRequestToDrivers] Emitting 'rideRequest' to driverId=${driver._id}, room=${getDriverRoom(driver._id)}`);
     emitToDriver(driver._id, 'rideRequest', {
       rideId: String(ride._id),
       type: ride.serviceType || 'ride',
@@ -665,13 +697,28 @@ export const cancelRideByUser = async ({ rideId, userId }) => {
 
     if (ride.status === RIDE_STATUS.CANCELLED || ride.liveStatus === RIDE_LIVE_STATUS.CANCELLED) {
       await session.commitTransaction();
-      return ride;
+      return { ride, cancellationSettlement: null };
     }
 
     cancellationSettlement = await settleUserCancellationFee(ride, session);
 
+    // IMPORTANT: persist cancellation charges into ride.fare so user/driver final bill shows complete total
+    // Frontend relies on ride.fare for arrived/completed bill.
+    const totalCancellationFee = Number(cancellationSettlement?.totalFeeAmount || 0);
+    if (totalCancellationFee > 0) {
+      // Put it into adminExtraCharge so it is visible on both sides and doesn't overwrite base fare breakdown.
+      ride.adminExtraCharge = {
+        amount: totalCancellationFee,
+        reason: 'User cancellation charge',
+        addedAt: new Date(),
+      };
+      // Increase consolidated fare by cancellation fee
+      ride.fare = Number(ride.fare || 0) + totalCancellationFee;
+    }
+
     ride.status = RIDE_STATUS.CANCELLED;
     ride.liveStatus = RIDE_LIVE_STATUS.CANCELLED;
+
     if (ride.bookingMode === 'bidding') {
       ride.biddingStatus = 'cancelled';
     }
@@ -691,6 +738,7 @@ export const cancelRideByUser = async ({ rideId, userId }) => {
     ]);
 
     await session.commitTransaction();
+    return { ride, cancellationSettlement };
   } catch (error) {
     await session.abortTransaction();
     throw error;
@@ -930,10 +978,19 @@ const dispatchAttempt = async (rideId, attemptIndex = 0) => {
 
     const rejectedDriverIds = new Set(dispatchState.rejectedDriverIds);
     const notifiedDriverIds = new Set(dispatchState.notifiedDriverIds);
+    
+    console.log(`[dispatchAttempt] Checking driver filtering for rideId=${rideId}. rejectedDriverIds=`, Array.from(rejectedDriverIds), `notifiedDriverIds=`, Array.from(notifiedDriverIds));
+    
     const availableDrivers = drivers.filter((driver) => {
       const driverId = String(driver._id);
-      return !rejectedDriverIds.has(driverId) && !notifiedDriverIds.has(driverId);
+      const isRejected = rejectedDriverIds.has(driverId);
+      const isNotified = notifiedDriverIds.has(driverId);
+      console.log(`[dispatchAttempt] Driver ${driverId} check: isRejected=${isRejected}, isNotified=${isNotified}`);
+      return !isRejected && !isNotified;
     });
+
+    console.log(`[dispatchAttempt] rideId=${rideId}, drivers.length=${drivers.length}, availableDrivers.length=${availableDrivers.length}`);
+
     const targetDrivers = dispatchConfig.dispatchType === 'broadcast'
       ? availableDrivers
       : availableDrivers.slice(0, 1);

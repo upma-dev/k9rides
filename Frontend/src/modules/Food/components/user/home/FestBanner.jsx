@@ -1,7 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { ArrowRightCircle, Sparkles } from 'lucide-react';
-import bannerFood1 from "@food/assets/category-icons/food.png"; // Burger
+import bannerFood1 from "@food/assets/category-icons/food.png.png"; // Burger
 const tacoImg = "https://images.unsplash.com/photo-1565299585323-38d6b0865b47?w=200&h=200&fit=crop";
 const platterImg = "https://images.unsplash.com/photo-1544025162-d76694265947?w=200&h=200&fit=crop";
 

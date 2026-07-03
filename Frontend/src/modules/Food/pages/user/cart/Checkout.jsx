@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
 
-import { CheckCircle, MapPin, CreditCard, ArrowLeft } from "lucide-react"
+import { CheckCircle, MapPin, CreditCard, ArrowLeft, AlertTriangle } from "lucide-react"
 import { Link } from "react-router-dom"
 import AnimatedPage from "@food/components/user/AnimatedPage"
 import ScrollReveal from "@food/components/user/ScrollReveal"
@@ -18,7 +18,7 @@ import { userAPI } from "@food/api"
 export default function Checkout() {
   const navigate = useNavigate()
   const { cart, clearCart } = useCart()
-  const { getDefaultAddress, getDefaultPaymentMethod, setDefaultAddress, addresses, paymentMethods } = useProfile()
+  const { userProfile, getDefaultAddress, getDefaultPaymentMethod, setDefaultAddress, addresses, paymentMethods } = useProfile()
   const { createOrder } = useOrders()
   const getAddressId = (address) => address?.id || address?._id || ""
   const [selectedAddressId, setSelectedAddressId] = useState(getAddressId(getDefaultAddress()))
@@ -60,6 +60,9 @@ export default function Checkout() {
 
   const availablePaymentMethods = paymentMethods.filter(pm => {
     if (pm.type === "cash" || pm.type === "cod") {
+      if (userProfile?.isBlockedFromCOD) {
+        return false
+      }
       if (feeSettings?.codOrderLimit !== undefined && feeSettings?.codOrderLimit !== null && total >= feeSettings.codOrderLimit) {
         return false
       }
@@ -117,7 +120,7 @@ export default function Checkout() {
 
       clearCart()
       setIsPlacingOrder(false)
-      navigate(`/user/orders/${orderId}?confirmed=true`)
+      navigate(`/food/user/orders/${orderId}?confirmed=true`)
     }, 1500)
   }
 
@@ -185,8 +188,8 @@ export default function Checkout() {
                           <div
                             key={addressId || `${address.label}-${address.street}-${address.city}`}
                             className={`border-2 rounded-lg p-4 cursor-pointer transition-colors ${isSelected
-                                ? "border-[#EB590E] bg-primary-orange/5"
-                                : "border-gray-200 hover:border-primary-orange/40"
+                              ? "border-[#EB590E] bg-primary-orange/5"
+                              : "border-gray-200 hover:border-primary-orange/40"
                               }`}
                             onClick={() => {
                               setSelectedAddressId(addressId)
@@ -234,6 +237,14 @@ export default function Checkout() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
+                  {userProfile?.isBlockedFromCOD && (
+                    <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/50 rounded-lg p-3 text-xs sm:text-sm text-amber-800 dark:text-amber-300 flex items-start gap-2 mb-3">
+                      <AlertTriangle className="h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400 mt-0.5" />
+                      <span>
+                        <strong>Cash on Delivery (COD) disabled:</strong> Cash on Delivery option has been disabled for your account. Please use online payment methods.
+                      </span>
+                    </div>
+                  )}
                   {availablePaymentMethods.length > 0 ? (
                     <div className="space-y-3">
                       {availablePaymentMethods.map((payment) => {
@@ -244,8 +255,8 @@ export default function Checkout() {
                           <div
                             key={payment.id}
                             className={`border-2 rounded-lg p-4 cursor-pointer transition-colors ${isSelected
-                                ? "border-[#EB590E] bg-primary-orange/5"
-                                : "border-gray-200 hover:border-primary-orange/40"
+                              ? "border-[#EB590E] bg-primary-orange/5"
+                              : "border-gray-200 hover:border-primary-orange/40"
                               }`}
                             onClick={() => setSelectedPayment(payment.id)}
                           >

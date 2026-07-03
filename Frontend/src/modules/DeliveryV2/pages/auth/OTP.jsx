@@ -8,10 +8,25 @@ import { setAuthData as storeAuthData } from "@food/utils/auth"
 import { useCompanyName } from "@food/hooks/useCompanyName"
 import { motion, AnimatePresence } from "framer-motion"
 import logoImg from "@food/assets/k9-logo.jpg"
+import { getDeliveryPartnerLogo, loadBusinessSettings } from "@food/utils/businessSettings"
 
 export default function DeliveryOTP() {
   const companyName = useCompanyName()
   const navigate = useNavigate()
+  const [logoUrl, setLogoUrl] = useState(() => {
+    try {
+      return getDeliveryPartnerLogo();
+    } catch (e) {
+      return logoImg;
+    }
+  })
+
+  useEffect(() => {
+    loadBusinessSettings().then(() => {
+      setLogoUrl(getDeliveryPartnerLogo());
+    }).catch(() => {});
+  }, []);
+
   const [otp, setOtp] = useState(["", "", "", ""])
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState("")
@@ -44,7 +59,7 @@ export default function DeliveryOTP() {
             navigate("/food/delivery", { replace: true })
             return
           }
-        } catch (e) {}
+        } catch (e) { }
       }
       navigate("/food/delivery/login", { replace: true })
       return
@@ -144,13 +159,13 @@ export default function DeliveryOTP() {
                 const t = await window.flutter_inappwebview.callHandler(n, { module: "delivery" });
                 const normalized = typeof t === "string" ? t.trim() : String(t?.token || t?.fcmToken || "").trim();
                 if (normalized.length > 20) { fcmToken = normalized; break; }
-              } catch (e) {}
+              } catch (e) { }
             }
           } else {
             fcmToken = localStorage.getItem("fcm_web_registered_token_delivery") || null;
           }
         }
-      } catch (e) {}
+      } catch (e) { }
       setDeviceToken(fcmToken);
       setActivePlatform(platform);
 
@@ -158,29 +173,29 @@ export default function DeliveryOTP() {
       const data = response?.data?.data || response?.data || {}
       if (data.pendingApproval === true) {
         if (data.isRejected) {
-           sessionStorage.setItem("deliveryNeedsRegistration", "true")
-           const partner = data.deliveryPartner || {}
-           sessionStorage.setItem("deliverySignupDetails", JSON.stringify({
-             name: partner.name || "",
-             phone: partner.phone || authData?.phone?.replace(/\D/g, "").slice(-10) || "",
-             countryCode: partner.countryCode || "+91",
-             email: partner.email || "",
-             address: partner.address || "",
-             city: partner.city || "",
-             state: partner.state || "",
-             vehicleType: partner.vehicleType || "bike",
-             vehicleName: partner.vehicleName || "",
-             vehicleNumber: partner.vehicleNumber || "",
-             drivingLicenseNumber: partner.drivingLicenseNumber || "",
-             panNumber: partner.panNumber || "",
-             aadharNumber: partner.aadharNumber || ""
-           }))
-           sessionStorage.setItem("deliverySignupDocs", JSON.stringify({
-             profilePhoto: partner.profilePhoto || null,
-             aadharPhoto: partner.aadharPhoto || null,
-             panPhoto: partner.panPhoto || null,
-             drivingLicensePhoto: partner.drivingLicensePhoto || null
-           }))
+          sessionStorage.setItem("deliveryNeedsRegistration", "true")
+          const partner = data.deliveryPartner || {}
+          sessionStorage.setItem("deliverySignupDetails", JSON.stringify({
+            name: partner.name || "",
+            phone: partner.phone || authData?.phone?.replace(/\D/g, "").slice(-10) || "",
+            countryCode: partner.countryCode || "+91",
+            email: partner.email || "",
+            address: partner.address || "",
+            city: partner.city || "",
+            state: partner.state || "",
+            vehicleType: partner.vehicleType || "bike",
+            vehicleName: partner.vehicleName || "",
+            vehicleNumber: partner.vehicleNumber || "",
+            drivingLicenseNumber: partner.drivingLicenseNumber || "",
+            panNumber: partner.panNumber || "",
+            aadharNumber: partner.aadharNumber || ""
+          }))
+          sessionStorage.setItem("deliverySignupDocs", JSON.stringify({
+            profilePhoto: partner.profilePhoto || null,
+            aadharPhoto: partner.aadharPhoto || null,
+            panPhoto: partner.panPhoto || null,
+            drivingLicensePhoto: partner.drivingLicensePhoto || null
+          }))
         }
         setIsLoading(false); setPendingMessage(data.message); setIsRejected(data.isRejected || false); setRejectionReason(data.rejectionReason || "");
         return
@@ -230,8 +245,8 @@ export default function DeliveryOTP() {
       <div className="relative h-[35dvh] w-full bg-[#1A1A1A] overflow-hidden flex flex-col items-center justify-center text-white pb-8">
         {/* Subtle Decorative Elements */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
-            <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-[#F38F24]/5 rounded-full blur-[80px] translate-x-1/3 -translate-y-1/3"></div>
-            <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-white/5 rounded-full blur-[60px] -translate-x-1/3 translate-y-1/3"></div>
+          <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-[#F38F24]/5 rounded-full blur-[80px] translate-x-1/3 -translate-y-1/3"></div>
+          <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-white/5 rounded-full blur-[60px] -translate-x-1/3 translate-y-1/3"></div>
         </div>
 
         <motion.div
@@ -241,7 +256,7 @@ export default function DeliveryOTP() {
           className="relative z-10 flex flex-col items-center gap-4 px-6 text-center"
         >
           <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center border-2 border-white/25 shadow-xl mb-2 overflow-hidden">
-            <img src={logoImg} alt={`${companyName} logo`} className="w-full h-full object-cover scale-110" />
+            <img src={logoUrl} alt={`${companyName} logo`} className="w-full h-full object-cover scale-110" />
           </div>
           <div className="space-y-1 text-center">
             <h1 className="font-black text-2xl tracking-tight uppercase leading-none mb-1">
@@ -285,9 +300,8 @@ export default function DeliveryOTP() {
                             onFocus={() => setFocusedIndex(index)}
                             onBlur={() => setFocusedIndex(null)}
                             disabled={isLoading}
-                            className={`w-14 h-16 sm:w-16 sm:h-20 text-center text-3xl font-black bg-[#F8F9FA] dark:bg-zinc-900 border-2 rounded-2xl text-[#1A1A1A] dark:text-white transition-all outline-none shadow-sm ${
-                              focusedIndex === index ? "border-[#F38F24] ring-2 ring-[#F38F24]/20" : "border-gray-200 dark:border-zinc-800"
-                            }`}
+                            className={`w-14 h-16 sm:w-16 sm:h-20 text-center text-3xl font-black bg-[#F8F9FA] dark:bg-zinc-900 border-2 rounded-2xl text-[#1A1A1A] dark:text-white transition-all outline-none shadow-sm ${focusedIndex === index ? "border-[#F38F24] ring-2 ring-[#F38F24]/20" : "border-gray-200 dark:border-zinc-800"
+                              }`}
                           />
                           {digit && (
                             <div className="absolute bottom-3 left-1/2 -translate-x-1/2 w-1.5 h-1.5 bg-[#F38F24] rounded-full" />
@@ -364,40 +378,40 @@ export default function DeliveryOTP() {
                 className="text-center space-y-8"
               >
                 <div className={`w-20 h-20 mx-auto rounded-3xl flex items-center justify-center shadow-xl transform rotate-12 ${isRejected ? "bg-red-50 text-red-600 border border-red-100" : "bg-[#F8F9FA] dark:bg-zinc-900 text-[#1A1A1A] border border-gray-200 dark:border-zinc-800"}`}>
-                   {isRejected ? <AlertCircle size={40} className="-rotate-12" /> : <ShieldCheck size={40} className="-rotate-12" />}
+                  {isRejected ? <AlertCircle size={40} className="-rotate-12" /> : <ShieldCheck size={40} className="-rotate-12" />}
                 </div>
 
                 <div className="space-y-3">
                   <h3 className={`text-2xl font-black tracking-tight ${isRejected ? "text-red-600" : "text-[#1A1A1A]"}`}>
-                     {isRejected ? "Onboarding Denied" : "Pending Approval"}
+                    {isRejected ? "Onboarding Denied" : "Pending Approval"}
                   </h3>
                   <p className="text-sm font-medium text-gray-500 dark:text-zinc-400 leading-relaxed">
-                     {pendingMessage}
+                    {pendingMessage}
                   </p>
                 </div>
 
                 {isRejected && rejectionReason && (
-                   <div className="bg-red-50 dark:bg-red-900/10 p-5 rounded-2xl border border-red-100 dark:border-red-900/10">
-                      <p className="text-xs font-bold text-red-500 uppercase tracking-wider mb-1">Fleet Feedback</p>
-                      <p className="text-sm text-red-700 dark:text-red-400 font-medium">"{rejectionReason}"</p>
-                   </div>
+                  <div className="bg-red-50 dark:bg-red-900/10 p-5 rounded-2xl border border-red-100 dark:border-red-900/10">
+                    <p className="text-xs font-bold text-red-500 uppercase tracking-wider mb-1">Fleet Feedback</p>
+                    <p className="text-sm text-red-700 dark:text-red-400 font-medium">"{rejectionReason}"</p>
+                  </div>
                 )}
 
                 <div className="pt-6 flex flex-col gap-4">
-                   {isRejected && (
-                      <Button
-                        onClick={() => navigate("/food/delivery/signup/details", { state: { isRejected: true, rejectionReason } })}
-                        className="w-full h-14 rounded-xl font-bold bg-red-600 hover:bg-red-700 text-white shadow-lg"
-                      >
-                        RE-APPLY NOW
-                      </Button>
-                   )}
-                   <button 
-                    onClick={() => navigate("/food/delivery/login")} 
+                  {isRejected && (
+                    <Button
+                      onClick={() => navigate("/food/delivery/signup/details", { state: { isRejected: true, rejectionReason } })}
+                      className="w-full h-14 rounded-xl font-bold bg-red-600 hover:bg-red-700 text-white shadow-lg"
+                    >
+                      RE-APPLY NOW
+                    </Button>
+                  )}
+                  <button
+                    onClick={() => navigate("/food/delivery/login")}
                     className="text-xs font-bold text-gray-500 uppercase tracking-widest hover:text-[#1A1A1A] transition-all"
-                   >
+                  >
                     BACK TO BASE
-                   </button>
+                  </button>
                 </div>
               </motion.div>
             )}

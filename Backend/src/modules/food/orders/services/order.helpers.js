@@ -133,16 +133,18 @@ export async function notifyOwnerSafely(target, payload) {
 export function buildOrderIdentityFilter(orderIdOrMongoId) {
   const raw = String(orderIdOrMongoId || "").trim();
   if (!raw) return null;
-  if (mongoose.isValidObjectId(raw))
-    return { _id: new mongoose.Types.ObjectId(raw) };
   
-  // Search BOTH underscore and camelCase variants for robust lookup
-  return { 
-    $or: [
-        { order_id: raw },
-        { orderId: raw }
-    ]
-  };
+  const conditions = [
+    { order_id: raw },
+    { orderId: raw }
+  ];
+
+  if (mongoose.isValidObjectId(raw)) {
+    conditions.push({ _id: new mongoose.Types.ObjectId(raw) });
+  }
+  
+  // Search BOTH underscore and camelCase variants for robust lookup, plus _id if valid
+  return { $or: conditions };
 }
 
 export function toGeoPoint(lat, lng) {

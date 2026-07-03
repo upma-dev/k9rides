@@ -7,10 +7,7 @@ import { clearModuleAuth } from "@food/utils/auth"
 import { useCompanyName } from "@food/hooks/useCompanyName"
 import { motion, AnimatePresence } from "framer-motion"
 import logoImg from "@food/assets/k9-logo.jpg"
-const debugLog = (...args) => {}
-const debugWarn = (...args) => {}
-const debugError = (...args) => {}
-
+import { getDeliveryPartnerLogo, loadBusinessSettings } from "@food/utils/businessSettings"
 
 const countryCodes = [
   { code: "+91", country: "IN", flag: "🇮🇳" },
@@ -20,6 +17,20 @@ export default function DeliverySignup() {
   const companyName = useCompanyName()
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
+  const [logoUrl, setLogoUrl] = useState(() => {
+    try {
+      return getDeliveryPartnerLogo();
+    } catch (e) {
+      return logoImg;
+    }
+  })
+
+  useEffect(() => {
+    loadBusinessSettings().then(() => {
+      setLogoUrl(getDeliveryPartnerLogo());
+    }).catch(() => {});
+  }, []);
+
   const [formData, setFormData] = useState({
     phone: "",
     countryCode: "+91",
@@ -193,8 +204,8 @@ export default function DeliverySignup() {
       <div className="relative h-[35dvh] w-full bg-[#1A1A1A] overflow-hidden flex flex-col items-center justify-center">
         {/* Subtle Decorative Elements */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
-            <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-[#F38F24]/5 rounded-full blur-[80px] translate-x-1/3 -translate-y-1/3"></div>
-            <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-white/5 rounded-full blur-[60px] -translate-x-1/3 translate-y-1/3"></div>
+          <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-[#F38F24]/5 rounded-full blur-[80px] translate-x-1/3 -translate-y-1/3"></div>
+          <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-white/5 rounded-full blur-[60px] -translate-x-1/3 translate-y-1/3"></div>
         </div>
 
         <motion.div
@@ -204,7 +215,7 @@ export default function DeliverySignup() {
           className="relative z-10 flex flex-col items-center gap-4"
         >
           <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center shadow-xl border-2 border-white/25 overflow-hidden">
-            <img src={logoImg} alt={`${companyName} logo`} className="w-full h-full object-cover scale-110" />
+            <img src={logoUrl} alt={`${companyName} logo`} className="w-full h-full object-cover scale-110" />
           </div>
           <div className="text-center text-white">
             <h1 className="font-black text-2xl tracking-tight leading-none mb-1">

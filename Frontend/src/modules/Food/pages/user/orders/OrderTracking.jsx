@@ -562,8 +562,15 @@ export default function OrderTracking() {
       const maxPages = 3
       const limit = 50
 
+      const promises = []
       for (let page = 1; page <= maxPages; page += 1) {
-        const listResponse = await orderAPI.getOrders({ page, limit })
+        promises.push(orderAPI.getOrders({ page, limit }))
+      }
+      
+      const responses = await Promise.allSettled(promises)
+      for (const res of responses) {
+        if (res.status !== 'fulfilled') continue
+        const listResponse = res.value
         let orders = []
         if (listResponse?.data?.success && listResponse?.data?.data?.orders) {
           orders = listResponse.data.data.orders || []
@@ -580,8 +587,6 @@ export default function OrderTracking() {
           return candidates.includes(needle)
         })
         if (matched) return matched
-        const totalPages = Number(listResponse?.data?.data?.pagination?.pages) || Number(listResponse?.data?.data?.totalPages) || 1
-        if (page >= totalPages) break
       }
       return null
     },

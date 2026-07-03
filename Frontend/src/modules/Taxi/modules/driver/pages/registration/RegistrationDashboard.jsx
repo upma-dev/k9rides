@@ -1,14 +1,14 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { 
-    User, 
-    Car, 
-    FileText, 
-    Camera, 
-    CreditCard, 
-    ChevronRight, 
-    CheckCircle2, 
+import {
+    User,
+    Car,
+    FileText,
+    Camera,
+    CreditCard,
+    ChevronRight,
+    CheckCircle2,
     Circle,
     Clock,
     ShieldAlert,
@@ -36,7 +36,7 @@ const RegistrationDashboard = () => {
         <div className="min-h-screen bg-taxi-bg font-sans select-none overflow-x-hidden p-6 pb-28 flex flex-col pt-6">
             {/* Premium Welcome Header */}
             <header className="mb-6 space-y-4">
-                <motion.div 
+                <motion.div
                     initial={{ scale: 0.8, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
                     className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center text-taxi-text shadow-2xl overflow-hidden p-2"
@@ -47,8 +47,8 @@ const RegistrationDashboard = () => {
                         <Zap size={24} className="text-slate-900" />
                     )}
                 </motion.div>
-                
-                <motion.div 
+
+                <motion.div
                     initial={{ x: -20, opacity: 0 }}
                     animate={{ x: 0, opacity: 1 }}
                     transition={{ delay: 0.2 }}
@@ -60,7 +60,7 @@ const RegistrationDashboard = () => {
                         </span>
                     </div>
                     <h1 className="text-3xl font-black text-taxi-text tracking-tighter leading-none uppercase">
-                        Start Your <br/> <span className="text-primary-orange/50">Journey</span>
+                        Start Your <br /> <span className="text-primary-orange/50">Journey</span>
                     </h1>
                     <p className="text-[14px] font-bold text-slate-400">Complete these 4 simple steps to join the Elite Driver network and start earning today.</p>
                 </motion.div>
@@ -70,7 +70,7 @@ const RegistrationDashboard = () => {
             <main className="flex-1 space-y-8 overflow-y-auto scrollbar-hide pb-10">
                 <div className="grid grid-cols-1 gap-4">
                     {steps.map((step, index) => (
-                        <motion.div 
+                        <motion.div
                             key={step.id}
                             initial={{ opacity: 0, x: -10 }}
                             animate={{ opacity: 1, x: 0 }}
@@ -93,7 +93,7 @@ const RegistrationDashboard = () => {
                     ))}
                 </div>
 
-                <motion.div 
+                <motion.div
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ delay: 1 }}
@@ -101,8 +101,8 @@ const RegistrationDashboard = () => {
                 >
                     <div className="relative z-10 space-y-1">
                         <div className="flex items-center gap-2">
-                             <Stars size={16} className="text-taxi-primary" fill="currentColor" />
-                             <h4 className="text-[15px] font-black uppercase tracking-tight">Driver Handbook</h4>
+                            <Stars size={16} className="text-taxi-primary" fill="currentColor" />
+                            <h4 className="text-[15px] font-black uppercase tracking-tight">Driver Handbook</h4>
                         </div>
                         <p className="text-[10px] font-bold opacity-60 uppercase tracking-widest text-taxi-primary">Read community guidelines</p>
                     </div>
@@ -113,7 +113,7 @@ const RegistrationDashboard = () => {
 
             {/* CTA Panel */}
             <div className="fixed bottom-0 left-0 right-0 p-6 pt-3 pb-8 bg-white/80 backdrop-blur-xl z-50 border-t border-slate-50">
-                <motion.button 
+                <motion.button
                     initial={{ y: 20, opacity: 0 }}
                     animate={{ y: 0, opacity: 1 }}
                     transition={{ delay: 0.8, type: "spring" }}

@@ -16,6 +16,7 @@ import {
     getRestaurantComplaintsController,
     uploadRestaurantAttachmentController,
     deleteCurrentRestaurantAccountController,
+    getRestaurantPublicReviewsController,
 } from '../controllers/restaurant.controller.js';
 import {
     createRestaurantOfferController,
@@ -90,6 +91,7 @@ router.post('/upload-attachment', upload.single('file'), uploadRestaurantAttachm
 router.get('/restaurants', cacheResponse(300, 'restaurants'), listApprovedRestaurantsController);
 router.get('/restaurants/:id', cacheResponse(600, 'restaurant_detail'), getApprovedRestaurantController);
 router.get('/restaurants/:id/menu', cacheResponse(600, 'restaurant_menu'), getPublicRestaurantMenuController);
+router.get('/restaurants/:id/reviews', getRestaurantPublicReviewsController);
 router.get('/restaurants/:id/outlet-timings', cacheResponse(600, 'restaurant_timings'), getOutletTimingsByRestaurantIdController);
 router.get('/offers', cacheResponse(300, 'offers'), listPublicOffersController);
 // Public: categories list (zone-aware; returns zone categories + global)

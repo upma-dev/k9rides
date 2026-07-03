@@ -688,6 +688,15 @@ const ActiveTrip = () => {
     const liveRequest = effectiveState?.request || {};
     const liveRaw = liveRequest.raw || {};
     const rideId = getJobRideId(liveRequest) || getJobRideId(effectiveState);
+    const tripStatus = String(
+        liveRaw?.liveStatus ||
+        liveRaw?.status ||
+        liveRequest?.liveStatus ||
+        liveRequest?.status ||
+        effectiveState?.liveStatus ||
+        effectiveState?.status ||
+        ''
+    ).toLowerCase();
     const [resolvedPickupCoords, setResolvedPickupCoords] = useState(null);
     const [resolvedDropCoords, setResolvedDropCoords] = useState(null);
     const vehicleIconUrl = liveRaw.vehicleIconUrl || liveRequest.vehicleIconUrl || effectiveState.vehicleIconUrl || carIcon;
@@ -869,7 +878,22 @@ const ActiveTrip = () => {
                 clearStoredTripPhase(currentRideId);
                 clearStoredTripUiState(currentRideId);
                 exitToDriverHome('Ride was cancelled by the user.');
+                return;
             }
+
+            setHydratedTripState((prev) => {
+                if (!prev) return prev;
+                const updatedRequestRaw = {
+                    ...(prev.request?.raw || {}),
+                    liveStatus: payload.liveStatus || prev.request?.raw?.liveStatus,
+                    status: payload.status || prev.request?.raw?.status,
+                    startedAt: payload.startedAt || prev.request?.raw?.startedAt,
+                    arrivedAt: payload.arrivedAt || prev.request?.raw?.arrivedAt,
+                    completedAt: payload.completedAt || prev.request?.raw?.completedAt,
+                    waitingChargeAmount: payload.waitingChargeAmount ?? prev.request?.raw?.waitingChargeAmount,
+                };
+                return buildPersistedTripState(updatedRequestRaw, { phase });
+            });
         };
 
         const handleRideState = (payload) => {
@@ -889,6 +913,14 @@ const ActiveTrip = () => {
                 clearStoredTripPhase(currentRideId);
                 clearStoredTripUiState(currentRideId);
                 exitToDriverHome('Ride was cancelled by the user.');
+                return;
+            }
+
+            const nextPersistedState = buildPersistedTripState(payload, {
+                phase,
+            });
+            if (nextPersistedState) {
+                setHydratedTripState(nextPersistedState);
             }
         };
 
@@ -996,7 +1028,7 @@ const ActiveTrip = () => {
             phase,
             liveStatus: derivedLiveStatus,
             status: derivedStatus,
-            arrivedAt: phase === 'otp_verification' ? (localArrivedAt || rawJob?.arrivedAt || '') : '',
+            arrivedAt: localArrivedAt || rawJob?.arrivedAt || '',
         });
         if (nextPersistedState) {
             writeStoredActiveTripSnapshot(nextPersistedState);
@@ -1141,8 +1173,6 @@ const ActiveTrip = () => {
         payment: liveRequest?.payment || effectiveState?.paymentMethod || 'Online'
     };
 
-    const displayFare = liveRequest?.fare || tripData.fare;
-    const fareAmount = parseFareAmount(displayFare);
     const expectedOtp = String(liveRaw?.otp || liveRequest?.otp || effectiveState?.otp || '');
     const waitingPricing = liveRaw?.pricingSnapshot || liveRequest?.raw?.pricingSnapshot || effectiveState?.pricingSnapshot || {};
     const allowedPaymentModes = (() => {
@@ -1155,22 +1185,54 @@ const ActiveTrip = () => {
 
         return normalized.length ? normalized : ['cash', 'online'];
     })();
+    const resolvedStatus = String(liveRaw?.status || liveRequest?.status || effectiveState?.status || 'accepted').toLowerCase();
     const waitingChargePerMinute = Math.max(0, Number(waitingPricing?.waiting_charge ?? 0));
     const freeWaitingBeforeMinutes = Math.max(0, Number(waitingPricing?.free_waiting_before ?? 0));
+    const tripStartedAtRaw = liveRaw?.startedAt || liveRequest?.raw?.startedAt || effectiveState?.startedAt || '';
     const waitingStartedAt = localArrivedAt || liveRaw?.arrivedAt || liveRequest?.raw?.arrivedAt || effectiveState?.arrivedAt || '';
+    const waitingEndedAt = tripStartedAtRaw ? new Date(tripStartedAtRaw).getTime() : waitingNow;
     const waitingElapsedSeconds = waitingStartedAt
-        ? Math.max(0, Math.floor((waitingNow - new Date(waitingStartedAt).getTime()) / 1000))
+        ? Math.max(0, Math.floor((waitingEndedAt - new Date(waitingStartedAt).getTime()) / 1000))
         : 0;
     const freeWaitingRemainingSeconds = Math.max(0, freeWaitingBeforeMinutes * 60 - waitingElapsedSeconds);
     const waitingChargeableMinutes = Math.max(0, Math.ceil(waitingElapsedSeconds / 60) - freeWaitingBeforeMinutes);
-    const canMarkArrived = pickupDistanceMeters <= ARRIVAL_RADIUS_METERS;
-    const canDeliverParcel = dropDistanceMeters <= ARRIVAL_RADIUS_METERS;
+    
+    // Use database value if trip is in ongoing/arrived/completed phases
+    const waitingCharge = ['ongoing', 'arrived', 'completed'].includes(resolvedStatus)
+        ? Number(liveRaw?.waitingChargeAmount ?? effectiveState?.waitingChargeAmount ?? 0)
+        : (waitingChargeableMinutes * waitingChargePerMinute);
+
+    const baseDisplayFare = liveRequest?.fare || tripData.fare;
+    const baseFareAmount = parseFareAmount(baseDisplayFare);
+
+    const timeChargePerMinute = Math.max(0, Number(waitingPricing?.time_price ?? 0));
+    const tripStartedAt = liveRaw?.startedAt || liveRequest?.raw?.startedAt || effectiveState?.startedAt || '';
+    const tripArrivedAt = liveRaw?.destinationArrivedAt || liveRequest?.raw?.destinationArrivedAt || effectiveState?.destinationArrivedAt || liveRaw?.completedAt || effectiveState?.completedAt || '';
+    const tripDurationLabel = formatDurationLabel(tripStartedAt, tripArrivedAt || Date.now());
+
+    const tripDurationMinutes = tripStartedAt && tripArrivedAt
+        ? Math.max(0, Math.floor((new Date(tripArrivedAt).getTime() - new Date(tripStartedAt).getTime()) / 60000))
+        : 0;
+    
+    // Use database value if trip is completed or arrived at destination
+    const timeCharge = ['arrived', 'completed'].includes(resolvedStatus)
+        ? Number(liveRaw?.timeChargeAmount ?? effectiveState?.timeChargeAmount ?? 0)
+        : (tripDurationMinutes * timeChargePerMinute);
+
+    const additionalCharge = Number(liveRaw?.additionalCharge ?? effectiveState?.additionalCharge ?? 0);
+    const adminExtraChargeAmount = Number(liveRaw?.adminExtraCharge?.amount ?? effectiveState?.adminExtraCharge?.amount ?? 0);
+    
+    // Use the final consolidated fare computed and saved in the database if completed
+    const fareAmount = resolvedStatus === 'completed' && (liveRaw?.fare || effectiveState?.fare)
+        ? Number(liveRaw?.fare ?? effectiveState?.fare ?? 0)
+        : (baseFareAmount + waitingCharge + timeCharge + additionalCharge + adminExtraChargeAmount);
+
+    const displayFare = `Rs ${fareAmount}`;
+    const canMarkArrived = true;
+    const canDeliverParcel = true;
     const isWaitingForOtp = phase === 'otp_verification' && Boolean(waitingStartedAt);
     const pickupContact = isParcel ? tripData.sender : tripData.user;
     const destinationContact = isParcel ? tripData.receiver : tripData.user;
-    const tripStartedAt = liveRaw?.startedAt || liveRequest?.raw?.startedAt || effectiveState?.startedAt || '';
-    const tripArrivedAt = localArrivedAt || liveRaw?.arrivedAt || liveRequest?.raw?.arrivedAt || effectiveState?.arrivedAt || '';
-    const tripDurationLabel = formatDurationLabel(tripStartedAt, tripArrivedAt || Date.now());
     const tripSummaryTitle = isParcel ? 'Delivery Summary' : 'Ride Summary';
     const tripSummarySubtitle = isParcel ? 'Review the delivery details before you close the order.' : 'Review the trip details before you close the ride.';
     const destinationRoleLabel = isParcel ? 'Receiver' : 'Rider';
@@ -1260,10 +1322,19 @@ const ActiveTrip = () => {
             })
             : null;
 
+        const logMsg = `[publishRideStatus] nextStatus=${nextStatus} waitingCharge=${waitingCharge} baseFareAmount=${baseFareAmount} fareAmount=${fareAmount} tripStatus=${tripStatus} phase=${phase}`;
+        api.post('/debug-log', { message: logMsg }).catch(() => {});
+
         socketService.emit('ride:status:update', {
             rideId,
             status: nextStatus,
             paymentMethod: paymentMode || undefined,
+            baseFare: baseFareAmount,
+            waitingChargeAmount: waitingCharge,
+            timeChargeAmount: timeCharge,
+            distanceChargeAmount: 0,
+            additionalCharge: additionalCharge,
+            fare: fareAmount,
             ...(driverPaymentCollection ? { driverPaymentCollection } : {}),
         });
     };
@@ -1279,6 +1350,12 @@ const ActiveTrip = () => {
                     {
                         status: 'completed',
                         paymentMethod: paymentMode || undefined,
+                        baseFare: baseFareAmount,
+                        waitingChargeAmount: waitingCharge,
+                        timeChargeAmount: timeCharge,
+                        distanceChargeAmount: 0,
+                        additionalCharge: additionalCharge,
+                        fare: fareAmount,
                         driverPaymentCollection: buildDriverPaymentCollection({
                             mode: paymentMode,
                             status: driverPaymentStatus,
@@ -1295,7 +1372,26 @@ const ActiveTrip = () => {
         publishRideStatus('completed', paymentMode);
         clearStoredTripPhase(rideId);
         clearStoredTripUiState(rideId);
-        navigate('/taxi/driver/home');
+        navigate('/taxi/driver/home', {
+            state: {
+                showBillModal: true,
+                completedRide: {
+                    rideId,
+                    type: tripType,
+                    fare: fareAmount,
+                    baseFare: baseFareAmount,
+                    waitingCharge: waitingCharge,
+                    timeCharge: timeCharge,
+                    additionalCharge: additionalCharge,
+                    adminExtraChargeAmount: adminExtraChargeAmount,
+                    driverEarnings: commissionSummary.driverEarnings,
+                    commissionAmount: commissionSummary.commissionAmount,
+                    pickup: tripData.pickup,
+                    drop: tripData.drop,
+                    paymentMethod: paymentModeLabel,
+                }
+            }
+        });
     };
 
     const completeRideForUserSync = async (paymentMode = '') => {
@@ -1305,11 +1401,19 @@ const ActiveTrip = () => {
 
         try {
             const driverToken = getLocalDriverToken();
+            const logMsg = `[completeRideForUserSync API call] rideId=${rideId} waitingCharge=${waitingCharge} baseFareAmount=${baseFareAmount} fareAmount=${fareAmount} tripStatus=${tripStatus} phase=${phase}`;
+            api.post('/debug-log', { message: logMsg }).catch(() => {});
             await api.patch(
                 `/rides/${rideId}/status`,
                 {
                     status: 'completed',
                     paymentMethod: paymentMode || undefined,
+                    baseFare: baseFareAmount,
+                    waitingChargeAmount: waitingCharge,
+                    timeChargeAmount: timeCharge,
+                    distanceChargeAmount: 0,
+                    additionalCharge: additionalCharge,
+                    fare: fareAmount,
                     driverPaymentCollection: buildDriverPaymentCollection({
                         mode: paymentMode,
                         status: driverPaymentStatus,
@@ -1419,10 +1523,11 @@ const ActiveTrip = () => {
         setPaymentQr(null);
 
         try {
+            const driverToken = getLocalDriverToken();
             const response = await api.post('/drivers/payments/qr', {
                 rideId,
                 amount: fareAmount,
-            });
+            }, withDriverAuthorization(driverToken));
             const qr = response?.data?.data || response?.data || {};
 
             if (!qr.imageUrl) {
@@ -1445,8 +1550,10 @@ const ActiveTrip = () => {
         }
 
         try {
+            const driverToken = getLocalDriverToken();
             const response = await api.get('/drivers/payments/qr/status', {
                 params: { rideId },
+                ...withDriverAuthorization(driverToken),
             });
             const status = response?.data?.data || response?.data || {};
 
@@ -1502,6 +1609,7 @@ const ActiveTrip = () => {
             return;
         }
 
+        const calculatedWaitingCharge = waitingCharge;
         setOtpError('');
         setLocalArrivedAt('');
         setPhase('in_trip');
@@ -1517,6 +1625,7 @@ const ActiveTrip = () => {
             status: 'ongoing',
             startedAt: startedAtIso,
             arrivedAt: '',
+            waitingChargeAmount: calculatedWaitingCharge,
         });
 
         if (optimisticSnapshot) {
@@ -1527,17 +1636,30 @@ const ActiveTrip = () => {
         try {
             if (rideId) {
                 const driverToken = getLocalDriverToken();
-                await api.patch(
+                const response = await api.patch(
                     `/rides/${rideId}/status`,
-                    { status: 'started' },
+                    {
+                        status: 'started',
+                        waitingChargeAmount: waitingCharge,
+                    },
                     withDriverAuthorization(driverToken),
                 );
+                const updatedRide = unwrapApiPayload(response);
+                const nextPersistedState = buildPersistedTripState(updatedRide, {
+                    phase: 'in_trip',
+                });
+                if (nextPersistedState) {
+                    setHydratedTripState(nextPersistedState);
+                    writeStoredActiveTripSnapshot(nextPersistedState);
+                }
             }
         } catch {
             // Keep the optimistic local state; socket/live hydration will reconcile when available.
         }
 
         publishRideStatus('started');
+        setLocalArrivedAt('');
+        setPhase('in_trip');
     };
 
     useEffect(() => {
@@ -1577,7 +1699,7 @@ const ActiveTrip = () => {
                     });
                 }
             })
-            .catch(() => {});
+            .catch(() => { });
 
         if (!navigator.geolocation) {
             return () => {
@@ -1614,7 +1736,7 @@ const ActiveTrip = () => {
                     return nextPosition;
                 });
             },
-            () => {},
+            () => { },
             {
                 enableHighAccuracy: true,
                 maximumAge: 5000,
@@ -2020,7 +2142,7 @@ const ActiveTrip = () => {
                             initial={{ y: '100%' }}
                             animate={{ y: 0 }}
                             exit={{ y: '100%' }}
-                            className="bg-white rounded-t-[2.5rem] p-5 pb-8 shadow-2xl border-t border-slate-100"
+                            className="bg-white rounded-t-[2.5rem] p-5 pb-8 shadow-2xl border-t border-slate-100 max-h-[85vh] overflow-y-auto overflow-x-hidden"
                         >
                             <div className="flex items-center justify-between mb-6">
                                 <div className="flex items-center gap-3">
@@ -2039,11 +2161,29 @@ const ActiveTrip = () => {
                                         </div>
                                     </div>
                                 </div>
-                            <div className="flex gap-2">
+                                <div className="flex gap-2">
                                     <button onClick={openTripChat} className="w-11 h-11 bg-slate-50 rounded-xl flex items-center justify-center text-slate-600 active:scale-95 transition-transform" aria-label="Open trip chat"><MessageSquare size={18} strokeWidth={2.5} /></button>
                                     <button onClick={() => callContact(pickupContact?.phone)} className="w-11 h-11 bg-slate-50 rounded-xl flex items-center justify-center active:scale-95 transition-transform" style={{ color: routeStrokeColor }} aria-label="Call contact"><Phone size={18} strokeWidth={2.5} /></button>
                                 </div>
                             </div>
+                            {(waitingPricing?.driver_cancellation_fee > 0 || waitingPricing?.waiting_charge > 0) && (
+                                <div className="mb-3 rounded-2xl border border-slate-100 bg-slate-50/50 px-4 py-3 text-[11px] font-bold text-slate-500 flex flex-col gap-1.5 shadow-sm">
+                                    <div className="flex items-center justify-between">
+                                        <span>Waiting Charge Rate:</span>
+                                        <span className="font-black text-slate-900">Rs {waitingPricing.waiting_charge}/min</span>
+                                    </div>
+                                    {waitingPricing?.driver_cancellation_fee > 0 && (
+                                        <div className="flex items-center justify-between">
+                                            <span>Cancellation Payout:</span>
+                                            <span className="font-black text-slate-900">
+                                                {waitingPricing.driver_cancellation_fee_type === 'percentage'
+                                                    ? `${waitingPricing.driver_cancellation_fee}% of fare`
+                                                    : `Rs ${waitingPricing.driver_cancellation_fee}`}
+                                            </span>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
                             <div className="mb-4 rounded-2xl border border-slate-100 bg-slate-50/80 px-4 py-3">
                                 <div className="flex items-center justify-between gap-3">
                                     <div>
@@ -2065,11 +2205,6 @@ const ActiveTrip = () => {
                             <motion.button
                                 whileTap={{ scale: 0.98 }}
                                 onClick={() => {
-                                    if (!canMarkArrived) {
-                                        setArrivalGuardError('Reach within 100 meters of pickup before marking arrived.');
-                                        return;
-                                    }
-
                                     setArrivalGuardError('');
                                     setLocalArrivedAt(new Date().toISOString());
                                     setPhase('otp_verification');
@@ -2089,7 +2224,7 @@ const ActiveTrip = () => {
                             initial={{ y: '100%' }}
                             animate={{ y: 0 }}
                             exit={{ y: '100%' }}
-                            className="bg-white rounded-t-[2.5rem] p-6 pb-8 shadow-2xl border-t border-slate-100"
+                            className="bg-white rounded-t-[2.5rem] p-6 pb-8 shadow-2xl border-t border-slate-100 max-h-[85vh] overflow-y-auto overflow-x-hidden"
                         >
                             <div className="text-center mb-6">
                                 <h3 className="text-xl font-semibold text-slate-900 tracking-tight uppercase leading-none">Security Pin</h3>
@@ -2098,20 +2233,33 @@ const ActiveTrip = () => {
                                 </p>
                             </div>
                             {isWaitingForOtp && (
-                                <div className="mb-6 rounded-[24px] border border-amber-100 bg-amber-50/70 px-4 py-4 shadow-sm">
+                                <div className={`mb-6 rounded-[24px] border px-4 py-4 shadow-sm ${waitingChargeableMinutes > 0 ? 'border-rose-100 bg-rose-50/70' : 'border-amber-100 bg-amber-50/70'}`}>
                                     <div className="flex items-center justify-between gap-3">
                                         <div className="flex items-center gap-3">
-                                            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white text-amber-500 shadow-sm">
+                                            <div className={`flex h-11 w-11 items-center justify-center rounded-2xl bg-white shadow-sm ${waitingChargeableMinutes > 0 ? 'text-rose-500' : 'text-amber-500'}`}>
                                                 <Clock3 size={18} strokeWidth={2.5} />
                                             </div>
                                             <div>
-                                                <p className="text-[9px] font-black uppercase tracking-[0.22em] text-amber-600">Waiting Clock</p>
-                                                <p className="mt-1 text-[22px] font-black tracking-tight text-slate-900">{formatTimerClock(waitingElapsedSeconds)}</p>
+                                                <p className={`text-[9px] font-black uppercase tracking-[0.22em] ${waitingChargeableMinutes > 0 ? 'text-rose-600' : 'text-amber-600'}`}>
+                                                    {waitingChargeableMinutes > 0 ? 'Paid Waiting' : 'Free Waiting'}
+                                                </p>
+                                                <p className="mt-1 text-[22px] font-black tracking-tight text-slate-900">
+                                                    {formatTimerClock(waitingChargeableMinutes > 0 ? waitingElapsedSeconds - (freeWaitingBeforeMinutes * 60) : waitingElapsedSeconds)}
+                                                </p>
                                             </div>
                                         </div>
                                         <div className="text-right">
-                                            <p className="text-[9px] font-black uppercase tracking-[0.18em] text-slate-400">Free Left</p>
-                                            <p className="mt-1 text-[13px] font-black text-slate-900">{formatTimerClock(freeWaitingRemainingSeconds)}</p>
+                                            {waitingChargeableMinutes > 0 ? (
+                                                <>
+                                                    <p className="text-[9px] font-black uppercase tracking-[0.18em] text-rose-500">Wait Charge</p>
+                                                    <p className="mt-1 text-[16px] font-black text-rose-600">+Rs {waitingCharge}</p>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <p className="text-[9px] font-black uppercase tracking-[0.18em] text-slate-400">Free Left</p>
+                                                    <p className="mt-1 text-[13px] font-black text-slate-900">{formatTimerClock(freeWaitingRemainingSeconds)}</p>
+                                                </>
+                                            )}
                                         </div>
                                     </div>
                                     <div className="mt-4 grid grid-cols-2 gap-3">
@@ -2174,9 +2322,9 @@ const ActiveTrip = () => {
                             initial={{ y: '100%' }}
                             animate={{ y: 0 }}
                             exit={{ y: '100%' }}
-                            className="bg-white rounded-t-[2.5rem] p-5 pb-8 shadow-2xl border-t border-slate-100"
+                            className="bg-white rounded-t-[2.5rem] p-5 pb-8 shadow-2xl border-t border-slate-100 max-h-[85vh] overflow-y-auto overflow-x-hidden"
                         >
-                                <div className="mb-5 rounded-[22px] border border-slate-100 bg-slate-50/85 px-4 py-3.5 shadow-[0_2px_10px_rgba(15,23,42,0.04)]">
+                            <div className="mb-5 rounded-[22px] border border-slate-100 bg-slate-50/85 px-4 py-3.5 shadow-[0_2px_10px_rgba(15,23,42,0.04)]">
                                 <div className="flex items-start justify-between gap-3">
                                     <div className="min-w-0 flex-1">
                                         <h4 className="text-[9px] font-semibold uppercase tracking-[0.22em] leading-none mb-1.5" style={{ color: routeStrokeColor }}>Destination</h4>
@@ -2229,11 +2377,6 @@ const ActiveTrip = () => {
                             <motion.button
                                 whileTap={{ scale: 0.96 }}
                                 onClick={() => {
-                                    if (isParcel && !canDeliverParcel) {
-                                        setArrivalGuardError('Reach within 100 meters of receiver before delivering parcel.');
-                                        return;
-                                    }
-
                                     setArrivalGuardError('');
                                     publishRideStatus('arrived');
                                     setSelectedPaymentMode('');
@@ -2256,7 +2399,7 @@ const ActiveTrip = () => {
                             initial={{ y: '100%' }}
                             animate={{ y: 0 }}
                             exit={{ y: '100%' }}
-                            className="bg-white rounded-t-[2.5rem] p-6 pb-8 shadow-2xl border-t border-slate-100"
+                            className="bg-white rounded-t-[2.5rem] p-6 pb-8 shadow-2xl border-t border-slate-100 max-h-[85vh] overflow-y-auto overflow-x-hidden"
                         >
                             <div className="text-center mb-6">
                                 <div className="w-16 h-16 rounded-2xl mx-auto flex items-center justify-center mb-3 shadow-lg transition-all duration-500 text-white" style={{ backgroundColor: driverPaymentStatus === 'success' ? routeStrokeColor : '#0f172a' }}>
@@ -2277,7 +2420,27 @@ const ActiveTrip = () => {
                                                 {tripSummaryTitle}
                                             </p>
                                             <p className="mt-2 text-[24px] font-black tracking-tight text-slate-900">{displayFare}</p>
-                                            <p className="text-[11px] font-semibold text-slate-500">
+
+                                            <div className="mt-3 bg-slate-50 rounded-lg p-2.5 space-y-1.5 border border-slate-100">
+                                                <div className="flex items-center justify-between">
+                                                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Base fare</span>
+                                                    <span className="text-[11px] font-black text-slate-900">Rs {baseFareAmount.toFixed(2)}</span>
+                                                </div>
+                                                {timeCharge > 0 && (
+                                                    <div className="flex items-center justify-between">
+                                                        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-700">Time Charge</span>
+                                                        <span className="text-[11px] font-black text-slate-900">Rs {timeCharge.toFixed(2)}</span>
+                                                    </div>
+                                                )}
+                                                {waitingCharge > 0 && (
+                                                    <div className="flex items-center justify-between">
+                                                        <span className="text-[10px] font-bold uppercase tracking-wider text-amber-500">Wait Time Charge</span>
+                                                        <span className="text-[11px] font-black text-slate-900">Rs {waitingCharge.toFixed(2)}</span>
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            <p className="mt-3 text-[11px] font-semibold text-slate-500">
                                                 {isParcel ? 'Parcel delivered and awaiting payment confirmation.' : 'Passenger reached destination and ready to complete.'}
                                             </p>
                                         </div>
@@ -2302,19 +2465,12 @@ const ActiveTrip = () => {
                                         </div>
                                         <p className="mt-2 text-[13px] font-bold leading-5 text-slate-900">{formatDateTimeLabel(tripArrivedAt)}</p>
                                     </div>
-                                    <div className="rounded-2xl border border-slate-100 bg-white px-4 py-3">
+                                    <div className="rounded-2xl border border-slate-100 bg-white px-4 py-3 col-span-2">
                                         <div className="flex items-center gap-2 text-slate-500">
                                             <ArrowUpRight size={14} strokeWidth={2.5} />
                                             <p className="text-[9px] font-black uppercase tracking-[0.2em]">Trip Duration</p>
                                         </div>
                                         <p className="mt-2 text-[13px] font-bold leading-5 text-slate-900">{tripDurationLabel}</p>
-                                    </div>
-                                    <div className="rounded-2xl border border-slate-100 bg-white px-4 py-3">
-                                        <div className="flex items-center gap-2 text-slate-500">
-                                            <Banknote size={14} strokeWidth={2.5} />
-                                            <p className="text-[9px] font-black uppercase tracking-[0.2em]">Your Earnings</p>
-                                        </div>
-                                        <p className="mt-2 text-[13px] font-bold leading-5 text-slate-900">{formatCurrencyAmount(commissionSummary.driverEarnings)}</p>
                                     </div>
                                 </div>
                                 <div className="border-t border-slate-100 px-5 py-4">
@@ -2355,19 +2511,10 @@ const ActiveTrip = () => {
                                         </div>
                                     </div>
                                 </div>
-                                <div className="grid grid-cols-3 gap-3 border-t border-slate-100 px-5 py-4">
-                                    <div className="rounded-2xl bg-white px-4 py-3 text-center shadow-[0_8px_20px_rgba(15,23,42,0.04)]">
-                                        <p className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-400">Trip Fare</p>
-                                        <p className="mt-2 text-[14px] font-black text-slate-900">{formatCurrencyAmount(fareAmount)}</p>
-                                    </div>
-                                    <div className="rounded-2xl bg-white px-4 py-3 text-center shadow-[0_8px_20px_rgba(15,23,42,0.04)]">
-                                        <p className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-400">Admin Cut</p>
-                                        <p className="mt-2 text-[14px] font-black text-slate-900">{formatCurrencyAmount(commissionSummary.commissionAmount)}</p>
-                                        <p className="mt-1 text-[9px] font-bold uppercase tracking-[0.18em] text-slate-400">{commissionSummary.commissionLabel}</p>
-                                    </div>
-                                    <div className="rounded-2xl px-4 py-3 text-center text-white shadow-[0_10px_24px_rgba(15,23,42,0.12)]" style={{ backgroundColor: routeStrokeColor }}>
-                                        <p className="text-[9px] font-black uppercase tracking-[0.2em] text-white/65">Driver Gets</p>
-                                        <p className="mt-2 text-[14px] font-black text-white">{formatCurrencyAmount(commissionSummary.driverEarnings)}</p>
+                                <div className="border-t border-slate-100 px-5 py-4">
+                                    <div className="rounded-2xl px-5 py-4 text-center shadow-[0_10px_24px_rgba(15,23,42,0.12)]" style={{ backgroundColor: routeStrokeColor }}>
+                                        <p className="text-[9px] font-black uppercase tracking-[0.2em] text-white/65">Collect from {isParcel ? 'Receiver' : 'Rider'}</p>
+                                        <p className="mt-2 text-[22px] font-black text-white">{formatCurrencyAmount(fareAmount)}</p>
                                     </div>
                                 </div>
                             </div>
@@ -2443,8 +2590,8 @@ const ActiveTrip = () => {
                                             Open payment link
                                         </a>
                                     )}
-                                <button onClick={() => setDriverPaymentStatus('success')} className="w-full py-3 bg-white/10 text-white rounded-xl text-[10px] font-semibold uppercase tracking-wide border border-white/5">Confirm Received</button>
-                            </motion.div>
+                                    <button onClick={() => setDriverPaymentStatus('success')} className="w-full py-3 bg-white/10 text-white rounded-xl text-[10px] font-semibold uppercase tracking-wide border border-white/5">Confirm Received</button>
+                                </motion.div>
                             )}
                             <motion.button
                                 whileTap={{ scale: 0.96 }}
@@ -2471,7 +2618,7 @@ const ActiveTrip = () => {
                             key="review"
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
-                            className="bg-white rounded-t-[2.5rem] p-6 pb-8 shadow-2xl border-t border-slate-50 text-center"
+                            className="bg-white rounded-t-[2.5rem] p-6 pb-8 shadow-2xl border-t border-slate-50 text-center max-h-[85vh] overflow-y-auto overflow-x-hidden"
                         >
                             <div className="mb-8 space-y-4">
                                 <div className="w-12 h-12 rounded-xl flex items-center justify-center mx-auto shadow-lg" style={{ backgroundColor: routeStrokeColor }}><User size={24} className="text-white" /></div>

@@ -11,12 +11,14 @@ import { FaLocationDot } from "react-icons/fa6"
 import { AnimatePresence, motion } from "framer-motion"
 import quickSpicyLogo from "@food/assets/k9-logo.jpg"
 import { getCachedSettings, loadBusinessSettings } from "@food/utils/businessSettings"
+import { useSettings } from "../../../Taxi/shared/context/SettingsContext"
 const debugLog = (...args) => {}
 const debugWarn = (...args) => {}
 const debugError = (...args) => {}
 
 
 export default function DesktopNavbar({ showLogo = true }) {
+    const { activeLogo } = useSettings()
     const location = useLocation()
     const navigate = useNavigate()
     const { location: userLocation, loading: locationLoading } = useLocationHook()
@@ -155,9 +157,9 @@ export default function DesktopNavbar({ showLogo = true }) {
                             {/* Logo */}
                             {showLogo && (
                                 <Link to="/food/user" className="flex items-center justify-center flex-shrink-0">
-                                    {logoUrl || companyName ? (
+                                    {activeLogo || logoUrl || companyName ? (
                                         <img
-                                            src={logoUrl || quickSpicyLogo}
+                                            src={activeLogo || logoUrl || quickSpicyLogo}
                                             alt={companyName || "Company Logo"}
                                             className="h-10 w-auto md:h-14 lg:h-16 object-contain"
                                             onError={(e) => {
@@ -167,7 +169,7 @@ export default function DesktopNavbar({ showLogo = true }) {
                                             }}
                                         />
                                     ) : (
-                                        <img src={quickSpicyLogo} alt={companyName || "Logo"} className="h-10 w-auto md:h-14 lg:h-16 object-contain" />
+                                        <img src={activeLogo || quickSpicyLogo} alt={companyName || "Logo"} className="h-10 w-auto md:h-14 lg:h-16 object-contain" />
                                     )}
                                 </Link>
                             )}

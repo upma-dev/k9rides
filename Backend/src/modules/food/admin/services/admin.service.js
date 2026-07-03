@@ -1148,7 +1148,7 @@ export async function getCustomers(query = {}) {
             .sort(sort)
             .skip(skip)
             .limit(limit)
-            .select('name email phone countryCode isVerified isActive createdAt profileImage')
+            .select('name email phone countryCode isVerified isActive createdAt profileImage isBlockedFromCOD')
             .lean(),
         FoodUser.countDocuments(filter)
     ]);
@@ -1199,7 +1199,8 @@ export async function getCustomers(query = {}) {
         totalOrder: stats.totalOrder,
         totalOrderAmount: stats.totalOrderAmount,
         joiningDate: u.createdAt,
-        createdAt: u.createdAt
+        createdAt: u.createdAt,
+        isBlockedFromCOD: u.isBlockedFromCOD === true
         });
     });
 
@@ -1248,7 +1249,8 @@ export async function getCustomerById(id) {
         totalOrderAmount: Number(stats.totalOrderAmount || 0),
         joiningDate: u.createdAt,
         createdAt: u.createdAt,
-        updatedAt: u.updatedAt
+        updatedAt: u.updatedAt,
+        isBlockedFromCOD: u.isBlockedFromCOD === true
     };
 }
 
@@ -1265,6 +1267,17 @@ export async function updateCustomerStatus(id, isActive) {
         await FoodRefreshToken.deleteMany({ userId: updated._id });
     }
     return updated;
+}
+
+export async function updateCustomerCodBlockStatus(id, isBlockedFromCOD) {
+    if (!id || !mongoose.Types.ObjectId.isValid(id)) return null;
+    const updatedDoc = await FoodUser.findByIdAndUpdate(
+        id,
+        { $set: { isBlockedFromCOD: Boolean(isBlockedFromCOD) } },
+        { new: true }
+    );
+    if (!updatedDoc) return null;
+    return updatedDoc.toObject();
 }
 
 export async function getSupportTickets(query = {}) {

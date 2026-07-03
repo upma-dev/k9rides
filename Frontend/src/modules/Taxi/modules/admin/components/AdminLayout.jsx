@@ -544,7 +544,7 @@ const ModeSwitcher = ({ mode, setMode }) => {
 const AdminLayout = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { settings } = useSettings();
+  const { settings, activeLogo } = useSettings();
   const adminThemeColor = normalizeHexColor(settings.customization?.admin_theme_color, '#405189');
   const sidebarTextColor = normalizeHexColor(settings.customization?.sidebar_text_color, '#CBD5E1');
   const [isSidebarOpen] = useState(true);
@@ -839,6 +839,7 @@ const AdminLayout = () => {
               { label: 'General Settings', path: '/taxi/admin/settings/business/general', permission: 'settings.view' },
               { label: 'Landing Page CMS', path: '/taxi/admin/settings/cms/home', permission: 'settings.view' },
               { label: 'Customization Settings', path: '/taxi/admin/settings/business/customization', permission: 'settings.view' },
+              { label: 'Logo Management', path: '/taxi/admin/settings/business/logos', permission: 'settings.view' },
               { label: 'Transport Ride Settings', path: '/taxi/admin/settings/business/transport-ride', permission: 'settings.view' },
               { label: 'Bid Ride Settings', path: '/taxi/admin/settings/business/bid-ride', permission: 'settings.view' },
             ],
@@ -1259,7 +1260,7 @@ const AdminLayout = () => {
           <div className="group/sidebar-head relative mb-4 flex h-24 items-center border-b border-white/5 px-6">
             <div className="flex items-center gap-4">
               <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-white/5 bg-white/5 p-1 transition-all group-hover/sidebar-head:scale-105">
-                <img src={quickSpicyLogo} alt="K9 Rides" className="h-10 w-10 object-contain" />
+                <img src={activeLogo || quickSpicyLogo} alt="K9 Rides" className="h-10 w-10 object-contain" />
               </div>
               {!isCollapsed && (
                 <div className="flex flex-col">
@@ -1301,6 +1302,7 @@ const AdminLayout = () => {
             <div className="px-4 mb-4">
               <div className="flex p-1 bg-neutral-900/60 backdrop-blur-sm rounded-xl border border-white/5 shadow-inner">
                 <button
+                  type="button"
                   onClick={() => navigate("/admin/food")}
                   className={cn(
                     "flex-1 flex items-center justify-center gap-2 py-2 text-xs font-bold rounded-lg transition-all duration-300",
@@ -1311,6 +1313,7 @@ const AdminLayout = () => {
                   Food
                 </button>
                 <button
+                  type="button"
                   onClick={() => navigate("/taxi/admin/dashboard")}
                   className={cn(
                     "flex-1 flex items-center justify-center gap-2 py-2 text-xs font-bold rounded-lg transition-all duration-300",
@@ -1432,8 +1435,8 @@ const AdminLayout = () => {
                           setRideRequestPage(1);
                         }}
                         className={`rounded-xl px-3 py-2 text-xs font-bold transition-all ${notificationTab === 'ride_requests'
-                            ? 'bg-white dark:bg-slate-900 text-slate-900 shadow-sm'
-                            : 'text-slate-500 dark:text-slate-400 dark:text-slate-500 hover:text-slate-900'
+                          ? 'bg-white dark:bg-slate-900 text-slate-900 shadow-sm'
+                          : 'text-slate-500 dark:text-slate-400 dark:text-slate-500 hover:text-slate-900'
                           }`}
                       >
                         Ride Requests
@@ -1445,8 +1448,8 @@ const AdminLayout = () => {
                           setBookingPage(1);
                         }}
                         className={`rounded-xl px-3 py-2 text-xs font-bold transition-all ${notificationTab === 'bookings'
-                            ? 'bg-white dark:bg-slate-900 text-slate-900 shadow-sm'
-                            : 'text-slate-500 dark:text-slate-400 dark:text-slate-500 hover:text-slate-900'
+                          ? 'bg-white dark:bg-slate-900 text-slate-900 shadow-sm'
+                          : 'text-slate-500 dark:text-slate-400 dark:text-slate-500 hover:text-slate-900'
                           }`}
                       >
                         Bookings
@@ -1457,8 +1460,8 @@ const AdminLayout = () => {
                           setNotificationTab('chats');
                         }}
                         className={`rounded-xl px-3 py-2 text-xs font-bold transition-all ${notificationTab === 'chats'
-                            ? 'bg-white dark:bg-slate-900 text-slate-900 shadow-sm'
-                            : 'text-slate-500 dark:text-slate-400 dark:text-slate-500 hover:text-slate-900'
+                          ? 'bg-white dark:bg-slate-900 text-slate-900 shadow-sm'
+                          : 'text-slate-500 dark:text-slate-400 dark:text-slate-500 hover:text-slate-900'
                           }`}
                       >
                         Chats

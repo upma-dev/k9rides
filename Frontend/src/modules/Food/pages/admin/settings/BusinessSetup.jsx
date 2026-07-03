@@ -12,11 +12,16 @@ export default function BusinessSetup() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [logoPreview, setLogoPreview] = useState(null);
-  const [faviconPreview, setFaviconPreview] = useState(null);
   const [logoFile, setLogoFile] = useState(null);
-  const [faviconFile, setFaviconFile] = useState(null);
   const logoInputRef = useRef(null);
-  const faviconInputRef = useRef(null);
+
+  const [restaurantLogoPreview, setRestaurantLogoPreview] = useState(null);
+  const [restaurantLogoFile, setRestaurantLogoFile] = useState(null);
+  const restaurantLogoInputRef = useRef(null);
+
+  const [deliveryPartnerLogoPreview, setDeliveryPartnerLogoPreview] = useState(null);
+  const [deliveryPartnerLogoFile, setDeliveryPartnerLogoFile] = useState(null);
+  const deliveryPartnerLogoInputRef = useRef(null);
 
   const [formData, setFormData] = useState({
     companyName: "",
@@ -52,12 +57,15 @@ export default function BusinessSetup() {
           region: settings.region || "India",
         });
 
-        // Set logo and favicon previews if they exist
+        // Set logo preview if it exists
         if (settings.logo?.url) {
           setLogoPreview(settings.logo.url);
         }
-        if (settings.favicon?.url) {
-          setFaviconPreview(settings.favicon.url);
+        if (settings.restaurantLogo?.url) {
+          setRestaurantLogoPreview(settings.restaurantLogo.url);
+        }
+        if (settings.deliveryPartnerLogo?.url) {
+          setDeliveryPartnerLogoPreview(settings.deliveryPartnerLogo.url);
         }
       }
     } catch (error) {
@@ -126,13 +134,16 @@ export default function BusinessSetup() {
         region: formData.region,
       };
 
-      // Prepare files
       const files = {};
       if (logoFile) {
         files.logo = logoFile;
+        files.favicon = logoFile;
       }
-      if (faviconFile) {
-        files.favicon = faviconFile;
+      if (restaurantLogoFile) {
+        files.restaurantLogo = restaurantLogoFile;
+      }
+      if (deliveryPartnerLogoFile) {
+        files.deliveryPartnerLogo = deliveryPartnerLogoFile;
       }
 
       const response = await adminAPI.updateBusinessSettings(dataToSend, files);
@@ -142,14 +153,18 @@ export default function BusinessSetup() {
         // Update global cache immediately
         setCachedSettings(updatedSettings);
 
-        // Update previews with new URLs if files were uploaded
+        // Update preview with new URL if file was uploaded
         if (updatedSettings.logo?.url) {
           setLogoPreview(updatedSettings.logo.url);
           setLogoFile(null);
         }
-        if (updatedSettings.favicon?.url) {
-          setFaviconPreview(updatedSettings.favicon.url);
-          setFaviconFile(null);
+        if (updatedSettings.restaurantLogo?.url) {
+          setRestaurantLogoPreview(updatedSettings.restaurantLogo.url);
+          setRestaurantLogoFile(null);
+        }
+        if (updatedSettings.deliveryPartnerLogo?.url) {
+          setDeliveryPartnerLogoPreview(updatedSettings.deliveryPartnerLogo.url);
+          setDeliveryPartnerLogoFile(null);
         }
       }
 
@@ -168,12 +183,16 @@ export default function BusinessSetup() {
   const handleReset = () => {
     fetchBusinessSettings();
     setLogoFile(null);
-    setFaviconFile(null);
+    setRestaurantLogoFile(null);
+    setDeliveryPartnerLogoFile(null);
     if (logoInputRef.current) {
       logoInputRef.current.value = "";
     }
-    if (faviconInputRef.current) {
-      faviconInputRef.current.value = "";
+    if (restaurantLogoInputRef.current) {
+      restaurantLogoInputRef.current.value = "";
+    }
+    if (deliveryPartnerLogoInputRef.current) {
+      deliveryPartnerLogoInputRef.current.value = "";
     }
     toast.info("Form reset to saved values");
   };
@@ -339,10 +358,10 @@ export default function BusinessSetup() {
               </div>
             </div>
 
-            {/* Logo & favicon upload */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+            {/* Logos upload section */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1.5">Logo</label>
+                <label className="block text-xs font-semibold text-slate-700 mb-1.5">General Logo</label>
                 <input
                   ref={logoInputRef}
                   type="file"
@@ -351,14 +370,12 @@ export default function BusinessSetup() {
                     const file = e.target.files?.[0];
                     if (!file) return;
 
-                    // Validate file type
                     const allowedTypes = ["image/png", "image/jpeg", "image/jpg", "image/webp"];
                     if (!allowedTypes.includes(file.type)) {
                       toast.error("Invalid file type. Please upload PNG, JPG, JPEG, or WEBP.");
                       return;
                     }
 
-                    // Validate file size (max 5MB)
                     const maxSize = 5 * 1024 * 1024; // 5MB
                     if (file.size > maxSize) {
                       toast.error("File size exceeds 5MB limit.");
@@ -403,63 +420,62 @@ export default function BusinessSetup() {
                   ) : (
                     <div className="text-center">
                       <Upload className="w-5 h-5 text-slate-400 mx-auto mb-1" />
-                      <p className="text-xs text-slate-400">Click to upload logo</p>
+                      <p className="text-xs text-slate-400">Click to upload general logo</p>
                     </div>
                   )}
                 </div>
               </div>
+
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1.5">Favicon</label>
+                <label className="block text-xs font-semibold text-slate-700 mb-1.5">Restaurant Logo</label>
                 <input
-                  ref={faviconInputRef}
+                  ref={restaurantLogoInputRef}
                   type="file"
-                  accept="image/png,image/jpeg,image/jpg,image/webp,image/x-icon"
+                  accept="image/png,image/jpeg,image/jpg,image/webp"
                   onChange={(e) => {
                     const file = e.target.files?.[0];
                     if (!file) return;
 
-                    // Validate file type
-                    const allowedTypes = ["image/png", "image/jpeg", "image/jpg", "image/webp", "image/x-icon"];
+                    const allowedTypes = ["image/png", "image/jpeg", "image/jpg", "image/webp"];
                     if (!allowedTypes.includes(file.type)) {
-                      toast.error("Invalid file type. Please upload PNG, JPG, JPEG, WEBP, or ICO.");
+                      toast.error("Invalid file type. Please upload PNG, JPG, JPEG, or WEBP.");
                       return;
                     }
 
-                    // Validate file size (max 5MB)
                     const maxSize = 5 * 1024 * 1024; // 5MB
                     if (file.size > maxSize) {
                       toast.error("File size exceeds 5MB limit.");
                       return;
                     }
 
-                    setFaviconFile(file);
+                    setRestaurantLogoFile(file);
                     const reader = new FileReader();
                     reader.onloadend = () => {
-                      setFaviconPreview(reader.result);
+                      setRestaurantLogoPreview(reader.result);
                     };
                     reader.readAsDataURL(file);
                   }}
                   className="hidden"
                 />
                 <div
-                  onClick={() => faviconInputRef.current?.click()}
+                  onClick={() => restaurantLogoInputRef.current?.click()}
                   className="border border-dashed border-slate-300 rounded-lg bg-slate-50/60 h-28 flex items-center justify-center cursor-pointer hover:bg-slate-100 transition-colors relative overflow-hidden"
                 >
-                  {faviconPreview ? (
+                  {restaurantLogoPreview ? (
                     <>
                       <img
-                        src={faviconPreview}
-                        alt="Favicon preview"
+                        src={restaurantLogoPreview}
+                        alt="Restaurant Logo preview"
                         className="w-full h-full object-contain"
                       />
                       <button
                         type="button"
                         onClick={(e) => {
                           e.stopPropagation();
-                          setFaviconPreview(null);
-                          setFaviconFile(null);
-                          if (faviconInputRef.current) {
-                            faviconInputRef.current.value = "";
+                          setRestaurantLogoPreview(null);
+                          setRestaurantLogoFile(null);
+                          if (restaurantLogoInputRef.current) {
+                            restaurantLogoInputRef.current.value = "";
                           }
                         }}
                         className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors"
@@ -470,7 +486,73 @@ export default function BusinessSetup() {
                   ) : (
                     <div className="text-center">
                       <Upload className="w-5 h-5 text-slate-400 mx-auto mb-1" />
-                      <p className="text-xs text-slate-400">Click to upload favicon</p>
+                      <p className="text-xs text-slate-400">Click to upload restaurant logo</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1.5">Delivery Partner Logo</label>
+                <input
+                  ref={deliveryPartnerLogoInputRef}
+                  type="file"
+                  accept="image/png,image/jpeg,image/jpg,image/webp"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (!file) return;
+
+                    const allowedTypes = ["image/png", "image/jpeg", "image/jpg", "image/webp"];
+                    if (!allowedTypes.includes(file.type)) {
+                      toast.error("Invalid file type. Please upload PNG, JPG, JPEG, or WEBP.");
+                      return;
+                    }
+
+                    const maxSize = 5 * 1024 * 1024; // 5MB
+                    if (file.size > maxSize) {
+                      toast.error("File size exceeds 5MB limit.");
+                      return;
+                    }
+
+                    setDeliveryPartnerLogoFile(file);
+                    const reader = new FileReader();
+                    reader.onloadend = () => {
+                      setDeliveryPartnerLogoPreview(reader.result);
+                    };
+                    reader.readAsDataURL(file);
+                  }}
+                  className="hidden"
+                />
+                <div
+                  onClick={() => deliveryPartnerLogoInputRef.current?.click()}
+                  className="border border-dashed border-slate-300 rounded-lg bg-slate-50/60 h-28 flex items-center justify-center cursor-pointer hover:bg-slate-100 transition-colors relative overflow-hidden"
+                >
+                  {deliveryPartnerLogoPreview ? (
+                    <>
+                      <img
+                        src={deliveryPartnerLogoPreview}
+                        alt="Delivery Partner Logo preview"
+                        className="w-full h-full object-contain"
+                      />
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setDeliveryPartnerLogoPreview(null);
+                          setDeliveryPartnerLogoFile(null);
+                          if (deliveryPartnerLogoInputRef.current) {
+                            deliveryPartnerLogoInputRef.current.value = "";
+                          }
+                        }}
+                        className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </>
+                  ) : (
+                    <div className="text-center">
+                      <Upload className="w-5 h-5 text-slate-400 mx-auto mb-1" />
+                      <p className="text-xs text-slate-400">Click to upload delivery partner logo</p>
                     </div>
                   )}
                 </div>

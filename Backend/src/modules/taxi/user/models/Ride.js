@@ -231,6 +231,42 @@ const rideSchema = new mongoose.Schema(
       default: 0,
       min: 0,
     },
+    waitingChargeAmount: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+    distanceChargeAmount: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+    timeChargeAmount: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+    additionalCharge: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+    adminExtraCharge: {
+      amount: {
+        type: Number,
+        default: 0,
+        min: 0,
+      },
+      reason: {
+        type: String,
+        default: '',
+        trim: true,
+      },
+      addedAt: {
+        type: Date,
+        default: null,
+      },
+    },
     bookingMode: {
       type: String,
       enum: ['normal', 'bidding'],
@@ -442,6 +478,11 @@ const rideSchema = new mongoose.Schema(
         ref: 'TaxiSetPrice',
         default: null,
       },
+      starting_fare: {
+        type: Number,
+        default: 0,
+        min: 0,
+      },
       admin_commission_type_from_driver: {
         type: Number,
         default: 1,
@@ -461,6 +502,11 @@ const rideSchema = new mongoose.Schema(
         min: 0,
       },
       free_waiting_after: {
+        type: Number,
+        default: 0,
+        min: 0,
+      },
+      time_price: {
         type: Number,
         default: 0,
         min: 0,
@@ -492,6 +538,26 @@ const rideSchema = new mongoose.Schema(
       allowed_payment_methods: {
         type: [String],
         default: ['cash', 'online'],
+      },
+      user_cancellation_fee_type: {
+        type: String,
+        default: 'percentage',
+        trim: true,
+      },
+      user_cancellation_fee: {
+        type: Number,
+        default: 0,
+        min: 0,
+      },
+      driver_cancellation_fee_type: {
+        type: String,
+        default: 'percentage',
+        trim: true,
+      },
+      driver_cancellation_fee: {
+        type: Number,
+        default: 0,
+        min: 0,
       },
       resolvedAt: {
         type: Date,
@@ -587,6 +653,10 @@ const rideSchema = new mongoose.Schema(
       default: null,
     },
     arrivedAt: {
+      type: Date,
+      default: null,
+    },
+    destinationArrivedAt: {
       type: Date,
       default: null,
     },

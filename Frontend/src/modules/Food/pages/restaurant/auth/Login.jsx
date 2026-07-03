@@ -8,6 +8,7 @@ import { restaurantAPI } from "@food/api"
 import { useCompanyName } from "@food/hooks/useCompanyName"
 import { motion, AnimatePresence } from "framer-motion"
 import logoImg from "@food/assets/k9-logo.jpg"
+import { getRestaurantLogo, loadBusinessSettings } from "@food/utils/businessSettings"
 
 const DEFAULT_COUNTRY_CODE = "+91"
 
@@ -15,6 +16,19 @@ export default function RestaurantLogin() {
   const companyName = useCompanyName()
   const navigate = useNavigate()
   const phoneInputRef = useRef(null)
+  const [logoUrl, setLogoUrl] = useState(() => {
+    try {
+      return getRestaurantLogo();
+    } catch (e) {
+      return logoImg;
+    }
+  })
+
+  useEffect(() => {
+    loadBusinessSettings().then(() => {
+      setLogoUrl(getRestaurantLogo());
+    }).catch(() => {});
+  }, []);
   const [formData, setFormData] = useState(() => {
     const saved = sessionStorage.getItem("restaurantLoginPhone")
     return {
@@ -103,7 +117,7 @@ export default function RestaurantLogin() {
           className="relative z-10 flex flex-col items-center gap-4"
         >
           <div className="w-20 h-20 bg-white rounded-3xl flex items-center justify-center shadow-xl border-4 border-white/25 overflow-hidden">
-            <img src={logoImg} alt={`${companyName} logo`} className="w-full h-full object-cover scale-110" />
+            <img src={logoUrl} alt={`${companyName} logo`} className="w-full h-full object-cover scale-110" />
           </div>
           <div className="text-center text-white">
             <h1 className="font-black text-3xl tracking-tight leading-none mb-1">

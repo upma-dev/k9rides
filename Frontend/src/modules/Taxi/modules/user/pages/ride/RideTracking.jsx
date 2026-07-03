@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Phone, MessageCircle, AlertTriangle, Shield, Star, ChevronLeft, Share2, Clock3 } from 'lucide-react';
+import { Phone, MessageCircle, AlertTriangle, Shield, Star, ChevronLeft, Share2, Clock3, FileText } from 'lucide-react';
 import { GoogleMap, MarkerF, OverlayView, OverlayViewF, PolylineF } from '@react-google-maps/api';
 import { HAS_VALID_GOOGLE_MAPS_KEY, useAppGoogleMapsLoader } from '../../../admin/utils/googleMaps';
 import { socketService } from '../../../../shared/api/socket';
@@ -315,6 +315,8 @@ const mergeDriverSnapshot = (baseDriver = {}, incomingDriver = {}) => {
 const RideTracking = () => {
   const [drawerOpen, setDrawerOpen] = useState(true);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
+  const [cancellationBill, setCancellationBill] = useState(null);
+  const [showCancellationBillModal, setShowCancellationBillModal] = useState(false);
   const [shareToast, setShareToast] = useState(false);
   const [shareSheetOpen, setShareSheetOpen] = useState(false);
   const [rideRealtime, setRideRealtime] = useState(null);
@@ -369,6 +371,10 @@ const RideTracking = () => {
   );
   const hasLiveDriverLocation = Boolean(rideRealtime?.driverLocation?.coordinates?.length);
   const tripStatus = String(rideRealtime?.status || state.liveStatus || state.status || 'accepted').toLowerCase();
+  const latestTripStatusRef = useRef(tripStatus);
+  useEffect(() => {
+    latestTripStatusRef.current = tripStatus;
+  }, [tripStatus]);
   const otp = ['started', 'ongoing', 'arrived', 'completed'].includes(tripStatus)
     ? ''
     : String(rideRealtime?.otp || state.otp || state.ride_otp || '');
@@ -397,12 +403,22 @@ const RideTracking = () => {
   const waitingPricing = rideRealtime?.pricingSnapshot || state.pricingSnapshot || {};
   const waitingChargePerMinute = Math.max(0, Number(waitingPricing?.waiting_charge ?? 0));
   const freeWaitingBeforeMinutes = Math.max(0, Number(waitingPricing?.free_waiting_before ?? 0));
+  const tripStartedAtRaw = rideRealtime?.startedAt || state?.startedAt || '';
   const waitingStartedAt = rideRealtime?.arrivedAt || state.arrivedAt || arrivalClockFallbackAt || '';
+  const waitingEndedAt = tripStartedAtRaw ? new Date(tripStartedAtRaw).getTime() : waitingNow;
   const waitingElapsedSeconds = waitingStartedAt
-    ? Math.max(0, Math.floor((waitingNow - new Date(waitingStartedAt).getTime()) / 1000))
+    ? Math.max(0, Math.floor((waitingEndedAt - new Date(waitingStartedAt).getTime()) / 1000))
     : 0;
   const freeWaitingRemainingSeconds = Math.max(0, freeWaitingBeforeMinutes * 60 - waitingElapsedSeconds);
   const waitingChargeableMinutes = Math.max(0, Math.ceil(waitingElapsedSeconds / 60) - freeWaitingBeforeMinutes);
+  const waitingCharge = ['ongoing', 'arrived', 'completed'].includes(tripStatus) || rideRealtime?.waitingChargeAmount !== undefined
+    ? Number(rideRealtime?.waitingChargeAmount ?? state.waitingChargeAmount ?? 0)
+    : (waitingChargeableMinutes * waitingChargePerMinute);
+  const additionalCharge = Number(rideRealtime?.additionalCharge ?? state.additionalCharge ?? 0);
+  const adminExtraChargeAmount = Number(rideRealtime?.adminExtraCharge?.amount ?? state.adminExtraCharge?.amount ?? 0);
+  const currentTotalFare = ['arrived', 'completed'].includes(tripStatus)
+    ? Math.round(Number(fare || 0) + adminExtraChargeAmount)
+    : Math.round(Number(fare || 0) + waitingCharge + additionalCharge + adminExtraChargeAmount);
   const isWaitingForOtp = Boolean(waitingStartedAt) && !['started', 'ongoing', 'arrived', 'completed', 'cancelled', 'delivered'].includes(tripStatus);
   const vehicleIcon = getTrackingVehicleIcon(trackingSnapshot, driver);
   const displayDriverHeading = useMemo(() => {
@@ -430,20 +446,20 @@ const RideTracking = () => {
   const driverSubtitle = isWaitingForOtp
     ? `${arrivalDriverName} has arrived`
     : isScheduledUpcoming && !hasLiveDriverLocation
-    ? 'Driver assigned. Live tracking starts closer to pickup time'
-    : tripStatus === 'arrived'
-    ? (serviceType === 'parcel' ? 'Parcel reached destination' : 'Driver reached destination')
-    : tripStatus === 'started' || tripStatus === 'ongoing'
-    ? (serviceType === 'parcel' ? 'Parcel picked up' : 'Trip started')
-    : serviceType === 'parcel'
-      ? 'Delivery agent is on the way'
-      : 'Captain is on the way';
+      ? 'Driver assigned. Live tracking starts closer to pickup time'
+      : tripStatus === 'arrived'
+        ? (serviceType === 'parcel' ? 'Parcel reached destination' : 'Driver reached destination')
+        : tripStatus === 'started' || tripStatus === 'ongoing'
+          ? (serviceType === 'parcel' ? 'Parcel picked up' : 'Trip started')
+          : serviceType === 'parcel'
+            ? 'Delivery agent is on the way'
+            : 'Captain is on the way';
   const vehicleDetails = [driver.vehicleColor, driver.vehicleMake, driver.vehicleModel].filter(Boolean).join(' ');
   const activeRideEndpoint = serviceType === 'parcel' ? '/deliveries/active/me' : '/rides/active/me';
   const latestStateRef = useRef(state);
   const latestFallbackDriverRef = useRef(fallbackDriver);
   const latestDriverRef = useRef(driver);
-  const latestCompleteTrackingRef = useRef(() => {});
+  const latestCompleteTrackingRef = useRef(() => { });
   const hasCompletedRedirectRef = useRef(false);
   const hasAutoFramedMapRef = useRef(false);
   const lastMapPanPositionRef = useRef(null);
@@ -468,14 +484,26 @@ const RideTracking = () => {
   const handleCancelRide = async () => {
     try {
       if (rideId) {
-        await api.patch(`/rides/${rideId}/cancel`);
+        const response = await api.patch(`/rides/${rideId}/cancel`);
+        const bill = response?.data?.data?.cancellationBill;
+        if (bill && (Number(bill.cancellationFee) > 0 || Number(bill.waitingCharge) > 0)) {
+          setCancellationBill(bill);
+          setShowCancellationBillModal(true);
+          setShowCancelConfirm(false);
+          return;
+        }
       }
     } catch (_error) {
       // If the ride has already advanced or ended, we still clear the local state below.
-    } finally {
-      clearCurrentRide();
-      navigate('/taxi/user');
     }
+    clearCurrentRide();
+    navigate('/taxi/user');
+  };
+
+  const handleCloseCancellationBill = () => {
+    setShowCancellationBillModal(false);
+    clearCurrentRide();
+    navigate('/taxi/user');
   };
 
   useEffect(() => {
@@ -531,21 +559,28 @@ const RideTracking = () => {
   );
 
   const completeTracking = useMemo(
-    () => (statusValue = 'completed') => {
+    () => (statusValue = 'completed', latestRealtime = null) => {
+      const sourceRealtime = latestRealtime || rideRealtime;
       const completedRideSnapshot = {
         ...state,
         rideId,
-        fare,
+        fare: sourceRealtime?.fare ?? fare ?? 0,
         paymentMethod,
-        driverPaymentCollection: rideRealtime?.driverPaymentCollection || state.driverPaymentCollection || null,
+        driverPaymentCollection: sourceRealtime?.driverPaymentCollection || state.driverPaymentCollection || null,
         pickup: pickupLabel,
         drop: dropLabel,
         driver,
         status: statusValue,
         liveStatus: statusValue,
-        feedback: rideRealtime?.feedback || state.feedback || null,
-        arrivedAt: rideRealtime?.arrivedAt || state.arrivedAt || '',
-        completedAt: rideRealtime?.completedAt || rideRealtime?.arrivedAt || state.arrivedAt || Date.now(),
+        feedback: sourceRealtime?.feedback || state.feedback || null,
+        arrivedAt: sourceRealtime?.arrivedAt || state.arrivedAt || '',
+        completedAt: sourceRealtime?.completedAt || sourceRealtime?.arrivedAt || state.arrivedAt || Date.now(),
+        waitingChargeAmount: sourceRealtime?.waitingChargeAmount ?? state.waitingChargeAmount ?? waitingCharge ?? 0,
+        distanceChargeAmount: sourceRealtime?.distanceChargeAmount ?? state.distanceChargeAmount ?? 0,
+        timeChargeAmount: sourceRealtime?.timeChargeAmount ?? state.timeChargeAmount ?? 0,
+        baseFare: sourceRealtime?.baseFare ?? state.baseFare ?? fare ?? 0,
+        additionalCharge: sourceRealtime?.additionalCharge ?? state.additionalCharge ?? 0,
+        adminExtraCharge: sourceRealtime?.adminExtraCharge ?? state.adminExtraCharge ?? null,
       };
 
       saveCurrentRide(completedRideSnapshot);
@@ -554,7 +589,7 @@ const RideTracking = () => {
         state: completedRideSnapshot,
       });
     },
-    [driver, dropLabel, fare, navigate, paymentMethod, pickupLabel, rideId, rideRealtime?.completedAt, rideRealtime?.feedback, routeComplete, state],
+    [driver, dropLabel, fare, navigate, paymentMethod, pickupLabel, rideId, rideRealtime, routeComplete, state, waitingCharge],
   );
 
   useEffect(() => {
@@ -587,7 +622,7 @@ const RideTracking = () => {
 
         if (POST_RIDE_REDIRECT_STATUSES.has(nextStatus)) {
           const mergedDriver = mergeDriverSnapshot(fallbackDriver, payload?.driver || {});
-          setRideRealtime({
+          const updatedRealtime = {
             pickup: {
               coordinates: payload?.pickupLocation?.coordinates,
               address: payload?.pickupAddress || latestStateRef.current.pickup || 'Pickup',
@@ -601,6 +636,9 @@ const RideTracking = () => {
               : null,
             status: nextStatus,
             fare: payload?.fare || latestStateRef.current.fare || 0,
+            baseFare: payload?.baseFare || latestStateRef.current.baseFare || 0,
+            waitingChargeAmount: payload?.waitingChargeAmount || latestStateRef.current.waitingChargeAmount || 0,
+            distanceChargeAmount: payload?.distanceChargeAmount || latestStateRef.current.distanceChargeAmount || 0,
             paymentMethod: payload?.paymentMethod || latestStateRef.current.paymentMethod || 'Cash',
             vehicleIconType: payload?.vehicleIconType || latestStateRef.current.vehicleIconType || '',
             vehicleIconUrl: payload?.vehicleIconUrl || latestStateRef.current.vehicleIconUrl || '',
@@ -612,15 +650,16 @@ const RideTracking = () => {
             completedAt: payload?.completedAt || null,
             feedback: payload?.feedback || null,
             driver: mergedDriver,
-          });
-          completeTracking(nextStatus);
+          };
+          setRideRealtime(updatedRealtime);
+          completeTracking(nextStatus, updatedRealtime);
           return;
         }
 
         if (TERMINAL_STATUSES.has(nextStatus)) {
           if (COMPLETED_TRACKING_STATUSES.has(nextStatus)) {
             const mergedDriver = mergeDriverSnapshot(fallbackDriver, payload?.driver || {});
-            setRideRealtime({
+            const updatedRealtime = {
               pickup: {
                 coordinates: payload?.pickupLocation?.coordinates,
                 address: payload?.pickupAddress || latestStateRef.current.pickup || 'Pickup',
@@ -634,6 +673,9 @@ const RideTracking = () => {
                 : null,
               status: nextStatus,
               fare: payload?.fare || latestStateRef.current.fare || 0,
+              baseFare: payload?.baseFare || latestStateRef.current.baseFare || 0,
+              waitingChargeAmount: payload?.waitingChargeAmount || latestStateRef.current.waitingChargeAmount || 0,
+              distanceChargeAmount: payload?.distanceChargeAmount || latestStateRef.current.distanceChargeAmount || 0,
               paymentMethod: payload?.paymentMethod || latestStateRef.current.paymentMethod || 'Cash',
               vehicleIconType: payload?.vehicleIconType || latestStateRef.current.vehicleIconType || '',
               vehicleIconUrl: payload?.vehicleIconUrl || latestStateRef.current.vehicleIconUrl || '',
@@ -645,8 +687,9 @@ const RideTracking = () => {
               completedAt: payload?.completedAt || null,
               feedback: payload?.feedback || null,
               driver: mergedDriver,
-            });
-            completeTracking(nextStatus);
+            };
+            setRideRealtime(updatedRealtime);
+            completeTracking(nextStatus, updatedRealtime);
             return;
           }
           exitTracking();
@@ -666,12 +709,15 @@ const RideTracking = () => {
           },
           driverLocation: payload?.lastDriverLocation
             ? {
-                coordinates: payload.lastDriverLocation.coordinates,
-                heading: payload.lastDriverLocation.heading,
-              }
+              coordinates: payload.lastDriverLocation.coordinates,
+              heading: payload.lastDriverLocation.heading,
+            }
             : null,
           status: payload?.liveStatus || payload?.status || 'accepted',
           fare: payload?.fare || latestStateRef.current.fare || 0,
+          baseFare: payload?.baseFare || latestStateRef.current.baseFare || 0,
+          waitingChargeAmount: payload?.waitingChargeAmount || latestStateRef.current.waitingChargeAmount || 0,
+          distanceChargeAmount: payload?.distanceChargeAmount || latestStateRef.current.distanceChargeAmount || 0,
           paymentMethod: payload?.paymentMethod || latestStateRef.current.paymentMethod || 'Cash',
           vehicleIconType: payload?.vehicleIconType || latestStateRef.current.vehicleIconType || '',
           vehicleIconUrl: payload?.vehicleIconUrl || latestStateRef.current.vehicleIconUrl || '',
@@ -718,22 +764,23 @@ const RideTracking = () => {
           return false;
         }
 
-        if (!activeRideId || activeRideId !== String(rideId)) {
-          await hydrateRideState().catch(() => {});
+        const currentLocalStatus = String(latestTripStatusRef.current || '').toLowerCase();
+        if (!activeRideId || activeRideId !== String(rideId) || activeStatus !== currentLocalStatus) {
+          await hydrateRideState().catch(() => { });
           return false;
         }
 
         return true;
       } catch (err) {
         console.error('Active ride validation failed:', err);
-        await hydrateRideState().catch(() => {});
+        await hydrateRideState().catch(() => { });
         return false;
       }
     };
 
     hydrateRideState();
     const validationInterval = window.setInterval(() => {
-      validateActiveRide().catch(() => {});
+      validateActiveRide().catch(() => { });
     }, ACTIVE_RIDE_VALIDATE_MS);
 
     return () => {
@@ -765,13 +812,13 @@ const RideTracking = () => {
 
   useEffect(() => {
     if (!rideId) {
-      return () => {};
+      return () => { };
     }
 
     const socket = socketService.connect({ role: 'user' });
 
     if (!socket) {
-      return () => {};
+      return () => { };
     }
 
     const onRideState = (payload) => {
@@ -795,9 +842,9 @@ const RideTracking = () => {
         },
         driverLocation: payload.lastDriverLocation
           ? {
-              coordinates: payload.lastDriverLocation.coordinates,
-              heading: payload.lastDriverLocation.heading,
-            }
+            coordinates: payload.lastDriverLocation.coordinates,
+            heading: payload.lastDriverLocation.heading,
+          }
           : null,
         status: payload.liveStatus || payload.status || 'accepted',
         fare: payload.fare || prev?.fare || latestState.fare || 0,
@@ -811,11 +858,49 @@ const RideTracking = () => {
         driverPaymentCollection: payload.driverPaymentCollection || prev?.driverPaymentCollection || latestState.driverPaymentCollection || null,
         completedAt: payload.completedAt || null,
         feedback: payload.feedback || null,
+        baseFare: payload.baseFare ?? prev?.baseFare ?? latestState.baseFare ?? 0,
+        waitingChargeAmount: payload.waitingChargeAmount ?? prev?.waitingChargeAmount ?? latestState.waitingChargeAmount ?? 0,
+        distanceChargeAmount: payload.distanceChargeAmount ?? prev?.distanceChargeAmount ?? latestState.distanceChargeAmount ?? 0,
+        timeChargeAmount: payload.timeChargeAmount ?? prev?.timeChargeAmount ?? latestState.timeChargeAmount ?? 0,
         driver: mergeDriverSnapshot(prev?.driver || latestFallbackDriver, payload.driver || {}),
       }));
 
       if (POST_RIDE_REDIRECT_STATUSES.has(nextStatus)) {
-        latestCompleteTrackingRef.current(nextStatus);
+        const realtimeSnapshot = {
+          pickup: {
+            coordinates: payload.pickupLocation?.coordinates,
+            address: payload.pickupAddress || latestState.pickup || 'Pickup',
+          },
+          drop: {
+            coordinates: payload.dropLocation?.coordinates,
+            address: payload.dropAddress || latestState.drop || 'Drop',
+          },
+          driverLocation: payload.lastDriverLocation
+            ? {
+              coordinates: payload.lastDriverLocation.coordinates,
+              heading: payload.lastDriverLocation.heading,
+            }
+            : null,
+          status: nextStatus,
+          fare: payload.fare || latestState.fare || 0,
+          paymentMethod: payload.paymentMethod || latestState.paymentMethod || 'Cash',
+          vehicleIconType: payload.vehicleIconType || latestState.vehicleIconType || '',
+          vehicleIconUrl: payload.vehicleIconUrl || latestState.vehicleIconUrl || '',
+          scheduledAt: payload.scheduledAt || latestState.scheduledAt || null,
+          otp: payload.otp || latestState.otp || latestState.ride_otp || '',
+          arrivedAt: payload.arrivedAt || latestState.arrivedAt || '',
+          pricingSnapshot: payload.pricingSnapshot || latestState.pricingSnapshot || null,
+          driverPaymentCollection: payload.driverPaymentCollection || latestState.driverPaymentCollection || null,
+          completedAt: payload.completedAt || null,
+          feedback: payload.feedback || null,
+          baseFare: payload.baseFare ?? latestState.baseFare ?? 0,
+          waitingChargeAmount: payload.waitingChargeAmount ?? latestState.waitingChargeAmount ?? 0,
+          distanceChargeAmount: payload.distanceChargeAmount ?? latestState.distanceChargeAmount ?? 0,
+          timeChargeAmount: payload.timeChargeAmount ?? latestState.timeChargeAmount ?? 0,
+          driver: mergeDriverSnapshot(latestFallbackDriver, payload.driver || {}),
+        };
+        setRideRealtime(realtimeSnapshot);
+        latestCompleteTrackingRef.current(nextStatus, realtimeSnapshot);
         return;
       }
 
@@ -847,14 +932,22 @@ const RideTracking = () => {
       const normalizedStatus = String(nextStatus).toLowerCase();
 
       if (POST_RIDE_REDIRECT_STATUSES.has(normalizedStatus)) {
-        setRideRealtime((prev) => ({
-          ...(prev || {}),
-          status: normalizedStatus,
-          arrivedAt: payload.arrivedAt || prev?.arrivedAt || null,
-          driverPaymentCollection: payload.driverPaymentCollection || prev?.driverPaymentCollection || null,
-          completedAt: payload.completedAt || prev?.completedAt || null,
-        }));
-        latestCompleteTrackingRef.current(normalizedStatus);
+        setRideRealtime((prev) => {
+          const updated = {
+            ...(prev || {}),
+            status: normalizedStatus,
+            arrivedAt: payload.arrivedAt || prev?.arrivedAt || null,
+            driverPaymentCollection: payload.driverPaymentCollection || prev?.driverPaymentCollection || null,
+            completedAt: payload.completedAt || prev?.completedAt || null,
+            fare: payload.fare ?? prev?.fare ?? null,
+            baseFare: payload.baseFare ?? prev?.baseFare ?? null,
+            waitingChargeAmount: payload.waitingChargeAmount ?? prev?.waitingChargeAmount ?? null,
+            distanceChargeAmount: payload.distanceChargeAmount ?? prev?.distanceChargeAmount ?? null,
+            timeChargeAmount: payload.timeChargeAmount ?? prev?.timeChargeAmount ?? null,
+          };
+          latestCompleteTrackingRef.current(normalizedStatus, updated);
+          return updated;
+        });
         return;
       }
 
@@ -882,6 +975,11 @@ const RideTracking = () => {
         pricingSnapshot: payload.pricingSnapshot || prev?.pricingSnapshot || null,
         driverPaymentCollection: payload.driverPaymentCollection || prev?.driverPaymentCollection || null,
         completedAt: payload.completedAt || prev?.completedAt || null,
+        fare: payload.fare ?? prev?.fare ?? latestStateRef.current.fare ?? 0,
+        baseFare: payload.baseFare ?? prev?.baseFare ?? latestStateRef.current.baseFare ?? 0,
+        waitingChargeAmount: payload.waitingChargeAmount ?? prev?.waitingChargeAmount ?? latestStateRef.current.waitingChargeAmount ?? 0,
+        distanceChargeAmount: payload.distanceChargeAmount ?? prev?.distanceChargeAmount ?? latestStateRef.current.distanceChargeAmount ?? 0,
+        timeChargeAmount: payload.timeChargeAmount ?? prev?.timeChargeAmount ?? latestStateRef.current.timeChargeAmount ?? 0,
       }));
     };
 
@@ -1301,7 +1399,7 @@ const RideTracking = () => {
                 </div>
                 {/* Car Badge */}
                 <div className="absolute -top-1 -right-1 w-6 h-6 rounded-lg bg-[#111827] border-2 border-white flex items-center justify-center shadow-md">
-                   <img src={vehicleIcon} alt="Vehicle icon" className="h-3.5 w-3.5 object-contain brightness-0 invert" draggable={false} />
+                  <img src={vehicleIcon} alt="Vehicle icon" className="h-3.5 w-3.5 object-contain brightness-0 invert" draggable={false} />
                 </div>
                 {/* Rating Badge */}
                 <div className="absolute -bottom-1 -right-1 bg-yellow-400 px-1.5 py-0.5 rounded-full border-2 border-white flex items-center gap-0.5 shadow-md">
@@ -1353,34 +1451,75 @@ const RideTracking = () => {
           ) : null}
 
           {isWaitingForOtp && (
-            <div className="rounded-[24px] border border-amber-100 bg-amber-50/70 px-4 py-4 shadow-sm">
+            <div className={`rounded-[24px] border px-4 py-4 shadow-sm ${waitingCharge > 0 ? 'border-rose-100 bg-rose-50/70' : 'border-amber-100 bg-amber-50/70'}`}>
               <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-3">
-                  <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white text-amber-500 shadow-sm">
+                  <div className={`flex h-11 w-11 items-center justify-center rounded-2xl bg-white shadow-sm ${waitingCharge > 0 ? 'text-rose-500' : 'text-amber-500'}`}>
                     <Clock3 size={18} strokeWidth={2.5} />
                   </div>
                   <div>
-                    <p className="text-[9px] font-black uppercase tracking-[0.22em] text-amber-600">Waiting Clock</p>
-                    <p className="mt-1 text-[22px] font-black tracking-tight text-slate-900">{formatTimerClock(waitingElapsedSeconds)}</p>
+                    <p className={`text-[9px] font-black uppercase tracking-[0.22em] ${waitingCharge > 0 ? 'text-rose-600' : 'text-amber-600'}`}>
+                      {waitingCharge > 0 ? 'Paid Waiting' : 'Free Waiting'}
+                    </p>
+                    <p className="mt-1 text-[22px] font-black tracking-tight text-slate-900">
+                      {formatTimerClock(waitingCharge > 0 ? waitingElapsedSeconds - (freeWaitingBeforeMinutes * 60) : waitingElapsedSeconds)}
+                    </p>
                   </div>
                 </div>
                 <div className="text-right">
-                  <p className="text-[9px] font-black uppercase tracking-[0.18em] text-slate-400">Free Left</p>
-                  <p className="mt-1 text-[13px] font-black text-slate-900">{formatTimerClock(freeWaitingRemainingSeconds)}</p>
+                  {waitingCharge > 0 ? (
+                    <>
+                      <p className="text-[9px] font-black uppercase tracking-[0.18em] text-rose-500">Added to Bill</p>
+                      <p className="mt-1 text-[18px] font-black text-rose-700">+Rs {waitingCharge}</p>
+                    </>
+                  ) : (
+                    <>
+                      <p className="text-[9px] font-black uppercase tracking-[0.18em] text-slate-400">Free Left</p>
+                      <p className="mt-1 text-[13px] font-black text-slate-900">{formatTimerClock(freeWaitingRemainingSeconds)}</p>
+                    </>
+                  )}
                 </div>
               </div>
-              <div className="mt-4 grid grid-cols-2 gap-3">
+              <div className={`mt-4 grid gap-3 ${waitingCharge > 0 ? 'grid-cols-3' : 'grid-cols-2'}`}>
                 <div className="rounded-2xl bg-white px-3 py-3 shadow-sm">
-                  <p className="text-[9px] font-black uppercase tracking-[0.18em] text-slate-400">Free Before Ride</p>
+                  <p className="text-[9px] font-black uppercase tracking-[0.18em] text-slate-400">Free Before</p>
                   <p className="mt-1 text-[13px] font-black text-slate-900">{formatWholeMinutes(freeWaitingBeforeMinutes)}</p>
                 </div>
                 <div className="rounded-2xl bg-white px-3 py-3 shadow-sm">
-                  <p className="text-[9px] font-black uppercase tracking-[0.18em] text-slate-400">Waiting Charge</p>
-                  <p className="mt-1 text-[13px] font-black text-slate-900">
-                    Rs {waitingChargePerMinute}/min
-                    {waitingChargeableMinutes > 0 ? ` • ${waitingChargeableMinutes} billable` : ''}
-                  </p>
+                  <p className="text-[9px] font-black uppercase tracking-[0.18em] text-slate-400">Rate</p>
+                  <p className="mt-1 text-[13px] font-black text-slate-900">Rs {waitingChargePerMinute}/min</p>
                 </div>
+                {waitingCharge > 0 && (
+                  <div className="rounded-2xl bg-amber-100 px-3 py-3 shadow-sm border border-amber-200/60">
+                    <p className="text-[9px] font-black uppercase tracking-[0.18em] text-amber-600">Billed Mins</p>
+                    <p className="mt-1 text-[13px] font-black text-amber-800">{waitingChargeableMinutes} min</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Pricing Policy Card */}
+          {(waitingPricing?.user_cancellation_fee > 0 || waitingPricing?.waiting_charge > 0) && (
+            <div className="rounded-[22px] border border-slate-100 bg-slate-50/50 p-4 shadow-sm">
+              <p className="text-[9px] font-black uppercase tracking-[0.22em] text-slate-400 mb-2">Ride Rules & Pricing Policies</p>
+              <div className="grid grid-cols-2 gap-3 text-[11px] font-bold text-slate-600">
+                {waitingPricing?.user_cancellation_fee > 0 && (
+                  <div className="bg-white p-3 rounded-2xl border border-slate-100/50 shadow-sm flex items-center justify-between">
+                    <span>Cancellation Fee</span>
+                    <span className="font-black text-slate-900">
+                      {waitingPricing.user_cancellation_fee_type === 'percentage'
+                        ? `${waitingPricing.user_cancellation_fee}%`
+                        : `Rs ${waitingPricing.user_cancellation_fee}`}
+                    </span>
+                  </div>
+                )}
+                {waitingPricing?.waiting_charge > 0 && (
+                  <div className="bg-white p-3 rounded-2xl border border-slate-100/50 shadow-sm flex items-center justify-between">
+                    <span>Waiting Charge</span>
+                    <span className="font-black text-slate-900">Rs {waitingPricing.waiting_charge}/min</span>
+                  </div>
+                )}
               </div>
             </div>
           )}
@@ -1388,16 +1527,16 @@ const RideTracking = () => {
           {/* Detailed Vehicle Status Card - High Fidelity */}
           <div className="flex items-center gap-3 rounded-[22px] bg-slate-50/40 border border-slate-50/80 px-3 py-3 shadow-[0_2px_12px_rgba(15,23,42,0.02)]">
             <div className="w-12 h-12 shrink-0 flex items-center justify-center rounded-[16px] bg-white shadow-sm border border-slate-100/50 overflow-hidden p-2">
-               {hasVehiclePhoto ? (
-                  <img
-                    src={vehicleImage}
-                    alt={vehicleLabel}
-                    className="w-full h-full object-contain"
-                    onError={() => setVehicleImageBroken(true)}
-                  />
-                ) : (
-                  <img src={vehicleIcon} alt={vehicleLabel} className="h-6 w-6 object-contain opacity-60" />
-                )}
+              {hasVehiclePhoto ? (
+                <img
+                  src={vehicleImage}
+                  alt={vehicleLabel}
+                  className="w-full h-full object-contain"
+                  onError={() => setVehicleImageBroken(true)}
+                />
+              ) : (
+                <img src={vehicleIcon} alt={vehicleLabel} className="h-6 w-6 object-contain opacity-60" />
+              )}
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-[9px] font-black uppercase tracking-[0.18em] text-slate-400 mb-0.5">Vehicle</p>
@@ -1429,21 +1568,85 @@ const RideTracking = () => {
           </div>
 
           {/* Footer: Fare & Cancellation Section */}
-          <div className="flex items-end justify-between pt-2 border-t border-slate-50">
-            <div className="space-y-0.5">
-              <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.18em] leading-none mb-1">Total Fare</p>
-              <div className="flex items-center gap-2">
-                <span className="text-[19px] font-black text-slate-950 tracking-tight leading-none">Rs {fare}.00</span>
-                <span className="text-[9px] font-black bg-slate-100 text-slate-600 px-2.5 py-1 rounded-lg uppercase tracking-wider border border-slate-200/50 shadow-sm">{paymentMethod}</span>
+          <div className="pt-2 border-t border-slate-50 space-y-3">
+            {['started', 'ongoing'].includes(tripStatus) ? (
+              // TRIP STARTED: Show Premium Detailed Bill Breakdown
+              <div className="bg-slate-50/70 border border-slate-100 rounded-2xl p-4 shadow-sm space-y-3">
+                <div className="flex justify-between items-center border-b border-slate-150 pb-2">
+                  <div className="flex flex-col">
+                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none">
+                      Active Trip Bill
+                    </span>
+                    <span className="text-[10px] font-bold text-emerald-600 uppercase tracking-wider mt-1">
+                      Admin-Managed Charges
+                    </span>
+                  </div>
+                  <span className="text-[9px] font-black bg-emerald-100 text-emerald-700 px-2.5 py-1 rounded-lg uppercase tracking-wider border border-emerald-250/50 shadow-sm animate-pulse">
+                    In Trip
+                  </span>
+                </div>
+                
+                <div className="space-y-2.5">
+                  <div className="flex justify-between items-center text-xs">
+                    <span className="font-semibold text-slate-500">Starting Base Fare</span>
+                    <span className="font-bold text-slate-900">Rs {Math.round(Number(fare || 0))}</span>
+                  </div>
+                  {waitingCharge > 0 && (
+                    <div className="flex justify-between items-center text-xs">
+                      <span className="font-semibold text-slate-500">Waiting Charge</span>
+                      <span className="font-bold text-slate-900">Rs {waitingCharge}</span>
+                    </div>
+                  )}
+                  {waitingPricing?.ride_surge_enabled && waitingPricing?.ride_surge_amount > 0 && (
+                    <div className="flex justify-between items-center text-xs text-amber-600">
+                      <span className="font-semibold">Surge Amount (Admin Configured)</span>
+                      <span className="font-bold">+Rs {waitingPricing.ride_surge_amount}</span>
+                    </div>
+                  )}
+                  <div className="h-px bg-slate-200/60 my-1" />
+                  <div className="flex justify-between items-center text-xs">
+                    <div className="flex flex-col">
+                      <span className="font-extrabold text-slate-900">Current Total Fare</span>
+                      <span className="text-[9px] font-black text-slate-400 uppercase mt-0.5 tracking-wider">Payment via {paymentMethod}</span>
+                    </div>
+                    <span className="text-[18px] font-black text-slate-950">Rs {currentTotalFare}.00</span>
+                  </div>
+                </div>
               </div>
-            </div>
-            <motion.button
-              whileTap={{ scale: 0.96 }}
-              onClick={() => setShowCancelConfirm(true)}
-              className="bg-white border-2 border-slate-50 text-red-500 font-black text-[11px] uppercase tracking-[0.16em] px-5 py-3 rounded-[18px] shadow-[0_8px_20px_rgba(239,68,68,0.08)] active:shadow-none hover:bg-red-50/10 transition-all"
-            >
-              Cancel
-            </motion.button>
+            ) : (
+              // TRIP NOT STARTED: Show normal fare info and Cancel button
+              <div className="flex items-end justify-between">
+                <div className="space-y-0.5">
+                  <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.18em] leading-none mb-1">
+                    {waitingCharge > 0 ? 'Updated Bill' : 'Total Fare'}
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[19px] font-black text-slate-950 tracking-tight leading-none">
+                      Rs {currentTotalFare}.00
+                    </span>
+                    <span className="text-[9px] font-black bg-slate-100 text-slate-600 px-2.5 py-1 rounded-lg uppercase tracking-wider border border-slate-200/50 shadow-sm">{paymentMethod}</span>
+                    {waitingCharge > 0 && (
+                      <span className="text-[9px] font-black bg-amber-100 text-amber-700 px-2 py-1 rounded-lg uppercase tracking-wider border border-amber-200/50 shadow-sm animate-pulse">
+                        +{waitingCharge} wait
+                      </span>
+                    )}
+                  </div>
+                  {waitingCharge > 0 && (
+                    <div className="flex items-center gap-2 mt-1">
+                      <span className="text-[10px] font-bold text-slate-400">Base Rs {Math.round(Number(fare || 0))}</span>
+                      <span className="text-[10px] font-bold text-amber-600">+ Rs {waitingCharge} waiting</span>
+                    </div>
+                  )}
+                </div>
+                <motion.button
+                  whileTap={{ scale: 0.96 }}
+                  onClick={() => setShowCancelConfirm(true)}
+                  className="bg-white border-2 border-slate-50 text-red-500 font-black text-[11px] uppercase tracking-[0.16em] px-5 py-3 rounded-[18px] shadow-[0_8px_20px_rgba(239,68,68,0.08)] active:shadow-none hover:bg-red-50/10 transition-all"
+                >
+                  Cancel
+                </motion.button>
+              </div>
+            )}
           </div>
         </div>
       </motion.div>
@@ -1484,6 +1687,59 @@ const RideTracking = () => {
                   No, Go Back
                 </button>
               </div>
+            </motion.div>
+          </>
+        )}
+
+        {showCancellationBillModal && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={handleCloseCancellationBill}
+              className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[100] max-w-lg mx-auto"
+            />
+            <motion.div
+              initial={{ scale: 0.92, opacity: 0, y: 40 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.92, opacity: 0, y: 40 }}
+              className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[85%] max-w-sm bg-white rounded-[28px] p-7 z-[101] shadow-2xl"
+            >
+              <div className="w-14 h-14 bg-red-50 rounded-[18px] flex items-center justify-center mx-auto mb-4">
+                <FileText size={26} className="text-red-500" strokeWidth={2} />
+              </div>
+              <h3 className="text-[18px] font-black text-slate-900 text-center mb-1.5">Cancellation Receipt</h3>
+              <p className="text-[12px] font-bold text-slate-400 text-center mb-6">
+                Your ride has been cancelled. Waiting time and cancellation fees are calculated below:
+              </p>
+
+              <div className="space-y-3.5 border-t border-b border-slate-100 py-4 mb-6">
+                <div className="flex justify-between items-center text-xs font-bold text-slate-500">
+                  <span>Standard Cancellation Fee</span>
+                  <span className="text-slate-800">Rs {cancellationBill?.cancellationFee || 0}.00</span>
+                </div>
+                <div className="flex justify-between items-center text-xs font-bold text-slate-500">
+                  <span>Waiting Time</span>
+                  <span className="text-slate-800">{cancellationBill?.waitingTimeMinutes || 0} mins</span>
+                </div>
+                <div className="flex justify-between items-center text-xs font-bold text-slate-500">
+                  <span>Waiting Charge</span>
+                  <span className="text-slate-800">Rs {cancellationBill?.waitingCharge || 0}.00</span>
+                </div>
+                <div className="flex justify-between items-center pt-2.5 border-t border-slate-100/60 font-black text-[14px]">
+                  <span className="text-slate-900">Total Deducted</span>
+                  <span className="text-red-500">Rs {cancellationBill?.totalCancellationFee || 0}.00</span>
+                </div>
+              </div>
+
+              <motion.button
+                whileTap={{ scale: 0.97 }}
+                onClick={handleCloseCancellationBill}
+                className="w-full bg-slate-900 text-white py-3.5 rounded-[16px] text-[13px] font-bold uppercase tracking-widest"
+              >
+                Okay
+              </motion.button>
             </motion.div>
           </>
         )}

@@ -31,7 +31,7 @@ const LanguageSelect = () => {
     };
 
     return (
-        <div 
+        <div
             className="min-h-screen bg-[linear-gradient(180deg,#f6efe4_0%,#fcfaf6_28%,#ffffff_100%)] select-none overflow-x-hidden flex flex-col p-5 pt-8 pb-32"
             style={{ fontFamily: "'Plus Jakarta Sans', system-ui, sans-serif" }}
         >
@@ -61,16 +61,14 @@ const LanguageSelect = () => {
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: index * 0.05 }}
                         onClick={() => setSelectedLang(lang.id)}
-                        className={`p-3.5 rounded-2xl border-2 transition-all cursor-pointer flex items-center justify-between group relative overflow-hidden ${
-                            selectedLang === lang.id 
-                            ? 'bg-slate-950 border-slate-950 shadow-lg shadow-slate-900/20' 
-                            : 'bg-white border-slate-50 shadow-sm hover:border-slate-100'
-                        }`}
+                        className={`p-3.5 rounded-2xl border-2 transition-all cursor-pointer flex items-center justify-between group relative overflow-hidden ${selectedLang === lang.id
+                                ? 'bg-slate-950 border-slate-950 shadow-lg shadow-slate-900/20'
+                                : 'bg-white border-slate-50 shadow-sm hover:border-slate-100'
+                            }`}
                     >
                         <div className="flex items-center gap-3.5 relative z-10">
-                            <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors ${
-                                selectedLang === lang.id ? 'bg-white/10 text-white' : 'bg-slate-50 text-slate-400'
-                            }`}>
+                            <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors ${selectedLang === lang.id ? 'bg-white/10 text-white' : 'bg-slate-50 text-slate-400'
+                                }`}>
                                 <Globe size={20} strokeWidth={2.5} />
                             </div>
                             <div className="leading-tight">
@@ -80,7 +78,7 @@ const LanguageSelect = () => {
                         </div>
 
                         {selectedLang === lang.id && (
-                            <motion.div 
+                            <motion.div
                                 initial={{ scale: 0 }}
                                 animate={{ scale: 1 }}
                                 className="w-7 h-7 bg-white rounded-full flex items-center justify-center text-slate-900 shadow-xl relative z-10"
@@ -88,7 +86,7 @@ const LanguageSelect = () => {
                                 <Check size={16} strokeWidth={3} />
                             </motion.div>
                         )}
-                        
+
                         {/* Subtle Background Pattern */}
                         <div className={`absolute -right-3 -bottom-3 transition-opacity ${selectedLang === lang.id ? 'opacity-[0.05] text-white' : 'opacity-[0.02] text-slate-900'}`}>
                             <Globe size={80} />

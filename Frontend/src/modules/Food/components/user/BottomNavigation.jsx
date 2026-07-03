@@ -33,7 +33,7 @@ export default function BottomNavigation() {
   return (
     // Floating nav — matches taxi design
     <div className="md:hidden fixed bottom-0 left-0 right-0 max-w-lg mx-auto z-[100] px-6 pb-6 pt-2 pointer-events-none">
-      <div className="flex items-center justify-around bg-white/70 backdrop-blur-2xl border border-white/40 rounded-[32px] shadow-[0_20px_40px_rgba(0,0,0,0.12)] px-2 py-2 pointer-events-auto relative">
+      <div className="flex items-center justify-around bg-white rounded-[32px] shadow-[0_12px_40px_rgba(0,0,0,0.15)] border border-gray-100 px-5 py-2 pointer-events-auto relative">
         {navItems.map(({ icon: Icon, label, path, isActive }) => (
           <button
             key={label}
@@ -53,7 +53,9 @@ export default function BottomNavigation() {
                       damping: 32,
                       mass: 1,
                     }}
-                    className="absolute -inset-y-2 -inset-x-4 bg-[#e65100] rounded-[20px] shadow-[0_8px_20px_rgba(230,81,0,0.30)]"
+                    className={`absolute -inset-y-1.5 bg-[#ff3d00] rounded-[18px] shadow-[0_8px_20px_rgba(255,61,0,0.35)] ${
+                      label === "Switch 99" ? "-inset-x-2.5" : "-inset-x-3.5"
+                    }`}
                   />
                 )}
               </AnimatePresence>
@@ -68,7 +70,7 @@ export default function BottomNavigation() {
                 className="relative z-20"
               >
                 <Icon
-                  size={21}
+                  size={20}
                   strokeWidth={isActive ? 2.5 : 2}
                   className={`transition-colors duration-300 ${
                     isActive ? "text-white" : "text-slate-400 group-hover:text-slate-600"
@@ -84,8 +86,8 @@ export default function BottomNavigation() {
                   scale: isActive ? 1 : 0.95,
                 }}
                 transition={{ duration: 0.2 }}
-                className={`relative z-20 text-[10px] font-black uppercase tracking-[0.18em] mt-1 transition-colors duration-300 ${
-                  isActive ? "text-white" : "text-slate-500"
+                className={`relative z-20 text-[9px] font-black uppercase tracking-[0.12em] mt-1 transition-colors duration-300 ${
+                  isActive ? "text-white" : "text-slate-505"
                 }`}
                 style={{ fontFamily: "'Outfit', sans-serif" }}
               >

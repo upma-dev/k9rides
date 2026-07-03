@@ -604,10 +604,10 @@ const SearchingDriver = () => {
 
         const rideRequestConfig = userToken
           ? {
-              headers: {
-                Authorization: `Bearer ${userToken}`,
-              },
-            }
+            headers: {
+              Authorization: `Bearer ${userToken}`,
+            },
+          }
           : {};
 
         const response = await api.post('/rides', {
@@ -656,7 +656,7 @@ const SearchingDriver = () => {
             nextFareIncreaseAt: ride?.nextFareIncreaseAt || routeState.nextFareIncreaseAt || null,
           });
           if ((ride?.pricingNegotiationMode || routeState.pricingNegotiationMode) === 'driver_bid') {
-            loadRideBids(rideId).catch(() => {});
+            loadRideBids(rideId).catch(() => { });
           }
           appendFareHistory(ride?.userMaxBidFare || ride?.fare);
         }
@@ -732,7 +732,7 @@ const SearchingDriver = () => {
           }
           setSearchStatus(error?.message || 'Could not create ride request. Redirecting...');
           setTimeout(() => {
-             if (!disposed) navigate(userHomeRoute, { replace: true });
+            if (!disposed) navigate(userHomeRoute, { replace: true });
           }, 3000);
         }
       }
@@ -835,7 +835,7 @@ const SearchingDriver = () => {
   };
 
   const isSearching = stage === STAGES.SEARCHING;
-  const isAccepted  = stage === STAGES.ACCEPTED || stage === STAGES.COMPLETING;
+  const isAccepted = stage === STAGES.ACCEPTED || stage === STAGES.COMPLETING;
 
   if (isScheduledRide && !isScheduledBiddingRide) {
     return (
@@ -845,10 +845,9 @@ const SearchingDriver = () => {
           animate={{ opacity: 1, y: 0 }}
           className="w-full rounded-[32px] border border-white/10 bg-white/5 px-6 py-8 text-center shadow-2xl"
         >
-          <div className={`mx-auto flex h-16 w-16 items-center justify-center rounded-[22px] ${
-            scheduledStatus === 'scheduled' ? 'bg-emerald-600/20 text-emerald-400' :
-            scheduledStatus === 'error' ? 'bg-rose-600/20 text-rose-400' : 'bg-blue-600/20 text-blue-400'
-          }`}>
+          <div className={`mx-auto flex h-16 w-16 items-center justify-center rounded-[22px] ${scheduledStatus === 'scheduled' ? 'bg-emerald-600/20 text-emerald-400' :
+              scheduledStatus === 'error' ? 'bg-rose-600/20 text-rose-400' : 'bg-blue-600/20 text-blue-400'
+            }`}>
             {scheduledStatus === 'scheduled' ? <CheckCircle2 size={26} /> : scheduledStatus === 'error' ? <AlertTriangle size={26} /> : <LoaderCircle size={26} className="animate-spin" />}
           </div>
           <h1 className="mt-5 text-[22px] font-black text-white">
@@ -895,7 +894,7 @@ const SearchingDriver = () => {
             zoom={15}
             options={MAP_OPTIONS}
           >
-            <Marker 
+            <Marker
               position={pickupPos}
               zIndex={100}
               icon={{
@@ -910,7 +909,7 @@ const SearchingDriver = () => {
             />
 
             {dropPos && (
-              <Marker 
+              <Marker
                 position={dropPos}
                 icon={{
                   path: 'M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z',
@@ -938,17 +937,17 @@ const SearchingDriver = () => {
                   mapPaneName={OverlayView.OVERLAY_MOUSE_TARGET}
                 >
                   <div className="flex items-center justify-center -translate-y-[22px]">
-                     <motion.div 
-                      initial={{ opacity: 0 }} 
-                      animate={{ opacity: 1 }} 
+                    <motion.div
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
                       className="relative flex items-center justify-center pointer-events-none"
                     >
                       {[1, 2, 3, 4].map((i) => (
                         <motion.div
                           key={i}
-                          animate={{ 
-                            scale: [0.5, 4.5], 
-                            opacity: [0.5, 0] 
+                          animate={{
+                            scale: [0.5, 4.5],
+                            opacity: [0.5, 0]
                           }}
                           transition={{
                             repeat: Infinity,
@@ -964,8 +963,8 @@ const SearchingDriver = () => {
                         animate={{ rotate: 360 }}
                         transition={{ repeat: Infinity, duration: 4, ease: "linear" }}
                         className="absolute w-[320px] h-[320px] rounded-full overflow-hidden"
-                        style={{ 
-                          background: 'conic-gradient(from 0deg, rgba(249, 115, 22, 0.5) 0deg, transparent 60deg, transparent 360deg)' 
+                        style={{
+                          background: 'conic-gradient(from 0deg, rgba(249, 115, 22, 0.5) 0deg, transparent 60deg, transparent 360deg)'
                         }}
                       />
                     </motion.div>
@@ -975,7 +974,7 @@ const SearchingDriver = () => {
             )}
 
             {dropPos && (
-              <Polyline 
+              <Polyline
                 path={[pickupPos, dropPos]}
                 options={{
                   strokeColor: '#0f172a',
@@ -1028,7 +1027,7 @@ const SearchingDriver = () => {
           {isSearching && (
             <motion.div key="searching" initial={{ y: 40, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 20, opacity: 0 }}
               className="rounded-[32px] border border-white/80 bg-white/95 backdrop-blur-xl shadow-[0_20px_50px_rgba(0,0,0,0.12)] px-6 pt-3 pb-6 space-y-5">
-              
+
               <div className="w-10 h-1.5 bg-slate-100 rounded-full mx-auto mb-2" />
 
               <div className="text-center space-y-1.5">
@@ -1038,10 +1037,10 @@ const SearchingDriver = () => {
 
               <div className="flex justify-center gap-2.5 py-1">
                 {[0, 1, 2, 3].map(i => (
-                  <motion.div key={i} animate={{ 
+                  <motion.div key={i} animate={{
                     scale: [1, 1.4, 1],
                     opacity: [0.3, 1, 0.3],
-                    backgroundColor: ['#e2e8f0', '#f97316', '#e2e8f0'] 
+                    backgroundColor: ['#e2e8f0', '#f97316', '#e2e8f0']
                   }} transition={{ repeat: Infinity, duration: 1.5, delay: i * 0.2 }}
                     className="w-2.5 h-2.5 rounded-full" />
                 ))}
@@ -1097,7 +1096,7 @@ const SearchingDriver = () => {
                     <div>
                       <p className="text-[10px] font-black uppercase tracking-[0.16em] text-blue-600">Current Offer</p>
                       <p className="mt-1 text-[18px] font-black text-slate-900">{formatCurrency(biddingSummary.userMaxBidFare)}</p>
-                   
+
                     </div>
                     <button
                       type="button"
@@ -1149,12 +1148,12 @@ const SearchingDriver = () => {
                 </div>
                 <div className="w-px h-8 bg-slate-200" />
                 <div className="flex items-center gap-3">
-                   <ShieldCheck size={20} className="text-blue-500" strokeWidth={2.5} />
-                   <span className="text-[11px] font-bold text-slate-700 uppercase tracking-wider">Top Safety</span>
+                  <ShieldCheck size={20} className="text-blue-500" strokeWidth={2.5} />
+                  <span className="text-[11px] font-bold text-slate-700 uppercase tracking-wider">Top Safety</span>
                 </div>
               </div>
 
-              <motion.button 
+              <motion.button
                 whileTap={{ scale: 0.98 }}
                 onClick={() => setShowCancelConfirm(true)}
                 className="w-full py-4.5 rounded-[22px] bg-red-50 text-[13px] font-extrabold text-red-500 uppercase tracking-[0.1em] hover:bg-red-100 transition-colors border border-red-100/50"
@@ -1193,7 +1192,7 @@ const SearchingDriver = () => {
                           <span className="text-[11px] font-black text-yellow-700">{driver.rating || "4.7"}</span>
                         </div>
                       </div>
-                      
+
                       {/* Driver Name / Display */}
                       <h2 className="text-[28px] font-black tracking-tighter text-slate-900 leading-none mb-4 uppercase">
                         {driver.plate || "MP13ZL3184"}
@@ -1210,17 +1209,17 @@ const SearchingDriver = () => {
                     {/* Premium Overlaid Avatars */}
                     <div className="relative h-20 w-24 shrink-0">
                       <div className="absolute right-0 top-0 h-20 w-20 overflow-hidden rounded-[24px] bg-[#1d2333] border-4 border-white shadow-xl flex items-center justify-center">
-                         <img 
-                          src={availableVehicleIcon || CarIcon} 
-                          className="h-12 w-12 object-contain brightness-0 invert opacity-90" 
-                          alt="Vehicle" 
+                        <img
+                          src={availableVehicleIcon || CarIcon}
+                          className="h-12 w-12 object-contain brightness-0 invert opacity-90"
+                          alt="Vehicle"
                         />
                       </div>
                       <div className="absolute -left-2 bottom-0 h-16 w-16 overflow-hidden rounded-full border-[4px] border-white shadow-2xl bg-slate-200">
-                         <img 
-                          src={`https://ui-avatars.com/api/?name=${(driver.name || "VK").replace(' ','+')}&background=cbd5e1&color=0f172a`}
-                          className="h-full w-full object-cover" 
-                          alt="Driver" 
+                        <img
+                          src={`https://ui-avatars.com/api/?name=${(driver.name || "VK").replace(' ', '+')}&background=cbd5e1&color=0f172a`}
+                          className="h-full w-full object-cover"
+                          alt="Driver"
                         />
                       </div>
                     </div>
@@ -1236,7 +1235,7 @@ const SearchingDriver = () => {
                       <Phone size={18} className="text-slate-900" strokeWidth={2.5} />
                       <span className="text-[13px] font-black text-slate-900 uppercase tracking-widest leading-none">Call</span>
                     </motion.button>
-                     <motion.button
+                    <motion.button
                       whileTap={{ scale: 0.96 }}
                       onClick={() => navigate(`${routePrefix}/ride/chat`, { state: { driver } })}
                       className="flex items-center justify-center gap-3 rounded-[22px] bg-slate-950 py-4.5 shadow-[0_12px_24px_rgba(15,23,42,0.15)] active:shadow-none"

@@ -101,20 +101,46 @@ const RideComplete = () => {
 
   const routeHome = location.pathname.startsWith('/taxi/user') ? '/taxi/user' : '/';
   const rideId = state.rideId || '';
-  const fare = Number(state.fare || 22);
-  const paymentMethod = state.paymentMethod || 'Cash';
+
+  const [rideDetails, setRideDetails] = useState({
+    fare: Number(state.fare || 22),
+    baseFare: Number(
+      state?.baseFare ??
+      (state?.fare ? (state.fare - (state.waitingChargeAmount || 0) - (state.timeChargeAmount || 0) - (state.distanceChargeAmount || 0) - (state.additionalCharge || 0)) : null) ??
+      0
+    ),
+    waitingChargeAmount: Number(state?.waitingChargeAmount || 0),
+    distanceChargeAmount: Number(state?.distanceChargeAmount || 0),
+    timeChargeAmount: Number(state?.timeChargeAmount || 0),
+    additionalCharge: Number(state?.additionalCharge || 0),
+    adminExtraCharge: state?.adminExtraCharge || null,
+    paymentMethod: state.paymentMethod || 'Cash',
+    pickup: state.pickup || 'Pickup',
+    drop: state.drop || 'Drop',
+    driver: state.driver || {
+      name: 'Captain',
+      rating: '4.9',
+      vehicle: (String(state.serviceType || state.type || 'ride').toLowerCase() === 'parcel') ? 'Delivery' : 'Taxi',
+      plate: 'Assigned',
+      profileImage: '',
+      vehicleImage: '',
+    }
+  });
+
+  const fare = rideDetails.fare;
+  const baseFare = rideDetails.baseFare;
+  const waitingChargeAmount = rideDetails.waitingChargeAmount;
+  const distanceChargeAmount = rideDetails.distanceChargeAmount;
+  const timeChargeAmount = rideDetails.timeChargeAmount;
+  const additionalCharge = rideDetails.additionalCharge;
+  const adminExtraChargeAmount = Number(rideDetails.adminExtraCharge?.amount || 0);
+  const totalBill = baseFare + waitingChargeAmount + distanceChargeAmount + timeChargeAmount + additionalCharge + adminExtraChargeAmount + Number(selectedTip || 0);
+  const paymentMethod = rideDetails.paymentMethod;
   const paymentMethodLabel = PAYMENT_OPTIONS.find((option) => option.id === selectedPaymentMethod)?.label || paymentMethod;
-  const pickup = state.pickup || 'Pickup';
-  const drop = state.drop || 'Drop';
+  const pickup = rideDetails.pickup;
+  const drop = rideDetails.drop;
   const serviceType = String(state.serviceType || state.type || 'ride').toLowerCase();
-  const driver = state.driver || {
-    name: 'Captain',
-    rating: '4.9',
-    vehicle: serviceType === 'parcel' ? 'Delivery' : 'Taxi',
-    plate: 'Assigned',
-    profileImage: '',
-    vehicleImage: '',
-  };
+  const driver = rideDetails.driver;
 
   const driverImage = driver.profileImage || '';
   const vehicleLabel = driver.vehicle || driver.vehicleType || (serviceType === 'parcel' ? 'Delivery' : 'Taxi');
@@ -123,9 +149,8 @@ const RideComplete = () => {
     ...driver,
     vehicleIconUrl: driver.vehicleIconUrl || state.vehicleIconUrl || state.vehicle?.vehicleIconUrl || state.vehicle?.icon || '',
   });
-  const totalBill = fare + Number(selectedTip || 0);
-  const fareDueNow = isCollectionPaid(paymentCollection) ? 0 : fare;
-  const payableNow = fareDueNow + Number(selectedTip || 0);
+  const fareDueNow = isCollectionPaid(paymentCollection) ? 0 : totalBill;
+  const payableNow = fareDueNow;
   const isRideFinalized = ['completed', 'delivered'].includes(rideLiveStatus) || Boolean(state.feedback?.submittedAt);
   const tipsEnabled = String(tipSettings.enable_tips || '1') === '1';
   const minimumTipAmount = Number(tipSettings.min_tip_amount || 0);
@@ -171,12 +196,38 @@ const RideComplete = () => {
       try {
         const response = await api.get(`/rides/${rideId}`);
         const payload = response?.data?.data || response?.data || response || {};
+        console.log("RIDE_COMPLETE_PAYLOAD:", JSON.stringify(payload, null, 2));
         const feedback = payload?.feedback || null;
         const nextLiveStatus = String(payload?.liveStatus || payload?.status || '').toLowerCase();
 
         if (active) {
           setPaymentCollection(payload?.driverPaymentCollection || null);
           setRideLiveStatus(nextLiveStatus);
+          const waitAmt = Number(payload.waitingChargeAmount ?? state.waitingChargeAmount ?? 0);
+          const distAmt = Number(payload.distanceChargeAmount ?? state.distanceChargeAmount ?? 0);
+          const timeAmt = Number(payload.timeChargeAmount ?? state.timeChargeAmount ?? 0);
+          const addAmt = Number(payload.additionalCharge ?? state.additionalCharge ?? 0);
+          const resolvedBase = Number(
+            payload.baseFare ??
+            (payload.fare ? (payload.fare - waitAmt - distAmt - timeAmt - addAmt) : null) ??
+            state.baseFare ??
+            (state.fare ? (state.fare - waitAmt - distAmt - timeAmt - addAmt) : null) ??
+            0
+          );
+
+          setRideDetails({
+            fare: Number(payload.fare ?? state.fare ?? 22),
+            baseFare: resolvedBase,
+            waitingChargeAmount: waitAmt,
+            distanceChargeAmount: distAmt,
+            timeChargeAmount: timeAmt,
+            additionalCharge: addAmt,
+            adminExtraCharge: payload.adminExtraCharge ?? state.adminExtraCharge ?? null,
+            paymentMethod: payload.paymentMethod || state.paymentMethod || 'Cash',
+            pickup: payload.pickupAddress || state.pickup || 'Pickup',
+            drop: payload.dropAddress || state.drop || 'Drop',
+            driver: payload.driver || state.driver || null,
+          });
         }
 
         if (!active || !feedback) {
@@ -568,8 +619,38 @@ const RideComplete = () => {
             <div className="rounded-[18px] border border-slate-100 bg-white p-3">
               <div className="flex items-center justify-between">
                 <span className="text-[12px] font-bold text-slate-500">Base fare</span>
-                <span className="text-[13px] font-black text-slate-900">Rs {fare.toFixed(2)}</span>
+                <span className="text-[13px] font-black text-slate-900">Rs {baseFare.toFixed(2)}</span>
               </div>
+              {waitingChargeAmount > 0 && (
+                <div className="mt-2 flex items-center justify-between">
+                  <span className="text-[12px] font-bold text-slate-500">Wait time charge</span>
+                  <span className="text-[13px] font-black text-slate-900">Rs {waitingChargeAmount.toFixed(2)}</span>
+                </div>
+              )}
+              {timeChargeAmount > 0 && (
+                <div className="mt-2 flex items-center justify-between">
+                  <span className="text-[12px] font-bold text-slate-500">Ride time charge</span>
+                  <span className="text-[13px] font-black text-slate-900">Rs {timeChargeAmount.toFixed(2)}</span>
+                </div>
+              )}
+              {distanceChargeAmount > 0 && (
+                <div className="mt-2 flex items-center justify-between">
+                  <span className="text-[12px] font-bold text-slate-500">Extra distance charge</span>
+                  <span className="text-[13px] font-black text-slate-900">Rs {distanceChargeAmount.toFixed(2)}</span>
+                </div>
+              )}
+              {additionalCharge > 0 && (
+                <div className="mt-2 flex items-center justify-between">
+                  <span className="text-[12px] font-bold text-slate-500">Additional charge</span>
+                  <span className="text-[13px] font-black text-slate-900">Rs {additionalCharge.toFixed(2)}</span>
+                </div>
+              )}
+              {adminExtraChargeAmount > 0 && (
+                <div className="mt-2 flex items-center justify-between text-amber-700 font-bold">
+                  <span>Extra charge ({rideDetails.adminExtraCharge?.reason || 'Admin extra'})</span>
+                  <span>Rs {adminExtraChargeAmount.toFixed(2)}</span>
+                </div>
+              )}
               <div className="mt-2 flex items-center justify-between">
                 <span className="text-[12px] font-bold text-slate-500">Tip</span>
                 <span className="text-[13px] font-black text-slate-900">Rs {Number(selectedTip || 0).toFixed(2)}</span>
@@ -610,11 +691,10 @@ const RideComplete = () => {
                       setError('');
                     }}
                     disabled={!tipsEnabled && amount > 0}
-                    className={`rounded-full border px-4 py-2 text-[11px] font-black transition-all ${
-                      selectedTip === amount
-                        ? 'border-primary-orange/50 bg-primary-orange/50 text-white shadow-[0_8px_18px_rgba(249,115,22,0.24)]'
-                        : 'border-slate-100 bg-slate-50 text-slate-600'
-                    } ${!tipsEnabled && amount > 0 ? 'cursor-not-allowed opacity-50' : ''}`}
+                    className={`rounded-full border px-4 py-2 text-[11px] font-black transition-all ${selectedTip === amount
+                      ? 'border-primary-orange/50 bg-primary-orange/50 text-white shadow-[0_8px_18px_rgba(249,115,22,0.24)]'
+                      : 'border-slate-100 bg-slate-50 text-slate-600'
+                      } ${!tipsEnabled && amount > 0 ? 'cursor-not-allowed opacity-50' : ''}`}
                   >
                     {amount === 0 ? 'No tip' : `Rs ${amount}`}
                   </button>
@@ -636,11 +716,10 @@ const RideComplete = () => {
                   setError('');
                 }}
                 disabled={isSubmitted}
-                className={`flex h-11 w-11 items-center justify-center rounded-[12px] transition-all ${
-                  rating >= value
-                    ? 'bg-primary-orange/50 shadow-[0_10px_20px_rgba(249,115,22,0.24)]'
-                    : 'bg-slate-100'
-                } ${isSubmitted ? 'cursor-default' : ''}`}
+                className={`flex h-11 w-11 items-center justify-center rounded-[12px] transition-all ${rating >= value
+                  ? 'bg-primary-orange/50 shadow-[0_10px_20px_rgba(249,115,22,0.24)]'
+                  : 'bg-slate-100'
+                  } ${isSubmitted ? 'cursor-default' : ''}`}
               >
                 <Star size={19} className={rating >= value ? 'fill-white text-white' : 'text-slate-300'} />
               </button>
@@ -677,7 +756,7 @@ const RideComplete = () => {
                 ? 'Feedback already saved'
                 : !isRideFinalized
                   ? 'Waiting for driver to finalize trip'
-                : 'Submit rating'}
+                  : 'Submit rating'}
             <ChevronRight size={16} />
           </button>
 

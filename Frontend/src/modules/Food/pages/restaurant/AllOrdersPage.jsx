@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { useNavigate } from "react-router-dom"
+import { useNavigate, useLocation } from "react-router-dom"
 import useRestaurantBackNavigation from "@food/hooks/useRestaurantBackNavigation"
 import {
   ArrowLeft,
@@ -14,11 +14,13 @@ import {
   X,
 } from "lucide-react"
 import { DateRangeCalendar } from "@food/components/ui/date-range-calendar"
-import { restaurantAPI } from "@food/api"
+import api, { restaurantAPI } from "@food/api"
 import { useRestaurantNotifications } from "@food/hooks/useRestaurantNotifications"
-const debugLog = (...args) => {}
-const debugWarn = (...args) => {}
-const debugError = (...args) => {}
+import { printZomatoInvoice } from "@food/utils/printZomatoInvoice"
+import { Download } from "lucide-react"
+const debugLog = (...args) => { }
+const debugWarn = (...args) => { }
+const debugError = (...args) => { }
 
 const formatMoney = (value) => `₹${Number(value || 0).toFixed(2)}`
 
@@ -119,6 +121,7 @@ const filterOptions = {
 
 export default function AllOrdersPage() {
   const navigate = useNavigate()
+  const location = useLocation()
   const goBack = useRestaurantBackNavigation()
   const [searchQuery, setSearchQuery] = useState("")
   const [showCalendar, setShowCalendar] = useState(false)
@@ -127,7 +130,7 @@ export default function AllOrdersPage() {
   const [startDate, setStartDate] = useState(currentWeekDates.start)
   const [endDate, setEndDate] = useState(currentWeekDates.end)
   const calendarRef = useRef(null)
-  
+
   // Filter states
   const [showFilterPopup, setShowFilterPopup] = useState(false)
   const [activeFilterCategory, setActiveFilterCategory] = useState("Order status")
@@ -140,16 +143,31 @@ export default function AllOrdersPage() {
     complaints: [],
     orderType: []
   })
-  
+
   // Toast state
   const [showToast, setShowToast] = useState(false)
-  
+
   // Real data states
   const [orders, setOrders] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [restaurantData, setRestaurantData] = useState(null)
   const { newOrder } = useRestaurantNotifications()
+
+  // Pre-apply status filter from URL query param (?status=delivered)
+  useEffect(() => {
+    const params = new URLSearchParams(location.search)
+    const statusParam = params.get('status')
+    if (statusParam) {
+      // Map URL param to filter id
+      const validStatuses = ['preparing', 'ready', 'out-for-delivery', 'delivered', 'rejected', 'cancelled']
+      const statusList = statusParam.split(',').filter(s => validStatuses.includes(s))
+      if (statusList.length > 0) {
+        setFilters(prev => ({ ...prev, orderStatus: statusList }))
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   // Fetch restaurant data
   useEffect(() => {
@@ -175,7 +193,7 @@ export default function AllOrdersPage() {
     const createdAt = new Date(order.createdAt)
     const date = createdAt.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
     const time = createdAt.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })
-    
+
     // Format address (backend: deliveryAddress)
     const addr = order.deliveryAddress || order.address || null
     const address =
@@ -183,20 +201,20 @@ export default function AllOrdersPage() {
       addr?.address ||
       (addr?.street ? `${addr.street}, ${addr.city || ""}`.trim() : "") ||
       "Address not available"
-    
+
     // Get restaurant name
     const restaurantName = restaurantData?.name || order.restaurantId?.name || 'Restaurant'
-    
+
     // Get customer name
     const customerName = order.userId?.name || order.customerName || 'Customer'
-    
+
     // Format items
     const items = (order.items || []).map(item => ({
       name: item.name || 'Item',
       quantity: item.quantity || 1,
       price: item.price || 0
     }))
-    
+
     // Determine status (backend: orderStatus)
     let status = (order.orderStatus || order.status || "created").toUpperCase()
     if (status === 'CANCELLED') status = 'CANCELLED'
@@ -205,7 +223,7 @@ export default function AllOrdersPage() {
     else if (status === 'PREPARING') status = 'PREPARING'
     else if (status === 'READY') status = 'READY'
     else if (status === 'OUT_FOR_DELIVERY' || status === 'OUT FOR DELIVERY') status = 'OUT FOR DELIVERY'
-    
+
     // Get rejection/cancellation reason
     let reason = null
     if (status === 'REJECTED' && order.rejectionReason) {
@@ -217,7 +235,7 @@ export default function AllOrdersPage() {
     } else if (status === 'CANCELLED') {
       reason = 'Cancelled by customer'
     }
-    
+
     // Determine tags based on order properties
     const tags = []
     if (order.scheduledAt) tags.push('SCHEDULED')
@@ -226,7 +244,7 @@ export default function AllOrdersPage() {
     // Check if all items are veg
     const allVeg = items.every(item => item.isVeg !== false)
     if (allVeg && items.length > 0) tags.push('VEG ONLY')
-    
+
     return {
       id: order.orderId || order._id?.toString() || '',
       status,
@@ -240,7 +258,8 @@ export default function AllOrdersPage() {
       reason,
       tags: tags.length > 0 ? tags : undefined,
       createdAt: order.createdAt,
-      mongoId: order._id?.toString()
+      mongoId: order._id?.toString(),
+      rawOrder: order
     }
   }, [restaurantData])
 
@@ -250,20 +269,20 @@ export default function AllOrdersPage() {
       try {
         setLoading(true)
         setError(null)
-        
+
         // Build query params
         const params = {
           page: 1,
           limit: 1000 // Get all orders, we'll filter by date on frontend
         }
-        
+
         // Fetch all orders (we'll filter by date range on frontend)
         const response = await restaurantAPI.getOrders(params)
-        
+
         if (response.data?.success && response.data.data?.orders) {
           // Transform orders
           const transformedOrders = response.data.data.orders.map(transformOrder)
-          
+
           // Filter by date range
           const filteredByDate = transformedOrders.filter(order => {
             if (!order.createdAt) return false
@@ -274,7 +293,7 @@ export default function AllOrdersPage() {
             end.setHours(23, 59, 59, 999)
             return orderDate >= start && orderDate <= end
           })
-          
+
           setOrders(filteredByDate)
         } else {
           setOrders([])
@@ -290,7 +309,7 @@ export default function AllOrdersPage() {
         setLoading(false)
       }
     }
-    
+
     fetchOrders()
   }, [startDate, endDate, transformOrder])
 
@@ -371,10 +390,35 @@ export default function AllOrdersPage() {
     setTimeout(() => setShowToast(false), 2000)
   }
 
+  const handleDownloadInvoice = async (order, e) => {
+    e.stopPropagation()
+    try {
+      let termsHtml = ""
+      try {
+        let response = await api.get("/food/pages/terms")
+        if (response.data?.success && response.data?.data?.content) {
+          termsHtml = response.data.data.content
+        } else {
+          response = await api.get("/food/admin/pages-social-media/terms")
+          if (response.data?.success && response.data?.data?.content) {
+             termsHtml = response.data.data.content
+          }
+        }
+      } catch (err) {
+        debugWarn("Failed to fetch terms", err)
+      }
+
+      printZomatoInvoice(order.rawOrder || order, restaurantData?.name || "Restaurant", termsHtml)
+    } catch (err) {
+      debugError("Failed to generate invoice", err)
+      alert("Failed to generate invoice")
+    }
+  }
+
   const handleFilterToggle = (option) => {
     const key = option.key
     const value = option.id
-    
+
     // For ratings, only allow one selection (radio button behavior)
     if (key === "ratings") {
       setFilters(prev => ({
@@ -483,7 +527,7 @@ export default function AllOrdersPage() {
       <div className="bg-white border-b border-gray-200 px-4 py-3 sticky top-0 z-50">
         <div className="flex items-center gap-3">
           <button
-            onClick={goBack}
+            onClick={() => { if (location.state?.from?.includes('/analytics')) { navigate('/food/restaurant/analytics'); } else { goBack(); } }}
             className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors"
             aria-label="Go back"
           >
@@ -523,11 +567,10 @@ export default function AllOrdersPage() {
           </div>
           <button
             onClick={() => setShowFilterPopup(true)}
-            className={`p-2.5 border rounded-lg transition-colors relative ${
-              hasActiveFilters() 
-                ? 'bg-blue-50 border-blue-500 hover:bg-blue-100' 
-                : 'bg-gray-50 border-gray-200 hover:bg-gray-100'
-            }`}
+            className={`p-2.5 border rounded-lg transition-colors relative ${hasActiveFilters()
+              ? 'bg-blue-50 border-blue-500 hover:bg-blue-100'
+              : 'bg-gray-50 border-gray-200 hover:bg-gray-100'
+              }`}
             aria-label="Filter"
           >
             <Filter className={`w-5 h-5 ${hasActiveFilters() ? 'text-blue-600' : 'text-gray-900'}`} />
@@ -558,7 +601,7 @@ export default function AllOrdersPage() {
       {/* Active Filters Summary */}
       {hasActiveFilters() && (
         <div className="px-4 pb-2">
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             className="bg-blue-50 border border-blue-200 rounded-lg p-3 flex items-center justify-between"
@@ -589,7 +632,7 @@ export default function AllOrdersPage() {
             </div>
           </div>
         )}
-        
+
         {!loading && error && (
           <div className="text-center py-12 bg-white rounded-lg border border-gray-200">
             <div className="flex flex-col items-center gap-3">
@@ -598,7 +641,7 @@ export default function AllOrdersPage() {
             </div>
           </div>
         )}
-        
+
         {!loading && !error && (
           <AnimatePresence mode="popLayout">
             {filteredOrders.length === 0 ? (
@@ -611,85 +654,96 @@ export default function AllOrdersPage() {
                 </div>
               </div>
             ) : filteredOrders.map((order, index) => (
-            <motion.div
-              key={order.id}
-              layout
-              initial={{ opacity: 0, scale: 0.95, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: -20 }}
-              transition={{ 
-                duration: 0.3, 
-                delay: Math.min(index * 0.05, 0.3),
-                layout: { duration: 0.3 }
-              }}
-              onClick={() => navigate(`/restaurant/orders/${order.id}`)}
-              className="bg-white border border-gray-200 rounded-lg p-4 cursor-pointer hover:shadow-md transition-shadow"
-            >
-            {/* Status and Order ID Row */}
-            <div className="flex items-start justify-between mb-3">
-              <div className="flex items-center gap-2 flex-wrap">
-                <span className={`px-2.5 py-1 rounded text-xs font-bold ${getStatusColor(order.status)}`}>
-                  {order.status}
-                </span>
-                {order.tags && order.tags.map((tag, idx) => (
-                  <span key={idx} className="px-2.5 py-1 rounded text-xs font-bold bg-green-600 text-white">
-                    {tag}
-                  </span>
-                ))}
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-gray-500">{order.date}, {order.time}</span>
-                <ChevronRight className="w-4 h-4 text-gray-400" />
-              </div>
-            </div>
-
-            {/* Order ID */}
-            <div className="flex items-center gap-2 mb-2">
-              <span className="text-base font-bold text-gray-900">ID: {order.id}</span>
-              <button
-                onClick={(e) => handleCopyOrderId(order.id, e)}
-                className="p-1 hover:bg-gray-100 rounded transition-colors"
-                aria-label="Copy order ID"
+              <motion.div
+                key={order.id}
+                layout
+                initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: -20 }}
+                transition={{
+                  duration: 0.3,
+                  delay: Math.min(index * 0.05, 0.3),
+                  layout: { duration: 0.3 }
+                }}
+                onClick={() => navigate(`/restaurant/orders/${order.id}`)}
+                className="bg-white border border-gray-200 rounded-lg p-4 cursor-pointer hover:shadow-md transition-shadow"
               >
-                <Copy className="w-4 h-4 text-gray-500" />
-              </button>
-            </div>
-
-            {/* Restaurant Info */}
-            <p className="text-sm text-gray-900 mb-1">
-              {order.restaurant}, {order.address}
-            </p>
-
-            {/* Customer Info */}
-            <p className="text-sm text-gray-600 mb-3">
-              Ordered by {order.customer}
-            </p>
-
-            {/* Divider */}
-            <div className="border-t border-dashed border-gray-300 my-3"></div>
-
-            {/* Order Items */}
-            <div className="space-y-2">
-              {order.items.slice(0, 1).map((item, idx) => (
-                <div key={idx} className="flex items-center justify-between">
-                  <span className="text-sm text-gray-900">
-                    {item.quantity} x {item.name}
-                  </span>
-                  <span className="text-sm font-medium text-gray-900">{formatMoney(item.price)}</span>
+                {/* Status and Order ID Row */}
+                <div className="flex items-start justify-between mb-3">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className={`px-2.5 py-1 rounded text-xs font-bold ${getStatusColor(order.status)}`}>
+                      {order.status}
+                    </span>
+                    {order.tags && order.tags.map((tag, idx) => (
+                      <span key={idx} className="px-2.5 py-1 rounded text-xs font-bold bg-green-600 text-white">
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-gray-500">{order.date}, {order.time}</span>
+                    <ChevronRight className="w-4 h-4 text-gray-400" />
+                  </div>
                 </div>
-              ))}
-              {order.items.length > 1 && (
-                <p className="text-sm text-gray-500">+{order.items.length - 1} more items</p>
-              )}
-            </div>
 
-            {/* Reason/Status Message */}
-            {order.reason && (
-              <div className="mt-3 pt-3 border-t border-gray-200">
-                <p className="text-sm text-red-600">{order.reason}</p>
-              </div>
-            )}
-            </motion.div>
+                {/* Order ID */}
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-base font-bold text-gray-900">ID: {order.id}</span>
+                  <button
+                    onClick={(e) => handleCopyOrderId(order.id, e)}
+                    className="p-1 hover:bg-gray-100 rounded transition-colors"
+                    aria-label="Copy order ID"
+                  >
+                    <Copy className="w-4 h-4 text-gray-500" />
+                  </button>
+                </div>
+
+                {/* Restaurant Info */}
+                <p className="text-sm text-gray-900 mb-1">
+                  {order.restaurant}, {order.address}
+                </p>
+
+                {/* Customer Info */}
+                <p className="text-sm text-gray-600 mb-3">
+                  Ordered by {order.customer}
+                </p>
+
+                {/* Divider */}
+                <div className="border-t border-dashed border-gray-300 my-3"></div>
+
+                {/* Order Items */}
+                <div className="space-y-2">
+                  {order.items.slice(0, 1).map((item, idx) => (
+                    <div key={idx} className="flex items-center justify-between">
+                      <span className="text-sm text-gray-900">
+                        {item.quantity} x {item.name}
+                      </span>
+                      <span className="text-sm font-medium text-gray-900">{formatMoney(item.price)}</span>
+                    </div>
+                  ))}
+                  {order.items.length > 1 && (
+                    <p className="text-sm text-gray-500">+{order.items.length - 1} more items</p>
+                  )}
+                </div>
+
+                {/* Reason/Status Message */}
+                {order.reason && (
+                  <div className="mt-3 pt-3 border-t border-gray-200">
+                    <p className="text-sm text-red-600">{order.reason}</p>
+                  </div>
+                )}
+                
+                {/* Actions */}
+                <div className="mt-4 pt-3 border-t border-gray-100 flex justify-end">
+                  <button
+                    onClick={(e) => handleDownloadInvoice(order, e)}
+                    className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-md transition-colors border border-blue-200"
+                  >
+                    <Download className="w-4 h-4" />
+                    Invoice
+                  </button>
+                </div>
+              </motion.div>
             ))}
           </AnimatePresence>
         )}
@@ -745,11 +799,10 @@ export default function AllOrdersPage() {
                       key={option.label}
                       type="button"
                       onClick={() => handleDateRangeSelect(option)}
-                      className={`w-full flex items-center justify-between rounded-xl border px-4 py-3 text-left transition-colors ${
-                        isSelected
-                          ? "border-blue-500 bg-blue-50"
-                          : "border-gray-200 bg-white hover:bg-gray-50"
-                      }`}
+                      className={`w-full flex items-center justify-between rounded-xl border px-4 py-3 text-left transition-colors ${isSelected
+                        ? "border-blue-500 bg-blue-50"
+                        : "border-gray-200 bg-white hover:bg-gray-50"
+                        }`}
                     >
                       <div>
                         <p className="text-sm font-semibold text-gray-900 capitalize">{option.label}</p>
@@ -820,13 +873,13 @@ export default function AllOrdersPage() {
               className="fixed inset-0 bg-black/50 z-50"
               onClick={() => setShowFilterPopup(false)}
             />
-            
+
             {/* Filter Sheet */}
             <motion.div
               initial={{ y: "100%" }}
               animate={{ y: 0 }}
               exit={{ y: "100%" }}
-              transition={{ 
+              transition={{
                 type: "spring",
                 damping: 30,
                 stiffness: 300
@@ -863,11 +916,10 @@ export default function AllOrdersPage() {
                         setActiveFilterCategory(category.id)
                         setFilterSearch("")
                       }}
-                      className={`w-full px-2 py-3 text-left text-xs transition-colors border-b border-gray-200 ${
-                        activeFilterCategory === category.id
-                          ? 'bg-white text-gray-900 font-semibold border-2 border-l-black'
-                          : 'text-gray-600 hover:bg-gray-100'
-                      }`}
+                      className={`w-full px-2 py-3 text-left text-xs transition-colors border-b border-gray-200 ${activeFilterCategory === category.id
+                        ? 'bg-white text-gray-900 font-semibold border-2 border-l-black'
+                        : 'text-gray-600 hover:bg-gray-100'
+                        }`}
                     >
                       {category.label}
                     </button>
@@ -893,13 +945,13 @@ export default function AllOrdersPage() {
                   {/* Options List */}
                   <div className="flex-1 overflow-y-auto px-3 py-2">
                     {filterOptions[activeFilterCategory]
-                      ?.filter(option => 
+                      ?.filter(option =>
                         option.label.toLowerCase().includes(filterSearch.toLowerCase())
                       )
                       .map((option) => {
                         const isChecked = isFilterChecked(option)
                         const isRadio = activeFilterCategory === "Ratings"
-                        
+
                         return (
                           <label
                             key={option.id}
@@ -909,11 +961,10 @@ export default function AllOrdersPage() {
                               {isRadio ? (
                                 <div
                                   onClick={() => handleFilterToggle(option)}
-                                  className={`w-5 h-5 rounded-full border-2 cursor-pointer transition-all ${
-                                    isChecked 
-                                      ? 'border-blue-600 bg-white' 
-                                      : 'border-gray-300 bg-white'
-                                  }`}
+                                  className={`w-5 h-5 rounded-full border-2 cursor-pointer transition-all ${isChecked
+                                    ? 'border-blue-600 bg-white'
+                                    : 'border-gray-300 bg-white'
+                                    }`}
                                 >
                                   {isChecked && (
                                     <div className="w-full h-full rounded-full flex items-center justify-center">

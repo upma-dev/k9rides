@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
-import { CalendarClock, ChevronRight, Clock3, MapPin, ShieldCheck, User } from 'lucide-react';
+import { CalendarClock, ChevronRight, Clock3, MapPin, ShieldCheck, User, X } from 'lucide-react';
 import HeaderGreeting from '../components/HeaderGreeting';
 import ServiceGrid from '../components/ServiceGrid';
 import LocationMapSection from '../components/LocationMapSection';
@@ -191,6 +191,13 @@ const Home = () => {
   const location = useLocation();
   const { settings } = useSettings();
   const appName = settings.general?.app_name || 'App';
+  const isTaxi = window.location.pathname.includes('/taxi');
+  const theme = {
+    activeBg: isTaxi ? 'bg-[#2563eb]' : 'bg-[#d82c23]',
+    activeHex: isTaxi ? '#2563eb' : '#d82c23',
+    inactiveHex: isTaxi ? '#0c1428' : '#6e0d09',
+    containerHex: isTaxi ? '#111d3a' : '#9c1c16',
+  };
 
   const [currentRide, setCurrentRide] = useState(() => {
     const ride = getCurrentRide();
@@ -745,86 +752,80 @@ const Home = () => {
 
       <AnimatePresence>
         {currentRide && (
-          <Motion.button
-            type="button"
-            initial={{ y: 24, opacity: 0, scale: 0.96 }}
+          <Motion.div
+            initial={{ y: 32, opacity: 0, scale: 0.95 }}
             animate={{ y: 0, opacity: 1, scale: 1 }}
-            exit={{ y: 18, opacity: 0, scale: 0.96 }}
-            whileTap={{ scale: 0.98 }}
+            exit={{ y: 24, opacity: 0, scale: 0.95 }}
             onClick={() => navigate(trackingPath, { state: currentRide })}
-            className="fixed bottom-24 left-4 right-4 z-[60] mx-auto flex max-w-[calc(32rem-2rem)] items-center gap-3 rounded-[20px] border border-white/80 bg-white/95 px-4 py-3 text-left shadow-[0_12px_34px_rgba(15,23,42,0.16)] backdrop-blur-xl"
+            className="fixed bottom-28 left-4 right-4 z-[60] mx-auto flex max-w-[calc(32rem-2rem)] items-center justify-between rounded-[28px] border border-slate-100 bg-white p-4 pr-5 text-left shadow-[0_16px_40px_rgba(15,23,42,0.12)] backdrop-blur-xl cursor-pointer hover:bg-slate-50/80 transition-all duration-200"
           >
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[14px] bg-slate-900 shadow-lg">
-              <img src={currentRideIcon} alt={vehicleLabel} className="h-8 w-8 object-contain" draggable={false} />
-            </div>
-            <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-1.5">
-                <span className="h-2 w-2 rounded-full bg-primary-orange/50 animate-pulse" />
-                <p className="text-[9px] font-black uppercase tracking-[0.22em] text-accent-orange">
-                  {isScheduledAcceptedRide
-                    ? 'Scheduled ride ready'
-                    : serviceType === 'parcel'
-                      ? 'Parcel in progress'
-                      : serviceType === 'rental'
-                        ? (rideStage === 'end_requested' ? 'Rental end review' : 'Rental in progress')
-                        : 'Current Ride'}
+            {/* Left side: Icon + Info */}
+            <div className="flex items-center gap-3.5 min-w-0">
+              {/* Icon Container with dynamic theme opacity background */}
+              <div 
+                className="flex h-16 w-16 shrink-0 items-center justify-center rounded-[22px] border"
+                style={{ 
+                  backgroundColor: `${theme.activeHex}15`,
+                  borderColor: `${theme.activeHex}25` 
+                }}
+              >
+                <img 
+                  src={currentRideIcon} 
+                  alt={vehicleLabel} 
+                  className="h-10 w-10 object-contain" 
+                  style={{ filter: 'url(#remove-white)' }}
+                  draggable={false} 
+                />
+              </div>
+
+              {/* Title and Subtitle Status */}
+              <div className="min-w-0">
+                <h4 className="text-[16px] font-black text-slate-900 leading-tight tracking-tight">
+                  {serviceType === 'rental' 
+                    ? 'Rental booking' 
+                    : serviceType === 'parcel' 
+                      ? 'Parcel Delivery' 
+                      : 'K9 Rides'}
+                </h4>
+                <p 
+                  className="text-[12px] font-bold mt-1 flex items-center gap-0.5 leading-none"
+                  style={{ color: theme.activeHex }}
+                >
+                  {rideStageContextLabel}
+                  <ChevronRight size={12} className="stroke-[3]" />
                 </p>
               </div>
-              <p className="mt-0.5 truncate text-[14px] font-black leading-tight text-slate-900">
-                {rideStageContextLabel}
-              </p>
-              {isScheduledAcceptedRide ? (
-                <div className="mt-1 flex items-center gap-2 text-[10px] font-black text-slate-600">
-                  <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-1 text-emerald-700">
-                    <CalendarClock size={11} />
-                    {scheduledDateLabel}
-                  </span>
-                  {scheduledCountdown ? (
-                    <span className="rounded-full bg-slate-100 px-2 py-1 text-slate-700">
-                      {scheduledCountdown}
-                    </span>
-                  ) : null}
-                </div>
-              ) : null}
-              <div className="mt-1 flex min-w-0 items-center gap-1.5 text-[10px] font-bold text-slate-500">
-                <MapPin size={12} className="shrink-0 text-emerald-500" strokeWidth={2.5} />
-                <span className="truncate">{currentRide.pickup || 'Pickup location'}</span>
-              </div>
-              <div className="mt-0.5 flex min-w-0 items-center gap-1.5 text-[10px] font-bold text-slate-500">
-                <MapPin size={12} className="shrink-0 text-primary-orange/50" strokeWidth={2.5} />
-                <span className="truncate">{currentRide.drop || 'Drop location'}</span>
-              </div>
-              {serviceType === 'rental' ? (
-                <div className="mt-1 flex items-center gap-2 text-[10px] font-black text-slate-600">
-                  <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-1">
-                    <Clock3 size={11} className="text-slate-500" />
-                    {rentalTimerLabel}
-                  </span>
-                  <span className="rounded-full bg-emerald-50 px-2 py-1 text-emerald-700">
-                    Live charge Rs {rentalCurrentCharge.toFixed(0)}
-                  </span>
-                </div>
-              ) : isScheduledAcceptedRide ? (
-                <div className="mt-1 flex items-center gap-2 text-[10px] font-black text-slate-600">
-                  <span className="inline-flex items-center gap-1 rounded-full bg-sky-50 px-2 py-1 text-sky-700">
-                    <User size={11} />
-                    {driverName}
-                  </span>
-                  <span className="rounded-full bg-slate-100 px-2 py-1 text-slate-700">
-                    Live tracking unlocks soon
-                  </span>
-                </div>
-              ) : null}
             </div>
-            <div className="shrink-0 text-right flex flex-col items-end gap-1">
-              <p className="text-[11px] font-black text-slate-900 px-2 py-0.5 rounded-lg bg-slate-100">
-                Rs {Number(serviceType === 'rental' ? rentalCurrentCharge : currentRide.fare || 0).toFixed(0)}
-              </p>
-              <div className="mt-1 inline-flex h-8 w-8 items-center justify-center rounded-[12px] bg-slate-900 text-white shadow-md">
-                <ChevronRight size={18} strokeWidth={3} />
+
+            {/* Right side: Arriving Pill with Dismiss Close Button */}
+            <div className="relative shrink-0 flex items-center ml-3">
+              <div 
+                className="flex flex-col justify-center items-center rounded-[20px] text-white px-4 py-2.5 min-w-[95px] text-center shadow-lg"
+                style={{ 
+                  backgroundColor: theme.activeHex,
+                  boxShadow: `0 8px 20px ${theme.activeHex}35`
+                }}
+              >
+                <span className="text-[8px] font-extrabold uppercase tracking-widest opacity-90 leading-none">
+                  {rideStage === 'arrived' ? 'REACHED' : 'ARRIVING IN'}
+                </span>
+                <span className="text-[16px] font-black leading-tight mt-0.5">
+                  {rideStage === 'arrived' ? 'Now' : `${currentRide?.estimatedDurationMinutes || 5} min`}
+                </span>
               </div>
+
+              {/* Close / Dismiss Button */}
+              <button 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  persistCurrentRide(null); // Clear active ride representation
+                }}
+                className="absolute -top-1.5 -right-1.5 bg-white text-slate-400 hover:text-slate-600 rounded-full p-1 border border-slate-100 shadow-md hover:scale-105 active:scale-95 transition-transform"
+              >
+                <X size={10} className="stroke-[3]" />
+              </button>
             </div>
-          </Motion.button>
+          </Motion.div>
         )}
       </AnimatePresence>
 

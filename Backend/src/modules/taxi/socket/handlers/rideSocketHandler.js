@@ -110,7 +110,7 @@ export const registerRideSocketHandlers = ({ io, socket, onAsync }) => {
 
   socket.on(
     SOCKET_EVENTS.RIDE_STATUS_UPDATE,
-    onAsync(socket, async ({ rideId, status, paymentMethod }) => {
+    onAsync(socket, async ({ rideId, status, paymentMethod, fare, baseFare, waitingChargeAmount, distanceChargeAmount, timeChargeAmount, additionalCharge, driverPaymentCollection }) => {
       if (socket.auth.role !== 'driver') {
         throw new Error('Only drivers can update ride status');
       }
@@ -126,6 +126,13 @@ export const registerRideSocketHandlers = ({ io, socket, onAsync }) => {
         driverId: socket.auth.sub,
         nextStatus: status,
         paymentMethod,
+        fare,
+        baseFare,
+        waitingChargeAmount,
+        distanceChargeAmount,
+        timeChargeAmount,
+        additionalCharge,
+        driverPaymentCollection,
       });
       const populatedRide = await getRideDetails(rideId);
 
@@ -137,6 +144,10 @@ export const registerRideSocketHandlers = ({ io, socket, onAsync }) => {
         arrivedAt: populatedRide.arrivedAt,
         startedAt: populatedRide.startedAt,
         completedAt: populatedRide.completedAt,
+        waitingChargeAmount: populatedRide.waitingChargeAmount || 0,
+        distanceChargeAmount: populatedRide.distanceChargeAmount || 0,
+        timeChargeAmount: populatedRide.timeChargeAmount || 0,
+        otp: populatedRide.otp || '',
       };
 
       io.to(getRideRoom(rideId)).emit(SOCKET_EVENTS.RIDE_STATUS_UPDATED, payload);

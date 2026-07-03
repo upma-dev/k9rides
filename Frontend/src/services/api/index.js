@@ -532,6 +532,12 @@ export const adminAPI = {
       { isActive: isActive !== false },
       { contextModule: "admin" },
     ),
+  updateCustomerCodBlockStatus: (id, isBlockedFromCOD) =>
+    apiClient.patch(
+      `/food/admin/customers/${String(id)}/cod-block`,
+      { isBlockedFromCOD: Boolean(isBlockedFromCOD) },
+      { contextModule: "admin" },
+    ),
   /** Orders (admin) – list, get by id, assign delivery partner */
   getOrders: (params = {}) =>
     apiClient.get("/food/admin/orders", {
@@ -911,6 +917,8 @@ export const adminAPI = {
     // Add files
     if (files.logo) formData.append("logo", files.logo);
     if (files.favicon) formData.append("favicon", files.favicon);
+    if (files.restaurantLogo) formData.append("restaurantLogo", files.restaurantLogo);
+    if (files.deliveryPartnerLogo) formData.append("deliveryPartnerLogo", files.deliveryPartnerLogo);
 
     return apiClient.patch(API_ENDPOINTS.ADMIN.BUSINESS_SETTINGS, formData, {
       headers: { "Content-Type": "multipart/form-data" },
@@ -1383,6 +1391,8 @@ export const restaurantAPI = {
   /** Public: get single approved restaurant by id or slug */
   getRestaurantById: (id, config = {}) =>
     apiClient.get(`/food/restaurant/restaurants/${String(id)}`, { ...config }),
+  getReviews: (id, config = {}) =>
+    apiClient.get(`/food/restaurant/restaurants/${String(id)}/reviews`, { ...config }),
   /** Public: get approved menu by restaurant id or slug */
   getMenuByRestaurantId: (id, config = {}) =>
     getPublicRestaurantMenuOnce(id, config),

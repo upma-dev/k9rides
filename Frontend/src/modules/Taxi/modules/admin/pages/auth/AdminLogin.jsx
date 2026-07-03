@@ -14,7 +14,7 @@ const AdminLogin = () => {
   const [otp, setOtp] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  
+
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -314,7 +314,7 @@ const AdminLogin = () => {
             />
           ) : (
             <div className="w-16 h-16 bg-primary rounded-2xl flex items-center justify-center text-white mb-4 shadow-xl">
-               <ShieldCheck size={32} />
+              <ShieldCheck size={32} />
             </div>
           )}
           <div className="flex items-center gap-2 px-4 py-2 bg-gray-50 rounded-full border border-gray-100">

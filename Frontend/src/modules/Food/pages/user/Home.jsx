@@ -37,6 +37,7 @@ import {
   Plus,
   Check,
   ChevronDown,
+  ChevronRight,
   Share2,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -2698,9 +2699,9 @@ export default function Home() {
           </h2>
           <Link
             to="/food/user/categories"
-            className="flex items-center gap-1.5 text-xs sm:text-sm font-medium text-gray-400 dark:text-gray-500 hover:text-gray-600 transition-colors">
+            className="flex items-center gap-1.5 text-xs sm:text-sm font-extrabold text-red-600 dark:text-red-500 hover:text-red-700 transition-colors">
             View All
-            <ArrowRightLeft className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
+            <ChevronRight className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
           </Link>
         </div>
       </section>
@@ -2725,7 +2726,7 @@ export default function Home() {
               className="flex-shrink-0 flex flex-col items-center gap-2.5 group transition-all duration-300 hover:-translate-y-1.5"
               style={{ animation: `fade-in-up 0.5s ease-out forwards ${index * 0.05}s`, opacity: 0 }}
             >
-              <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full overflow-hidden shadow-md border border-gray-150/80 dark:border-gray-800 bg-white dark:bg-[#1a1a1a] group-hover:border-[#ff6d00] group-hover:shadow-lg transition-all duration-300">
+              <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full overflow-hidden bg-white dark:bg-[#1a1a1a] transition-all duration-300">
                 <OptimizedImage
                   src={category.image}
                   alt={category.name}
@@ -2885,43 +2886,7 @@ export default function Home() {
             isCategoryStuck={isCategoryStuck}
           />
 
-          {/* ── TRUE VIEWPORT-STICKY SEARCH BAR ── */}
-          <div
-            className="sticky top-0 z-[70] transition-all duration-300 bg-gradient-to-r from-[#ff5100] to-[#b30707] px-4 py-3 shadow-[0_6px_24px_rgba(183,7,7,0.32)]"
-          >
-            <div
-              className="relative rounded-2xl flex items-center px-4 py-2.5 bg-white border border-transparent shadow-[0_4px_15px_rgba(0,0,0,0.06)] cursor-pointer active:scale-[0.99] transition-all duration-300 hover:shadow-[0_8px_20px_rgba(0,0,0,0.12)] group"
-              onClick={handleSearchFocus}
-              role="button"
-              tabIndex={0}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" || e.key === " ") {
-                  e.preventDefault();
-                  handleSearchFocus();
-                }
-              }}
-            >
-              <Search className="h-5 w-5 text-gray-400 mr-3 group-hover:text-[#ff6d00] group-hover:scale-110 transition-all duration-300" strokeWidth={2.2} />
-              <div className="flex-1 overflow-hidden relative h-5">
-                <AnimatePresence mode="wait">
-                  <motion.span
-                    key={placeholderIndex}
-                    initial={{ y: 15, opacity: 0 }}
-                    animate={{ y: 0, opacity: 1 }}
-                    exit={{ y: -15, opacity: 0 }}
-                    transition={{ duration: 0.25, ease: 'easeOut' }}
-                    className="absolute inset-0 text-sm font-semibold text-gray-500 truncate"
-                  >
-                    {placeholders?.[placeholderIndex] || 'Search for dishes, restaurants, cuisines...'}
-                  </motion.span>
-                </AnimatePresence>
-              </div>
-              <div className="bg-[#ff6d00]/5 p-2 rounded-full border border-[#ff6d00]/10 ml-2 group-hover:bg-[#ff6d00]/10 transition-all flex items-center justify-center hover:scale-105 active:scale-95 duration-200">
-                <Mic className="h-4 w-4 text-[#ff6d00]" strokeWidth={2.5} />
-              </div>
-            </div>
-          </div>
-          {/* ── END STICKY SEARCH BAR ── */}
+          {/* Search bar is now integrated inside HomeHeader to remain inside the orange container */}
 
           <PromoRow
             handleVegModeChange={handleVegModeChange}
@@ -3043,24 +3008,24 @@ export default function Home() {
                 setIsFilterOpen(true);
               }}
               className={`flex items-center gap-1.5 px-3.5 py-2 rounded-full border text-xs font-bold transition-all duration-300 hover:scale-105 active:scale-95 flex-shrink-0 ${sortBy
-                  ? "bg-[#FFF2EB] dark:bg-orange-950/20 border-[#EB590E] text-[#EB590E] shadow-sm"
-                  : "bg-white dark:bg-[#1a1a1a] border-gray-200 dark:border-gray-800 text-gray-750 dark:text-gray-300 hover:border-gray-300 dark:hover:border-gray-700"
+                  ? "bg-[#FFF2EB] dark:bg-orange-950/20 border-red-500 text-red-600 shadow-sm"
+                  : "bg-red-50/50 dark:bg-[#1a1a1a] border-red-200 dark:border-red-800 text-red-600 dark:text-red-500 hover:border-red-300 dark:hover:border-red-700"
                 }`}
             >
-              <SlidersHorizontal className="h-3.5 w-3.5" />
+              <SlidersHorizontal className="h-3.5 w-3.5 text-red-500" />
               <span>Sort {sortBy ? `(${sortBy})` : ''}</span>
-              <ChevronDown className="h-3 w-3 opacity-60" />
+              <ChevronDown className="h-3 w-3 text-red-500 opacity-60" />
             </button>
 
             {/* Rating 4+ Pill */}
             <button
               onClick={() => handleToggleHorizontalFilter("rating-4-plus")}
               className={`flex items-center gap-1.5 px-3.5 py-2 rounded-full border text-xs font-bold transition-all duration-300 hover:scale-105 active:scale-95 flex-shrink-0 ${activeFilters.has("rating-4-plus")
-                  ? "bg-[#FFF2EB] dark:bg-orange-950/20 border-[#EB590E] text-[#EB590E] shadow-sm"
-                  : "bg-white dark:bg-[#1a1a1a] border-gray-200 dark:border-gray-800 text-gray-755 dark:text-gray-300 hover:border-gray-300 dark:hover:border-gray-700"
+                  ? "bg-[#FFF2EB] dark:bg-orange-950/20 border-red-500 text-red-600 shadow-sm"
+                  : "bg-red-50/50 dark:bg-[#1a1a1a] border-red-200 dark:border-red-800 text-red-600 dark:text-red-500 hover:border-red-300 dark:hover:border-red-700"
                 }`}
             >
-              <Star className={`h-3.5 w-3.5 ${activeFilters.has("rating-4-plus") ? "fill-[#EB590E] text-[#EB590E]" : "text-gray-400"}`} />
+              <Star className={`h-3.5 w-3.5 ${activeFilters.has("rating-4-plus") ? "fill-red-500 text-red-500" : "text-red-500"}`} />
               <span>Rating 4.0+</span>
             </button>
 
@@ -3068,11 +3033,11 @@ export default function Home() {
             <button
               onClick={() => handleToggleHorizontalFilter("delivery-under-30")}
               className={`flex items-center gap-1.5 px-3.5 py-2 rounded-full border text-xs font-bold transition-all duration-300 hover:scale-105 active:scale-95 flex-shrink-0 ${activeFilters.has("delivery-under-30")
-                  ? "bg-[#FFF2EB] dark:bg-orange-950/20 border-[#EB590E] text-[#EB590E] shadow-sm"
-                  : "bg-white dark:bg-[#1a1a1a] border-gray-200 dark:border-gray-800 text-gray-755 dark:text-gray-300 hover:border-gray-300 dark:hover:border-gray-700"
+                  ? "bg-[#FFF2EB] dark:bg-orange-950/20 border-red-500 text-red-600 shadow-sm"
+                  : "bg-red-50/50 dark:bg-[#1a1a1a] border-red-200 dark:border-red-800 text-red-600 dark:text-red-500 hover:border-red-300 dark:hover:border-red-700"
                 }`}
             >
-              <Clock className="h-3.5 w-3.5" />
+              <Clock className="h-3.5 w-3.5 text-red-500" />
               <span>Fast Delivery</span>
             </button>
 
@@ -3187,7 +3152,7 @@ export default function Home() {
                 {previouslyOrderedRestaurants.map((restaurant) => (
                   <div
                     key={`prev-ordered-${restaurant.mongoId || restaurant.id}`}
-                    className="w-48 sm:w-56 flex-shrink-0 flex flex-col bg-white dark:bg-[#1a1a1a] rounded-[24px] overflow-hidden border border-gray-150/70 dark:border-gray-800/80 shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-2 group"
+                    className="w-48 sm:w-56 flex-shrink-0 flex flex-col bg-white dark:bg-[#1a1a1a] rounded-[24px] overflow-hidden border border-gray-150/70 dark:border-gray-800/80 shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-2 group active:scale-[0.97]"
                   >
                     <Link to={`/user/restaurants/${restaurant.slug}`} className="block relative h-28 sm:h-32 bg-gray-50 overflow-hidden">
                       <RestaurantImageCarousel
@@ -3261,7 +3226,8 @@ export default function Home() {
                       initial={{ opacity: 0, y: 12 }}
                       whileInView={{ opacity: 1, y: 0 }}
                       viewport={{ once: true }}
-                      transition={{ duration: 0.35, delay: index * 0.05 }}>
+                      transition={{ duration: 0.35, delay: index * 0.05 }}
+                      whileTap={{ scale: 0.96 }}>
                       <Link
                         to={`/user/restaurants/${restaurantSlug}`}
                         className="block rounded-[20px] overflow-hidden border border-gray-100 dark:border-gray-800 bg-white dark:bg-[#1a1a1a] shadow-sm hover:shadow-md transition-shadow">
@@ -3397,7 +3363,7 @@ export default function Home() {
                         restaurantSlug ||
                         index
                       }
-                      className="h-full transform transition-all duration-300 hover:-translate-y-3 hover:scale-[1.02]"
+                      className="h-full transform transition-all duration-300 hover:-translate-y-3 hover:scale-[1.02] active:scale-[0.97]"
                       style={{
                         perspective: 1000,
                         animation:
@@ -3541,7 +3507,7 @@ export default function Home() {
                               {/* Featured Dish Badge - Top Left */}
                               <div className="absolute top-3 left-3 flex items-center z-10">
                                 <div className="bg-black/60 backdrop-blur-md text-white px-3.5 py-1 rounded-full text-[10px] font-black tracking-wide flex items-center shadow-lg border border-white/10">
-                                  {restaurant.featuredDish} @ ₹{restaurant.featuredPrice}
+                                  {restaurant.featuredDish} @ <span className="text-[#ff3d00] font-black ml-1">₹{restaurant.featuredPrice}</span>
                                 </div>
                               </div>
 
@@ -3602,11 +3568,16 @@ export default function Home() {
                                       )}
                                   </div>
                                 </div>
-                                <div className={`flex-shrink-0 ${Number(restaurant.rating) > 0 ? "bg-[#259539]" : "bg-gray-400"} text-white px-2.5 py-1 rounded-xl flex items-center gap-1 shadow-sm transform transition-transform duration-300 group-hover:scale-105`}>
-                                  <span className="text-xs sm:text-sm font-black tracking-tight">
-                                    {Number(restaurant.rating) > 0 ? Number(restaurant.rating).toFixed(1) : "NEW"}
-                                  </span>
-                                  {Number(restaurant.rating) > 0 && <Star className="h-3 w-3 fill-white text-white" strokeWidth={0} />}
+                                <div className="flex flex-col items-end gap-1 flex-shrink-0">
+                                  <div className={`${Number(restaurant.rating) > 0 ? "bg-[#259539]" : "bg-gray-400"} text-white px-2.5 py-1 rounded-xl flex items-center gap-1 shadow-sm transform transition-transform duration-300 group-hover:scale-105`}>
+                                    <span className="text-xs sm:text-sm font-black tracking-tight">
+                                      {Number(restaurant.rating) > 0 ? Number(restaurant.rating).toFixed(1) : "NEW"}
+                                    </span>
+                                    {Number(restaurant.rating) > 0 && <Star className="h-3 w-3 fill-white text-white" strokeWidth={0} />}
+                                  </div>
+                                  {restaurant.totalRatings > 0 && (
+                                    <span className="text-[9px] text-gray-455 dark:text-gray-400 font-bold">({restaurant.totalRatings} reviews)</span>
+                                  )}
                                 </div>
                               </div>
 
@@ -3623,8 +3594,8 @@ export default function Home() {
                                 </div>
                                 <span className="text-gray-300 dark:text-gray-700">•</span>
                                 <div className="flex items-center gap-1 font-bold">
-                                  <MapPin className="h-3.5 w-3.5 text-gray-400" strokeWidth={2} />
-                                  <span>{restaurant.distance}</span>
+                                  <MapPin className="h-3.5 w-3.5 text-red-600 dark:text-red-500" strokeWidth={2} />
+                                  <span className="text-red-600 dark:text-red-500">{restaurant.distance}</span>
                                 </div>
                               </div>
 

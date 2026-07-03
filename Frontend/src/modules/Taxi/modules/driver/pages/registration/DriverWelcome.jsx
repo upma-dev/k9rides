@@ -34,28 +34,28 @@ const DriverWelcome = () => {
     ];
 
     return (
-        <div 
+        <div
             className="min-h-screen bg-[linear-gradient(180deg,#f6efe4_0%,#fcfaf6_28%,#ffffff_100%)] select-none overflow-x-hidden"
             style={{ fontFamily: "'Plus Jakarta Sans', system-ui, sans-serif" }}
         >
             {/* Hero Section */}
             <header className="relative h-[48vh] overflow-hidden rounded-b-[3.5rem] shadow-2xl">
                 <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/40 to-transparent z-10" />
-                <img 
-                    src={DriverHero} 
-                    alt={`Drive with ${appName}`} 
+                <img
+                    src={DriverHero}
+                    alt={`Drive with ${appName}`}
                     className="w-full h-full object-cover scale-110"
                 />
-                
+
                 {/* Branding Top Overlay */}
                 <div className="absolute top-10 left-8 z-20">
-                     {appLogo ? (
-                         <img src={appLogo} alt={appName} className="h-10 drop-shadow-sm" />
-                     ) : (
-                         <div className="rounded-2xl bg-white px-4 py-2 text-sm font-black tracking-tighter text-slate-900 shadow-xl">
+                    {appLogo ? (
+                        <img src={appLogo} alt={appName} className="h-10 drop-shadow-sm" />
+                    ) : (
+                        <div className="rounded-2xl bg-white px-4 py-2 text-sm font-black tracking-tighter text-slate-900 shadow-xl">
                             {appName}
-                         </div>
-                     )}
+                        </div>
+                    )}
                 </div>
 
                 {/* Overlay Greeting */}
@@ -67,7 +67,7 @@ const DriverWelcome = () => {
                         className="space-y-4"
                     >
                         <div className="inline-flex items-center gap-2 rounded-full bg-white/10 backdrop-blur-md px-4 py-1.5 text-[10px] font-black uppercase tracking-[0.15em] text-amber-400 border border-white/10">
-                             <Sparkles size={12} strokeWidth={3} /> Captain Program
+                            <Sparkles size={12} strokeWidth={3} /> Captain Program
                         </div>
                         <h1 className="font-['Outfit'] text-[48px] font-black leading-[0.95] tracking-[-0.05em]">
                             Drive & <span className="text-amber-400">Earn Daily</span>
@@ -92,7 +92,7 @@ const DriverWelcome = () => {
                         <div className="flex -space-x-2">
                             {partnerAvatars.map((partner) => (
                                 <div key={partner.name} className="w-9 h-9 rounded-full border-2 border-white bg-slate-100 overflow-hidden shadow-sm">
-                                     <img src={partner.image} alt={partner.name} className="w-full h-full object-cover" />
+                                    <img src={partner.image} alt={partner.name} className="w-full h-full object-cover" />
                                 </div>
                             ))}
                             <div className="w-9 h-9 rounded-full border-2 border-white bg-slate-900 text-[10px] flex items-center justify-center text-white font-black shadow-lg">
@@ -100,7 +100,7 @@ const DriverWelcome = () => {
                             </div>
                         </div>
                     </div>
-                    
+
                     <div className="grid grid-cols-1 gap-5">
                         {perks.map((perk, index) => (
                             <motion.div
@@ -124,20 +124,20 @@ const DriverWelcome = () => {
 
                 <section className="bg-white rounded-[32px] p-6 shadow-[0_18px_50px_rgba(15,23,42,0.08)] border border-slate-100 relative overflow-hidden">
                     <div className="absolute top-0 right-0 p-4 text-emerald-50 opacity-20">
-                       <UserCheck size={80} />
+                        <UserCheck size={80} />
                     </div>
                     <div className="relative z-10 flex flex-col items-center text-center space-y-4">
                         <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
                             <Star size={24} fill="currentColor" />
                         </div>
                         <div className="space-y-2">
-                             <p className="text-sm font-medium text-slate-500 italic leading-relaxed px-2">
+                            <p className="text-sm font-medium text-slate-500 italic leading-relaxed px-2">
                                 "The payouts are always on time and the support team is incredible. This is the best decision I've made."
-                             </p>
-                             <div className="space-y-0.5">
-                                 <h5 className="text-[15px] font-semibold text-slate-900">Arjun Shinde</h5>
-                                 <p className="text-[11px] font-bold text-emerald-600 uppercase tracking-widest">Verified Captain • 5.0 Rating</p>
-                             </div>
+                            </p>
+                            <div className="space-y-0.5">
+                                <h5 className="text-[15px] font-semibold text-slate-900">Arjun Shinde</h5>
+                                <p className="text-[11px] font-bold text-emerald-600 uppercase tracking-widest">Verified Captain • 5.0 Rating</p>
+                            </div>
                         </div>
                     </div>
                 </section>
@@ -146,7 +146,7 @@ const DriverWelcome = () => {
             {/* Sticky Action Footer */}
             <div className="fixed bottom-0 left-0 right-0 p-8 bg-gradient-to-t from-slate-50 via-slate-50 to-transparent z-50">
                 <div className="mx-auto max-w-sm">
-                    <motion.button 
+                    <motion.button
                         whileHover={{ scale: 1.02, y: -2 }}
                         whileTap={{ scale: 0.98 }}
                         onClick={() => navigate('/taxi/driver/lang-select')}

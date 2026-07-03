@@ -3,6 +3,7 @@ import { Toaster } from 'sonner'
 import { StrictMode } from 'react'
 import { Provider as ReduxProvider } from 'react-redux'
 import { store } from './store'
+import { SettingsProvider } from '../modules/Taxi/shared/context/SettingsContext'
 
 function shouldUseHashRouter() {
   if (typeof window === 'undefined') return false
@@ -26,10 +27,13 @@ export function AppProviders({ children }) {
     <StrictMode>
       <ReduxProvider store={store}>
         <Router>
-          {children}
+          <SettingsProvider>
+            {children}
+          </SettingsProvider>
           <Toaster position="top-center" richColors offset="80px" closeButton />
         </Router>
       </ReduxProvider>
     </StrictMode>
   )
 }
+

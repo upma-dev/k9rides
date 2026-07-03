@@ -12,6 +12,12 @@ export const adminSidebarMenu = [
     icon: "CreditCard",
   },
   {
+    type: "link",
+    label: "Real Time Status",
+    path: "/admin/food/status-monitor",
+    icon: "MapPin",
+  },
+  {
     type: "section",
     label: "FOOD MANAGEMENT",
     items: [

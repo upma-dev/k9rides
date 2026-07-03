@@ -7,9 +7,9 @@ import { toast } from "sonner";
 import { deliveryAPI } from "@food/api";
 import { useCompanyName } from "@food/hooks/useCompanyName";
 import { getCachedSettings, loadBusinessSettings } from "@food/utils/businessSettings";
-const debugLog = (...args) => {}
-const debugWarn = (...args) => {}
-const debugError = (...args) => {}
+const debugLog = (...args) => { }
+const debugWarn = (...args) => { }
+const debugError = (...args) => { }
 
 
 const LS_KEY = "app:isOnline";
@@ -106,7 +106,7 @@ export default function FeedNavbar({ className = "" }) {
       localStorage.setItem(LS_KEY, JSON.stringify(isOnline));
       // Dispatch custom event for same-tab sync (storage event only works across tabs)
       window.dispatchEvent(new CustomEvent('onlineStatusChanged'));
-    } catch {}
+    } catch { }
   }, [isOnline]);
 
   // 3) Optional: sync across tabs/windows
@@ -125,15 +125,15 @@ export default function FeedNavbar({ className = "" }) {
   const showSingleToast = (isNowOnline) => {
     // Dismiss any existing toast with the same ID first
     toast.dismiss(TOAST_ID_KEY);
-    
+
     // Show new toast with a consistent ID to prevent duplicates and offset position
     if (isNowOnline) {
-      toast.success("You are now online", { 
+      toast.success("You are now online", {
         id: TOAST_ID_KEY,
         style: { marginTop: '80px' }
       });
     } else {
-      toast("You are now offline", { 
+      toast("You are now offline", {
         id: TOAST_ID_KEY,
         style: { marginTop: '80px' }
       });
@@ -147,7 +147,7 @@ export default function FeedNavbar({ className = "" }) {
     e?.stopPropagation?.();
 
     const next = !isOnline;
-    
+
     // Update state immediately for better UX
     setIsOnline(next);
     showSingleToast(next);
@@ -157,7 +157,7 @@ export default function FeedNavbar({ className = "" }) {
       // Try to get current location from localStorage or geolocation
       let latitude = null;
       let longitude = null;
-      
+
       // Check localStorage first
       try {
         const savedLocation = localStorage.getItem('deliveryBoyLastLocation');
@@ -165,13 +165,13 @@ export default function FeedNavbar({ className = "" }) {
           const location = JSON.parse(savedLocation);
           if (Array.isArray(location) && location.length === 2) {
             let [lat, lng] = location;
-            
+
             // Validate and check for coordinate swap
             if (typeof lat === 'number' && typeof lng === 'number' &&
-                lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180) {
+              lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180) {
               // Check if coordinates might be swapped (lat in lng range for India)
               const mightBeSwapped = (lat >= 68 && lat <= 98 && lng >= 8 && lng <= 38);
-              
+
               if (mightBeSwapped) {
                 debugWarn('?? Saved coordinates might be swapped in FeedNavbar - correcting:', {
                   original: [lat, lng],
@@ -187,7 +187,7 @@ export default function FeedNavbar({ className = "" }) {
       } catch (err) {
         debugWarn('Error reading location from localStorage:', err);
       }
-      
+
       // If no saved location, try to get current location
       if ((!latitude || !longitude) && navigator.geolocation) {
         try {
@@ -200,10 +200,10 @@ export default function FeedNavbar({ className = "" }) {
           });
           latitude = position.coords.latitude;
           longitude = position.coords.longitude;
-          
+
           // Validate coordinates
           if (typeof latitude !== 'number' || typeof longitude !== 'number' ||
-              latitude < -90 || latitude > 90 || longitude < -180 || longitude > 180) {
+            latitude < -90 || latitude > 90 || longitude < -180 || longitude > 180) {
             debugWarn('?? Invalid coordinates from geolocation:', { latitude, longitude });
             latitude = null;
             longitude = null;
@@ -212,15 +212,15 @@ export default function FeedNavbar({ className = "" }) {
           debugWarn('Could not get current location:', geoError);
         }
       }
-      
+
       // Update backend with location if available, otherwise just online status
-      if (latitude && longitude && 
-          latitude >= -90 && latitude <= 90 && 
-          longitude >= -180 && longitude <= 180) {
+      if (latitude && longitude &&
+        latitude >= -90 && latitude <= 90 &&
+        longitude >= -180 && longitude <= 180) {
         await deliveryAPI.updateLocation(latitude, longitude, next);
-        debugLog('? Online status and location updated in backend:', { 
-          isOnline: next, 
-          latitude, 
+        debugLog('? Online status and location updated in backend:', {
+          isOnline: next,
+          latitude,
           longitude,
           format: "lat, lng (correct order)"
         });
@@ -238,18 +238,18 @@ export default function FeedNavbar({ className = "" }) {
 
   // Help options with proper navigation paths
   const helpOptions = [
-    { 
-      id: "supportTickets", 
-      title: "Support tickets", 
-      subtitle: "Check status of tickets raised", 
-      icon: "ticket", 
+    {
+      id: "supportTickets",
+      title: "Support tickets",
+      subtitle: "Check status of tickets raised",
+      icon: "ticket",
       path: "/delivery/help/tickets"
     },
-    { 
-      id: "idCard", 
-      title: "Show ID card", 
-      subtitle: `See your ${companyName} ID card`, 
-      icon: "idCard", 
+    {
+      id: "idCard",
+      title: "Show ID card",
+      subtitle: `See your ${companyName} ID card`,
+      icon: "idCard",
       path: "/delivery/help/id-card"
     },
   ];
@@ -304,11 +304,11 @@ export default function FeedNavbar({ className = "" }) {
 
   // Emergency options with phone numbers from API
   const emergencyOptions = [
-    { 
-      id: "ambulance", 
-      title: "Medical Emergency", 
-      subtitle: "Call an ambulance", 
-      icon: "ambulance", 
+    {
+      id: "ambulance",
+      title: "Medical Emergency",
+      subtitle: "Call an ambulance",
+      icon: "ambulance",
       phone: emergencyNumbers.medicalEmergency,
       onClick: () => {
         const phoneToDial = normalizePhoneForDial(emergencyNumbers.medicalEmergency);
@@ -319,11 +319,11 @@ export default function FeedNavbar({ className = "" }) {
         }
       }
     },
-    { 
-      id: "accident", 
-      title: "Accident Helpline", 
-      subtitle: "Report an accident", 
-      icon: "accident", 
+    {
+      id: "accident",
+      title: "Accident Helpline",
+      subtitle: "Report an accident",
+      icon: "accident",
       phone: emergencyNumbers.accidentHelpline,
       onClick: () => {
         const phoneToDial = normalizePhoneForDial(emergencyNumbers.accidentHelpline);
@@ -334,11 +334,11 @@ export default function FeedNavbar({ className = "" }) {
         }
       }
     },
-    { 
-      id: "police", 
-      title: "Contact Police", 
-      subtitle: "Nearest police support", 
-      icon: "police", 
+    {
+      id: "police",
+      title: "Contact Police",
+      subtitle: "Nearest police support",
+      icon: "police",
       phone: emergencyNumbers.contactPolice,
       onClick: () => {
         const phoneToDial = normalizePhoneForDial(emergencyNumbers.contactPolice);
@@ -349,11 +349,11 @@ export default function FeedNavbar({ className = "" }) {
         }
       }
     },
-    { 
-      id: "insurance", 
-      title: "Insurance", 
-      subtitle: "Policy & claim help", 
-      icon: "insurance", 
+    {
+      id: "insurance",
+      title: "Insurance",
+      subtitle: "Policy & claim help",
+      icon: "insurance",
       phone: emergencyNumbers.insurance,
       onClick: () => {
         const phoneToDial = normalizePhoneForDial(emergencyNumbers.insurance);
@@ -382,10 +382,10 @@ export default function FeedNavbar({ className = "" }) {
         }
       } catch (error) {
         // Skip logging network and timeout errors (handled by axios interceptor)
-        if (error.code !== 'ECONNABORTED' && 
-            error.code !== 'ERR_NETWORK' && 
-            error.message !== 'Network Error' &&
-            !error.message?.includes('timeout')) {
+        if (error.code !== 'ECONNABORTED' &&
+          error.code !== 'ERR_NETWORK' &&
+          error.message !== 'Network Error' &&
+          !error.message?.includes('timeout')) {
           debugError("Error fetching profile image for navbar:", error);
         }
       }
@@ -399,7 +399,7 @@ export default function FeedNavbar({ className = "" }) {
     };
 
     window.addEventListener('deliveryProfileRefresh', handleProfileRefresh);
-    
+
     return () => {
       window.removeEventListener('deliveryProfileRefresh', handleProfileRefresh);
     };
@@ -407,82 +407,81 @@ export default function FeedNavbar({ className = "" }) {
 
   return (
     <>
-    <div className={`bg-white px-4 py-3 flex items-center justify-between sticky top-0 z-50 border-b border-gray-200 ${className}`}>
+      <div className={`bg-white px-4 py-3 flex items-center justify-between sticky top-0 z-50 border-b border-gray-200 ${className}`}>
         {/* Logo and Online/Offline Toggle */}
-      <div className="flex items-center gap-3">
-        {logoUrl && (
-          <img src={logoUrl} alt="Logo" className="h-8 w-auto object-contain" />
-        )}
-        <div className="relative" style={{ zIndex: 100 }}>
-          <button
-            onClick={handleToggle}
-            onTouchStart={(e) => e.stopPropagation()}
-            className="focus:outline-none relative cursor-pointer"
-            type="button"
-            role="switch"
+        <div className="flex items-center gap-3">
+          {logoUrl && (
+            <img src={logoUrl} alt="Logo" className="h-8 w-auto object-contain" />
+          )}
+          <div className="relative" style={{ zIndex: 100 }}>
+            <button
+              onClick={handleToggle}
+              onTouchStart={(e) => e.stopPropagation()}
+              className="focus:outline-none relative cursor-pointer"
+              type="button"
+              role="switch"
               aria-checked={isOnline}
               style={{ pointerEvents: "auto", zIndex: 100, WebkitTapHighlightColor: "transparent" }}
             >
               <div className={`relative w-20 h-8 rounded-full transition-colors duration-300 ${isOnline ? "bg-green-500" : "bg-gray-400"}`}>
-              <span
-                className={`text-[11px] font-bold text-white absolute top-1/2 -translate-y-1/2 whitespace-nowrap transition-all duration-300 ${
-                    isOnline ? "left-2" : "right-2"
-                }`}
-                style={{ opacity: 1, zIndex: 2, pointerEvents: "none" }}
-              >
+                <span
+                  className={`text-[11px] font-bold text-white absolute top-1/2 -translate-y-1/2 whitespace-nowrap transition-all duration-300 ${isOnline ? "left-2" : "right-2"
+                    }`}
+                  style={{ opacity: 1, zIndex: 2, pointerEvents: "none" }}
+                >
                   {isOnline ? "Online" : "Offline"}
-              </span>
+                </span>
 
-              <motion.div
-                className="absolute top-1 w-6 h-6 bg-white rounded-full shadow-lg"
+                <motion.div
+                  className="absolute top-1 w-6 h-6 bg-white rounded-full shadow-lg"
                   animate={{ x: isOnline ? 48 : 2 }}
-                transition={{ type: "spring", stiffness: 500, damping: 30 }}
-                style={{ pointerEvents: "none", zIndex: 10 }}
+                  transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                  style={{ pointerEvents: "none", zIndex: 10 }}
+                />
+              </div>
+            </button>
+          </div>
+        </div>
+
+        {/* Right Icons */}
+        <div className="flex items-center gap-3">
+          {/* Emergency */}
+          <button
+            onClick={() => setShowEmergencyPopup(true)}
+            className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center hover:bg-red-600 transition-colors relative"
+            title="Emergency"
+          >
+            <svg className="w-5 h-5 text-accent-orange" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+          </button>
+
+          {/* Help */}
+          <button
+            onClick={() => setShowHelpPopup(true)}
+            className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center hover:bg-gray-300 transition-colors"
+            title="Help"
+          >
+            <HelpCircle className="w-5 h-5 text-gray-700" />
+          </button>
+
+          {/* Profile */}
+          <button onClick={handleProfileClick} className="w-9 h-9 rounded-full overflow-hidden ring-2 ring-gray-300 flex items-center justify-center bg-gray-200" title="Profile">
+            {profileImage && !imageError ? (
+              <img
+                src={profileImage}
+                alt="Profile"
+                className="w-full h-full object-cover"
+                onError={() => {
+                  setImageError(true);
+                }}
               />
-            </div>
+            ) : (
+              <User className="w-5 h-5 text-gray-500" />
+            )}
           </button>
         </div>
       </div>
-
-      {/* Right Icons */}
-      <div className="flex items-center gap-3">
-        {/* Emergency */}
-        <button
-            onClick={() => setShowEmergencyPopup(true)}
-          className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center hover:bg-red-600 transition-colors relative"
-            title="Emergency"
-        >
-          <svg className="w-5 h-5 text-accent-orange" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-          </svg>
-        </button>
-
-        {/* Help */}
-        <button
-            onClick={() => setShowHelpPopup(true)}
-          className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center hover:bg-gray-300 transition-colors"
-            title="Help"
-        >
-          <HelpCircle className="w-5 h-5 text-gray-700" />
-        </button>
-
-        {/* Profile */}
-        <button onClick={handleProfileClick} className="w-9 h-9 rounded-full overflow-hidden ring-2 ring-gray-300 flex items-center justify-center bg-gray-200" title="Profile">
-          {profileImage && !imageError ? (
-            <img
-              src={profileImage}
-              alt="Profile"
-              className="w-full h-full object-cover"
-              onError={() => {
-                setImageError(true);
-              }}
-            />
-          ) : (
-            <User className="w-5 h-5 text-gray-500" />
-          )}
-        </button>
-      </div>
-    </div>
 
       {/* Help Popup */}
       <BottomPopup
@@ -493,7 +492,7 @@ export default function FeedNavbar({ className = "" }) {
         closeOnBackdropClick={true}
         maxHeight="70vh"
       >
-    <div className="py-2">
+        <div className="py-2">
           {helpOptions.map((option) => (
             <button
               key={option.id}

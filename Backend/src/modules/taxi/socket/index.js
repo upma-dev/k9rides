@@ -40,13 +40,7 @@ const onAsync = (socket, handler) => async (payload = {}) => {
   }
 };
 
-export const configureTaxiSocketServer = (httpServer) => {
-  const io = new Server(httpServer, {
-    cors: {
-      origin: env.corsOrigin === '*' ? true : env.corsOrigin.split(','),
-      credentials: true,
-    },
-  });
+export const configureTaxiSocketServer = (io) => {
 
   attachSocketAuth(io);
   setSocketServer(io);

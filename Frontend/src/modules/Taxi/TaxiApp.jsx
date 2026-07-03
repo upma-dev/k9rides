@@ -296,6 +296,7 @@ const AdminMapSettings = lazy(() => import('./modules/admin/pages/settings/MapSe
 const AdminMailSettings = lazy(() => import('./modules/admin/pages/settings/MailSettings'));
 const AdminNotificationChannels = lazy(() => import('./modules/admin/pages/settings/NotificationChannels'));
 const AdminDispatcherAddons = lazy(() => import('./modules/admin/pages/settings/DispatcherAddons'));
+const AdminLogoSettings = lazy(() => import('./modules/admin/pages/settings/LogoSettings'));
 const AdminCountryManagement = lazy(() => import('./modules/admin/pages/masters/CountryManagement'));
 const AdminSupportTicketTitle = lazy(() => import('./modules/admin/pages/support/TicketTitle'));
 const AdminSupportTickets = lazy(() => import('./modules/admin/pages/support/SupportTickets'));
@@ -656,7 +657,6 @@ function TaxiApp() {
 
   return (
     <>
-      <SettingsProvider>
         <RentalLocationTracker />
         <AppAutoUpdater />
         <ScrollToTop />
@@ -795,6 +795,10 @@ function TaxiApp() {
               <Route path="user" element={<UserHomeRoute taxiPrefixed />} />
 
               <Route element={<UserProtectedRoute />}>
+                <Route
+                  path="user/ride"
+                  element={<Navigate to="/taxi/user/ride/select-location" replace />}
+                />
                 <Route
                   path="user/ride/select-location"
                   element={<SelectLocation />}
@@ -1571,6 +1575,10 @@ function TaxiApp() {
                   element={<AdminCustomizationSettings />}
                 />
                 <Route
+                  path="settings/business/logos"
+                  element={<AdminLogoSettings />}
+                />
+                <Route
                   path="settings/business/transport-ride"
                   element={<AdminTransportRideSettings />}
                 />
@@ -1644,7 +1652,6 @@ function TaxiApp() {
             </Routes>
           </Suspense>
         </MainLayout>
-      </SettingsProvider>
     </>
   );
 }

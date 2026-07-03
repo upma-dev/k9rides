@@ -77,6 +77,20 @@ export async function updateBusinessSettings(req, res, next) {
                     publicId: faviconResult.public_id
                 };
             }
+            if (req.files.restaurantLogo) {
+                const logoResult = await uploadImageBufferDetailed(req.files.restaurantLogo[0].buffer, 'business/restaurantLogos');
+                settings.restaurantLogo = {
+                    url: logoResult.secure_url,
+                    publicId: logoResult.public_id
+                };
+            }
+            if (req.files.deliveryPartnerLogo) {
+                const logoResult = await uploadImageBufferDetailed(req.files.deliveryPartnerLogo[0].buffer, 'business/deliveryPartnerLogos');
+                settings.deliveryPartnerLogo = {
+                    url: logoResult.secure_url,
+                    publicId: logoResult.public_id
+                };
+            }
         }
 
         await settings.save();

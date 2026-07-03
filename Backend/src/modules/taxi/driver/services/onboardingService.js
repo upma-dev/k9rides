@@ -497,11 +497,11 @@ export const startDriverOnboarding = async ({ phone, role = 'driver' }) => {
   const existingOwner =
     normalizedRole === 'owner'
       ? await Owner.findOne({
-          $or: [
-            { mobile: normalizedPhone },
-            { phone: normalizedPhone },
-          ],
-        })
+        $or: [
+          { mobile: normalizedPhone },
+          { phone: normalizedPhone },
+        ],
+      })
       : null;
 
   if (existingDriver || existingOwner) {
@@ -534,14 +534,14 @@ export const startDriverOnboarding = async ({ phone, role = 'driver' }) => {
 
   const smsDispatch = isStatic
     ? {
-        mode: 'static',
-        message: 'Static OTP enabled',
-      }
+      mode: 'static',
+      message: 'Static OTP enabled',
+    }
     : await sendOtpSms({
-        phone: normalizedPhone,
-        otp,
-        purpose: 'driver onboarding OTP',
-      });
+      phone: normalizedPhone,
+      otp,
+      purpose: 'driver onboarding OTP',
+    });
   const debugOtp = process.env.NODE_ENV !== 'production' ? otp : null;
 
   if (debugOtp) {
@@ -777,22 +777,22 @@ export const saveDriverVehicle = async ({
     locationName: selectedLocation,
     serviceLocation: selectedServiceLocation
       ? {
-          _id: selectedServiceLocation._id || locationId || '',
-          name: selectedServiceLocation.name || selectedServiceLocation.service_location_name || selectedLocation,
-          service_location_name:
-            selectedServiceLocation.service_location_name || selectedServiceLocation.name || selectedLocation,
-          address: selectedServiceLocation.address || '',
-          country: selectedServiceLocation.country || '',
-          currency_name: selectedServiceLocation.currency_name || '',
-          currency_symbol: selectedServiceLocation.currency_symbol || '',
-          currency_code: selectedServiceLocation.currency_code || '',
-          timezone: selectedServiceLocation.timezone || '',
-          unit: selectedServiceLocation.unit || 'km',
-          latitude: selectedServiceLocation.latitude ?? null,
-          longitude: selectedServiceLocation.longitude ?? null,
-          location: selectedServiceLocation.location || null,
-          coordinates: getServiceLocationCoordinates(selectedServiceLocation),
-        }
+        _id: selectedServiceLocation._id || locationId || '',
+        name: selectedServiceLocation.name || selectedServiceLocation.service_location_name || selectedLocation,
+        service_location_name:
+          selectedServiceLocation.service_location_name || selectedServiceLocation.name || selectedLocation,
+        address: selectedServiceLocation.address || '',
+        country: selectedServiceLocation.country || '',
+        currency_name: selectedServiceLocation.currency_name || '',
+        currency_symbol: selectedServiceLocation.currency_symbol || '',
+        currency_code: selectedServiceLocation.currency_code || '',
+        timezone: selectedServiceLocation.timezone || '',
+        unit: selectedServiceLocation.unit || 'km',
+        latitude: selectedServiceLocation.latitude ?? null,
+        longitude: selectedServiceLocation.longitude ?? null,
+        location: selectedServiceLocation.location || null,
+        coordinates: getServiceLocationCoordinates(selectedServiceLocation),
+      }
       : null,
     vehicleTypeId: String(vehicleTypeId || '').trim(),
     make: String(make || '').trim(),

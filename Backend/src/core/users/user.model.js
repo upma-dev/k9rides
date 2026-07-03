@@ -137,6 +137,10 @@ const userSchema = new mongoose.Schema(
         addresses: {
             type: [userAddressSchema],
             default: []
+        },
+        isBlockedFromCOD: {
+            type: Boolean,
+            default: false
         }
     },
     {

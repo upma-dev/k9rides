@@ -120,6 +120,13 @@ export async function createOrder(userId, dto) {
     const isCash = paymentMethod === "cash";
     const isWallet = paymentMethod === "wallet";
 
+    if (isCash) {
+      const user = await FoodUser.findById(userId).select("isBlockedFromCOD").lean();
+      if (user?.isBlockedFromCOD) {
+        throw new ValidationError("Cash on Delivery (COD) is blocked for your account. Please use online payment.");
+      }
+    }
+
     // Ensure pricing is present and consistent.
     const computedSubtotal = (dto.items || []).reduce((sum, item) => {
       const price = Number(item?.price);

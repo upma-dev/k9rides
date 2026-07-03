@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import api from '../api/axiosInstance';
 
 let activeFaviconObjectUrl = '';
@@ -143,6 +144,23 @@ const buildFaviconHref = (faviconUrl = '') => {
 export const SettingsProvider = ({ children }) => {
   const [settings, setSettings] = useState(DEFAULT_SETTINGS_CONTEXT.settings);
   const [loading, setLoading] = useState(true);
+  const [activeModule, setActiveModule] = useState('landing');
+  const location = useLocation();
+
+  useEffect(() => {
+    const pathname = location.pathname;
+    if (pathname.startsWith('/admin') || pathname.startsWith('/taxi/admin') || pathname.startsWith('/taxi/owner')) {
+      setActiveModule('admin');
+    } else if (pathname.startsWith('/food/delivery') || pathname.startsWith('/delivery')) {
+      setActiveModule('delivery');
+    } else if (pathname.startsWith('/food')) {
+      setActiveModule('food');
+    } else if (pathname.startsWith('/taxi')) {
+      setActiveModule('taxi');
+    } else {
+      setActiveModule('landing');
+    }
+  }, [location.pathname]);
 
   const fetchSettings = async () => {
     try {
@@ -175,7 +193,8 @@ export const SettingsProvider = ({ children }) => {
     }
     document.title = appName;
 
-    const favicon = settings.general?.favicon || settings.customization?.favicon;
+    const favicons = settings.customization?.favicons || {};
+    const favicon = favicons[activeModule] || settings.general?.favicon || settings.customization?.favicon;
     if (favicon) {
       const href = buildFaviconHref(favicon);
       const type = getFaviconType(favicon);
@@ -197,7 +216,7 @@ export const SettingsProvider = ({ children }) => {
         activeFaviconObjectUrl = '';
       }
     };
-  }, [settings.general?.app_name, settings.general?.favicon, settings.customization?.favicon]);
+  }, [settings.general?.app_name, settings.general?.favicon, settings.customization?.favicon, settings.customization?.favicons, activeModule]);
 
   useEffect(() => {
     const root = document.documentElement;
@@ -248,8 +267,13 @@ export const SettingsProvider = ({ children }) => {
 
   const refreshSettings = () => fetchSettings();
 
+  const getActiveLogo = () => {
+    const logos = settings.customization?.logos || {};
+    return logos[activeModule] || settings.general?.logo || settings.customization?.logo;
+  };
+
   return (
-    <SettingsContext.Provider value={{ settings, loading, refreshSettings }}>
+    <SettingsContext.Provider value={{ settings, loading, refreshSettings, activeModule, activeLogo: getActiveLogo() }}>
       {children}
     </SettingsContext.Provider>
   );

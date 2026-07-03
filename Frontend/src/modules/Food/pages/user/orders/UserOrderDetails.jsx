@@ -14,15 +14,16 @@ import {
   RotateCcw,
   FileText,
 } from "lucide-react"
-import { orderAPI, restaurantAPI } from "@food/api"
+import api, { orderAPI, restaurantAPI } from "@food/api"
 import { useCart } from "@food/context/CartContext"
 import { toast } from "sonner"
 import { jsPDF } from "jspdf"
 import autoTable from "jspdf-autotable"
 import { getCompanyNameAsync } from "@food/utils/businessSettings"
-const debugLog = (...args) => {}
-const debugWarn = (...args) => {}
-const debugError = (...args) => {}
+import { printZomatoInvoice } from "@food/utils/printZomatoInvoice"
+const debugLog = (...args) => { }
+const debugWarn = (...args) => { }
+const debugError = (...args) => { }
 
 
 export default function UserOrderDetails() {
@@ -213,112 +214,59 @@ export default function UserOrderDetails() {
   const handleDownloadSummary = async () => {
     try {
       const companyName = await getCompanyNameAsync()
-      // Create new PDF document
-      const doc = new jsPDF()
-
-      // Title
-      doc.setFontSize(16)
-      doc.setFont('helvetica', 'bold')
-      doc.text(`${companyName} Order: Summary and Receipt`, 105, 20, { align: 'center' })
-
-      // Order details section
-      let yPos = 35
-      doc.setFontSize(10)
-      doc.setFont('helvetica', 'normal')
-
-      // Order ID
-      doc.setFont('helvetica', 'bold')
-      doc.text('Order ID:', 20, yPos)
-      doc.setFont('helvetica', 'normal')
-      doc.text(orderIdDisplay, 60, yPos)
-      yPos += 7
-
-      // Order Time
-      doc.setFont('helvetica', 'bold')
-      doc.text('Order Time:', 20, yPos)
-      doc.setFont('helvetica', 'normal')
-      const orderTimeLines = doc.splitTextToSize(paymentDate || 'N/A', 130)
-      doc.text(orderTimeLines, 60, yPos)
-      yPos += orderTimeLines.length * 7
-
-      // Customer Name
-      doc.setFont('helvetica', 'bold')
-      doc.text('Customer Name:', 20, yPos)
-      doc.setFont('helvetica', 'normal')
-      doc.text(userName || 'Customer', 60, yPos)
-      yPos += 7
-
-      // Delivery Address
-      doc.setFont('helvetica', 'bold')
-      doc.text('Delivery Address:', 20, yPos)
-      doc.setFont('helvetica', 'normal')
-      const addressLines = doc.splitTextToSize(addressText || 'N/A', 130)
-      doc.text(addressLines, 60, yPos)
-      yPos += addressLines.length * 7
-
-      // Restaurant Name
-      doc.setFont('helvetica', 'bold')
-      doc.text('Restaurant Name:', 20, yPos)
-      doc.setFont('helvetica', 'normal')
-      doc.text(restaurantName, 60, yPos)
-      yPos += 7
-
-      // Restaurant Address
-      doc.setFont('helvetica', 'bold')
-      doc.text('Restaurant Address:', 20, yPos)
-      doc.setFont('helvetica', 'normal')
-      const restaurantAddressLines = doc.splitTextToSize(restaurantLocation || 'N/A', 130)
-      doc.text(restaurantAddressLines, 60, yPos)
-      yPos += restaurantAddressLines.length * 7 + 5
-
-      // Items table
-      const tableData = items.map(item => [
-        item.variantName ? `${item.name || 'Item'} (${item.variantName})` : (item.name || 'Item'),
-        String(item.quantity || item.qty || 1),
-        `?${Number(item.price || 0).toFixed(2)}`,
-        `?${Number((item.price || 0) * (item.quantity || item.qty || 1)).toFixed(2)}`
-      ])
-
-      autoTable(doc, {
-        startY: yPos,
-        head: [['Item', 'Quantity', 'Unit Price', 'Total Price']],
-        body: tableData,
-        theme: 'striped',
-        headStyles: { fillColor: [0, 0, 0], textColor: 255, fontStyle: 'bold', fontSize: 10 },
-        styles: { fontSize: 9 },
-        columnStyles: {
-          0: { cellWidth: 80 },
-          1: { cellWidth: 30, halign: 'center' },
-          2: { cellWidth: 35, halign: 'right' },
-          3: { cellWidth: 35, halign: 'right', fontStyle: 'bold' }
+      let termsHtml = ""
+      try {
+        let response = await api.get("/food/pages/terms")
+        if (response.data?.success && response.data?.data?.content) {
+          termsHtml = response.data.data.content
+        } else {
+          response = await api.get("/food/admin/pages-social-media/terms")
+          if (response.data?.success && response.data?.data?.content) {
+            termsHtml = response.data.data.content
+          }
         }
-      })
-
-      // Get final Y position after table (autoTable adds lastAutoTable property)
-      const finalY = (doc.lastAutoTable && doc.lastAutoTable.finalY) ? doc.lastAutoTable.finalY : yPos + (tableData.length * 8) + 20
-
-      // Total
-      doc.setFontSize(12)
-      let amountLineY = finalY + 10
-      const surgeAmount = Number(pricing.surgeAmount || 0)
-      if (surgeAmount > 0) {
-        doc.setFont('helvetica', 'normal')
-        doc.text('Surge Amount:', 145, amountLineY, { align: 'right' })
-        doc.text(`?${surgeAmount.toFixed(2)}`, 195, amountLineY, { align: 'right' })
-        amountLineY += 8
+      } catch (err) {
+        debugWarn("Failed to fetch terms", err)
       }
-      doc.setFont('helvetica', 'bold')
-      doc.text('Total:', 145, amountLineY, { align: 'right' })
-      doc.text(`?${Number(pricing.total || 0).toFixed(2)}`, 195, amountLineY, { align: 'right' })
 
-      // Save PDF instantly
-      const fileName = `Order_Summary_${orderIdDisplay}_${Date.now()}.pdf`
-      doc.save(fileName)
+      // Map local order and pricing data to the expected invoice format
+      const unifiedOrder = {
+        id: orderIdDisplay,
+        createdAt: order.createdAt,
+        customer: {
+          name: userName || "Customer"
+        },
+        address: {
+          street: addressText || "N/A"
+        },
+        restaurant: {
+          name: restaurantName,
+          address: restaurantLocation || "N/A"
+        },
+        deliveryPartner: {
+          name: order.deliveryPartner?.name || order.dispatch?.deliveryPartnerId?.name || "Assigning..."
+        },
+        items: items.map(item => ({
+          name: item.name || 'Item',
+          variantName: item.variantName || '',
+          quantity: item.quantity || item.qty || 1,
+          price: item.price || 0
+        })),
+        subtotal: pricing.subtotal || pricing.originalItemTotal || 0,
+        deliveryFee: pricing.deliveryFee || 0,
+        tax: pricing.tax || 0,
+        discount: pricing.discount || 0,
+        total: pricing.total || 0,
+        packagingCharge: pricing.packagingFee || 0,
+        platformFee: pricing.platformFee || 0,
+        surgeAmount: pricing.surgeAmount || 0
+      }
 
-      toast.success("Summary downloaded successfully!")
+      printZomatoInvoice(unifiedOrder, companyName, termsHtml)
+      toast.success("Invoice generated successfully!")
     } catch (error) {
-      debugError("Error generating PDF:", error)
-      toast.error("Failed to download summary")
+      debugError("Error generating invoice:", error)
+      toast.error("Failed to download invoice")
     }
   }
 
@@ -440,8 +388,8 @@ export default function UserOrderDetails() {
             <div className="flex items-center gap-2 mb-4">
               <span
                 className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${sendsCutlery
-                    ? "bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-400 dark:border-emerald-800"
-                    : "bg-primary-orange/5 text-accent-orange/90 border border-primary-orange/20 dark:bg-accent-orange/50/20 dark:text-primary-orange/80 dark:border-accent-orange/70"
+                  ? "bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-400 dark:border-emerald-800"
+                  : "bg-primary-orange/5 text-accent-orange/90 border border-primary-orange/20 dark:bg-accent-orange/50/20 dark:text-primary-orange/80 dark:border-accent-orange/70"
                   }`}
               >
                 {sendsCutlery ? "Send cutlery" : "Don't send cutlery"}

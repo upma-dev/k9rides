@@ -180,7 +180,7 @@ const SetPrices = ({ mode }) => {
       normalized.set('both', { id: 'both', name: 'both', display_name: 'Both' });
     }
 
-    return Array.from(normalized.values());
+    return Array.from(normalized.values()).filter(t => t.name !== 'pooling');
   }, [transportTypes]);
 
   const [formData, setFormData] = useState(initialFormState);

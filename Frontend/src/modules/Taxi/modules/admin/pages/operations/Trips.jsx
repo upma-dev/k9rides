@@ -44,6 +44,7 @@ const normalizeRow = (row = {}) => ({
   transportType: row.transportType || row.transport_type || row.service_type || row.module || '--',
   tripStatus: String(row.tripStatus || row.trip_status || row.status || '').toUpperCase(),
   paymentOption: String(row.paymentOption || row.payment_option || row.payment_method || 'CASH').toUpperCase(),
+  raw: row,
 });
 
 const Trips = () => {
@@ -53,6 +54,7 @@ const Trips = () => {
   const [rows, setRows] = React.useState([]);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState('');
+  const [expandedRow, setExpandedRow] = React.useState(null);
 
   const loadRows = React.useCallback(async () => {
     setLoading(true);
@@ -112,9 +114,8 @@ const Trips = () => {
                 <button
                   key={tab}
                   onClick={() => setActiveTab(tab)}
-                  className={`relative py-1 text-[15px] font-bold transition-all ${
-                    activeTab === tab ? 'text-slate-900' : 'text-slate-400 hover:text-slate-600'
-                  }`}
+                  className={`relative py-1 text-[15px] font-bold transition-all ${activeTab === tab ? 'text-slate-900' : 'text-slate-400 hover:text-slate-600'
+                    }`}
                 >
                   {tab}
                   {activeTab === tab && (
@@ -166,28 +167,106 @@ const Trips = () => {
                   </tr>
                 ) : rows.length > 0 ? (
                   rows.map((row) => (
-                    <tr key={row.id} className="hover:bg-slate-50/30">
-                      <td className="px-6 py-5 text-[14px] text-slate-600 font-medium">{row.requestId}</td>
-                      <td className="px-6 py-5 text-[14px] text-slate-600 font-medium">{formatDate(row.date)}</td>
-                      <td className="px-6 py-5 text-[14px] text-slate-600 font-medium">{row.userName}</td>
-                      <td className="px-6 py-5 text-[14px] text-slate-600 font-medium">{row.driverName}</td>
-                      <td className="px-6 py-5 text-[14px] text-slate-600 font-medium">{row.transportType}</td>
-                      <td className="px-6 py-5">
-                        <span className={`inline-block px-3 py-1 text-[10px] font-bold rounded uppercase ${STATUS_STYLES[row.tripStatus] || 'bg-slate-200 text-slate-700'}`}>
-                          {row.tripStatus || 'UNKNOWN'}
-                        </span>
-                      </td>
-                      <td className="px-6 py-5">
-                        <span className={`inline-block px-3 py-1 text-[10px] font-bold rounded uppercase ${PAYMENT_STYLES[row.paymentOption] || 'bg-primary-orange/50 text-white'}`}>
-                          {row.paymentOption}
-                        </span>
-                      </td>
-                      <td className="px-6 py-5">
-                        <button className="text-slate-400 hover:text-slate-800">
-                          <MoreVertical size={18} />
-                        </button>
-                      </td>
-                    </tr>
+                    <React.Fragment key={row.id}>
+                      <tr
+                        className={`cursor-pointer transition-colors ${expandedRow === row.id ? 'bg-slate-50' : 'hover:bg-slate-50/30'}`}
+                        onClick={() => setExpandedRow(expandedRow === row.id ? null : row.id)}
+                      >
+                        <td className="px-6 py-5 text-[14px] text-slate-600 font-medium">
+                          <div className="flex items-center gap-2">
+                            <ChevronRight
+                              size={16}
+                              className={`text-slate-400 transition-transform ${expandedRow === row.id ? 'rotate-90' : ''}`}
+                            />
+                            {row.requestId}
+                          </div>
+                        </td>
+                        <td className="px-6 py-5 text-[14px] text-slate-600 font-medium">{formatDate(row.date)}</td>
+                        <td className="px-6 py-5 text-[14px] text-slate-600 font-medium">{row.userName}</td>
+                        <td className="px-6 py-5 text-[14px] text-slate-600 font-medium">{row.driverName}</td>
+                        <td className="px-6 py-5 text-[14px] text-slate-600 font-medium">{row.transportType}</td>
+                        <td className="px-6 py-5">
+                          <span className={`inline-block px-3 py-1 text-[10px] font-bold rounded uppercase ${STATUS_STYLES[row.tripStatus] || 'bg-slate-200 text-slate-700'}`}>
+                            {row.tripStatus || 'UNKNOWN'}
+                          </span>
+                        </td>
+                        <td className="px-6 py-5">
+                          <span className={`inline-block px-3 py-1 text-[10px] font-bold rounded uppercase ${PAYMENT_STYLES[row.paymentOption] || 'bg-primary-orange/50 text-white'}`}>
+                            {row.paymentOption}
+                          </span>
+                        </td>
+                        <td className="px-6 py-5">
+                          <button
+                            className="text-slate-400 hover:text-slate-800"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              // Open context menu (placeholder)
+                            }}
+                          >
+                            <MoreVertical size={18} />
+                          </button>
+                        </td>
+                      </tr>
+                      {expandedRow === row.id && (
+                        <tr>
+                          <td colSpan={8} className="px-0 py-0 border-b border-slate-100">
+                            <motion.div
+                              initial={{ opacity: 0, height: 0 }}
+                              animate={{ opacity: 1, height: 'auto' }}
+                              exit={{ opacity: 0, height: 0 }}
+                              className="bg-slate-50/50 p-6 border-t border-slate-100"
+                            >
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                <div className="space-y-4">
+                                  <h3 className="text-[11px] font-black uppercase tracking-wider text-slate-400">Trip Locations</h3>
+                                  <div className="space-y-3">
+                                    <div className="flex items-start gap-3">
+                                      <div className="mt-1 w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
+                                      <div>
+                                        <p className="text-[12px] font-bold text-slate-700">Pickup</p>
+                                        <p className="text-[13px] text-slate-600">{row.raw?.pickupLabel || '--'}</p>
+                                      </div>
+                                    </div>
+                                    <div className="flex items-start gap-3">
+                                      <div className="mt-1 w-2 h-2 rounded-full bg-rose-500 shrink-0" />
+                                      <div>
+                                        <p className="text-[12px] font-bold text-slate-700">Drop-off</p>
+                                        <p className="text-[13px] text-slate-600">{row.raw?.dropLabel || '--'}</p>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                                <div className="space-y-4">
+                                  <h3 className="text-[11px] font-black uppercase tracking-wider text-slate-400">Fare Breakdown</h3>
+                                  <div className="bg-white rounded-lg border border-slate-200 p-4 space-y-2">
+                                    <div className="flex justify-between items-center text-[13px] text-slate-600">
+                                      <span>Base Fare</span>
+                                      <span className="font-bold">₹{(row.raw?.baseFare || 0).toFixed(2)}</span>
+                                    </div>
+                                    <div className="flex justify-between items-center text-[13px] text-slate-600">
+                                      <span>Wait Time Charge</span>
+                                      <span className="font-bold text-amber-500">₹{(row.raw?.waitingChargeAmount || 0).toFixed(2)}</span>
+                                    </div>
+                                    <div className="flex justify-between items-center text-[13px] text-slate-600">
+                                      <span>Time Charge</span>
+                                      <span className="font-bold">₹{(row.raw?.timeChargeAmount || 0).toFixed(2)}</span>
+                                    </div>
+                                    <div className="flex justify-between items-center text-[13px] text-slate-600">
+                                      <span>Distance Charge</span>
+                                      <span className="font-bold">₹{(row.raw?.distanceChargeAmount || 0).toFixed(2)}</span>
+                                    </div>
+                                    <div className="pt-2 mt-2 border-t border-slate-100 flex justify-between items-center text-[15px] font-black text-slate-900">
+                                      <span>Total Final Fare</span>
+                                      <span>₹{(row.raw?.fare || 0).toFixed(2)}</span>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            </motion.div>
+                          </td>
+                        </tr>
+                      )}
+                    </React.Fragment>
                   ))
                 ) : (
                   <tr>

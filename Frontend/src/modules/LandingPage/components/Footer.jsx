@@ -3,10 +3,12 @@ import { Mail, Phone, MapPin, ArrowRight } from 'lucide-react'
 import k9Logo from '../assets/k9-logo.png'
 import { gsap } from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
+import { useSettings } from '../../Taxi/shared/context/SettingsContext'
 
 gsap.registerPlugin(ScrollTrigger)
 
 export default function Footer({ settings }) {
+  const { activeLogo } = useSettings()
   const currentYear = new Date().getFullYear()
   const footerRef = useRef(null)
   const topBannerRef = useRef(null)
@@ -132,13 +134,19 @@ export default function Footer({ settings }) {
           {/* Branding Column */}
           <div className="lg:col-span-4 text-left space-y-6">
             <a href="#" className="flex items-center gap-3 group w-fit">
-              <div className="h-11 w-11 rounded-xl overflow-hidden shadow-sm bg-white p-0.5 border border-slate-800 group-hover:border-slate-600 transition-colors">
-                <img src={settings?.logo_url || k9Logo} alt="K9 Rides" className="w-full h-full object-cover rounded-lg" loading="lazy" />
-              </div>
-              <div>
-                <span className="font-black text-xl tracking-tight text-white block leading-none">K9 Rides</span>
-                <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mt-0.5 block">Super-App Platform</span>
-              </div>
+              {settings?.logo_url ? (
+                <img src={settings.logo_url} alt="K9 Rides" className="h-11 w-auto object-contain bg-white/10 p-1 rounded-lg" loading="lazy" />
+              ) : (
+                <>
+                  <div className="h-11 w-11 rounded-xl overflow-hidden shadow-sm bg-white p-0.5 border border-slate-800 group-hover:border-slate-600 transition-colors">
+                    <img src={activeLogo || k9Logo} alt="K9 Rides" className="w-full h-full object-cover rounded-lg" loading="lazy" />
+                  </div>
+                  <div>
+                    <span className="font-black text-xl tracking-tight text-white block leading-none">K9 Rides</span>
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mt-0.5 block">Super-App Platform</span>
+                  </div>
+                </>
+              )}
             </a>
 
             <p className="text-sm leading-relaxed text-slate-400 max-w-sm">

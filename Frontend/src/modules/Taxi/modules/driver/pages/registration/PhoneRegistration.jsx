@@ -260,8 +260,8 @@ const PhoneRegistration = () => {
                                     whileTap={{ scale: 0.97 }}
                                     onClick={() => setRole(option.id)}
                                     className={`flex-1 min-w-max flex items-center justify-center gap-2 py-2 px-3 rounded-xl transition-all whitespace-nowrap ${active
-                                            ? 'bg-white text-[#F38F24] shadow-sm border border-[#F38F24]/20'
-                                            : 'text-slate-500 hover:text-slate-700'
+                                        ? 'bg-white text-[#F38F24] shadow-sm border border-[#F38F24]/20'
+                                        : 'text-slate-500 hover:text-slate-700'
                                         }`}
                                 >
                                     <option.Icon size={14} strokeWidth={active ? 2.5 : 2} className={active ? 'text-[#F38F24]' : ''} />
@@ -394,8 +394,8 @@ const PhoneRegistration = () => {
                             onClick={handleSendOTP}
                             disabled={loading || !agreed || phone.length !== 10}
                             className={`group flex h-12 w-full items-center justify-center gap-2 rounded-[0.85rem] text-[14px] font-bold transition-all relative overflow-hidden ${agreed && phone.length === 10
-                                    ? 'bg-[#1A1A1A] text-white shadow-[0_4px_14px_rgba(26,26,26,0.15)] active:bg-black'
-                                    : 'bg-slate-100 text-slate-400'
+                                ? 'bg-[#1A1A1A] text-white shadow-[0_4px_14px_rgba(26,26,26,0.15)] active:bg-black'
+                                : 'bg-slate-100 text-slate-400'
                                 }`}
                         >
                             {loading ? (

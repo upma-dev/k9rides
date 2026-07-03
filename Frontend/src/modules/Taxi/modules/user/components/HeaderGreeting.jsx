@@ -3,8 +3,10 @@ import { useLocation, useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { MapPin, Search, Wallet, Utensils, Car } from 'lucide-react';
 import { DEFAULT_LOCATION_LABEL, getSavedLocationLabel, LOCATION_UPDATED_EVENT } from '../services/locationStore';
-import foodIcon from '../../../../Food/assets/category-icons/food.png';
-import taxiIcon from '../../../../Food/assets/category-icons/taxi.png';
+import foodIcon from '@food/assets/category-icons/food.png.png';
+import taxiIcon from '@food/assets/category-icons/taxi.png.png';
+
+import { useSettings } from '../../../shared/context/SettingsContext';
 
 const fallingCoins = [
   { id: 1, left: '24%', delay: 0 },
@@ -12,13 +14,11 @@ const fallingCoins = [
   { id: 3, left: '72%', delay: 1.2 },
 ];
 
-import { useSettings } from '../../../shared/context/SettingsContext';
-
 const HeaderGreeting = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { settings } = useSettings();
-  const appLogo = settings.general?.logo || settings.customization?.logo || settings.general?.favicon || '';
+  const { settings, activeLogo } = useSettings();
+  const appLogo = activeLogo || settings.general?.logo || settings.customization?.logo || '/k9-logo.png';
   const appName = settings.general?.app_name || 'App';
   const [locationLabel, setLocationLabel] = useState(getSavedLocationLabel);
   const routePrefix = location.pathname.startsWith('/taxi/user') ? '/taxi/user' : '';
@@ -26,13 +26,20 @@ const HeaderGreeting = () => {
   const walletPath = `${routePrefix}/wallet`;
   const isTaxi = window.location.pathname.includes('/taxi');
   const theme = {
-    activeBg: isTaxi ? 'bg-[#2563eb]' : 'bg-[#b81d24]',
-    activeHex: isTaxi ? '#2563eb' : '#b81d24',
-    inactiveHex: isTaxi ? '#09101d' : '#4a0b0e',
-    containerHex: isTaxi ? '#0b1528' : '#3b070a',
+    activeBg: isTaxi ? 'bg-[#2563eb]' : 'bg-[#d82c23]',
+    activeHex: isTaxi ? '#2563eb' : '#d82c23',
+    inactiveHex: isTaxi ? '#0c1428' : '#6e0d09',
+    containerHex: isTaxi ? '#111d3a' : '#9c1c16',
   };
 
+  const [isScrolled, setIsScrolled] = useState(false);
+
   useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 95);
+    };
+    window.addEventListener('scroll', handleScroll);
+
     const syncLocationLabel = () => {
       setLocationLabel(getSavedLocationLabel());
     };
@@ -42,13 +49,18 @@ const HeaderGreeting = () => {
     window.addEventListener(LOCATION_UPDATED_EVENT, syncLocationLabel);
 
     return () => {
+      window.removeEventListener('scroll', handleScroll);
       window.removeEventListener('storage', syncLocationLabel);
       window.removeEventListener(LOCATION_UPDATED_EVENT, syncLocationLabel);
     };
   }, []);
 
   return (
-    <div className="w-full bg-[#0b1528] rounded-b-[2rem] pb-5 shadow-lg overflow-visible">
+    <>
+      <div 
+        className="w-full rounded-b-[2rem] pb-2 shadow-none overflow-visible"
+        style={{ backgroundColor: theme.containerHex }}
+      >
       {/* Top Location / Header Greeting Row */}
       <div className="px-5 pt-6 flex items-center justify-between gap-3">
         <div className="flex min-w-0 items-center gap-3">
@@ -56,12 +68,12 @@ const HeaderGreeting = () => {
             initial={{ opacity: 0, y: -8, scale: 0.94 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             transition={{ duration: 0.45, ease: 'easeOut' }}
-            className="relative inline-flex items-center rounded-full border border-white/10 bg-white/10 px-2.5 py-1.5 shadow-[0_12px_30px_rgba(15,23,42,0.06)] backdrop-blur-md"
+            className="relative inline-flex items-center rounded-full px-1 py-0.5"
           >
             <motion.div
               aria-hidden="true"
-              className="absolute inset-x-3 inset-y-1.5 rounded-full bg-emerald-500/10 blur-md"
-              animate={{ opacity: [0.3, 0.75, 0.3], scale: [0.92, 1.06, 0.92] }}
+              className="absolute inset-x-3 inset-y-1.5 rounded-full bg-emerald-500/5 blur-md"
+              animate={{ opacity: [0.2, 0.5, 0.2], scale: [0.92, 1.06, 0.92] }}
               transition={{ duration: 3.2, repeat: Infinity, ease: 'easeInOut' }}
             />
             {appLogo ? (
@@ -69,12 +81,15 @@ const HeaderGreeting = () => {
                 key={appLogo}
                 src={appLogo}
                 alt={appName}
-                className="relative z-10 h-10 object-contain drop-shadow-sm brightness-0 invert"
+                className="relative z-10 h-12 object-contain drop-shadow-sm"
+                style={{
+                  filter: 'url(#remove-white)'
+                }}
                 animate={{ y: [0, -2, 0], scale: [1, 1.02, 1] }}
                 transition={{ duration: 3.2, repeat: Infinity, ease: 'easeInOut' }}
               />
             ) : (
-              <div className="relative z-10 flex h-10 min-w-[40px] items-center justify-center rounded-full bg-white/10 px-3 text-[10px] font-black uppercase tracking-[0.18em] text-white">
+              <div className="relative z-10 flex h-12 min-w-[48px] items-center justify-center rounded-full bg-white/10 px-3 text-[12px] font-black uppercase tracking-[0.18em] text-white">
                 {appName.slice(0, 2)}
               </div>
             )}
@@ -141,9 +156,14 @@ const HeaderGreeting = () => {
 
       {/* Mobile Option Buttons (Food & Taxi) */}
       <div className="px-5 mt-4 md:hidden flex flex-col pointer-events-auto overflow-visible">
-        <div 
+        <div
           className="custom-tab-container overflow-visible"
-          style={{ backgroundColor: theme.containerHex }}
+          style={{
+            '--tab-container-bg': theme.containerHex,
+            '--active-tab-bg': theme.activeHex,
+            '--inactive-tab-bg': theme.inactiveHex,
+            backgroundColor: theme.containerHex
+          }}
         >
           {/* Food Button */}
           <button
@@ -153,19 +173,9 @@ const HeaderGreeting = () => {
                 ? 'custom-tab-active'
                 : 'custom-tab-inactive'
             }`}
-            style={
-              !window.location.pathname.includes('/food')
-                ? { backgroundColor: theme.inactiveHex }
-                : {}
-            }
           >
-            {window.location.pathname.includes('/food') && (
-              <div
-                className={`absolute inset-0 rounded-t-[16px] ${theme.activeBg}`}
-              />
-            )}
             <img src={foodIcon} alt="K9Food" className="custom-tab-icon" />
-            <span className="relative z-10">K9Food</span>
+            <span>K9Food</span>
           </button>
 
           {/* Taxi Button */}
@@ -176,44 +186,34 @@ const HeaderGreeting = () => {
                 ? 'custom-tab-active'
                 : 'custom-tab-inactive'
             }`}
-            style={
-              !window.location.pathname.includes('/taxi')
-                ? { backgroundColor: theme.inactiveHex }
-                : {}
-            }
           >
-            {window.location.pathname.includes('/taxi') && (
-              <div
-                className={`absolute inset-0 rounded-t-[16px] ${theme.activeBg}`}
-              />
-            )}
-            <img src={taxiIcon} alt="K9Rides" className="custom-tab-icon" />
-            <span className="relative z-10">K9Rides</span>
+            <img src={taxiIcon} alt="K9Rides" className="custom-tab-icon custom-tab-icon-taxi" />
+            <span>K9Rides</span>
           </button>
         </div>
-        <div className="flex w-full overflow-visible -mt-[1px] z-15">
-          <div 
-            className="h-[6px] flex-1 transition-colors duration-200" 
-            style={{
-              backgroundColor: window.location.pathname.includes('/food') ? theme.activeHex : theme.inactiveHex
-            }}
-          />
-          <div 
-            className="h-[6px] flex-1 transition-colors duration-200" 
-            style={{
-              backgroundColor: window.location.pathname.includes('/taxi') ? theme.activeHex : theme.inactiveHex
-            }}
-          />
-        </div>
       </div>
+    </div>
 
-      {/* Search Bar */}
-      <div className="px-5 mt-4">
+      {/* Search Bar (Sticky Viewport, turns white on scroll) */}
+      <div 
+        className={`sticky top-0 z-[70] transition-all duration-300 pt-2 pb-3 px-5 ${
+          isScrolled 
+            ? 'shadow-[0_4px_20px_rgba(0,0,0,0.06)] border-b border-gray-100/80' 
+            : 'border-b border-transparent'
+        }`}
+        style={{
+          background: isScrolled ? 'rgba(255, 255, 255, 0.98)' : theme.containerHex
+        }}
+      >
         <motion.button
           type="button"
           whileTap={{ scale: 0.99 }}
           onClick={() => navigate(selectLocationPath)}
-          className="flex w-full items-center gap-2 rounded-[18px] border border-white/10 bg-white px-3.5 py-3.5 text-left shadow-sm active:scale-[0.99] transition-transform"
+          className={`flex w-full items-center gap-2 rounded-[18px] border border-transparent px-3.5 py-3.5 text-left transition-all duration-300 ${
+            isScrolled 
+              ? 'bg-gray-100/80 hover:bg-gray-100 shadow-none' 
+              : 'bg-white shadow-sm'
+          }`}
         >
           <Search size={16} className="text-slate-400" strokeWidth={2.5} />
           <span className="min-w-0 flex-1 truncate text-[12px] font-bold text-slate-400">
@@ -222,7 +222,7 @@ const HeaderGreeting = () => {
           <span className="text-[10px] font-black uppercase tracking-[0.16em] text-[#00E676]">Go</span>
         </motion.button>
       </div>
-    </div>
+    </>
   );
 };
 

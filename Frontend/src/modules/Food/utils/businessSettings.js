@@ -182,3 +182,13 @@ export const getDynamicLogo = () => {
   return settings?.logo?.url || "/k9-logo.jpg";
 };
 
+export const getRestaurantLogo = () => {
+  const settings = getCachedSettings();
+  return settings?.restaurantLogo?.url || "/k9-logo.jpg";
+};
+
+export const getDeliveryPartnerLogo = () => {
+  const settings = getCachedSettings();
+  return settings?.deliveryPartnerLogo?.url || "/k9-logo.jpg";
+};
+

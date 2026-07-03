@@ -563,6 +563,11 @@ export default function Customers() {
                           Inactive
                         </span>
                       )}
+                      {userDetails.isBlockedFromCOD && (
+                        <span className="px-2 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-700 flex items-center gap-1">
+                          COD Blocked
+                        </span>
+                      )}
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3">
                       <div className="flex items-center gap-2 text-sm text-slate-600 min-w-0">
@@ -687,6 +692,39 @@ export default function Customers() {
                     </p>
                   </div>
                 )}
+              </div>
+
+              {/* COD Block Option */}
+              <div className="bg-slate-100 rounded-lg p-4 flex items-center justify-between border border-slate-200 mt-4">
+                <div>
+                  <h5 className="text-sm font-semibold text-slate-900">Cash on Delivery (COD) Block</h5>
+                  <p className="text-xs text-slate-600 mt-1">Restrict this customer from placing orders via cash on delivery.</p>
+                </div>
+                <button
+                  onClick={async () => {
+                    try {
+                      const newBlocked = !userDetails.isBlockedFromCOD;
+                      await adminAPI.updateCustomerCodBlockStatus(userDetails.id || userDetails._id, newBlocked);
+                      setUserDetails({ ...userDetails, isBlockedFromCOD: newBlocked });
+                      // Also update local list so the state is synced
+                      setCustomers(customers.map(c => 
+                        (c.id === userDetails.id || c._id === userDetails._id || c.id === (userDetails.id || userDetails._id)) 
+                          ? { ...c, isBlockedFromCOD: newBlocked } 
+                          : c
+                      ));
+                      toast.success(`COD payment method ${newBlocked ? 'blocked' : 'allowed'} successfully`);
+                    } catch (err) {
+                      toast.error("Failed to update COD block status");
+                    }
+                  }}
+                  className={`px-4 py-2.5 rounded-lg text-xs font-bold transition-all ${
+                    userDetails.isBlockedFromCOD
+                      ? "bg-amber-600 hover:bg-amber-700 text-white"
+                      : "bg-slate-700 hover:bg-slate-800 text-white"
+                  }`}
+                >
+                  {userDetails.isBlockedFromCOD ? "Unblock COD" : "Block COD"}
+                </button>
               </div>
             </div>
           ) : (

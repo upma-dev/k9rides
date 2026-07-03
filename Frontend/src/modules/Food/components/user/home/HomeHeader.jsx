@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 
 import { Link, useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { MapPin, ChevronDown, Search, Mic, Bell, CheckCircle2, Tag, Gift, AlertCircle, Clock, BellOff, X, ChevronRight, ShoppingBag, Sparkles, Utensils, Car } from 'lucide-react';
 import {
   Popover,
@@ -10,8 +10,8 @@ import {
 } from "@food/components/ui/popover";
 import { Badge } from "@food/components/ui/badge";
 import { Avatar, AvatarFallback } from "@food/components/ui/avatar";
-import foodIcon from "@food/assets/category-icons/food.png";
-import taxiIcon from "@food/assets/category-icons/taxi.png";
+import foodIcon from "@food/assets/category-icons/food.png.png";
+import taxiIcon from "@food/assets/category-icons/taxi.png.png";
 import quickIcon from "@food/assets/category-icons/quick.png";
 import hotelIcon from "@food/assets/category-icons/hotel.png";
 import useNotificationInbox from "@food/hooks/useNotificationInbox";
@@ -43,10 +43,10 @@ export default function HomeHeader({
 
   const isTaxi = window.location.pathname.includes('/taxi');
   const theme = {
-    activeBg: isTaxi ? 'bg-[#2563eb]' : 'bg-[#e65100]',
-    activeHex: isTaxi ? '#2563eb' : '#e65100',
-    inactiveHex: isTaxi ? '#09101d' : '#4a1d0b',
-    containerHex: isTaxi ? '#0b1528' : '#301205',
+    activeBg: isTaxi ? 'bg-[#2563eb]' : 'bg-[#d82c23]',
+    activeHex: isTaxi ? '#2563eb' : '#d82c23',
+    inactiveHex: isTaxi ? '#09101d' : '#6e0d09',
+    containerHex: isTaxi ? '#0b1528' : '#9c1c16',
   };
 
   const [notifications, setNotifications] = useState(() => {
@@ -194,18 +194,36 @@ export default function HomeHeader({
 
   return (
     <>
-      {/* Dynamic Header Wrapper */}
-      <div 
-        className="relative w-full rounded-b-[2.5rem] bg-gradient-to-br from-[#ff3d00] via-[#ee3f24] to-[#b30707] shadow-[0_12px_40px_rgba(238,63,36,0.22)] pb-6 flex flex-col overflow-hidden z-30"
-        style={{ fontFamily: "'Sora', sans-serif" }}
-      >
-        {/* Location / Bell / Veg bar */}
-        <motion.div
-          className="relative z-20 px-4 pt-5 flex items-center justify-between gap-3"
-          initial={{ opacity: 0, y: -12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, ease: 'easeOut' }}
+      <div className="relative w-full overflow-hidden">
+        {/* Dynamic Slide Background Layer */}
+      <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
+        <div
+          className="flex h-full w-full transition-all duration-1000 ease-in-out"
+          style={{ transform: `translateX(-${currentSlide * 100}%)` }}
         >
+          {slideBanners.map((banner) => (
+            <div 
+              key={banner.id} 
+              className={`w-full h-full shrink-0 bg-gradient-to-r ${
+                banner.id === 0 
+                  ? 'from-[#ff5100] to-[#e11d48]' 
+                  : banner.id === 1 
+                    ? 'from-[#e11d48] to-[#b30707]' 
+                    : 'from-[#ff5100] to-[#b30707]'
+              }`}
+            />
+          ))}
+        </div>
+      </div>
+
+      {/* 1. Location / Bell / Veg bar + Option Tabs */}
+      <div 
+        className="relative w-full px-4 pt-5 pb-0 flex flex-col gap-4 z-30 bg-transparent"
+        style={{
+          fontFamily: "'Sora', sans-serif"
+        }}
+      >
+        <div className="flex items-center justify-between gap-3">
           {(() => {
             const addressToShow = savedAddressText || (location?.area && location?.city
               ? `${location.area}, ${location.city}`
@@ -333,72 +351,151 @@ export default function HomeHeader({
               </div>
             </div>
           </div>
-        </motion.div>
+        </div>
 
         {/* Option Tabs (Food & Taxi) - animated entrance */}
         <motion.div
-          className="relative mt-4 px-4 flex flex-col z-20"
+          className="relative w-full z-20 overflow-visible"
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, delay: 0.15, ease: 'easeOut' }}
         >
-          <div
-            className="flex w-full bg-black/20 rounded-2xl p-1 border border-white/10"
+          <div 
+            className="custom-tab-container overflow-visible"
+            style={{
+              '--tab-container-bg': 'transparent',
+              '--active-tab-bg': theme.activeHex,
+              '--inactive-tab-bg': 'rgba(0, 0, 0, 0.2)',
+              backgroundColor: 'transparent'
+            }}
           >
             {/* Food Button */}
             <button
               onClick={() => navigate('/food/user')}
-              className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-xl text-xs font-black transition-all duration-300 ${
+              className={`custom-tab overflow-visible ${
                 window.location.pathname.includes('/food')
-                  ? 'bg-white text-[#ff5100] shadow-md'
-                  : 'text-white/70 hover:text-white'
+                  ? 'custom-tab-active'
+                  : 'custom-tab-inactive'
               }`}
             >
-              <img src={foodIcon} alt="K9Food" className="w-5 h-5 object-contain" />
+              <img src={foodIcon} alt="K9Food" className="custom-tab-icon" />
               <span>K9Food</span>
             </button>
 
             {/* Taxi Button */}
             <button
               onClick={() => navigate('/taxi/user')}
-              className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-xl text-xs font-black transition-all duration-300 ${
+              className={`custom-tab overflow-visible ${
                 window.location.pathname.includes('/taxi')
-                  ? 'bg-white text-[#ff5100] shadow-md'
-                  : 'text-white/70 hover:text-white'
+                  ? 'custom-tab-active'
+                  : 'custom-tab-inactive'
               }`}
             >
-              <img src={taxiIcon} alt="K9Rides" className="w-5 h-5 object-contain" />
+              <img src={taxiIcon} alt="K9Rides" className="custom-tab-icon custom-tab-icon-taxi" />
               <span>K9Rides</span>
             </button>
           </div>
         </motion.div>
+      </div>
+    </div>
 
-        {/* Search bar moved to Home.jsx as a true viewport-sticky element */}
-
-        {/* Sliding Banners Card Overlay — animated entrance */}
-        <motion.div
-          className="relative mx-4 mt-4 overflow-hidden h-[120px] rounded-2xl shadow-lg border border-white/10 z-20"
-          initial={{ opacity: 0, scale: 0.96 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.45, delay: 0.25, ease: 'easeOut' }}
+      {/* 2. TRUE VIEWPORT-STICKY SEARCH BAR (Turns white on scroll) */}
+      <div
+        className={`sticky top-0 z-[70] transition-all duration-300 pt-2 pb-3 px-4 ${
+          isScrolled 
+            ? 'shadow-[0_4px_20px_rgba(0,0,0,0.06)] border-b border-gray-100/80' 
+            : 'border-b border-transparent'
+        }`}
+        style={{ 
+          fontFamily: "'Sora', sans-serif",
+          background: isScrolled
+            ? 'rgba(255, 255, 255, 0.98)'
+            : isTaxi
+              ? theme.activeHex
+              : `linear-gradient(to right, ${currentSlide === 0 ? '#ff5100, #e11d48' : currentSlide === 1 ? '#e11d48, #b30707' : '#ff5100, #b30707'})`
+        }}
+      >
+        <div
+          className={`relative rounded-2xl flex items-center px-4 py-2.5 border border-transparent cursor-pointer active:scale-[0.99] transition-all duration-300 group ${
+            isScrolled 
+              ? 'bg-gray-100/80 hover:bg-gray-100 shadow-none' 
+              : 'bg-white shadow-[0_4px_15px_rgba(0,0,0,0.06)] hover:shadow-[0_8px_20px_rgba(0,0,0,0.12)]'
+          }`}
+          onClick={handleSearchFocus}
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              handleSearchFocus();
+            }
+          }}
         >
+          <Search className="h-5 w-5 text-gray-400 mr-3 group-hover:text-[#ff6d00] group-hover:scale-110 transition-all duration-300" strokeWidth={2.2} />
+          <div className="flex-1 overflow-hidden relative h-5">
+            <AnimatePresence mode="wait">
+              <motion.span
+                key={placeholderIndex}
+                initial={{ y: 15, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                exit={{ y: -15, opacity: 0 }}
+                transition={{ duration: 0.25, ease: 'easeOut' }}
+                className="absolute inset-0 text-sm font-semibold text-gray-500 truncate"
+              >
+                {placeholders?.[placeholderIndex] || 'Search for dishes, restaurants, cuisines...'}
+              </motion.span>
+            </AnimatePresence>
+          </div>
+          <div className="bg-[#ff6d00]/5 p-2 rounded-full border border-[#ff6d00]/10 ml-2 group-hover:bg-[#ff6d00]/10 transition-all flex items-center justify-center hover:scale-105 active:scale-95 duration-200">
+            <Mic className="h-4 w-4 text-[#ff6d00]" strokeWidth={2.5} />
+          </div>
+        </div>
+      </div>
+
+      {/* Bottom Container: Banners */}
+      <div className="relative w-full overflow-hidden shadow-[0_12px_40px_rgba(238,63,36,0.18)]">
+        {/* Dynamic Slide Background Layer (Bottom) */}
+        <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
           <div
-            className="flex h-full transition-transform duration-700 ease-in-out"
+            className="flex h-full w-full transition-all duration-1000 ease-in-out"
             style={{ transform: `translateX(-${currentSlide * 100}%)` }}
           >
             {slideBanners.map((banner) => (
               <div 
                 key={banner.id} 
-                className={`w-full h-full shrink-0 flex items-center justify-between ${banner.bg}`}
-              >
-                {banner.content}
-              </div>
+                className={`w-full h-full shrink-0 bg-gradient-to-r ${
+                  banner.id === 0 
+                    ? 'from-[#ff5100] to-[#e11d48]' 
+                    : banner.id === 1 
+                      ? 'from-[#e11d48] to-[#b30707]' 
+                      : 'from-[#ff5100] to-[#b30707]'
+                }`}
+              />
             ))}
           </div>
-        </motion.div>
+        </div>
+
+        {/* 3. Banners Content (Rendering directly on the animated gradient background) */}
+      <div
+        className="relative w-full overflow-hidden h-[130px] pb-4 pt-2 flex flex-col z-30 bg-transparent"
+        style={{ fontFamily: "'Sora', sans-serif" }}
+      >
+        <div
+          className="flex h-full transition-transform duration-700 ease-in-out"
+          style={{ transform: `translateX(-${currentSlide * 100}%)` }}
+        >
+          {slideBanners.map((banner) => (
+            <div
+              key={banner.id}
+              className="w-full h-full shrink-0 flex items-center justify-between px-6"
+            >
+              {banner.content}
+            </div>
+          ))}
+        </div>
 
         {/* Carousel Pager Dots */}
-        <div className="relative mt-3 flex justify-center gap-1.5 z-20">
+        <div className="relative mt-2 flex justify-center gap-1.5 z-20">
           {slideBanners.map((_, i) => (
             <span
               key={i}
@@ -407,6 +504,7 @@ export default function HomeHeader({
           ))}
         </div>
       </div>
+    </div>
     </>
   );
 }

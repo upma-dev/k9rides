@@ -182,7 +182,7 @@ export const isOriginAllowed = (origin) => {
         ) {
             return true;
         }
-    } catch (_) {}
+    } catch (_) { }
 
     return false;
 };

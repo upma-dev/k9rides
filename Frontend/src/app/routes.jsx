@@ -1,5 +1,5 @@
 import { Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom'
-import { Suspense, lazy, useEffect, useLayoutEffect } from 'react'
+import { Suspense, lazy, useEffect, useLayoutEffect, useState, useRef } from 'react'
 import { AppShellSkeleton } from '@food/components/ui/loading-skeletons'
 import { applyFoodUserTheme, applySavedTheme, applyTheme } from '../shared/utils/theme.js'
 
@@ -100,54 +100,84 @@ const AppRoutes = () => {
     }
   }, [location.pathname, location.search])
 
+  const [isTransitioning, setIsTransitioning] = useState(false)
+  const prevPathRef = useRef(location.pathname)
+
+  useEffect(() => {
+    const prevPath = prevPathRef.current
+    const currentPath = location.pathname
+
+    const getModule = (path) => {
+      if (path.startsWith('/taxi')) return 'taxi'
+      if (path.startsWith('/food') || path.startsWith('/admin')) return 'food'
+      return 'other'
+    }
+
+    const prevModule = getModule(prevPath)
+    const currentModule = getModule(currentPath)
+
+    if (prevModule !== currentModule) {
+      setIsTransitioning(true)
+      const timer = setTimeout(() => {
+        setIsTransitioning(false)
+      }, 600)
+      prevPathRef.current = currentPath
+      return () => clearTimeout(timer)
+    }
+
+    prevPathRef.current = currentPath
+  }, [location.pathname])
+
   return (
-    <Routes>
-      {/* Root → Master Landing Page */}
-      <Route path="/" element={<Suspense fallback={<PageLoader />}><LandingPage /></Suspense>} />
+    <>
+      <Routes>
+        {/* Root → Master Landing Page */}
+        <Route path="/" element={<Suspense fallback={<PageLoader />}><LandingPage /></Suspense>} />
 
-      {/* Landing Page Module - Redirect to root */}
-      <Route path="/landing-page" element={<Navigate to="/" replace />} />
+        {/* Landing Page Module - Redirect to root */}
+        <Route path="/landing-page" element={<Navigate to="/" replace />} />
 
-      {/* Auth Module */}
-      <Route path="/login/*" element={<Suspense fallback={<PageLoader />}><AuthApp /></Suspense>} />
+        {/* Auth Module */}
+        <Route path="/login/*" element={<Suspense fallback={<PageLoader />}><AuthApp /></Suspense>} />
 
-      {/* Support Module */}
-      <Route path="/support" element={<Suspense fallback={<PageLoader />}><HelpSupportPage /></Suspense>} />
+        {/* Support Module */}
+        <Route path="/support" element={<Suspense fallback={<PageLoader />}><HelpSupportPage /></Suspense>} />
 
-      {/* Legal & Policy Modules */}
-      <Route path="/terms" element={<Suspense fallback={<PageLoader />}><TermsPage /></Suspense>} />
-      <Route path="/privacy" element={<Suspense fallback={<PageLoader />}><PrivacyPage /></Suspense>} />
+        {/* Legal & Policy Modules */}
+        <Route path="/terms" element={<Suspense fallback={<PageLoader />}><TermsPage /></Suspense>} />
+        <Route path="/privacy" element={<Suspense fallback={<PageLoader />}><PrivacyPage /></Suspense>} />
 
 
-      {/* Food Module */}
-      <Route path="/food/*" element={<FoodAppWrapper />} />
+        {/* Food Module */}
+        <Route path="/food/*" element={<FoodAppWrapper />} />
 
-      {/* Taxi Module */}
-      <Route path="/taxi/*" element={<TaxiAppWrapper />} />
+        {/* Taxi Module */}
+        <Route path="/taxi/*" element={<TaxiAppWrapper />} />
 
-      {/* Global Admin Portal - AdminRouter handles its own protection for sub-routes */}
-      <Route
-        path="/admin/*"
-        element={
-          <Suspense fallback={<PageLoader />}>
-            <AdminRouter />
-          </Suspense>
-        }
-      />
-      
-      {/* Dynamic intercept redirects for bare paths (accessed programmatically) */}
-      <Route path="/user/*" element={<RedirectToFood />} />
-      <Route path="/restaurant/*" element={<RedirectToFood />} />
-      <Route path="/delivery/*" element={<RedirectToFood />} />
-      <Route path="/usermain/*" element={<RedirectToFood />} />
-      <Route path="/profile/*" element={<RedirectToFood />} />
-      <Route path="/cart/*" element={<Navigate to="/food/user/cart" replace />} />
-      <Route path="/orders/*" element={<RedirectToFood />} />
+        {/* Global Admin Portal - AdminRouter handles its own protection for sub-routes */}
+        <Route
+          path="/admin/*"
+          element={
+            <Suspense fallback={<PageLoader />}>
+              <AdminRouter />
+            </Suspense>
+          }
+        />
 
-      {/* Fallback 404 */}
-      <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
+        {/* Dynamic intercept redirects for bare paths (accessed programmatically) */}
+        <Route path="/user/*" element={<RedirectToFood />} />
+        <Route path="/restaurant/*" element={<RedirectToFood />} />
+        <Route path="/delivery/*" element={<RedirectToFood />} />
+        <Route path="/usermain/*" element={<RedirectToFood />} />
+        <Route path="/profile/*" element={<RedirectToFood />} />
+        <Route path="/cart/*" element={<Navigate to="/food/user/cart" replace />} />
+        <Route path="/orders/*" element={<RedirectToFood />} />
+
+        {/* Fallback 404 */}
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </>
   )
 }
 
-export default AppRoutes
+      export default AppRoutes

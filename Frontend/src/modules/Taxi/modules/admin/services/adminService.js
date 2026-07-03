@@ -37,13 +37,13 @@ export const adminService = {
     }
     return api.get(`/admin/users?${params.toString()}`);
   },
-  
+
   bulkImportUsers: (payload) => api.post('/admin/users/bulk-import', payload),
 
   createUser: (userData) => api.post('/admin/users', userData),
-  
+
   updateUser: (id, userData) => api.patch(`/admin/users/${id}`, userData),
-  
+
   deleteUser: (id) => api.delete(`/admin/users/${id}`),
   getUserDeleteRequests: () => api.get('/admin/users/delete-requests'),
   approveUserDeleteRequest: (id) => api.patch(`/admin/users/delete-requests/${id}/approve`),
@@ -109,7 +109,7 @@ export const adminService = {
   getUserSubscriptionPlans: () => api.get('/admin/user-subscriptions/plans/list'),
   createUserSubscriptionPlan: (planData) => api.post('/admin/user-subscriptions/plans/create', planData),
   getUserSubscriptionsByUserId: (id) => api.get(`/admin/users/${id}/subscriptions`),
-  
+
   /**
    * Common / Configuration Data
    */

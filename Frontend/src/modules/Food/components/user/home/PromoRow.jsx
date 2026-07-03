@@ -66,7 +66,7 @@ export default function PromoRow({ handleVegModeChange, navigate, isVegMode, tog
             <span className="text-[12px] font-black text-gray-900 dark:text-gray-100 tracking-tight leading-tight mb-0.5">
               {promo.value}
             </span>
-            <span className="text-[9px] font-bold text-gray-500 dark:text-gray-400 capitalize whitespace-nowrap">
+            <span className="text-[9px] font-bold text-rose-600 dark:text-rose-500 capitalize whitespace-nowrap">
               {promo.title}
             </span>
           </div>

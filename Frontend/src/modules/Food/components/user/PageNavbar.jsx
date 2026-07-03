@@ -8,6 +8,7 @@ import { useLocationSelector } from "./UserLayout"
 import { FaLocationDot } from "react-icons/fa6"
 import { getCachedSettings, loadBusinessSettings } from "@food/utils/businessSettings"
 import quickSpicyLogo from "@food/assets/k9-logo.jpg"
+import { useSettings } from "../../../Taxi/shared/context/SettingsContext"
 
 export default function PageNavbar({
   textColor = "white",
@@ -16,6 +17,7 @@ export default function PageNavbar({
   showLogo = true,
   onNavClick
 }) {
+  const { activeLogo } = useSettings()
   const { location, loading, requestLocation } = useLocation()
   const { getCartCount } = useCart()
   const { openLocationSelector } = useLocationSelector()
@@ -991,9 +993,9 @@ export default function PageNavbar({
         {/* Left: Company Logo */}
         {showLogo && (
           <Link to="/food/user" className="flex-shrink-0 mr-3 sm:mr-4">
-            {logoUrl ? (
+            {activeLogo || logoUrl ? (
               <img
-                src={logoUrl}
+                src={activeLogo || logoUrl}
                 alt={companyName || "Company Logo"}
                 className="h-10 w-auto sm:h-12 md:h-14 object-contain scale-[1.8] sm:scale-[2] origin-left"
                 crossOrigin="anonymous"
@@ -1008,7 +1010,7 @@ export default function PageNavbar({
               </span>
             ) : (
               <img
-                src={quickSpicyLogo}
+                src={activeLogo || quickSpicyLogo}
                 alt="Logo"
                 className="h-10 w-auto sm:h-12 md:h-14 object-contain scale-[1.8] sm:scale-[2] origin-left"
               />

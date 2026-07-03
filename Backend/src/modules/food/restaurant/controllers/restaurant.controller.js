@@ -166,3 +166,36 @@ export const deleteCurrentRestaurantAccountController = async (req, res, next) =
         next(error);
     }
 };
+
+import { FoodOrder } from '../../orders/models/order.model.js';
+
+export const getRestaurantPublicReviewsController = async (req, res, next) => {
+    try {
+        const restaurant = await getApprovedRestaurantByIdOrSlug(req.params.id);
+        if (!restaurant) {
+            return res.status(404).json({ success: false, message: 'Restaurant not found' });
+        }
+        
+        const restaurantId = restaurant._id;
+        const reviews = await FoodOrder.find({
+            restaurantId,
+            'ratings.restaurant.rating': { $exists: true, $ne: null }
+        })
+        .sort({ createdAt: -1 })
+        .limit(20)
+        .populate('userId', 'name')
+        .lean();
+        
+        const formattedReviews = reviews.map(order => ({
+            id: order._id,
+            userName: order.userId?.name || 'Anonymous Customer',
+            rating: order.ratings?.restaurant?.rating,
+            comment: order.ratings?.restaurant?.comment || 'No comment provided',
+            date: order.createdAt
+        }));
+        
+        return sendResponse(res, 200, 'Reviews fetched successfully', { reviews: formattedReviews });
+    } catch (error) {
+        next(error);
+    }
+};

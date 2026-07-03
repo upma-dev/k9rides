@@ -52,6 +52,7 @@ import { Input } from "@food/components/ui/input"
 import { adminSidebarMenu } from "@food/utils/adminSidebarMenu"
 import { getCachedSettings, loadBusinessSettings } from "@food/utils/businessSettings"
 import quickSpicyLogo from "@food/assets/k9-logo.jpg"
+import { useSettings } from "../../../Taxi/shared/context/SettingsContext"
 const debugLog = (...args) => {}
 const debugWarn = (...args) => {}
 const debugError = (...args) => {}
@@ -103,6 +104,7 @@ const iconMap = {
 }
 
 export default function AdminSidebar({ isOpen = false, onClose, onCollapseChange }) {
+  const { activeLogo } = useSettings()
   const location = useLocation()
   const navigate = useNavigate()
   const [searchQuery, setSearchQuery] = useState("")
@@ -627,9 +629,9 @@ export default function AdminSidebar({ isOpen = false, onClose, onCollapseChange
             {!isCollapsed && (
               <div className="flex items-center gap-2 animate-[slideIn_0.3s_ease-out]">
                 <div className="w-24 h-12 rounded-lg flex items-center justify-center shadow-black/20">
-                  {logoUrl ? (
+                  {activeLogo || logoUrl ? (
                     <img
-                      src={logoUrl || quickSpicyLogo}
+                      src={activeLogo || logoUrl || quickSpicyLogo}
                       alt={companyName || "Company"}
                       className="w-24 h-10 object-contain"
                       loading="lazy"
@@ -644,7 +646,7 @@ export default function AdminSidebar({ isOpen = false, onClose, onCollapseChange
                       {companyName}
                     </span>
                   ) : (
-                    <img src={quickSpicyLogo} alt="Company" className="w-24 h-10 object-contain" loading="lazy" />
+                    <img src={activeLogo || quickSpicyLogo} alt="Company" className="w-24 h-10 object-contain" loading="lazy" />
                   )}
                 </div>
               </div>
@@ -652,9 +654,9 @@ export default function AdminSidebar({ isOpen = false, onClose, onCollapseChange
             {isCollapsed && (
               <div className="w-full flex items-center justify-center">
                 <div className="w-10 h-10 rounded-lg bg-white/5 flex items-center justify-center shadow-lg shadow-black/20 ring-1 ring-white/10">
-                  {logoUrl || companyName ? (
+                  {activeLogo || logoUrl || companyName ? (
                     <img
-                      src={logoUrl || quickSpicyLogo}
+                      src={activeLogo || logoUrl || quickSpicyLogo}
                       alt={companyName || "Company"}
                       className="w-10 h-10 object-contain"
                       loading="lazy"
@@ -665,7 +667,7 @@ export default function AdminSidebar({ isOpen = false, onClose, onCollapseChange
                       }}
                     />
                   ) : (
-                    <img src={quickSpicyLogo} alt="Company" className="w-10 h-10 object-contain" loading="lazy" />
+                    <img src={activeLogo || quickSpicyLogo} alt="Company" className="w-10 h-10 object-contain" loading="lazy" />
                   )}
                 </div>
               </div>
@@ -704,6 +706,7 @@ export default function AdminSidebar({ isOpen = false, onClose, onCollapseChange
           {!isCollapsed && (
             <div className="flex p-1 bg-neutral-800/40 backdrop-blur-sm rounded-xl mb-4 border border-white/5 shadow-inner animate-[slideIn_0.4s_ease-out_0.15s_both]">
               <button
+                type="button"
                 onClick={() => navigate("/admin/food")}
                 className={cn(
                   "flex-1 flex items-center justify-center gap-2 py-2 text-xs font-bold rounded-lg transition-all duration-300",
@@ -723,6 +726,7 @@ export default function AdminSidebar({ isOpen = false, onClose, onCollapseChange
                 Food
               </button>
               <button
+                type="button"
                 onClick={() => navigate("/taxi/admin/dashboard")}
                 className={cn(
                   "flex-1 flex items-center justify-center gap-2 py-2 text-xs font-bold rounded-lg transition-all duration-300",

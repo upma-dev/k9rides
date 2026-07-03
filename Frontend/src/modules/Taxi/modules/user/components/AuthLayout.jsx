@@ -6,9 +6,9 @@ import { useSettings } from '../../../shared/context/SettingsContext';
 import mobilityBanner from '@/assets/images/mobility-banner-cartoony.png';
 
 const AuthLayout = ({ children, title, subtitle }) => {
-  const { settings } = useSettings();
+  const { settings, activeLogo } = useSettings();
   const appName = settings.general?.app_name || 'App';
-  const appLogo = settings.general?.logo || settings.customization?.logo || settings.general?.favicon || '';
+  const appLogo = activeLogo || settings.general?.logo || settings.customization?.logo || '/k9-logo.png';
 
   return (
     <div className="h-screen w-screen bg-[#F8F9FA] flex flex-col lg:flex-row font-display overflow-hidden fixed inset-0">
@@ -35,21 +35,21 @@ const AuthLayout = ({ children, title, subtitle }) => {
             )}
             <span className="text-3xl font-black tracking-tight">{appName}</span>
           </div>
-          
+
           <div className="max-w-xl">
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
             >
               <h2 className="text-5xl font-bold tracking-tight leading-[1.1] mb-6">
-                Move with <br/>
+                Move with <br />
                 <span className="text-[#F38F24]">Safety & Style.</span>
               </h2>
               <p className="text-gray-400 text-lg leading-relaxed mb-12">
                 Experience the next generation of urban mobility with {appName}. Reliable, fast, and always at your service.
               </p>
-              
+
               <div className="flex gap-4">
                 <div className="px-6 py-4 bg-white/5 rounded-2xl border border-white/10">
                   <p className="text-gray-500 text-xs font-bold uppercase tracking-wider mb-1">Global Coverage</p>
@@ -73,7 +73,7 @@ const AuthLayout = ({ children, title, subtitle }) => {
 
       {/* Right side (Main content) */}
       <div className="flex-1 h-full flex flex-col items-center justify-start lg:justify-center relative w-full bg-[#F8F9FA] overflow-y-auto lg:overflow-hidden">
-        
+
         {/* Premium Mobile Background (Hidden on Desktop) */}
         <div className="lg:hidden absolute top-0 left-0 w-full h-[300px] bg-[#1A1A1A] rounded-b-[2.5rem] z-0 overflow-hidden shadow-lg">
           <div className="absolute top-0 right-0 w-64 h-64 bg-[#F38F24]/10 rounded-full blur-[60px] -mr-20 -mt-20" />
@@ -82,21 +82,21 @@ const AuthLayout = ({ children, title, subtitle }) => {
 
         {/* Mobile Header (Visible only on small screens) */}
         <div className="lg:hidden w-full flex flex-col items-center text-center mt-10 mb-8 z-20 px-6">
-            {appLogo ? (
-              <img
-                src={appLogo}
-                alt={`${appName} logo`}
-                className="w-16 h-16 rounded-2xl object-contain bg-white p-2 mb-4 shadow-xl"
-              />
-            ) : (
-              <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center mb-4 shadow-xl">
-                <div className="w-8 h-8 bg-[#1A1A1A] rounded-lg"></div>
-              </div>
-            )}
-            <h2 className="text-2xl font-black text-white tracking-tight mb-2">{appName}</h2>
+          {appLogo ? (
+            <img
+              src={appLogo}
+              alt={`${appName} logo`}
+              className="w-16 h-16 rounded-2xl object-contain bg-white p-2 mb-4 shadow-xl"
+            />
+          ) : (
+            <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center mb-4 shadow-xl">
+              <div className="w-8 h-8 bg-[#1A1A1A] rounded-lg"></div>
+            </div>
+          )}
+          <h2 className="text-2xl font-black text-white tracking-tight mb-2">{appName}</h2>
         </div>
 
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           className="w-full max-w-[420px] bg-white lg:bg-transparent rounded-3xl p-6 lg:p-0 z-10 relative shadow-[0_20px_40px_-15px_rgba(0,0,0,0.05)] lg:shadow-none mx-4 lg:mx-0 mb-8 lg:mb-0"
@@ -117,13 +117,13 @@ const AuthLayout = ({ children, title, subtitle }) => {
             {children}
           </div>
         </motion.div>
-        
+
         {/* Helper footer link */}
         <div className="mt-auto lg:mt-12 text-center w-full max-w-[420px] z-20 pb-8 lg:pb-0">
-            <p className="text-xs text-gray-400 flex items-center justify-center gap-2">
-              <span className="w-4 h-4 rounded-full border border-gray-300 flex items-center justify-center font-bold text-[10px]">?</span>
-              Need assistance? <a href="/support" className="text-[#1A1A1A] font-semibold hover:text-[#F38F24] transition-colors ml-1">Contact Support</a>
-            </p>
+          <p className="text-xs text-gray-400 flex items-center justify-center gap-2">
+            <span className="w-4 h-4 rounded-full border border-gray-300 flex items-center justify-center font-bold text-[10px]">?</span>
+            Need assistance? <a href="/support" className="text-[#1A1A1A] font-semibold hover:text-[#F38F24] transition-colors ml-1">Contact Support</a>
+          </p>
         </div>
       </div>
     </div>

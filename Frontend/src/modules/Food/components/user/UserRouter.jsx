@@ -18,7 +18,7 @@ const Under250 = lazy(() => import("@food/pages/user/Under250"))
 const Categories = lazy(() => import("@food/pages/user/Categories"))
 const CategoryPage = lazy(() => import("@food/pages/user/CategoryPage"))
 const Restaurants = lazy(() => import("@food/pages/user/restaurants/Restaurants"))
-const RestaurantDetails = lazy(() => import("@food/pages/user/restaurants/RestaurantDetails"))
+import RestaurantDetails from "@food/pages/user/restaurants/RestaurantDetails"
 const DiningRestaurantDetails = lazy(() => import("@food/pages/user/dining/DiningRestaurantDetails"))
 const TableBooking = lazy(() => import("@food/pages/user/dining/TableBooking"))
 const TableBookingConfirmation = lazy(() => import("@food/pages/user/dining/TableBookingConfirmation"))

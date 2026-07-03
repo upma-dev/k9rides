@@ -1,28 +1,29 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-    Bell, 
+import {
+    Bell,
     CalendarClock,
     Camera,
-    Navigation, 
-    Wallet, 
-    Clock, 
-    Bike, 
-    Power, 
-    Target, 
-    Layers, 
+    Navigation,
+    Wallet,
+    Clock,
+    Bike,
+    Power,
+    Target,
+    Layers,
     Zap,
-    IndianRupee, 
-    TrendingUp, 
-    Star, 
+    IndianRupee,
+    TrendingUp,
+    Star,
     ChevronRight,
     MapPin,
     User,
     Shield,
     Mail,
-    BarChart2
+    BarChart2,
+    Check
 } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { GoogleMap, Marker } from '@react-google-maps/api';
 import toast from 'react-hot-toast';
 import LowBalanceModal from './LowBalanceModal';
@@ -69,7 +70,7 @@ const containerStyle = {
 
 const DEFAULT_MAP_CENTER = {
     lat: 22.7196,
-    lng: 75.8577 
+    lng: 75.8577
 };
 
 const DEFAULT_MAP_COORDS = [75.8577, 22.7196];
@@ -552,28 +553,31 @@ const hasSelfieForToday = (onlineSelfie = null) =>
     Boolean(String(onlineSelfie?.imageUrl || '').trim());
 
 const mapStyles = [
-  { "elementType": "geometry", "stylers": [{ "color": "#f5f5f5" }] },
-  { "elementType": "labels.icon", "stylers": [{ "visibility": "off" }] },
-  { "elementType": "labels.text.fill", "stylers": [{ "color": "#616161" }] },
-  { "elementType": "labels.text.stroke", "stylers": [{ "color": "#f5f5f5" }] },
-  { "featureType": "administrative.land_parcel", "elementType": "labels.text.fill", "stylers": [{ "color": "#bdbdbd" }] },
-  { "featureType": "poi", "elementType": "geometry", "stylers": [{ "color": "#eeeeee" }] },
-  { "featureType": "poi", "elementType": "labels.text.fill", "stylers": [{ "color": "#757575" }] },
-  { "featureType": "poi.park", "elementType": "geometry", "stylers": [{ "color": "#e5e5e5" }] },
-  { "featureType": "poi.park", "elementType": "labels.text.fill", "stylers": [{ "color": "#9e9e9e" }] },
-  { "featureType": "road", "elementType": "geometry", "stylers": [{ "color": "#ffffff" }] },
-  { "featureType": "road.arterial", "elementType": "labels.text.fill", "stylers": [{ "color": "#757575" }] },
-  { "featureType": "road.highway", "elementType": "geometry", "stylers": [{ "color": "#dadada" }] },
-  { "featureType": "road.highway", "elementType": "labels.text.fill", "stylers": [{ "color": "#616161" }] },
-  { "featureType": "road.local", "elementType": "labels.text.fill", "stylers": [{ "color": "#9e9e9e" }] },
-  { "featureType": "transit.line", "elementType": "geometry", "stylers": [{ "color": "#e5e5e5" }] },
-  { "featureType": "transit.station", "elementType": "geometry", "stylers": [{ "color": "#eeeeee" }] },
-  { "featureType": "water", "elementType": "geometry", "stylers": [{ "color": "#c9c9c9" }] },
-  { "featureType": "water", "elementType": "labels.text.fill", "stylers": [{ "color": "#9e9e9e" }] }
+    { "elementType": "geometry", "stylers": [{ "color": "#f5f5f5" }] },
+    { "elementType": "labels.icon", "stylers": [{ "visibility": "off" }] },
+    { "elementType": "labels.text.fill", "stylers": [{ "color": "#616161" }] },
+    { "elementType": "labels.text.stroke", "stylers": [{ "color": "#f5f5f5" }] },
+    { "featureType": "administrative.land_parcel", "elementType": "labels.text.fill", "stylers": [{ "color": "#bdbdbd" }] },
+    { "featureType": "poi", "elementType": "geometry", "stylers": [{ "color": "#eeeeee" }] },
+    { "featureType": "poi", "elementType": "labels.text.fill", "stylers": [{ "color": "#757575" }] },
+    { "featureType": "poi.park", "elementType": "geometry", "stylers": [{ "color": "#e5e5e5" }] },
+    { "featureType": "poi.park", "elementType": "labels.text.fill", "stylers": [{ "color": "#9e9e9e" }] },
+    { "featureType": "road", "elementType": "geometry", "stylers": [{ "color": "#ffffff" }] },
+    { "featureType": "road.arterial", "elementType": "labels.text.fill", "stylers": [{ "color": "#757575" }] },
+    { "featureType": "road.highway", "elementType": "geometry", "stylers": [{ "color": "#dadada" }] },
+    { "featureType": "road.highway", "elementType": "labels.text.fill", "stylers": [{ "color": "#616161" }] },
+    { "featureType": "road.local", "elementType": "labels.text.fill", "stylers": [{ "color": "#9e9e9e" }] },
+    { "featureType": "transit.line", "elementType": "geometry", "stylers": [{ "color": "#e5e5e5" }] },
+    { "featureType": "transit.station", "elementType": "geometry", "stylers": [{ "color": "#eeeeee" }] },
+    { "featureType": "water", "elementType": "geometry", "stylers": [{ "color": "#c9c9c9" }] },
+    { "featureType": "water", "elementType": "labels.text.fill", "stylers": [{ "color": "#9e9e9e" }] }
 ];
 
 const DriverHome = () => {
     const navigate = useNavigate();
+    const location = useLocation();
+    const [showCompletedTripModal, setShowCompletedTripModal] = useState(false);
+    const [completedTripDetails, setCompletedTripDetails] = useState(null);
     const { settings } = useSettings();
     const appName = settings.general?.app_name || 'App';
     const appLogo = settings.general?.logo || settings.customization?.logo;
@@ -706,6 +710,13 @@ const DriverHome = () => {
         }
     }, [cancellingScheduledRideId, loadScheduledRides]);
 
+    useEffect(() => {
+        if (location.state?.showBillModal && location.state?.completedRide) {
+            setCompletedTripDetails(location.state.completedRide);
+            setShowCompletedTripModal(true);
+            window.history.replaceState({}, document.title);
+        }
+    }, [location.state]);
 
     useEffect(() => {
         const unlock = () => unlockRideRequestAlertSound();
@@ -892,7 +903,7 @@ const DriverHome = () => {
     }, [map]);
 
     useEffect(() => {
-        updateDriverLocation({ quiet: true }).catch(() => {});
+        updateDriverLocation({ quiet: true }).catch(() => { });
     }, [updateDriverLocation]);
 
     const hydrateDriverState = useCallback(async () => {
@@ -1012,9 +1023,8 @@ const DriverHome = () => {
 
         (async () => {
             try {
-                const [dRes, activeDelivery, activeRide] = await Promise.allSettled([
+                const [dRes, activeRide] = await Promise.allSettled([
                     hydrateDriverState(),
-                    fetchActiveJob('parcel'),
                     fetchActiveJob('ride')
                 ]);
 
@@ -1028,16 +1038,10 @@ const DriverHome = () => {
                     return;
                 }
 
-                const deliveryPayload =
-                    activeDelivery.status === 'fulfilled' ? activeDelivery.value : null;
                 const ridePayload =
                     activeRide.status === 'fulfilled' ? activeRide.value : null;
 
-                const currentJob = deliveryPayload?.rideId
-                    ? deliveryPayload
-                    : ridePayload?.rideId
-                        ? ridePayload
-                        : null;
+                const currentJob = ridePayload?.rideId ? ridePayload : null;
 
                 if (currentJob?.rideId) {
                     const currentType = normalizeJobType(currentJob);
@@ -1144,19 +1148,19 @@ const DriverHome = () => {
         try {
             console.info('[driver-home] goOnline requested');
             setStatusMessage('Going online...');
-            
+
             // OPTIMIZATION: Use last known coords to speed up the transition
             // instead of waiting for a fresh GPS lock (which can take 2-6 seconds)
             let coordinates = Array.isArray(routeBookingPreferences.coordinates) && routeBookingPreferences.enabled
                 ? routeBookingPreferences.coordinates
                 : driverCoordsRef.current;
-            
+
             if (!coordinates) {
                 // If we really don't have any coords yet, we MUST wait for them once
                 coordinates = await updateDriverLocation({ quiet: true });
             } else if (!routeBookingPreferences.enabled) {
                 // Refresh location in background for better accuracy without blocking the UI
-                updateDriverLocation({ quiet: true }).catch(() => {});
+                updateDriverLocation({ quiet: true }).catch(() => { });
             }
 
             console.info('[driver-home] using coordinates for online status', coordinates);
@@ -1183,12 +1187,12 @@ const DriverHome = () => {
             setIsOnline(Boolean(driver?.isOnline));
             setVehicleIconUrl((current) => driver?.vehicleIconUrl || current);
             setOnlineSelfie(driver?.onlineSelfie || null);
-            
+
             // Sync current state with server response
             const finalCoords = (Array.isArray(driver?.location?.coordinates) && driver.location.coordinates.length === 2)
                 ? driver.location.coordinates
                 : coordinates;
-            
+
             driverCoordsRef.current = finalCoords;
             setDriverCoords(finalCoords);
             persistStoredDriverInfo({
@@ -1198,13 +1202,13 @@ const DriverHome = () => {
                 coordinates: finalCoords,
             });
             socketService.emit('locationUpdate', { coordinates: finalCoords });
-            
+
             setStatusMessage(
                 routeBookingPreferences.enabled
                     ? 'You are online. Matching rides from your selected route area.'
                     : 'You are online. Waiting for nearby bookings.',
             );
-            refreshTodaySummary().catch(() => {});
+            refreshTodaySummary().catch(() => { });
         } catch (error) {
             console.error('[driver-home] goOnline failed', error);
             setIsOnline(false);
@@ -1232,7 +1236,7 @@ const DriverHome = () => {
             setCurrentRequest(null);
             setStatusMessage('You are offline.');
             socketService.disconnect();
-            refreshTodaySummary().catch(() => {});
+            refreshTodaySummary().catch(() => { });
         } catch (error) {
             setIsOnline(true);
             setStatusMessage(error.message || 'Could not go offline.');
@@ -1393,7 +1397,7 @@ const DriverHome = () => {
 
         const video = selfieVideoRef.current;
         video.srcObject = selfieStreamRef.current;
-        video.play().catch(() => {});
+        video.play().catch(() => { });
     }, [showSelfieCameraCapture]);
 
     const captureSelfieFromCamera = useCallback(async () => {
@@ -1464,17 +1468,11 @@ const DriverHome = () => {
             }
 
             try {
-                const [activeDelivery, activeRide] = await Promise.allSettled([
-                    fetchActiveJob('parcel'),
+                const [activeRide] = await Promise.allSettled([
                     fetchActiveJob('ride'),
                 ]);
-                const deliveryPayload = activeDelivery.status === 'fulfilled' ? activeDelivery.value : null;
                 const ridePayload = activeRide.status === 'fulfilled' ? activeRide.value : null;
-                const currentJob = deliveryPayload?.rideId
-                    ? deliveryPayload
-                    : ridePayload?.rideId
-                        ? ridePayload
-                        : null;
+                const currentJob = ridePayload?.rideId ? ridePayload : null;
 
                 if (currentJob?.rideId) {
                     openActiveJob(currentJob);
@@ -1505,7 +1503,7 @@ const DriverHome = () => {
             const timeoutId = window.setTimeout(() => {
                 recoverRealtimeSession({
                     reason: index === 0 ? reason : `${reason}-retry-${index}`,
-                }).catch(() => {});
+                }).catch(() => { });
             }, delay);
 
             recoveryTimeoutsRef.current.push(timeoutId);
@@ -1858,7 +1856,7 @@ const DriverHome = () => {
             delete window.__driverReconnectRealtime;
         };
     }, [isOnline, scheduleRecoveryBurst]);
-    
+
     const liveActiveSeconds = Math.max(0, Number(todaySummary.activeSeconds || 0));
     const dutyHours = Math.floor(liveActiveSeconds / 3600);
     const dutyMins = Math.floor((liveActiveSeconds % 3600) / 60);
@@ -1898,11 +1896,11 @@ const DriverHome = () => {
     return (
         <div className="h-screen w-full bg-[#E5E7EB] font-sans select-none overflow-hidden relative text-slate-900 border-x border-slate-200 shadow-2xl max-w-md mx-auto">
             {/* Overlay for Ride Request Modal */}
-            <IncomingRideRequest 
+            <IncomingRideRequest
                 visible={showRequest && Boolean(currentRequest)}
                 requestData={currentRequest}
                 isAccepting={Boolean(acceptingRideId)}
-                onAccept={handleAccept} 
+                onAccept={handleAccept}
                 onDecline={handleDecline}
                 onSubmitBid={handleSubmitBid}
             />
@@ -1923,7 +1921,7 @@ const DriverHome = () => {
                 onDecline={() => setSelectedScheduledRide(null)}
             />
 
-            <LowBalanceModal 
+            <LowBalanceModal
                 isOpen={showLowBalanceModal}
                 onClose={() => setShowLowBalanceModal(false)}
                 balance={walletAlertState.balance}
@@ -1933,6 +1931,121 @@ const DriverHome = () => {
                 belowMinimumBalance={walletAlertState.belowMinimumBalance}
                 cashLimitExceeded={walletAlertState.cashLimitExceeded}
             />
+
+            <AnimatePresence>
+                {showCompletedTripModal && completedTripDetails && (
+                    <>
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            className="absolute inset-0 z-[70] bg-slate-950/60 backdrop-blur-md"
+                            onClick={() => setShowCompletedTripModal(false)}
+                        />
+                        <motion.div
+                            initial={{ opacity: 0, y: 100, scale: 0.95 }}
+                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                            exit={{ opacity: 0, y: 100, scale: 0.95 }}
+                            transition={{ type: "spring", damping: 25, stiffness: 280 }}
+                            className="absolute bottom-0 left-0 right-0 z-[71] max-h-[85vh] overflow-y-auto rounded-t-[36px] border border-white/10 bg-white px-6 py-8 shadow-[0_-24px_50px_rgba(15,23,42,0.15)] backdrop-blur-lg dark:bg-slate-900 text-slate-900 dark:text-white"
+                        >
+                            {/* Done Header checkmark */}
+                            <div className="text-center mb-6">
+                                <div className="w-16 h-16 rounded-2xl bg-emerald-500 text-white mx-auto flex items-center justify-center mb-4 shadow-lg shadow-emerald-500/20">
+                                    <Check size={36} strokeWidth={3.5} />
+                                </div>
+                                <h3 className="text-2xl font-black uppercase tracking-tight text-slate-900 dark:text-white">
+                                    {completedTripDetails.type === 'parcel' ? 'Delivery Completed!' : 'Ride Completed!'}
+                                </h3>
+                                <p className="text-[11px] font-bold text-slate-400 dark:text-slate-400 mt-1 uppercase tracking-widest">
+                                    Trip successfully completed
+                                </p>
+                            </div>
+
+                            {/* Earnings display */}
+                            <div className="mb-6 rounded-[28px] border border-slate-100 dark:border-slate-800 bg-gradient-to-b from-slate-50 to-white dark:from-slate-800/50 dark:to-slate-900 p-5 shadow-sm text-center">
+                                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 dark:text-slate-400">
+                                    Your Net Earnings
+                                </span>
+                                <h2 className="mt-1 text-4xl font-black text-emerald-600 dark:text-emerald-400 tracking-tight">
+                                    ₹{Number(completedTripDetails.driverEarnings || 0).toFixed(2)}
+                                </h2>
+                                <p className="mt-1.5 text-[11px] font-semibold text-slate-500 dark:text-slate-400">
+                                    Added to your wallet balance
+                                </p>
+                            </div>
+
+                            {/* Bill details table breakdown */}
+                            <div className="mb-6 overflow-hidden rounded-[24px] border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900/60 shadow-sm">
+                                <div className="border-b border-slate-100 dark:border-slate-800 px-5 py-4 flex justify-between items-center bg-slate-50/50 dark:bg-slate-800/35">
+                                    <span className="text-[11px] font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                                        Fare Details
+                                    </span>
+                                    <span className="text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
+                                        {completedTripDetails.paymentMethod}
+                                    </span>
+                                </div>
+                                <div className="p-5 space-y-3.5">
+                                    <div className="flex justify-between items-center text-xs">
+                                        <span className="font-semibold text-slate-500 dark:text-slate-400">Base Fare</span>
+                                        <span className="font-bold text-slate-900 dark:text-white">₹{Number(completedTripDetails.baseFare || 0).toFixed(2)}</span>
+                                    </div>
+                                    {completedTripDetails.timeCharge > 0 && (
+                                        <div className="flex justify-between items-center text-xs">
+                                            <span className="font-semibold text-slate-500 dark:text-slate-400">Duration Time Charge</span>
+                                            <span className="font-bold text-slate-900 dark:text-white">₹{Number(completedTripDetails.timeCharge || 0).toFixed(2)}</span>
+                                        </div>
+                                    )}
+                                    {completedTripDetails.waitingCharge > 0 && (
+                                        <div className="flex justify-between items-center text-xs">
+                                            <span className="font-semibold text-slate-500 dark:text-slate-400">Waiting Charge</span>
+                                            <span className="font-bold text-slate-900 dark:text-white">₹{Number(completedTripDetails.waitingCharge || 0).toFixed(2)}</span>
+                                        </div>
+                                    )}
+                                    <div className="h-px bg-slate-100 dark:bg-slate-800 my-1" />
+                                    <div className="flex justify-between items-center text-xs">
+                                        <span className="font-bold text-slate-900 dark:text-white">Total Customer Fare</span>
+                                        <span className="font-extrabold text-slate-900 dark:text-white">₹{Number(completedTripDetails.fare || 0).toFixed(2)}</span>
+                                    </div>
+                                    <div className="flex justify-between items-center text-xs text-rose-500 dark:text-rose-400">
+                                        <span className="font-semibold">Admin Commission</span>
+                                        <span className="font-bold">-₹{Number(completedTripDetails.commissionAmount || 0).toFixed(2)}</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Trip Address details */}
+                            <div className="mb-6 rounded-[24px] border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900/60 p-4 shadow-sm">
+                                <div className="flex items-start gap-3">
+                                    <div className="mt-1 flex flex-col items-center">
+                                        <span className="h-2.5 w-2.5 rounded-full bg-emerald-500" />
+                                        <span className="my-1 h-8 w-px border-l border-dashed border-slate-200 dark:border-slate-700" />
+                                        <span className="h-2.5 w-2.5 rounded-full bg-rose-500" />
+                                    </div>
+                                    <div className="min-w-0 flex-1 space-y-3">
+                                        <div>
+                                            <p className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-400">Pickup</p>
+                                            <p className="mt-0.5 text-xs font-semibold leading-relaxed text-slate-800 dark:text-slate-200 truncate">{completedTripDetails.pickup}</p>
+                                        </div>
+                                        <div>
+                                            <p className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-400">Drop</p>
+                                            <p className="mt-0.5 text-xs font-semibold leading-relaxed text-slate-800 dark:text-slate-200 truncate">{completedTripDetails.drop}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Done Button */}
+                            <button
+                                onClick={() => setShowCompletedTripModal(false)}
+                                className="w-full h-14 rounded-2xl bg-slate-950 hover:bg-slate-900 dark:bg-white dark:text-slate-950 text-white font-black uppercase tracking-wider text-xs shadow-lg active:scale-98 transition-all flex items-center justify-center gap-2"
+                            >
+                                Done
+                            </button>
+                        </motion.div>
+                    </>
+                )}
+            </AnimatePresence>
 
             <AnimatePresence>
                 {showOfflineConfirm && (
@@ -2187,7 +2300,7 @@ const DriverHome = () => {
                         ) : null}
                     </button>
 
-                    <button 
+                    <button
                         onClick={() => navigate('/taxi/driver/notifications')}
                         className="relative flex h-10 w-10 items-center justify-center rounded-full border border-slate-100 bg-white text-slate-900 shadow-md transition-all active:scale-90"
                     >
@@ -2205,9 +2318,8 @@ const DriverHome = () => {
                     <button
                         disabled={isTogglingDuty}
                         onClick={handleDutyToggle}
-                        className={`relative flex h-10 w-28 items-center rounded-full p-1 transition-all duration-500 shadow-lg ${
-                            isOnline ? 'bg-emerald-500 shadow-emerald-500/20' : 'bg-slate-200'
-                        }`}
+                        className={`relative flex h-10 w-28 items-center rounded-full p-1 transition-all duration-500 shadow-lg ${isOnline ? 'bg-emerald-500 shadow-emerald-500/20' : 'bg-slate-200'
+                            }`}
                     >
                         <motion.div
                             animate={{ x: isOnline ? 72 : 0 }}
@@ -2226,7 +2338,7 @@ const DriverHome = () => {
 
                 {/* Right Side: Wallet */}
                 <div className="flex justify-end pointer-events-auto">
-                    <div 
+                    <div
                         onClick={() => navigate('/taxi/driver/wallet')}
                         className="flex items-center gap-1.5 rounded-full bg-black px-3 py-1.5 text-white shadow-xl shadow-black/10 active:scale-95 transition-all cursor-pointer border border-white/10"
                     >
@@ -2241,21 +2353,21 @@ const DriverHome = () => {
             {/* --- MAP BACKGROUND --- */}
             <div className="absolute inset-0 z-0 w-full h-full">
                 {HAS_VALID_GOOGLE_MAPS_KEY && isLoaded ? (
-                    <GoogleMap 
-                        mapContainerStyle={containerStyle} 
-                        center={driverPosition} 
-                        zoom={15} 
-                        onLoad={onLoad} 
-                        onUnmount={onUnmount} 
+                    <GoogleMap
+                        mapContainerStyle={containerStyle}
+                        center={driverPosition}
+                        zoom={15}
+                        onLoad={onLoad}
+                        onUnmount={onUnmount}
                         options={mapOptions}
                     >
-                        <Marker 
-                            position={driverPosition} 
-                            icon={{ 
-                                url: mapVehicleIcon, 
-                                scaledSize: new window.google.maps.Size(40, 40), 
+                        <Marker
+                            position={driverPosition}
+                            icon={{
+                                url: mapVehicleIcon,
+                                scaledSize: new window.google.maps.Size(40, 40),
                                 anchor: new window.google.maps.Point(20, 20)
-                            }} 
+                            }}
                         />
                     </GoogleMap>
                 ) : (
@@ -2377,7 +2489,7 @@ const DriverHome = () => {
             {/* Status Based Background Overlay */}
             <AnimatePresence>
                 {!isOnline && (
-                    <motion.div 
+                    <motion.div
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}

@@ -12,10 +12,25 @@ import { useCompanyName } from "@food/hooks/useCompanyName"
 import { motion, AnimatePresence } from "framer-motion"
 import logoImg from "@food/assets/k9-logo.jpg"
 import { formatDisplayPhone } from "../../../../../utils/phone.util"
+import { getRestaurantLogo, loadBusinessSettings } from "@food/utils/businessSettings"
 
 export default function RestaurantOTP() {
   const companyName = useCompanyName()
   const navigate = useNavigate()
+  const [logoUrl, setLogoUrl] = useState(() => {
+    try {
+      return getRestaurantLogo();
+    } catch (e) {
+      return logoImg;
+    }
+  })
+
+  useEffect(() => {
+    loadBusinessSettings().then(() => {
+      setLogoUrl(getRestaurantLogo());
+    }).catch(() => {});
+  }, []);
+
   const [otp, setOtp] = useState(["", "", "", ""])
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState("")
@@ -259,7 +274,7 @@ export default function RestaurantOTP() {
           className="relative z-10 flex flex-col items-center gap-4 px-6 text-center"
         >
           <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center border border-white/25 shadow-lg mb-2 overflow-hidden">
-            <img src={logoImg} alt={`${companyName} logo`} className="w-full h-full object-cover scale-110" />
+            <img src={logoUrl} alt={`${companyName} logo`} className="w-full h-full object-cover scale-110" />
           </div>
           <div className="space-y-1">
             <h1 className="text-white font-black text-3xl tracking-tight leading-none italic">

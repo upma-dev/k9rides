@@ -1,16 +1,20 @@
-import { useState, useEffect } from "react"
-import { Outlet } from "react-router-dom"
+import { useState, useEffect, useRef } from "react"
+import { Outlet, useLocation } from "react-router-dom"
 import AdminSidebar from "./AdminSidebar"
 import AdminNavbar from "./AdminNavbar"
 import { API_BASE_URL } from "@food/api/config"
+import { ContentPageSkeleton } from "@food/components/ui/loading-skeletons"
+
 const debugLog = (...args) => {}
 const debugWarn = (...args) => {}
 const debugError = (...args) => {}
 
-
 export default function AdminLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const location = useLocation();
+  const [isNavigating, setIsNavigating] = useState(false);
+  const prevPathRef = useRef(location.pathname);
 
   // Get initial collapsed state from localStorage to set initial margin
   useEffect(() => {
@@ -26,6 +30,16 @@ export default function AdminLayout() {
       debugError('Error loading sidebar collapsed state:', e)
     }
   }, [])
+
+  // Page navigation skeleton effect
+  useEffect(() => {
+    if (prevPathRef.current !== location.pathname) {
+      setIsNavigating(true);
+      const timer = setTimeout(() => setIsNavigating(false), 400);
+      prevPathRef.current = location.pathname;
+      return () => clearTimeout(timer);
+    }
+  }, [location.pathname]);
 
   const handleCollapseChange = (collapsed) => {
     setIsSidebarCollapsed(collapsed)
@@ -65,7 +79,13 @@ export default function AdminLayout() {
 
         {/* Page Content */}
         <main className="flex-1 min-h-0 w-full max-w-full overflow-x-hidden overflow-y-auto bg-neutral-100">
-          <Outlet />
+          {isNavigating ? (
+             <div className="p-4 lg:p-6 w-full h-full">
+                <ContentPageSkeleton hero={false} className="bg-transparent dark:bg-transparent min-h-0" />
+             </div>
+          ) : (
+             <Outlet />
+          )}
         </main>
       </div>
     </div>

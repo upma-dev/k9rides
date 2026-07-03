@@ -592,9 +592,40 @@ const matchesTransportType = (rule, transportType) => {
     || normalizedRuleTransport === 'both';
 };
 
-const findBestPricingRule = ({ rules, vehicleTypeId, serviceLocationId, transportType }) => {
+const isPointInPolygon = (point, polygonCoordinates) => {
+  const x = point[0], y = point[1];
+  let inside = false;
+  for (let i = 0, j = polygonCoordinates.length - 1; i < polygonCoordinates.length; j = i++) {
+    const xi = polygonCoordinates[i][0], yi = polygonCoordinates[i][1];
+    const xj = polygonCoordinates[j][0], yj = polygonCoordinates[j][1];
+    const intersect = ((yi > y) !== (yj > y))
+        && (x < (xj - xi) * (y - yi) / (yj - yi) + xi);
+    if (intersect) inside = !inside;
+  }
+  return inside;
+};
+
+const findZoneForLocation = (coords, zonesList) => {
+  if (!coords || !Array.isArray(zonesList)) return null;
+  for (const zone of zonesList) {
+    if ((zone.active !== false && String(zone.status || 'active').toLowerCase() === 'active') && zone.geometry?.coordinates) {
+      const type = zone.geometry.type;
+      const polys = type === 'Polygon' ? [zone.geometry.coordinates] : zone.geometry.coordinates;
+      for (const poly of polys) {
+        const ring = Array.isArray(poly[0]?.[0]) ? poly[0] : poly;
+        if (isPointInPolygon(coords, ring)) {
+          return zone;
+        }
+      }
+    }
+  }
+  return null;
+};
+
+const findBestPricingRule = ({ rules, vehicleTypeId, serviceLocationId, zoneId, transportType }) => {
   const normalizedVehicleTypeId = normalizeId(vehicleTypeId);
   const normalizedServiceLocationId = normalizeId(serviceLocationId);
+  const normalizedZoneId = normalizeId(zoneId);
   const normalizedTransportType = String(transportType || 'taxi').trim().toLowerCase() || 'taxi';
 
   const candidates = sortPricingRules(rules.filter((rule) => {
@@ -607,9 +638,25 @@ const findBestPricingRule = ({ rules, vehicleTypeId, serviceLocationId, transpor
   }
 
   const exactTransportMatch = (rule) => String(rule?.transport_type || 'taxi').trim().toLowerCase() === normalizedTransportType;
+
+  // 1. Try to match specific zone first
+  if (normalizedZoneId) {
+    const exactZone = candidates.find((rule) => (
+      rule.zone_id && normalizeId(rule.zone_id) === normalizedZoneId && exactTransportMatch(rule)
+    ));
+    if (exactZone) return exactZone;
+
+    const zoneAnyTransport = candidates.find((rule) => (
+      rule.zone_id && normalizeId(rule.zone_id) === normalizedZoneId
+    ));
+    if (zoneAnyTransport) return zoneAnyTransport;
+  }
+
+  // 2. Fallback to service location (no zone match)
   const exactServiceLocation = candidates.find((rule) => (
     normalizedServiceLocationId
     && getRuleServiceLocationId(rule) === normalizedServiceLocationId
+    && !rule.zone_id
     && exactTransportMatch(rule)
   ));
 
@@ -618,7 +665,9 @@ const findBestPricingRule = ({ rules, vehicleTypeId, serviceLocationId, transpor
   }
 
   const exactServiceLocationAnyTransport = candidates.find((rule) => (
-    normalizedServiceLocationId && getRuleServiceLocationId(rule) === normalizedServiceLocationId
+    normalizedServiceLocationId
+    && getRuleServiceLocationId(rule) === normalizedServiceLocationId
+    && !rule.zone_id
   ));
 
   if (exactServiceLocationAnyTransport) {
@@ -626,30 +675,41 @@ const findBestPricingRule = ({ rules, vehicleTypeId, serviceLocationId, transpor
   }
 
   const genericTransportMatch = candidates.find((rule) => (
-    !getRuleServiceLocationId(rule) && exactTransportMatch(rule)
+    !getRuleServiceLocationId(rule) && !rule.zone_id && exactTransportMatch(rule)
   ));
 
   if (genericTransportMatch) {
     return genericTransportMatch;
   }
 
-  const genericBoth = candidates.find((rule) => !getRuleServiceLocationId(rule));
+  const genericBoth = candidates.find((rule) => !getRuleServiceLocationId(rule) && !rule.zone_id);
   return genericBoth || candidates[0];
 };
 
-const calculateEstimatedFare = ({ vehicle, pricingRule, distanceMeters, durationMinutes }) => {
+const calculateEstimatedFare = ({ vehicle, pricingRule, distanceMeters, durationMinutes, transportType = 'taxi' }) => {
   const fallbackFare = getFallbackVehicleEstimate(vehicle?.raw || vehicle);
 
   if (!pricingRule) {
     return fallbackFare;
   }
 
+  const isIntercity = String(transportType).toLowerCase() === 'intercity';
   const distanceKm = Math.max(0, Number(distanceMeters || 0) / 1000);
-  const basePrice = toFiniteNumber(pricingRule.base_price, 0);
-  const baseDistance = Math.max(0, toFiniteNumber(pricingRule.base_distance, 0));
-  const pricePerDistance = toFiniteNumber(pricingRule.price_per_distance, 0);
-  const timePrice = toFiniteNumber(pricingRule.time_price, 0);
+  const basePrice = isIntercity && pricingRule.outstation_base_price !== undefined && pricingRule.outstation_base_price !== null
+    ? toFiniteNumber(pricingRule.outstation_base_price, 0)
+    : toFiniteNumber(pricingRule.base_price, 0);
+  const baseDistance = isIntercity && pricingRule.outstation_base_distance !== undefined && pricingRule.outstation_base_distance !== null
+    ? Math.max(0, toFiniteNumber(pricingRule.outstation_base_distance, 0))
+    : Math.max(0, toFiniteNumber(pricingRule.base_distance, 0));
+  const pricePerDistance = isIntercity && pricingRule.outstation_price_per_distance !== undefined && pricingRule.outstation_price_per_distance !== null
+    ? toFiniteNumber(pricingRule.outstation_price_per_distance, 0)
+    : toFiniteNumber(pricingRule.price_per_distance, 0);
+  const timePrice = isIntercity && pricingRule.outstation_time_price !== undefined && pricingRule.outstation_time_price !== null
+    ? toFiniteNumber(pricingRule.outstation_time_price, 0)
+    : toFiniteNumber(pricingRule.time_price, 0);
   const serviceTax = toFiniteNumber(pricingRule.service_tax, 0);
+  // Include the ride surge set by admin — backend always adds this, so user must see it too
+  const rideSurgeAmount = toFiniteNumber(pricingRule.ride_surge_amount, 0);
   const isWithinBaseDistance = baseDistance > 0 && distanceKm <= baseDistance;
   const extraDistanceKm = Math.max(0, distanceKm - baseDistance);
   const subtotal = isWithinBaseDistance
@@ -660,7 +720,7 @@ const calculateEstimatedFare = ({ vehicle, pricingRule, distanceMeters, duration
     return fallbackFare;
   }
 
-  const total = subtotal + (subtotal * serviceTax) / 100;
+  const total = subtotal + (subtotal * serviceTax) / 100 + rideSurgeAmount;
   return Math.max(0, Math.round(total));
 };
 
@@ -910,6 +970,8 @@ const SelectVehicle = () => {
   const [driverLoadError, setDriverLoadError] = useState('');
   const [pricingRules, setPricingRules] = useState([]);
   const [isLoadingPricingRules, setIsLoadingPricingRules] = useState(true);
+  const [zones, setZones] = useState([]);
+  const [isLoadingZones, setIsLoadingZones] = useState(true);
   const [tripMetrics, setTripMetrics] = useState(() => {
     if (
       Number.isFinite(Number(routeState?.estimatedDistanceMeters))
@@ -1037,7 +1099,27 @@ const SelectVehicle = () => {
       }
     };
 
+    const loadZones = async () => {
+      setIsLoadingZones(true);
+      try {
+        const response = await api.get('/admin/zones');
+        if (!active) {
+          return;
+        }
+        setZones(response?.data?.data || response?.data || []);
+      } catch {
+        if (active) {
+          setZones([]);
+        }
+      } finally {
+        if (active) {
+          setIsLoadingZones(false);
+        }
+      }
+    };
+
     loadPricingRules();
+    loadZones();
 
     return () => {
       active = false;
@@ -1117,14 +1199,19 @@ const SelectVehicle = () => {
     };
   }, [dropCoords, dropPosition, isMapLoaded, mapLoadError, pickupCoords, pickupPosition, stops]);
 
+  const matchedZone = useMemo(() => findZoneForLocation(pickupCoords, zones), [pickupCoords, zones]);
+  const matchedZoneId = matchedZone?._id || matchedZone?.id || null;
+
   const pricedVehicles = useMemo(
     () =>
       vehicles.map((vehicle) => {
+        const resolvedVehicleTransportType = vehicle.transportType || routeState.transport_type || routeState.transportType || 'taxi';
         const pricingRule = findBestPricingRule({
           rules: pricingRules,
           vehicleTypeId: vehicle.vehicleTypeId,
           serviceLocationId,
-          transportType: vehicle.transportType || routeState.transport_type || routeState.transportType || 'taxi',
+          zoneId: matchedZoneId,
+          transportType: resolvedVehicleTransportType,
         });
 
         return {
@@ -1135,10 +1222,11 @@ const SelectVehicle = () => {
             pricingRule,
             distanceMeters: tripMetrics.distanceMeters,
             durationMinutes: tripMetrics.durationMinutes,
+            transportType: resolvedVehicleTransportType,
           }),
         };
       }),
-    [pricingRules, serviceLocationId, tripMetrics.distanceMeters, tripMetrics.durationMinutes, vehicles],
+    [pricingRules, serviceLocationId, matchedZoneId, tripMetrics.distanceMeters, tripMetrics.durationMinutes, vehicles],
   );
 
   const isFarePending = isResolvingTripMetrics || isLoadingPricingRules;

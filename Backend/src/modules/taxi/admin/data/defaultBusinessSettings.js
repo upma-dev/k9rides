@@ -43,7 +43,7 @@ export const createDefaultBusinessSettings = () => ({
     enable_multiple_ride_feature: '1',
     enable_max_dist_feature: '1',
     enable_fixed_fare: '1',
-    
+
     // Sign-in Toggles
     user_email_login: '1',
     user_email_otp: '1',

@@ -25,11 +25,13 @@ import {
 import {
   cancelRideByUser,
   emitToDriver,
+  emitToRideRoom,
   notifyRideAccepted,
   notifyRideBiddingUpdated,
   restartRideDispatchWithLatestFare,
   startDispatchFlow,
 } from '../../services/dispatchService.js';
+import { SOCKET_EVENTS } from '../../socket/events.js';
 import { getTipSettings } from '../../services/appSettingsService.js';
 import { Ride } from '../models/Ride.js';
 import { UserWallet } from '../models/UserWallet.js';
@@ -348,7 +350,10 @@ export const getRideById = async (req, res) => {
   });
 
   const ride = await getRideDetails(req.params.rideId);
-
+  console.log(`[DEBUG] getRideById: id=${ride._id} status=${ride.status} liveStatus=${ride.liveStatus} fare=${ride.fare} baseFare=${ride.baseFare} waitingChargeAmount=${ride.waitingChargeAmount} timeChargeAmount=${ride.timeChargeAmount} distanceChargeAmount=${ride.distanceChargeAmount}`);
+  import('fs').then(fs => {
+    fs.writeFileSync('s:/Appezeto task-2/k9rides/Backend/scratch_ride_debug.json', JSON.stringify(ride, null, 2));
+  }).catch(err => console.error(err));
   res.json({
     success: true,
     data: ride,
@@ -402,7 +407,30 @@ export const updateRideStatus = async (req, res) => {
     driverId: req.auth.sub,
     nextStatus,
     paymentMethod: req.body.paymentMethod,
+    fare: req.body.fare,
+    baseFare: req.body.baseFare,
+    waitingChargeAmount: req.body.waitingChargeAmount,
+    timeChargeAmount: req.body.timeChargeAmount,
+    distanceChargeAmount: req.body.distanceChargeAmount,
+    additionalCharge: req.body.additionalCharge,
+    driverPaymentCollection: req.body.driverPaymentCollection,
   });
+
+  const payload = {
+    rideId: String(ride._id),
+    status: ride.status,
+    liveStatus: ride.liveStatus,
+    acceptedAt: ride.acceptedAt,
+    arrivedAt: ride.arrivedAt,
+    startedAt: ride.startedAt,
+    completedAt: ride.completedAt,
+    waitingChargeAmount: ride.waitingChargeAmount || 0,
+    distanceChargeAmount: ride.distanceChargeAmount || 0,
+    timeChargeAmount: ride.timeChargeAmount || 0,
+  };
+
+  emitToRideRoom(ride._id, SOCKET_EVENTS.RIDE_STATUS_UPDATED, payload);
+  emitToRideRoom(ride._id, SOCKET_EVENTS.RIDE_STATE, serializeRideRealtime(ride));
 
   res.json({
     success: true,
@@ -871,24 +899,24 @@ export const verifyRazorpayRideTip = async (req, res) => {
 
   const walletResult = existingWalletCredit
     ? {
-        wallet: await serializeDriverWallet(driver),
-        transaction: null,
-      }
+      wallet: await serializeDriverWallet(driver),
+      transaction: null,
+    }
     : await applyDriverWalletAdjustment({
-        driverId: ride.driverId,
-        rideId: ride._id,
-        amount: verifiedTipAmount,
-        type: 'adjustment',
-        description: 'Ride tip credited from rider',
-        metadata: {
-          source: 'ride_tip',
-          provider: 'razorpay',
-          providerOrderId: orderId,
-          providerPaymentId: paymentId,
-          rideId: String(ride._id),
-          userId: String(req.auth.sub),
-        },
-      });
+      driverId: ride.driverId,
+      rideId: ride._id,
+      amount: verifiedTipAmount,
+      type: 'adjustment',
+      description: 'Ride tip credited from rider',
+      metadata: {
+        source: 'ride_tip',
+        provider: 'razorpay',
+        providerOrderId: orderId,
+        providerPaymentId: paymentId,
+        rideId: String(ride._id),
+        userId: String(req.auth.sub),
+      },
+    });
 
   ride.feedback = {
     rating,
@@ -939,14 +967,16 @@ export const getRideAppTipSettings = async (_req, res) => {
 };
 
 export const cancelRide = async (req, res) => {
-  const ride = await cancelRideByUser({
+  const result = await cancelRideByUser({
     rideId: req.params.rideId,
     userId: req.auth.sub,
   });
 
-  if (!ride) {
+  if (!result || !result.ride) {
     throw new ApiError(404, 'Ride not found');
   }
+
+  const { ride, cancellationSettlement } = result;
 
   res.json({
     success: true,
@@ -954,6 +984,12 @@ export const cancelRide = async (req, res) => {
       rideId: String(ride._id),
       status: ride.status,
       liveStatus: ride.liveStatus,
+      cancellationBill: cancellationSettlement ? {
+        cancellationFee: cancellationSettlement.feeAmount || 0,
+        waitingTimeMinutes: cancellationSettlement.waitingTimeMinutes || 0,
+        waitingCharge: cancellationSettlement.waitingCharge || 0,
+        totalCancellationFee: cancellationSettlement.totalFeeAmount || 0,
+      } : null
     },
   });
 };

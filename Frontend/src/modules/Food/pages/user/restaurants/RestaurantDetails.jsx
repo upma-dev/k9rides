@@ -107,6 +107,8 @@ function RestaurantDetailsContent() {
   const [highlightedDishId, setHighlightedDishId] = useState(null)
   const [loadingMenuItems, setLoadingMenuItems] = useState(true)
   const [selectedMenuCategory, setSelectedMenuCategory] = useState("all")
+  const [reviews, setReviews] = useState([])
+  const [loadingReviews, setLoadingReviews] = useState(true)
   const dishCardRefs = useRef({})
 
   const getLineItemIdForDish = (item, variant = null) =>
@@ -494,7 +496,7 @@ function RestaurantDetailsContent() {
               "Unknown Restaurant",
             cuisine: resolvedTopCategory,
             topCategory: resolvedTopCategory,
-            rating: actualRestaurant?.rating || apiRestaurant?.rating || actualRestaurant?.averageRating || apiRestaurant?.averageRating || 4.5,
+            rating: actualRestaurant?.rating || apiRestaurant?.rating || actualRestaurant?.averageRating || apiRestaurant?.averageRating || 0,
             reviews: actualRestaurant?.totalRatings || apiRestaurant?.totalRatings || actualRestaurant?.reviewCount || apiRestaurant?.reviewCount || actualRestaurant?.reviews?.length || apiRestaurant?.reviews?.length || 0,
             deliveryTime: actualRestaurant?.estimatedDeliveryTime || apiRestaurant?.estimatedDeliveryTime || actualRestaurant?.deliveryTime || apiRestaurant?.deliveryTime || actualRestaurant?.avgDeliveryTime || apiRestaurant?.avgDeliveryTime || "25-30 mins",
             distance: calculatedDistance || actualRestaurant?.distance || apiRestaurant?.distance || actualRestaurant?.distanceFromUser || apiRestaurant?.distanceFromUser || "1.2 km",
@@ -1001,6 +1003,30 @@ function RestaurantDetailsContent() {
 
     fetchRestaurant()
   }, [slug, zoneId, restaurant])
+
+  // Fetch real reviews from database (Zomato style)
+  useEffect(() => {
+    const fetchReviews = async () => {
+      const targetId = restaurant?.mongoId || restaurant?.id || slug;
+      if (!targetId) return;
+      
+      try {
+        setLoadingReviews(true);
+        const res = await restaurantAPI.getReviews(targetId);
+        if (res?.data?.success && res.data.data?.reviews) {
+          setReviews(res.data.data.reviews);
+        }
+      } catch (err) {
+        debugWarn("Failed to fetch restaurant reviews:", err);
+      } finally {
+        setLoadingReviews(false);
+      }
+    };
+    
+    if (restaurant) {
+      fetchReviews();
+    }
+  }, [restaurant?.id, slug])
 
   // Track previous values to prevent unnecessary recalculations
   const prevCoordsRef = useRef({ userLat: null, userLng: null, restaurantLat: null, restaurantLng: null })
@@ -1919,17 +1945,28 @@ function RestaurantDetailsContent() {
       })
     }, 3000)
     return () => clearInterval(interval)
-  }, [restaurant?.offers?.length || 0])
-
-  // Auto-rotate highlight offer text every 2 seconds
+  }, [restaurant?.offers?.length || 0])  // Auto-rotate highlight offer text every 2 seconds
   useEffect(() => {
     const interval = setInterval(() => {
       setHighlightIndex((prev) => (prev + 1) % highlightOffers.length)
     }, 2000)
-
+ 
     return () => clearInterval(interval)
   }, [highlightOffers.length])
 
+  // Smooth scroll to food list directly on load (Zomato effect)
+  useEffect(() => {
+    if (!loadingRestaurant && restaurant) {
+      const scrollTimer = setTimeout(() => {
+        const element = document.getElementById("menu-items-container");
+        if (element) {
+          element.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+      }, 600);
+      return () => clearTimeout(scrollTimer);
+    }
+  }, [loadingRestaurant, restaurant]);
+ 
   // Show loading state
   if (loadingRestaurant) {
     return <RestaurantDetailSkeleton />
@@ -2069,11 +2106,17 @@ function RestaurantDetailsContent() {
               <Info className="h-5 w-5 text-gray-400" />
             </div>
             <div className="flex flex-col items-end">
-              <Badge className="bg-green-600 text-white mb-1 flex items-center gap-1 px-2 py-1">
-                <Star className="h-3 w-3 fill-white" />
-                {restaurant?.rating || 4.5}
+              <Badge className={`${reviews.length > 0 || (restaurant?.rating && Number(restaurant.rating) > 0) ? "bg-[#259539]" : "bg-gray-400"} text-white mb-1 flex items-center gap-1 px-2.5 py-1 rounded-xl`}>
+                {(reviews.length > 0 || (restaurant?.rating && Number(restaurant.rating) > 0)) && <Star className="h-3 w-3 fill-white text-white" strokeWidth={0} />}
+                <span className="font-black text-xs sm:text-sm">
+                  {reviews.length > 0 
+                    ? (reviews.reduce((acc, r) => acc + r.rating, 0) / reviews.length).toFixed(1) 
+                    : (restaurant?.rating && Number(restaurant.rating) > 0 ? Number(restaurant.rating).toFixed(1) : "NEW")}
+                </span>
               </Badge>
-              <span className="text-xs text-gray-500">By {(restaurant.reviews || 0).toLocaleString()}+</span>
+              <span className="text-xs text-gray-500 font-bold">
+                ({reviews.length > 0 ? reviews.length : (restaurant?.reviews || restaurant?.totalRatings || 0)} reviews)
+              </span>
             </div>
           </div>
 
@@ -2085,12 +2128,15 @@ function RestaurantDetailsContent() {
 
           {/* Location */}
           <div
-            className="flex items-center gap-1 text-sm text-gray-700 dark:text-gray-300 cursor-pointer"
+            className="flex items-center gap-1 text-sm text-gray-750 dark:text-gray-300 cursor-pointer font-medium"
             onClick={() => setShowLocationSheet(true)}
           >
-            <MapPin className="h-4 w-4" />
-            <span>{restaurant?.distance || "1.2 km"} � {restaurant?.location || "Location"}</span>
-            <ChevronDown className="h-4 w-4 text-gray-500" />
+            <MapPin className="h-4 w-4 text-red-600 dark:text-red-500" />
+            <span className="text-red-600 dark:text-red-500 font-bold">{restaurant?.distance || "1.2 km"}</span>
+            <span> • </span>
+            <MapPin className="h-3.5 w-3.5 text-gray-500 flex-shrink-0" />
+            <span className="truncate max-w-[220px]">{restaurant?.location || "Address"}</span>
+            <ChevronDown className="h-4 w-4 text-gray-550" />
           </div>
 
           {/* Delivery Time */}
@@ -2237,7 +2283,7 @@ function RestaurantDetailsContent() {
 
         {/* Menu Items Section */}
         {restaurant?.menuSections && Array.isArray(restaurant.menuSections) && restaurant.menuSections.length > 0 && (
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 lg:px-10 xl:px-12 py-6 sm:py-8 md:py-10 lg:py-12 space-y-6 md:space-y-8 lg:space-y-10">
+          <div id="menu-items-container" className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 lg:px-10 xl:px-12 py-6 sm:py-8 md:py-10 lg:py-12 space-y-6 md:space-y-8 lg:space-y-10 scroll-mt-24">
             {filteredSections.length === 0 && hasActiveMenuFilters && (
               <div className="rounded-2xl border border-dashed border-gray-300 dark:border-gray-700 bg-white dark:bg-[#1a1a1a] px-5 py-8 text-center">
                 <p className="text-sm md:text-base font-medium text-gray-700 dark:text-gray-300">
@@ -2348,7 +2394,7 @@ function RestaurantDetailsContent() {
                   )}
                   {isExpanded && sectionItems.length > 0 && (
                     <div className="space-y-0">
-                      {sectionItems.map((item) => {
+                      {sectionItems.map((item, idx) => {
                         const quantity = getDishQuantity(item)
                         // Determine veg/non-veg based on foodType
                         const isVeg = item.foodType === "Veg"
@@ -2359,8 +2405,11 @@ function RestaurantDetailsContent() {
                         }
 
                         return (
-                          <div
+                          <motion.div
                             key={item.id}
+                            initial={{ opacity: 0, y: 25 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.35, delay: Math.min(idx * 0.04, 0.28), ease: "easeOut" }}
                             ref={(node) => {
                               if (node) {
                                 dishCardRefs.current[item.id] = node
@@ -2400,7 +2449,7 @@ function RestaurantDetailsContent() {
                               )}
 
                               <div className="flex items-center gap-3 mt-1">
-                                <p className="font-semibold text-gray-900 dark:text-white">{getFoodPriceLabel(item)}</p>
+                                <p className="font-semibold text-red-600 dark:text-red-500">{getFoodPriceLabel(item)}</p>
                                 {/* Preparation Time - Show if available */}
                                 {item.preparationTime && String(item.preparationTime).trim() && (
                                   <div className="flex items-center gap-1.5 text-xs font-medium text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded-full">
@@ -2523,7 +2572,7 @@ function RestaurantDetailsContent() {
                                 </motion.button>
                               )}
                             </div>
-                          </div>
+                          </motion.div>
                         )
                       })}
                     </div>
@@ -2565,11 +2614,10 @@ function RestaurantDetailsContent() {
                                 />
                               </button>
                             </div>
-
                             {/* Subsection Items */}
                             {isSubsectionExpanded && subsectionItems.length > 0 && (
                               <div className="space-y-0">
-                                {subsectionItems.map((item) => {
+                                {subsectionItems.map((item, idx) => {
                                   const quantity = getDishQuantity(item)
                                   // Determine veg/non-veg based on foodType
                                   const isVeg = item.foodType === "Veg"
@@ -2580,8 +2628,11 @@ function RestaurantDetailsContent() {
                                   }
 
                                   return (
-                                    <div
+                                    <motion.div
                                       key={item.id}
+                                      initial={{ opacity: 0, y: 25 }}
+                                      animate={{ opacity: 1, y: 0 }}
+                                      transition={{ duration: 0.35, delay: Math.min(idx * 0.04, 0.28), ease: "easeOut" }}
                                       ref={(node) => {
                                         if (node) {
                                           dishCardRefs.current[item.id] = node
@@ -2621,7 +2672,7 @@ function RestaurantDetailsContent() {
                                         )}
 
                                         <div className="flex items-center gap-3 mt-1">
-                                          <p className="font-semibold text-gray-900 dark:text-white">{getFoodPriceLabel(item)}</p>
+                                          <p className="font-semibold text-red-600 dark:text-red-500">{getFoodPriceLabel(item)}</p>
                                           {/* Preparation Time - Show if available */}
                                           {item.preparationTime && String(item.preparationTime).trim() && (
                                             <div className="flex items-center gap-1.5 text-xs font-medium text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded-full">
@@ -2744,7 +2795,7 @@ function RestaurantDetailsContent() {
                                           </motion.button>
                                         )}
                                       </div>
-                                    </div>
+                                    </motion.div>
                                   )
                                 })}
                               </div>
@@ -2761,6 +2812,51 @@ function RestaurantDetailsContent() {
         )}
       </div>
 
+      {/* Customer Reviews Section */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 lg:px-10 xl:px-12 pb-6 space-y-4">
+        <div className="border-t border-gray-150 dark:border-zinc-800 pt-6">
+          <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+            <span>Customer Reviews</span>
+            <span className="text-xs bg-[#FFF1E8] text-[#EB590E] px-2 py-0.5 rounded-full font-bold">Real database</span>
+          </h2>
+          
+          {loadingReviews ? (
+            <p className="text-sm text-gray-500">Loading reviews...</p>
+          ) : reviews.length === 0 ? (
+            <div className="p-4 bg-gray-50 dark:bg-[#1a1a1a] rounded-2xl text-center text-sm text-gray-500 border border-gray-100 dark:border-gray-800">
+              No reviews have been submitted for this restaurant yet.
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {reviews.map((review) => (
+                <div key={review.id} className="p-4 bg-white dark:bg-[#1a1a1a] rounded-2xl border border-gray-105 dark:border-gray-800 shadow-xs space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="h-8 w-8 rounded-full bg-[#FFF1E8] flex items-center justify-center text-[#EB590E] font-black text-xs">
+                        {review.userName.charAt(0).toUpperCase()}
+                      </div>
+                      <div>
+                        <p className="text-sm font-bold text-gray-800 dark:text-gray-200">{review.userName}</p>
+                        <p className="text-[10px] text-gray-400">
+                          {new Date(review.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="bg-[#259539] text-white px-2 py-0.5 rounded-lg flex items-center gap-0.5 text-xs font-bold shadow-xs">
+                      <span>{review.rating}</span>
+                      <Star className="h-3 w-3 fill-white text-white" strokeWidth={0} />
+                    </div>
+                  </div>
+                  <p className="text-sm text-gray-650 dark:text-gray-300 italic leading-relaxed pl-1">
+                    "{review.comment}"
+                  </p>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+ 
       {/* FSSAI License Information - Bottom of page */}
       {restaurant?.onboarding?.step3?.fssai?.registrationNumber && (
         <div className="px-4 py-4 mt-2 mb-24 border-t border-dashed border-gray-200 dark:border-gray-800 bg-gray-50/30 dark:bg-white/5 mx-4 rounded-xl">

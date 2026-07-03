@@ -907,6 +907,12 @@ const DriverWallet = () => {
                                             </button>
                                         ))}
                                     </div>
+                                    {error && (
+                                        <div className="flex items-start gap-2 rounded-xl bg-rose-50 p-3 text-xs font-bold text-rose-700">
+                                            <AlertCircle className="mt-0.5 shrink-0" size={14} />
+                                            <p>{error}</p>
+                                        </div>
+                                    )}
                                     <button
                                         type="button"
                                         onClick={handleTopUp}
@@ -968,6 +974,12 @@ const DriverWallet = () => {
                                         />
                                         <p className="mt-2 text-xs font-bold text-slate-500">Available balance: {money(wallet.balance)}</p>
                                     </div>
+                                    {error && (
+                                        <div className="flex items-start gap-2 rounded-xl bg-rose-50 p-3 text-xs font-bold text-rose-700">
+                                            <AlertCircle className="mt-0.5 shrink-0" size={14} />
+                                            <p>{error}</p>
+                                        </div>
+                                    )}
                                     <button
                                         type="button"
                                         onClick={handleWithdrawRequest}
