@@ -479,12 +479,12 @@ const getSimulationPath = ({ routePath = [], from, to }) => {
 
     const interpolatedPath = [validPath[0]];
     const stepMeters = 15; // smooth steps
-    
+
     for (let i = 0; i < validPath.length - 1; i++) {
         const p1 = validPath[i];
         const p2 = validPath[i + 1];
         const dist = getDistanceMeters(p1, p2);
-        
+
         if (dist > stepMeters) {
             const steps = Math.ceil(dist / stepMeters);
             for (let j = 1; j <= steps; j++) {
@@ -498,7 +498,7 @@ const getSimulationPath = ({ routePath = [], from, to }) => {
             interpolatedPath.push(p2);
         }
     }
-    
+
     return interpolatedPath;
 };
 
@@ -1443,6 +1443,7 @@ const ActiveTrip = () => {
                     pickup: tripData.pickup,
                     drop: tripData.drop,
                     paymentMethod: paymentModeLabel,
+                    promo: liveRaw?.promo || effectiveState?.promo || null,
                 }
             }
         });

@@ -2007,8 +2007,24 @@ const DriverHome = () => {
                                     ₹{Number(completedTripDetails.driverEarnings || 0).toFixed(2)}
                                 </h2>
                                 <p className="mt-1.5 text-[11px] font-semibold text-slate-500 dark:text-slate-400">
-                                    Added to your wallet balance
+                                    Total Trip Earnings
                                 </p>
+                                
+                                {String(completedTripDetails.paymentMethod || '').toLowerCase() === 'cash' ? (
+                                    <div className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-700/50">
+                                        <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Wallet Adjustment</p>
+                                        <p className={`mt-1 text-sm font-black ${Number(completedTripDetails.driverEarnings) - (Number(completedTripDetails.fare) - (Number(completedTripDetails?.promo?.discount_amount) || 0)) > 0 ? 'text-emerald-500' : 'text-rose-500'}`}>
+                                            {Number(completedTripDetails.driverEarnings) - (Number(completedTripDetails.fare) - (Number(completedTripDetails?.promo?.discount_amount) || 0)) > 0 ? '+' : ''}₹{(Number(completedTripDetails.driverEarnings) - (Number(completedTripDetails.fare) - (Number(completedTripDetails?.promo?.discount_amount) || 0))).toFixed(2)}
+                                        </p>
+                                    </div>
+                                ) : (
+                                    <div className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-700/50">
+                                        <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Wallet Adjustment</p>
+                                        <p className="mt-1 text-sm font-black text-emerald-500">
+                                            +₹{Number(completedTripDetails.driverEarnings || 0).toFixed(2)} (Added to Wallet)
+                                        </p>
+                                    </div>
+                                )}
                             </div>
 
                             {/* Bill details table breakdown */}
@@ -2040,9 +2056,21 @@ const DriverHome = () => {
                                     )}
                                     <div className="h-px bg-slate-100 dark:bg-slate-800 my-1" />
                                     <div className="flex justify-between items-center text-xs">
-                                        <span className="font-bold text-slate-900 dark:text-white">Total Customer Fare</span>
-                                        <span className="font-extrabold text-slate-900 dark:text-white">₹{Number(completedTripDetails.fare || 0).toFixed(2)}</span>
+                                        <span className="font-bold text-slate-900 dark:text-white">Gross Customer Fare</span>
+                                        <span className="font-bold text-slate-900 dark:text-white">₹{Number(completedTripDetails.fare || 0).toFixed(2)}</span>
                                     </div>
+                                    {completedTripDetails?.promo?.discount_amount > 0 && (
+                                        <div className="flex justify-between items-center text-xs text-rose-500 dark:text-rose-400">
+                                            <span className="font-semibold">Promo Discount (Driver Bears)</span>
+                                            <span className="font-bold">-₹{Number(completedTripDetails.promo.discount_amount || 0).toFixed(2)}</span>
+                                        </div>
+                                    )}
+                                    <div className="h-px bg-slate-100 dark:bg-slate-800 my-1" />
+                                    <div className="flex justify-between items-center text-[13px]">
+                                        <span className="font-black text-slate-900 dark:text-white">Net Customer Fare</span>
+                                        <span className="font-black text-emerald-600 dark:text-emerald-400">₹{(Number(completedTripDetails.fare || 0) - Number(completedTripDetails?.promo?.discount_amount || 0)).toFixed(2)}</span>
+                                    </div>
+                                    <div className="h-px bg-slate-100 dark:bg-slate-800 my-1" />
                                     {completedTripDetails.distanceCharge > 0 && (
                                         <div className="flex justify-between items-center text-xs text-slate-500 dark:text-slate-400">
                                             <span className="font-semibold">Extra Distance Charge</span>

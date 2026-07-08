@@ -428,15 +428,15 @@ const RideTracking = () => {
   const distanceChargeAmount = Number(rideRealtime?.distanceChargeAmount ?? state.distanceChargeAmount ?? 0);
   const timeChargeAmount = Number(rideRealtime?.timeChargeAmount ?? state.timeChargeAmount ?? 0);
   const adminExtraChargeAmount = Number(rideRealtime?.adminExtraCharge?.amount ?? state.adminExtraCharge?.amount ?? 0);
-  
+
   const { user } = useAuthStore();
   const pendingCancellationDue = Number(rideRealtime?.pending_cancellation_due || state.pending_cancellation_due || user?.pending_cancellation_due || 0);
   const applicableCancellationDue = tripStatus === 'completed' ? 0 : pendingCancellationDue;
 
   const promoDiscountAmount = Number(rideRealtime?.promo?.discount_amount ?? state?.promo?.discount_amount ?? 0);
   const currentTotalFare = ['arrived', 'completed'].includes(tripStatus)
-    ? Math.max(0, Math.round(Number(fare || 0) + adminExtraChargeAmount + applicableCancellationDue))
-    : Math.max(0, Math.round(Number(fare || 0) + waitingCharge + distanceChargeAmount + timeChargeAmount + additionalCharge + adminExtraChargeAmount + applicableCancellationDue));
+    ? Math.max(0, Math.round(Number(fare || 0) + adminExtraChargeAmount + applicableCancellationDue - promoDiscountAmount))
+    : Math.max(0, Math.round(Number(fare || 0) + waitingCharge + distanceChargeAmount + timeChargeAmount + additionalCharge + adminExtraChargeAmount + applicableCancellationDue - promoDiscountAmount));
   const isWaitingForOtp = Boolean(waitingStartedAt) && !['started', 'ongoing', 'arrived', 'completed', 'cancelled', 'delivered'].includes(tripStatus);
   const vehicleIcon = getTrackingVehicleIcon(trackingSnapshot, driver);
   const displayDriverHeading = useMemo(() => {
@@ -484,19 +484,19 @@ const RideTracking = () => {
 
   const isChargeableConditionMet = useMemo(() => {
     if (waitingPricing.enable_cancellation_charge === false) return false;
-    
+
     const acceptedAt = rideRealtime?.acceptedAt || state.acceptedAt;
     if (acceptedAt) {
       const freeMin = Number(waitingPricing.free_cancellation_time || 2);
       const timeSinceAccepted = (Date.now() - new Date(acceptedAt).getTime()) / 60000;
       if (timeSinceAccepted < freeMin) return false;
     }
-    
+
     const liveStatusLower = String(rideRealtime?.liveStatus || rideRealtime?.status || state.liveStatus || state.status || '').toLowerCase();
     const isOtpStage = ['waiting_for_otp', 'otp_verification'].includes(liveStatusLower);
     const isReachedStage = !!rideRealtime?.arrivedAt || !!state.arrivedAt || liveStatusLower === 'arrived';
     const isAcceptedStage = !!driver || !!acceptedAt || liveStatusLower === 'accepted';
-    
+
     if (isOtpStage) return waitingPricing.charge_after_otp || waitingPricing.charge_after_driver_reached_pickup || waitingPricing.charge_after_driver_accepted;
     if (isReachedStage) return waitingPricing.charge_after_driver_reached_pickup || waitingPricing.charge_after_driver_accepted;
     if (isAcceptedStage) return waitingPricing.charge_after_driver_accepted;
@@ -695,6 +695,7 @@ const RideTracking = () => {
             scheduledAt: payload?.scheduledAt || latestStateRef.current.scheduledAt || null,
             otp: payload?.otp || latestStateRef.current.otp || latestStateRef.current.ride_otp || '',
             arrivedAt: payload?.arrivedAt || latestStateRef.current.arrivedAt || '',
+            promo: payload?.promo || latestStateRef.current.promo || null,
             pricingSnapshot: payload?.pricingSnapshot || latestStateRef.current.pricingSnapshot || null,
             driverPaymentCollection: payload?.driverPaymentCollection || latestStateRef.current.driverPaymentCollection || null,
             completedAt: payload?.completedAt || null,
@@ -734,6 +735,7 @@ const RideTracking = () => {
               scheduledAt: payload?.scheduledAt || latestStateRef.current.scheduledAt || null,
               otp: payload?.otp || latestStateRef.current.otp || latestStateRef.current.ride_otp || '',
               arrivedAt: payload?.arrivedAt || latestStateRef.current.arrivedAt || '',
+              promo: payload?.promo || latestStateRef.current.promo || null,
               pricingSnapshot: payload?.pricingSnapshot || latestStateRef.current.pricingSnapshot || null,
               driverPaymentCollection: payload?.driverPaymentCollection || latestStateRef.current.driverPaymentCollection || null,
               completedAt: payload?.completedAt || null,
@@ -776,6 +778,7 @@ const RideTracking = () => {
           scheduledAt: payload?.scheduledAt || latestStateRef.current.scheduledAt || null,
           otp: payload?.otp || latestStateRef.current.otp || latestStateRef.current.ride_otp || '',
           arrivedAt: payload?.arrivedAt || latestStateRef.current.arrivedAt || '',
+          promo: payload?.promo || latestStateRef.current.promo || null,
           pricingSnapshot: payload?.pricingSnapshot || latestStateRef.current.pricingSnapshot || null,
           driverPaymentCollection: payload?.driverPaymentCollection || latestStateRef.current.driverPaymentCollection || null,
           completedAt: payload?.completedAt || null,
@@ -791,6 +794,7 @@ const RideTracking = () => {
           liveStatus: payload?.liveStatus || payload?.status || latestStateRef.current.liveStatus || latestStateRef.current.status || 'accepted',
           scheduledAt: payload?.scheduledAt || latestStateRef.current.scheduledAt || null,
           arrivedAt: payload?.arrivedAt || latestStateRef.current.arrivedAt || '',
+          promo: payload?.promo || latestStateRef.current.promo || null,
           pricingSnapshot: payload?.pricingSnapshot || latestStateRef.current.pricingSnapshot || null,
           driverPaymentCollection: payload?.driverPaymentCollection || latestStateRef.current.driverPaymentCollection || null,
         });
@@ -906,6 +910,7 @@ const RideTracking = () => {
         scheduledAt: payload.scheduledAt || prev?.scheduledAt || latestState.scheduledAt || null,
         otp: payload.otp || prev?.otp || latestState.otp || latestState.ride_otp || '',
         arrivedAt: payload.arrivedAt || prev?.arrivedAt || latestState.arrivedAt || '',
+        promo: payload.promo || prev?.promo || latestState.promo || null,
         pricingSnapshot: payload.pricingSnapshot || prev?.pricingSnapshot || latestState.pricingSnapshot || null,
         driverPaymentCollection: payload.driverPaymentCollection || prev?.driverPaymentCollection || latestState.driverPaymentCollection || null,
         completedAt: payload.completedAt || null,
@@ -943,6 +948,7 @@ const RideTracking = () => {
           scheduledAt: payload.scheduledAt || latestState.scheduledAt || null,
           otp: payload.otp || latestState.otp || latestState.ride_otp || '',
           arrivedAt: payload.arrivedAt || latestState.arrivedAt || '',
+          promo: payload.promo || latestState.promo || null,
           pricingSnapshot: payload.pricingSnapshot || latestState.pricingSnapshot || null,
           driverPaymentCollection: payload.driverPaymentCollection || latestState.driverPaymentCollection || null,
           completedAt: payload.completedAt || null,
@@ -1018,6 +1024,7 @@ const RideTracking = () => {
           status: nextStatus,
           scheduledAt: payload.scheduledAt || latestState.scheduledAt || null,
           arrivedAt: payload.arrivedAt || latestState.arrivedAt || '',
+          promo: payload.promo || latestState.promo || null,
           pricingSnapshot: payload.pricingSnapshot || latestState.pricingSnapshot || null,
           driverPaymentCollection: payload.driverPaymentCollection || latestState.driverPaymentCollection || null,
         });
@@ -1028,6 +1035,7 @@ const RideTracking = () => {
         status: nextStatus,
         scheduledAt: payload.scheduledAt || prev?.scheduledAt || latestStateRef.current.scheduledAt || null,
         arrivedAt: payload.arrivedAt || prev?.arrivedAt || '',
+        promo: payload.promo || prev?.promo || null,
         pricingSnapshot: payload.pricingSnapshot || prev?.pricingSnapshot || null,
         driverPaymentCollection: payload.driverPaymentCollection || prev?.driverPaymentCollection || null,
         completedAt: payload.completedAt || prev?.completedAt || null,
@@ -1656,7 +1664,7 @@ const RideTracking = () => {
                     {tripStatus === 'arrived' ? 'Payment Pending' : 'In Trip'}
                   </span>
                 </div>
-                
+
                 <div className="space-y-2.5">
                   <div className="flex justify-between items-center text-xs">
                     <span className="font-semibold text-slate-500">Starting Base Fare</span>
@@ -1723,7 +1731,7 @@ const RideTracking = () => {
                   )}
 
                   <div className="h-px bg-slate-200/60 my-1 mt-2.5" />
-                  
+
                   {trackingSnapshot.promo && trackingSnapshot.promo.discount_amount > 0 && (
                     <div className="flex justify-between items-center text-xs mb-2">
                       <div className="flex flex-col">
@@ -1751,6 +1759,11 @@ const RideTracking = () => {
                     {waitingCharge > 0 ? 'Updated Bill' : 'Total Fare'}
                   </p>
                   <div className="flex items-center gap-2">
+                    {trackingSnapshot.promo && trackingSnapshot.promo.discount_amount > 0 && (
+                      <span className="text-[16px] font-bold text-slate-400 line-through tracking-tight leading-none">
+                        Rs {currentTotalFare + trackingSnapshot.promo.discount_amount}
+                      </span>
+                    )}
                     <span className="text-[19px] font-black text-slate-950 tracking-tight leading-none">
                       Rs {currentTotalFare}.00
                     </span>
@@ -1762,31 +1775,19 @@ const RideTracking = () => {
                     )}
                   </div>
 
-                  <div className="mt-1.5 flex flex-col gap-0.5">
-                    {trackingSnapshot.promo && trackingSnapshot.promo.discount_amount > 0 && (
-                      <div className="flex flex-col">
-                        <div className="flex items-center gap-2">
-                          <span className="text-[10px] font-bold text-slate-400">Base Fare Rs {Math.round(Number(trackingSnapshot.baseFare || currentTotalFare + trackingSnapshot.promo.discount_amount))}</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-[10px] font-bold text-emerald-600">Promo ({trackingSnapshot.promo.code}) Applied</span>
-                          <span className="text-[10px] font-bold text-emerald-600/80">- Rs {trackingSnapshot.promo.discount_amount}</span>
-                        </div>
-                      </div>
-                    )}
+                  {trackingSnapshot.promo && trackingSnapshot.promo.discount_amount > 0 && (
+                    <div className="flex items-center gap-2 mt-1">
+                      <span className="text-[10px] font-bold text-emerald-600">Promo ({trackingSnapshot.promo.code}) Applied</span>
+                      <span className="text-[10px] font-bold text-emerald-600/80">- Rs {trackingSnapshot.promo.discount_amount}</span>
+                    </div>
+                  )}
 
-                    {waitingCharge > 0 && (!trackingSnapshot.promo || !trackingSnapshot.promo.discount_amount) && (
-                      <div className="flex items-center gap-2">
-                        <span className="text-[10px] font-bold text-slate-400">Base Rs {Math.round(Number(trackingSnapshot.baseFare || fare || 0))}</span>
-                        <span className="text-[10px] font-bold text-amber-600">+ Rs {waitingCharge} waiting</span>
-                      </div>
-                    )}
-                    {waitingCharge > 0 && trackingSnapshot.promo && trackingSnapshot.promo.discount_amount > 0 && (
-                      <div className="flex items-center gap-2">
-                        <span className="text-[10px] font-bold text-amber-600">Wait Charge Added: + Rs {waitingCharge}</span>
-                      </div>
-                    )}
-                  </div>
+                  {waitingCharge > 0 && (
+                    <div className="flex items-center gap-2 mt-1">
+                      <span className="text-[10px] font-bold text-slate-400">Base Rs {Math.round(Number(trackingSnapshot.baseFare || fare || 0))}</span>
+                      <span className="text-[10px] font-bold text-amber-600">+ Rs {waitingCharge} waiting</span>
+                    </div>
+                  )}
                 </div>
                 <motion.button
                   whileTap={{ scale: 0.96 }}

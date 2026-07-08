@@ -146,6 +146,12 @@ export const registerRideSocketHandlers = ({ io, socket, onAsync }) => {
         baseFare: populatedRide.baseFare || 0,
         additionalCharge: populatedRide.additionalCharge || 0,
         recovered_cancellation_due: populatedRide.recovered_cancellation_due || 0,
+        promo: populatedRide.promo || null,
+        driverEarnings: populatedRide.driverEarnings || 0,
+        commissionAmount: populatedRide.commissionAmount || 0,
+        paymentMethod: populatedRide.paymentMethod || 'cash',
+        adminExtraChargeAmount: populatedRide?.pricingSnapshot?.admin_extra_charge_amount || 0,
+        cancellationChargeAmount: populatedRide?.pricingSnapshot?.cancellation_charge_amount || 0,
       };
 
       io.to(getRideRoom(rideId)).emit(SOCKET_EVENTS.RIDE_STATUS_UPDATED, payload);

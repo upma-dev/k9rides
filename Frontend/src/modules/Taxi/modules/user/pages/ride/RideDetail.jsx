@@ -1,9 +1,14 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState, useRef } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, Bike, HelpCircle, Repeat, Share2, Star } from 'lucide-react';
+import { ArrowLeft, Bike, HelpCircle, Repeat, Share2, Star, Download } from 'lucide-react';
+import toast from 'react-hot-toast';
 import api from '../../../../shared/api/axiosInstance';
 import { useSettings } from '../../../../shared/context/SettingsContext';
+import { generateInvoicePDF } from '../../utils/generateInvoicePDF';
+import { GOOGLE_MAPS_API_KEY, useAppGoogleMapsLoader } from '../../../admin/utils/googleMaps';
+import { GoogleMap, MarkerF, PolylineF } from '@react-google-maps/api';
+import { InvoiceTemplate } from '../../components/InvoiceTemplate';
 
 const unwrap = (response) => response?.data || response;
 
@@ -41,8 +46,9 @@ const coordLabel = (location, fallback) => {
 };
 
 const RideDetail = () => {
-  const { settings } = useSettings();
+  const { settings, activeLogo } = useSettings();
   const appName = settings.general?.app_name || 'App';
+  const appLogo = activeLogo || settings.general?.logo || settings.customization?.logo || '/k9-logo.png';
   const { id } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
@@ -51,6 +57,8 @@ const RideDetail = () => {
   const [loading, setLoading] = useState(!location.state?.ride);
   const [error, setError] = useState('');
   const routePrefix = location.pathname.startsWith('/taxi/user') ? '/taxi/user' : '';
+  const invoiceRef = useRef(null);
+  const { isLoaded } = useAppGoogleMapsLoader();
 
   useEffect(() => {
     if (ride || !id) return undefined;
@@ -79,10 +87,24 @@ const RideDetail = () => {
   const details = useMemo(() => {
     const driver = ride?.driver || ride?.driverId || {};
     const timeSource = ride?.completedAt || ride?.startedAt || ride?.acceptedAt || ride?.createdAt || ride?.updatedAt;
-    const fare = Number(ride?.fare || 0);
-    const taxes = Math.max(Math.round(fare * 0.18), 0);
     const status = String(ride?.status || ride?.liveStatus || 'trip').toLowerCase();
     const rideCode = String(ride?.rideId || ride?._id || ride?.id || id || 'ride');
+    
+    const baseFare = Number(
+      ride?.baseFare ??
+      (ride?.fare ? (ride.fare - (ride.waitingChargeAmount || 0) - (ride.timeChargeAmount || 0) - (ride.distanceChargeAmount || 0) - (ride.additionalCharge || 0) - (ride.adminExtraCharge?.amount || 0)) : null) ??
+      0
+    );
+
+    const waitingChargeAmount = Number(ride?.waitingChargeAmount || 0);
+    const distanceChargeAmount = Number(ride?.distanceChargeAmount || 0);
+    const timeChargeAmount = Number(ride?.timeChargeAmount || 0);
+    const additionalCharge = Number(ride?.additionalCharge || 0);
+    const adminExtraChargeAmount = Number(ride?.adminExtraCharge?.amount || 0);
+    const promoDiscountAmount = Number(ride?.promo?.discount_amount || 0);
+    
+    // Total should match the fare the user actually paid
+    const totalPaid = Math.ceil(baseFare + waitingChargeAmount + distanceChargeAmount + timeChargeAmount + additionalCharge + adminExtraChargeAmount - promoDiscountAmount);
 
     return {
       pickup: pickFirstString(
@@ -96,9 +118,15 @@ const RideDetail = () => {
         ride?.drop?.name,
         ride?.destinationAddress,
       ) || coordLabel(ride?.dropLocation || ride?.drop, 'Drop location'),
-      fare,
-      taxes,
-      baseFare: Math.max(fare - taxes, 0),
+      fare: totalPaid,
+      baseFare,
+      waitingChargeAmount,
+      distanceChargeAmount,
+      timeChargeAmount,
+      additionalCharge,
+      adminExtraChargeAmount,
+      promoDiscountAmount,
+      promoCode: ride?.promo?.code || '',
       timeSource,
       startTime: ride?.startedAt || ride?.acceptedAt || timeSource,
       endTime: ride?.completedAt || timeSource,
@@ -116,8 +144,92 @@ const RideDetail = () => {
       ).trim().toLowerCase() === 'cash' ? 'Cash' : 'Online',
       rideCode,
       shortRideCode: rideCode.length > 14 ? `${rideCode.slice(0, 6)}...${rideCode.slice(-4)}` : rideCode,
+      distance: ride?.distance ? `${Number(ride.distance).toFixed(2)} kms` : '--',
+      duration: ride?.duration ? `${Number(ride.duration).toFixed(0)} mins` : '--',
     };
   }, [ride]);
+
+  const [imageError, setImageError] = useState(false);
+
+  const mapImageUrl = useMemo(() => {
+    const pCoords = ride?.pickupLocation?.coordinates || ride?.pickup?.coordinates || [];
+    const dCoords = ride?.dropLocation?.coordinates || ride?.drop?.coordinates || [];
+    if (pCoords.length === 2 && dCoords.length === 2 && GOOGLE_MAPS_API_KEY && !imageError) {
+      const [pLng, pLat] = pCoords;
+      const [dLng, dLat] = dCoords;
+      return `https://maps.googleapis.com/maps/api/staticmap?size=600x300&markers=color:green|label:P|${pLat},${pLng}&markers=color:red|label:D|${dLat},${dLng}&path=color:0x0000ff80|weight:4|${pLat},${pLng}|${dLat},${dLng}&key=${GOOGLE_MAPS_API_KEY}`;
+    }
+    return '/MapRider.png';
+  }, [ride, imageError]);
+
+  const [pdfMapImageUrl, setPdfMapImageUrl] = useState('/MapRider.png');
+
+  useEffect(() => {
+    let isMounted = true;
+    const pCoords = ride?.pickupLocation?.coordinates || ride?.pickup?.coordinates || [];
+    const dCoords = ride?.dropLocation?.coordinates || ride?.drop?.coordinates || [];
+    
+    if (pCoords.length === 2 && dCoords.length === 2 && GOOGLE_MAPS_API_KEY) {
+      const [pLng, pLat] = pCoords;
+      const [dLng, dLat] = dCoords;
+      const url = `https://maps.googleapis.com/maps/api/staticmap?size=600x300&markers=color:green|label:P|${pLat},${pLng}&markers=color:red|label:D|${dLat},${dLng}&path=color:0x0000ff80|weight:4|${pLat},${pLng}|${dLat},${dLng}&key=${GOOGLE_MAPS_API_KEY}`;
+      
+      const img = new window.Image();
+      img.crossOrigin = "anonymous";
+      img.onload = () => {
+        if (isMounted) setPdfMapImageUrl(url);
+      };
+      img.src = url;
+    }
+    return () => { isMounted = false; };
+  }, [ride]);
+
+  const handleDownloadInvoice = async () => {
+    const toastId = toast.loading('Generating invoice...');
+    try {
+      if (!invoiceRef || !invoiceRef.current) {
+        throw new Error('Invoice template is not mounted');
+      }
+
+      try {
+        const interactiveMap = document.getElementById('interactive-map');
+        if (interactiveMap) {
+          const html2canvas = (await import('html2canvas')).default;
+          const mapCanvas = await html2canvas(interactiveMap, { 
+            useCORS: true, 
+            logging: false,
+            allowTaint: true,
+            backgroundColor: '#f9fafb',
+            ignoreElements: (element) => {
+              if (typeof element.className === 'string' && (element.className.includes('gmnoprint') || element.className.includes('gm-style-cc') || element.tagName.toLowerCase() === 'svg')) {
+                return true;
+              }
+              const computedStyle = window.getComputedStyle(element);
+              if (computedStyle.color.includes('oklch') || computedStyle.backgroundColor.includes('oklch') || computedStyle.borderColor.includes('oklch')) {
+                return true;
+              }
+              return false;
+            }
+          });
+          const mapDataUrl = mapCanvas.toDataURL('image/jpeg', 0.9);
+          const templateImg = invoiceRef.current.querySelector('img[alt="Map View"]');
+          if (templateImg) {
+            templateImg.src = mapDataUrl;
+            // Remove crossOrigin since it's a data URL now, preventing cloneNode recursion crash
+            templateImg.removeAttribute('crossOrigin');
+          }
+        }
+      } catch (e) {
+        console.warn('Failed to capture interactive map, falling back to static/placeholder map', e);
+      }
+
+      await generateInvoicePDF({ details, ride, appName, invoiceRef });
+      toast.success('Invoice downloaded successfully', { id: toastId });
+    } catch (err) {
+      console.error('Invoice generation error:', err);
+      toast.error('Failed to generate invoice', { id: toastId });
+    }
+  };
 
   const handleShare = async () => {
     const text = `My ${appName} trip #${details.shortRideCode} - ${details.pickup} to ${details.drop} | Rs ${details.fare}.00`;
@@ -174,9 +286,14 @@ const RideDetail = () => {
             </p>
           </div>
         </div>
-        <button onClick={handleShare} className="shrink-0 active:scale-90 transition-all">
-          <Share2 size={20} className="text-gray-400 hover:text-gray-900 transition-colors" />
-        </button>
+        <div className="flex shrink-0 gap-2">
+          <button onClick={handleDownloadInvoice} className="shrink-0 active:scale-90 transition-all p-2 rounded-full bg-gray-50 border border-gray-100 shadow-sm" title="Download Invoice">
+            <Download size={18} className="text-gray-900 transition-colors" />
+          </button>
+          <button onClick={handleShare} className="shrink-0 active:scale-90 transition-all p-2 rounded-full bg-gray-50 border border-gray-100 shadow-sm" title="Share Ride Details">
+            <Share2 size={18} className="text-gray-900 transition-colors" />
+          </button>
+        </div>
       </header>
 
       <div className="flex-1 p-5 space-y-8 overflow-y-auto no-scrollbar">
@@ -192,8 +309,62 @@ const RideDetail = () => {
           </div>
         )}
 
-        <div className="h-40 bg-gray-100 rounded-[32px] overflow-hidden relative shadow-sm">
-          <img src="/map image.avif" className="w-full h-full object-cover opacity-60" alt="Map View" />
+        <div id="interactive-map" className="h-40 bg-gray-100 rounded-[32px] overflow-hidden relative shadow-sm">
+          {isLoaded ? (
+            <GoogleMap
+              mapContainerStyle={{ width: '100%', height: '100%' }}
+              center={{ 
+                lat: Number(ride?.pickupLocation?.coordinates?.[1] || ride?.pickup?.coordinates?.[1] || 22), 
+                lng: Number(ride?.pickupLocation?.coordinates?.[0] || ride?.pickup?.coordinates?.[0] || 75) 
+              }}
+              zoom={13}
+              options={{ disableDefaultUI: true, gestureHandling: 'greedy' }}
+            >
+              {(ride?.pickupLocation?.coordinates || ride?.pickup?.coordinates) && (
+                <MarkerF 
+                  position={{ 
+                    lat: Number(ride?.pickupLocation?.coordinates?.[1] || ride?.pickup?.coordinates?.[1]), 
+                    lng: Number(ride?.pickupLocation?.coordinates?.[0] || ride?.pickup?.coordinates?.[0]) 
+                  }} 
+                  label="P" 
+                />
+              )}
+              {(ride?.dropLocation?.coordinates || ride?.drop?.coordinates) && (
+                <MarkerF 
+                  position={{ 
+                    lat: Number(ride?.dropLocation?.coordinates?.[1] || ride?.drop?.coordinates?.[1]), 
+                    lng: Number(ride?.dropLocation?.coordinates?.[0] || ride?.drop?.coordinates?.[0]) 
+                  }} 
+                  label="D" 
+                />
+              )}
+              {(ride?.pickupLocation?.coordinates || ride?.pickup?.coordinates) && (ride?.dropLocation?.coordinates || ride?.drop?.coordinates) && (
+                <PolylineF
+                  path={[
+                    { 
+                      lat: Number(ride?.pickupLocation?.coordinates?.[1] || ride?.pickup?.coordinates?.[1]), 
+                      lng: Number(ride?.pickupLocation?.coordinates?.[0] || ride?.pickup?.coordinates?.[0]) 
+                    },
+                    { 
+                      lat: Number(ride?.dropLocation?.coordinates?.[1] || ride?.drop?.coordinates?.[1]), 
+                      lng: Number(ride?.dropLocation?.coordinates?.[0] || ride?.drop?.coordinates?.[0]) 
+                    }
+                  ]}
+                  options={{ strokeColor: '#0000FF', strokeWeight: 4, strokeOpacity: 0.5 }}
+                />
+              )}
+            </GoogleMap>
+          ) : (
+            <img 
+              src={mapImageUrl} 
+              className="w-full h-full object-cover opacity-80" 
+              alt="Map View" 
+              crossOrigin="anonymous"
+              onError={() => {
+                if (!imageError) setImageError(true);
+              }}
+            />
+          )}
           <div className="absolute inset-0 bg-gradient-to-t from-white/80 to-transparent" />
         </div>
 
@@ -262,21 +433,53 @@ const RideDetail = () => {
               <>
                 <div className="flex justify-between items-center text-[13px] font-bold text-gray-500">
                   <span>Base Fare</span>
-                  <span className="text-gray-900">Rs {details.baseFare}.00</span>
+                  <span className="text-gray-900">Rs {details.baseFare.toFixed(2)}</span>
                 </div>
-                <div className="flex justify-between items-center text-[13px] font-bold text-gray-500">
-                  <span>Taxes & Fees</span>
-                  <span className="text-gray-900">Rs {details.taxes}.00</span>
-                </div>
+                {details.waitingChargeAmount > 0 && (
+                  <div className="flex justify-between items-center text-[13px] font-bold text-gray-500">
+                    <span>Wait time charge</span>
+                    <span className="text-gray-900">Rs {details.waitingChargeAmount.toFixed(2)}</span>
+                  </div>
+                )}
+                {details.timeChargeAmount > 0 && (
+                  <div className="flex justify-between items-center text-[13px] font-bold text-gray-500">
+                    <span>Ride time charge</span>
+                    <span className="text-gray-900">Rs {details.timeChargeAmount.toFixed(2)}</span>
+                  </div>
+                )}
+                {details.distanceChargeAmount > 0 && (
+                  <div className="flex justify-between items-center text-[13px] font-bold text-gray-500">
+                    <span>Extra distance charge</span>
+                    <span className="text-gray-900">Rs {details.distanceChargeAmount.toFixed(2)}</span>
+                  </div>
+                )}
+                {details.additionalCharge > 0 && (
+                  <div className="flex justify-between items-center text-[13px] font-bold text-gray-500">
+                    <span>Additional charge</span>
+                    <span className="text-gray-900">Rs {details.additionalCharge.toFixed(2)}</span>
+                  </div>
+                )}
+                {details.adminExtraChargeAmount > 0 && (
+                  <div className="flex justify-between items-center text-[13px] font-bold text-amber-700">
+                    <span>Extra charge ({ride?.adminExtraCharge?.reason || 'Admin extra'})</span>
+                    <span className="text-amber-700">Rs {details.adminExtraChargeAmount.toFixed(2)}</span>
+                  </div>
+                )}
+                {details.promoDiscountAmount > 0 && (
+                  <div className="flex justify-between items-center text-[13px] font-bold text-emerald-600">
+                    <span>Promo ({details.promoCode}) Applied</span>
+                    <span>-Rs {details.promoDiscountAmount.toFixed(2)}</span>
+                  </div>
+                )}
                 {ride?.recovered_cancellation_due > 0 && (
                   <div className="flex justify-between items-center text-[13px] font-bold text-red-500">
                     <span>Previous Cancellation Due</span>
-                    <span>Rs {ride.recovered_cancellation_due}.00</span>
+                    <span>Rs {Number(ride.recovered_cancellation_due).toFixed(2)}</span>
                   </div>
                 )}
                 <div className="flex justify-between items-center text-[16px] font-black text-gray-900 border-t border-gray-50 pt-3">
                   <span>Total Paid</span>
-                  <span>Rs {details.fare + Number(ride?.recovered_cancellation_due || 0)}.00</span>
+                  <span>Rs {(details.fare + Number(ride?.recovered_cancellation_due || 0)).toFixed(2)}</span>
                 </div>
               </>
             )}
@@ -335,6 +538,7 @@ const RideDetail = () => {
           <span>Help</span>
         </button>
       </div>
+      <InvoiceTemplate ref={invoiceRef} details={details} ride={ride} appName={appName} appLogo={appLogo} mapImageUrl={pdfMapImageUrl} isLoaded={isLoaded} />
     </div>
   );
 };

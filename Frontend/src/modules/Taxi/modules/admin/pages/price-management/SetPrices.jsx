@@ -610,7 +610,7 @@ const SetPrices = ({ mode }) => {
                            </div>
                            <div>
                               <label className={labelClass}>Admin Commission From Customer <span className="text-rose-500">*</span></label>
-                              <input type="number" required className={inputClass} placeholder="Enter Admin Commission From Customer" value={formData.admin_commision} onChange={e => setFormData(p => ({ ...p, admin_commision: e.target.value }))} />
+                              <input type="number" min="0" required className={inputClass} placeholder="Enter Admin Commission From Customer" value={formData.admin_commision} onChange={e => setFormData(p => ({ ...p, admin_commision: e.target.value }))} />
                            </div>
                            <div>
                               <label className={labelClass}>Admin Commission Type From Driver <span className="text-rose-500">*</span></label>
@@ -625,7 +625,7 @@ const SetPrices = ({ mode }) => {
                            </div>
                            <div>
                               <label className={labelClass}>Admin Commission From Driver <span className="text-rose-500">*</span></label>
-                              <input type="number" required className={inputClass} placeholder="Enter Admin Commission From Driver" value={formData.admin_commission_from_driver} onChange={e => setFormData(p => ({ ...p, admin_commission_from_driver: e.target.value }))} />
+                              <input type="number" min="0" required className={inputClass} placeholder="Enter Admin Commission From Driver" value={formData.admin_commission_from_driver} onChange={e => setFormData(p => ({ ...p, admin_commission_from_driver: e.target.value }))} />
                            </div>
                            <div>
                               <label className={labelClass}>Admin Commission Type From Owner <span className="text-rose-500">*</span></label>
@@ -640,35 +640,35 @@ const SetPrices = ({ mode }) => {
                            </div>
                            <div>
                               <label className={labelClass}>Admin Commission From Owner <span className="text-rose-500">*</span></label>
-                              <input type="number" required className={inputClass} placeholder="Enter Admin Commission From Owner" value={formData.admin_commission_for_owner} onChange={e => setFormData(p => ({ ...p, admin_commission_for_owner: e.target.value }))} />
+                              <input type="number" min="0" required className={inputClass} placeholder="Enter Admin Commission From Owner" value={formData.admin_commission_for_owner} onChange={e => setFormData(p => ({ ...p, admin_commission_for_owner: e.target.value }))} />
                            </div>
                            <div>
                               <label className={labelClass}>Service Tax (%) <span className="text-rose-500">*</span></label>
-                              <input type="number" required className={inputClass} placeholder="Enter Service Tax (%)" value={formData.service_tax} onChange={e => setFormData(p => ({ ...p, service_tax: e.target.value }))} />
+                              <input type="number" min="0" required className={inputClass} placeholder="Enter Service Tax (%)" value={formData.service_tax} onChange={e => setFormData(p => ({ ...p, service_tax: e.target.value }))} />
                            </div>
                            <div>
                               <label className={labelClass}>ETA Sequence <span className="text-rose-500">*</span></label>
-                              <input type="number" required className={inputClass} placeholder="Enter Order Number" value={formData.order_number} onChange={e => setFormData(p => ({ ...p, order_number: e.target.value }))} />
+                              <input type="number" min="0" required className={inputClass} placeholder="Enter Order Number" value={formData.order_number} onChange={e => setFormData(p => ({ ...p, order_number: e.target.value }))} />
                            </div>
                            <div>
                               <label className={labelClass}>Base Price <span className="text-rose-500">*</span></label>
-                              <input type="number" required className={inputClass} placeholder="Enter Base Price" value={formData.base_price} onChange={e => setFormData(p => ({ ...p, base_price: e.target.value }))} />
+                              <input type="number" min="0" required className={inputClass} placeholder="Enter Base Price" value={formData.base_price} onChange={e => setFormData(p => ({ ...p, base_price: e.target.value }))} />
                            </div>
                            <div>
                               <label className={labelClass}>Base Distance <span className="text-rose-500">*</span></label>
-                              <input type="number" required className={inputClass} placeholder="Enter Base Distance" value={formData.base_distance} onChange={e => setFormData(p => ({ ...p, base_distance: e.target.value }))} />
+                              <input type="number" min="0" required className={inputClass} placeholder="Enter Base Distance" value={formData.base_distance} onChange={e => setFormData(p => ({ ...p, base_distance: e.target.value }))} />
                            </div>
                            <div>
                               <label className={labelClass}>Price Per Distance <span className="text-rose-500">*</span></label>
-                              <input type="number" required className={inputClass} placeholder="Enter Price Per Distance" value={formData.price_per_distance} onChange={e => setFormData(p => ({ ...p, price_per_distance: e.target.value }))} />
+                              <input type="number" min="0" required className={inputClass} placeholder="Enter Price Per Distance" value={formData.price_per_distance} onChange={e => setFormData(p => ({ ...p, price_per_distance: e.target.value }))} />
                            </div>
                            <div>
                               <label className={labelClass}>Time Price in Mintue <span className="text-rose-500">*</span></label>
-                              <input type="number" required className={inputClass} placeholder="Enter Time Price" value={formData.time_price} onChange={e => setFormData(p => ({ ...p, time_price: e.target.value }))} />
+                              <input type="number" min="0" required className={inputClass} placeholder="Enter Time Price" value={formData.time_price} onChange={e => setFormData(p => ({ ...p, time_price: e.target.value }))} />
                            </div>
                            <div>
                               <label className={labelClass}>Waiting Charge <span className="text-rose-500">*</span></label>
-                              <input type="number" required className={inputClass} placeholder="Enter Waiting Charge" value={formData.waiting_charge} onChange={e => setFormData(p => ({ ...p, waiting_charge: e.target.value }))} />
+                              <input type="number" min="0" required className={inputClass} placeholder="Enter Waiting Charge" value={formData.waiting_charge} onChange={e => setFormData(p => ({ ...p, waiting_charge: e.target.value }))} />
                            </div>
                            <div>
                               <label className={labelClass}>Ride Surge Amount <span className="text-rose-500">*</span></label>
@@ -676,13 +676,13 @@ const SetPrices = ({ mode }) => {
                            </div>
                            <div>
                               <label className={labelClass}>Free Waiting Time In Minutes Before Start A Ride <span className="text-rose-500">*</span></label>
-                              <input type="number" required className={inputClass} placeholder="Free Waiting Time In Minutes Before Start A Ride" value={formData.free_waiting_before} onChange={e => setFormData(p => ({ ...p, free_waiting_before: e.target.value }))} />
+                              <input type="number" min="0" required className={inputClass} placeholder="Free Waiting Time In Minutes Before Start A Ride" value={formData.free_waiting_before} onChange={e => setFormData(p => ({ ...p, free_waiting_before: e.target.value }))} />
                            </div>
 
                            <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-x-12">
                               <div>
                                  <label className={labelClass}>Free Waiting Time In Minutes After Start A Ride <span className="text-rose-500">*</span></label>
-                                 <input type="number" required className={inputClass} placeholder="Free Waiting Time In Minutes After Start A Ride" value={formData.free_waiting_after} onChange={e => setFormData(p => ({ ...p, free_waiting_after: e.target.value }))} />
+                                 <input type="number" min="0" required className={inputClass} placeholder="Free Waiting Time In Minutes After Start A Ride" value={formData.free_waiting_after} onChange={e => setFormData(p => ({ ...p, free_waiting_after: e.target.value }))} />
                               </div>
                            </div>
 
@@ -699,11 +699,11 @@ const SetPrices = ({ mode }) => {
                                  <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-8">
                                     <div>
                                        <label className={labelClass}>Airport Surge Fee <span className="text-rose-500">*</span></label>
-                                       <input type="number" required={formData.enable_airport_ride} className={inputClass} placeholder="Enter Airport Surge Fee" value={formData.airport_surge} onChange={e => setFormData(p => ({ ...p, airport_surge: e.target.value }))} />
+                                       <input type="number" min="0" required={formData.enable_airport_ride} className={inputClass} placeholder="Enter Airport Surge Fee" value={formData.airport_surge} onChange={e => setFormData(p => ({ ...p, airport_surge: e.target.value }))} />
                                     </div>
                                     <div>
                                        <label className={labelClass}>Support Airport Fee <span className="text-rose-500">*</span></label>
-                                       <input type="number" required={formData.enable_airport_ride} className={inputClass} placeholder="Enter Support Airport Fee" value={formData.support_airport_fee} onChange={e => setFormData(p => ({ ...p, support_airport_fee: e.target.value }))} />
+                                       <input type="number" min="0" required={formData.enable_airport_ride} className={inputClass} placeholder="Enter Support Airport Fee" value={formData.support_airport_fee} onChange={e => setFormData(p => ({ ...p, support_airport_fee: e.target.value }))} />
                                     </div>
                                  </div>
                               </div>
@@ -722,19 +722,19 @@ const SetPrices = ({ mode }) => {
                                  <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-8">
                                     <div>
                                        <label className={labelClass}>Base Price <span className="text-rose-500">*</span></label>
-                                       <input type="number" required={formData.enable_outstation_ride} className={inputClass} placeholder="Enter Base Price" value={formData.outstation_base_price} onChange={e => setFormData(p => ({ ...p, outstation_base_price: e.target.value }))} />
+                                       <input type="number" min="0" required={formData.enable_outstation_ride} className={inputClass} placeholder="Enter Base Price" value={formData.outstation_base_price} onChange={e => setFormData(p => ({ ...p, outstation_base_price: e.target.value }))} />
                                     </div>
                                     <div>
                                        <label className={labelClass}>Base Distance <span className="text-rose-500">*(Kilometers)</span></label>
-                                       <input type="number" required={formData.enable_outstation_ride} className={inputClass} placeholder="Enter Base Distance" value={formData.outstation_base_distance} onChange={e => setFormData(p => ({ ...p, outstation_base_distance: e.target.value }))} />
+                                       <input type="number" min="0" required={formData.enable_outstation_ride} className={inputClass} placeholder="Enter Base Distance" value={formData.outstation_base_distance} onChange={e => setFormData(p => ({ ...p, outstation_base_distance: e.target.value }))} />
                                     </div>
                                     <div>
                                        <label className={labelClass}>Price Per Distance <span className="text-rose-500">*(Kilometers)</span></label>
-                                       <input type="number" required={formData.enable_outstation_ride} className={inputClass} placeholder="Enter Price Per Distance" value={formData.outstation_price_per_distance} onChange={e => setFormData(p => ({ ...p, outstation_price_per_distance: e.target.value }))} />
+                                       <input type="number" min="0" required={formData.enable_outstation_ride} className={inputClass} placeholder="Enter Price Per Distance" value={formData.outstation_price_per_distance} onChange={e => setFormData(p => ({ ...p, outstation_price_per_distance: e.target.value }))} />
                                     </div>
                                     <div>
                                        <label className={labelClass}>Time Price in Mintue <span className="text-rose-500">*</span></label>
-                                       <input type="number" required={formData.enable_outstation_ride} className={inputClass} placeholder="Enter Time Price" value={formData.outstation_time_price} onChange={e => setFormData(p => ({ ...p, outstation_time_price: e.target.value }))} />
+                                       <input type="number" min="0" required={formData.enable_outstation_ride} className={inputClass} placeholder="Enter Time Price" value={formData.outstation_time_price} onChange={e => setFormData(p => ({ ...p, outstation_time_price: e.target.value }))} />
                                     </div>
                                  </div>
                               </div>
@@ -764,6 +764,7 @@ const SetPrices = ({ mode }) => {
                                     <label className={labelClass}>Free Cancellation Window (Minutes)</label>
                                     <input
                                        type="number"
+                                       min="0"
                                        className={inputClass}
                                        placeholder="e.g. 2"
                                        value={formData.free_cancellation_time}
@@ -776,6 +777,7 @@ const SetPrices = ({ mode }) => {
                                     <label className={labelClass}>Percentage Cancellation Charge (%)</label>
                                     <input
                                        type="number"
+                                       min="0"
                                        className={inputClass}
                                        placeholder="e.g. 10 (applied to base fare)"
                                        value={formData.percentage_cancellation_charge}
@@ -787,6 +789,7 @@ const SetPrices = ({ mode }) => {
                                     <label className={labelClass}>Max Cancellation Fee Cap (₹)</label>
                                     <input
                                        type="number"
+                                       min="0"
                                        className={inputClass}
                                        placeholder="e.g. 150"
                                        value={formData.max_cancellation_fee}
