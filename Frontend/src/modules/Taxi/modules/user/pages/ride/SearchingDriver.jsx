@@ -9,6 +9,7 @@ import { getLocalUserToken, userAuthService } from '../../services/authService';
 import { getCurrentRide, isActiveCurrentRide, saveCurrentRide } from '../../services/currentRideService';
 import { useAppGoogleMapsLoader, HAS_VALID_GOOGLE_MAPS_KEY } from '../../../admin/utils/googleMaps';
 import { scheduleScheduledRideReminders } from '../../utils/upcomingRideReminderService';
+import { useAuthStore } from '../../../../../../core/auth/auth.store';
 
 const MAP_OPTIONS = {
   disableDefaultUI: true,
@@ -210,6 +211,8 @@ const SearchingDriver = () => {
   const cleanupDelayRef = useRef(null);
   const trackingStartedRef = useRef(false);
   const driverRef = useRef(driver);
+  const { user } = useAuthStore();
+  const pendingCancellationDue = Number(user?.pending_cancellation_due || 0);
   const routePrefix = useMemo(
     () => (location.pathname.startsWith('/taxi/user') ? '/taxi/user' : ''),
     [location.pathname],
@@ -611,8 +614,8 @@ const SearchingDriver = () => {
           : {};
 
         const response = await api.post('/rides', {
-          pickup: routeState.pickupCoords || [75.9048, 22.7039],
-          drop: routeState.dropCoords || [75.8937, 22.7533],
+          pickup: routeState.pickupCoords,
+          drop: routeState.dropCoords,
           pickupAddress: routeState.pickup || '',
           dropAddress: routeState.drop || '',
           fare: routeState.baseFare || routeState.fare || routeState.vehicle?.price || 22,
@@ -1095,8 +1098,12 @@ const SearchingDriver = () => {
                   <div className="flex items-start justify-between gap-3">
                     <div>
                       <p className="text-[10px] font-black uppercase tracking-[0.16em] text-blue-600">Current Offer</p>
-                      <p className="mt-1 text-[18px] font-black text-slate-900">{formatCurrency(biddingSummary.userMaxBidFare)}</p>
-
+                      <p className="mt-1 text-[18px] font-black text-slate-900">{formatCurrency(biddingSummary.userMaxBidFare + pendingCancellationDue)}</p>
+                      {pendingCancellationDue > 0 && (
+                        <p className="text-[9px] font-bold text-red-500 uppercase tracking-widest mt-1">
+                          Includes Rs {pendingCancellationDue} due
+                        </p>
+                      )}
                     </div>
                     <button
                       type="button"

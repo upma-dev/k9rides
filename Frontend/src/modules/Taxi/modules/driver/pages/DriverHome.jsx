@@ -578,14 +578,16 @@ const DriverHome = () => {
     const location = useLocation();
     const [showCompletedTripModal, setShowCompletedTripModal] = useState(false);
     const [completedTripDetails, setCompletedTripDetails] = useState(null);
-    const { settings } = useSettings();
+    const { settings, activeLogo } = useSettings();
     const appName = settings.general?.app_name || 'App';
-    const appLogo = settings.general?.logo || settings.customization?.logo;
+    const appLogo = activeLogo || settings.general?.logo || settings.customization?.logo;
     const storedDriverInfo = useMemo(() => readStoredDriverInfo(), []);
     const [isOwnerManagedDriver, setIsOwnerManagedDriver] = useState(() => isOwnerManagedDriverProfile(storedDriverInfo));
     const [isOnline, setIsOnline] = useState(false);
     const [showRequest, setShowRequest] = useState(false);
     const [showLowBalanceModal, setShowLowBalanceModal] = useState(false);
+    const [showCancelledTripModal, setShowCancelledTripModal] = useState(false);
+    const [cancelledTripMessage, setCancelledTripMessage] = useState('');
 
     const [currentRequest, setCurrentRequest] = useState(null);
     const [todaySummary, setTodaySummary] = useState(() => normalizeTodaySummary());
@@ -717,6 +719,14 @@ const DriverHome = () => {
             window.history.replaceState({}, document.title);
         }
     }, [location.state]);
+
+    useEffect(() => {
+        if (location.state?.cancelled) {
+            setCancelledTripMessage(location.state.statusMessage || 'The user has cancelled this ride.');
+            setShowCancelledTripModal(true);
+            navigate(location.pathname, { replace: true, state: {} });
+        }
+    }, [location.state, navigate]);
 
     useEffect(() => {
         const unlock = () => unlockRideRequestAlertSound();
@@ -1932,6 +1942,32 @@ const DriverHome = () => {
                 cashLimitExceeded={walletAlertState.cashLimitExceeded}
             />
 
+            {showCancelledTripModal && (
+                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-6">
+                    <motion.div
+                        initial={{ scale: 0.95, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        exit={{ scale: 0.95, opacity: 0 }}
+                        className="w-full max-w-sm bg-white dark:bg-slate-900 rounded-[32px] p-8 shadow-2xl border border-slate-100/80 dark:border-slate-800 text-center relative overflow-hidden"
+                    >
+                        <div className="w-16 h-16 bg-rose-50 dark:bg-rose-950/20 rounded-2xl flex items-center justify-center mx-auto mb-5">
+                            <Bell size={28} className="text-rose-500 animate-bounce" />
+                        </div>
+                        <h3 className="text-xl font-black text-slate-900 dark:text-white mb-2">Ride Cancelled</h3>
+                        <p className="text-sm font-semibold text-slate-500 dark:text-slate-400 mb-8 leading-relaxed">
+                            {cancelledTripMessage}
+                        </p>
+                        <motion.button
+                            whileTap={{ scale: 0.96 }}
+                            onClick={() => setShowCancelledTripModal(false)}
+                            className="w-full bg-slate-900 dark:bg-white dark:text-slate-900 hover:bg-slate-800 text-white py-4 rounded-2xl text-[13px] font-bold uppercase tracking-widest shadow-lg"
+                        >
+                            Okay
+                        </motion.button>
+                    </motion.div>
+                </div>
+            )}
+
             <AnimatePresence>
                 {showCompletedTripModal && completedTripDetails && (
                     <>
@@ -2007,6 +2043,30 @@ const DriverHome = () => {
                                         <span className="font-bold text-slate-900 dark:text-white">Total Customer Fare</span>
                                         <span className="font-extrabold text-slate-900 dark:text-white">₹{Number(completedTripDetails.fare || 0).toFixed(2)}</span>
                                     </div>
+                                    {completedTripDetails.distanceCharge > 0 && (
+                                        <div className="flex justify-between items-center text-xs text-slate-500 dark:text-slate-400">
+                                            <span className="font-semibold">Extra Distance Charge</span>
+                                            <span className="font-bold text-slate-900 dark:text-white">₹{Number(completedTripDetails.distanceCharge || 0).toFixed(2)}</span>
+                                        </div>
+                                    )}
+                                    {completedTripDetails.additionalCharge > 0 && (
+                                        <div className="flex justify-between items-center text-xs text-slate-500 dark:text-slate-400">
+                                            <span className="font-semibold">Additional Charge</span>
+                                            <span className="font-bold text-slate-900 dark:text-white">₹{Number(completedTripDetails.additionalCharge || 0).toFixed(2)}</span>
+                                        </div>
+                                    )}
+                                    {completedTripDetails.adminExtraChargeAmount > 0 && (
+                                        <div className="flex justify-between items-center text-xs text-amber-500 dark:text-amber-400">
+                                            <span className="font-semibold">Admin Extra Charge</span>
+                                            <span className="font-bold">₹{Number(completedTripDetails.adminExtraChargeAmount || 0).toFixed(2)}</span>
+                                        </div>
+                                    )}
+                                    {completedTripDetails.cancellationChargeAmount > 0 && (
+                                        <div className="flex justify-between items-center text-xs text-red-500 dark:text-red-400">
+                                            <span className="font-semibold">Previous Cancellation Fee (Admin)</span>
+                                            <span className="font-bold">₹{Number(completedTripDetails.cancellationChargeAmount || 0).toFixed(2)}</span>
+                                        </div>
+                                    )}
                                     <div className="flex justify-between items-center text-xs text-rose-500 dark:text-rose-400">
                                         <span className="font-semibold">Admin Commission</span>
                                         <span className="font-bold">-₹{Number(completedTripDetails.commissionAmount || 0).toFixed(2)}</span>

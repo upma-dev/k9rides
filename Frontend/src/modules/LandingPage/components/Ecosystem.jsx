@@ -142,11 +142,10 @@ export default function Ecosystem() {
                       <button
                         key={opt.id}
                         onClick={() => setActiveTab(opt.id)}
-                        className={`relative p-6 rounded-2xl border-2 text-left transition-all duration-300 group overflow-hidden ${
-                          isSelected
+                        className={`relative p-6 rounded-2xl border-2 text-left transition-all duration-300 group overflow-hidden ${isSelected
                             ? 'border-transparent shadow-lg scale-[1.02]'
                             : 'border-slate-200 hover:border-slate-300 bg-white hover:shadow-md'
-                        }`}
+                          }`}
                         style={isSelected ? {
                           background: `linear-gradient(135deg, ${opt.primary}12, ${opt.secondary}08)`,
                           borderColor: `${opt.primary}40`

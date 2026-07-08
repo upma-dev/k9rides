@@ -47,7 +47,7 @@ const redirectToDriverLogin = (navigate) => {
 const RegistrationStatus = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { settings } = useSettings();
+  const { settings, activeLogo } = useSettings();
   const [checking, setChecking] = useState(true);
   const [driver, setDriver] = useState(null);
   const [documentTemplates, setDocumentTemplates] = useState([]);
@@ -59,7 +59,7 @@ const RegistrationStatus = () => {
   const mountedRef = useRef(false);
 
   const appName = settings.general?.app_name || "App";
-  const appLogo = settings.general?.logo || settings.customization?.logo;
+  const appLogo = activeLogo || settings.general?.logo || settings.customization?.logo;
   const isVehicleReapproval = location.state?.statusReason === "vehicle-update" || driver?.approve === false;
   const routePrefix = location.pathname.startsWith('/taxi/owner') ? '/taxi/owner' : '/taxi/driver';
 

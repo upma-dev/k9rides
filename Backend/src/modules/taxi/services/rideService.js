@@ -1064,6 +1064,16 @@ export const createRideRecord = async ({
     user_cancellation_fee: Number(pricingRule?.user_cancellation_fee ?? 0),
     driver_cancellation_fee_type: pricingRule?.driver_cancellation_fee_type || 'percentage',
     driver_cancellation_fee: Number(pricingRule?.driver_cancellation_fee ?? 0),
+    enable_cancellation_charge: pricingRule?.enable_cancellation_charge !== false,
+    free_cancellation_time: Number(pricingRule?.free_cancellation_time ?? 2),
+    fixed_cancellation_charge: Number(pricingRule?.fixed_cancellation_charge ?? 0),
+    percentage_cancellation_charge: Number(pricingRule?.percentage_cancellation_charge ?? 0),
+    charge_after_driver_accepted: pricingRule?.charge_after_driver_accepted !== false,
+    charge_after_driver_reached_pickup: pricingRule?.charge_after_driver_reached_pickup !== false,
+    charge_after_otp: Boolean(pricingRule?.charge_after_otp),
+    max_cancellation_fee: Number(pricingRule?.max_cancellation_fee ?? 0),
+    enable_cancellation_reasons: pricingRule?.enable_cancellation_reasons !== false,
+    cancellation_policy_message: pricingRule?.cancellation_policy_message || '',
     resolvedAt: pricingRule ? new Date() : null,
   };
 
@@ -1160,6 +1170,7 @@ export const createRideRecord = async ({
       scheduledAt: normalizedScheduledAt,
       status: RIDE_STATUS.SEARCHING,
       liveStatus: RIDE_LIVE_STATUS.SEARCHING,
+      pending_cancellation_due: Number(user.pending_cancellation_due || 0),
     });
 
     user.currentRideId = ride._id;
@@ -1215,6 +1226,7 @@ export const createRideRecord = async ({
             scheduledAt: normalizedScheduledAt,
             status: RIDE_STATUS.SEARCHING,
             liveStatus: RIDE_LIVE_STATUS.SEARCHING,
+            pending_cancellation_due: Number(user.pending_cancellation_due || 0),
           },
         ],
         { session },
@@ -1299,6 +1311,7 @@ export const serializeRideRealtime = (ride) => ({
     amount: Number(ride.adminExtraCharge.amount || 0),
     reason: ride.adminExtraCharge.reason || '',
   } : null,
+  recovered_cancellation_due: Number(ride.recovered_cancellation_due || 0),
   bookingMode: ride.bookingMode || 'normal',
   pricingNegotiationMode: ride.pricingNegotiationMode || 'none',
   biddingStatus: ride.biddingStatus || 'none',
@@ -1374,6 +1387,16 @@ export const serializeRideRealtime = (ride) => ({
       user_cancellation_fee: Number(ride.pricingSnapshot.user_cancellation_fee ?? 0),
       driver_cancellation_fee_type: ride.pricingSnapshot.driver_cancellation_fee_type || 'percentage',
       driver_cancellation_fee: Number(ride.pricingSnapshot.driver_cancellation_fee ?? 0),
+      enable_cancellation_charge: ride.pricingSnapshot.enable_cancellation_charge !== false,
+      free_cancellation_time: Number(ride.pricingSnapshot.free_cancellation_time ?? 2),
+      fixed_cancellation_charge: Number(ride.pricingSnapshot.fixed_cancellation_charge ?? 0),
+      percentage_cancellation_charge: Number(ride.pricingSnapshot.percentage_cancellation_charge ?? 0),
+      charge_after_driver_accepted: ride.pricingSnapshot.charge_after_driver_accepted !== false,
+      charge_after_driver_reached_pickup: ride.pricingSnapshot.charge_after_driver_reached_pickup !== false,
+      charge_after_otp: Boolean(ride.pricingSnapshot.charge_after_otp),
+      max_cancellation_fee: Number(ride.pricingSnapshot.max_cancellation_fee ?? 0),
+      enable_cancellation_reasons: ride.pricingSnapshot.enable_cancellation_reasons !== false,
+      cancellation_policy_message: ride.pricingSnapshot.cancellation_policy_message || '',
       resolvedAt: ride.pricingSnapshot.resolvedAt || null,
     }
     : null,
@@ -1400,6 +1423,16 @@ export const serializeRideRealtime = (ride) => ({
     : null,
   user: ride.userId,
   driver: ride.driverId,
+  cancelled_by: ride.cancelled_by || '',
+  cancellation_reason: ride.cancellation_reason || '',
+  cancellation_charge: Number(ride.cancellation_charge || 0),
+  cancellation_status: ride.cancellation_status || 'none',
+  pending_cancellation_due: Number(ride.pending_cancellation_due || 0),
+  recovery_status: ride.recovery_status || 'none',
+  recovered_in_ride: ride.recovered_in_ride ? String(ride.recovered_in_ride) : null,
+  recovered_at: ride.recovered_at || null,
+  cancellation_time: ride.cancellation_time || null,
+  recovered_cancellation_due: Number(ride.recovered_cancellation_due || 0),
   messages: (ride.messages || []).slice(-30).map((message) => ({
     id: String(message._id),
     senderRole: message.senderRole,
@@ -1410,20 +1443,14 @@ export const serializeRideRealtime = (ride) => ({
 });
 
 export const ensureRideParticipantAccess = async ({ rideId, role, entityId }) => {
-  const ride = await Ride.findById(rideId).select('userId driverId status liveStatus');
-
-  if (!ride) {
-    throw new ApiError(404, 'Ride not found');
+  const ride = await Ride.findById(rideId);
+  if (!ride) throw new ApiError(404, 'Ride not found');
+  if (role === 'user' && String(ride.userId) !== String(entityId)) {
+    throw new ApiError(403, 'Forbidden');
   }
-
-  const actorId = String(entityId);
-  const isUser = role === 'user' && String(ride.userId) === actorId;
-  const isDriver = role === 'driver' && ride.driverId && String(ride.driverId) === actorId;
-
-  if (!isUser && !isDriver) {
-    throw new ApiError(403, 'You are not allowed to access this ride room');
+  if (role === 'driver' && String(ride.driverId) !== String(entityId)) {
+    throw new ApiError(403, 'Forbidden');
   }
-
   return ride;
 };
 
@@ -1532,6 +1559,16 @@ export const listRideHistoryForIdentity = async ({ role, entityId, limit = 50, p
       'updatedAt',
       'userId',
       'driverId',
+      'cancelled_by',
+      'cancellation_reason',
+      'cancellation_charge',
+      'cancellation_status',
+      'pending_cancellation_due',
+      'recovery_status',
+      'recovered_in_ride',
+      'recovered_at',
+      'cancellation_time',
+      'recovered_cancellation_due',
     ].join(' '))
     .sort({ createdAt: -1 })
     .skip((safePage - 1) * safeLimit)
@@ -1591,6 +1628,16 @@ export const listRideHistoryForIdentity = async ({ role, entityId, limit = 50, p
       updatedAt: ride.updatedAt,
       user: role === 'driver' ? (ride.userId || null) : null,
       driver: role === 'user' ? (ride.driverId || null) : null,
+      cancelled_by: ride.cancelled_by || '',
+      cancellation_reason: ride.cancellation_reason || '',
+      cancellation_charge: Number(ride.cancellation_charge || 0),
+      cancellation_status: ride.cancellation_status || 'none',
+      pending_cancellation_due: Number(ride.pending_cancellation_due || 0),
+      recovery_status: ride.recovery_status || 'none',
+      recovered_in_ride: ride.recovered_in_ride ? String(ride.recovered_in_ride) : null,
+      recovered_at: ride.recovered_at || null,
+      cancellation_time: ride.cancellation_time || null,
+      recovered_cancellation_due: Number(ride.recovered_cancellation_due || 0),
     })),
     pagination: {
       page: safePage,
@@ -1764,11 +1811,21 @@ export const updateRideLifecycle = async ({ rideId, driverId, nextStatus, paymen
 
   if (nextStatus === RIDE_LIVE_STATUS.COMPLETED) {
     ride.completedAt = new Date();
+  }
 
-    if (ride.arrivedAt && ride.startedAt) {
+  // Calculate final fare when arriving at destination or completing (if not already done)
+  const isFinalizingFare = (nextStatus === RIDE_LIVE_STATUS.ARRIVED || nextStatus === RIDE_LIVE_STATUS.COMPLETED);
+  
+  if (isFinalizingFare && !ride.recovered_cancellation_due) {
+    const userDoc = await User.findById(ride.userId).select('pending_cancellation_due');
+    if (userDoc && userDoc.pending_cancellation_due > 0) {
+      ride.recovered_cancellation_due = userDoc.pending_cancellation_due;
+    }
+
+    if (ride.arrivedAt && ride.startedAt && !ride.waitingChargeAmount) {
       const freeWaitingMinutes = Number(ride.pricingSnapshot?.free_waiting_before ?? 0);
       const waitingRatePerMinute = Number(ride.pricingSnapshot?.waiting_charge ?? 0);
-      
+
       const waitingTimeMs = new Date(ride.startedAt).getTime() - new Date(ride.arrivedAt).getTime();
       const waitingTimeMinutes = Math.max(0, Math.ceil(waitingTimeMs / 60000));
       const billableWaitingTimeMinutes = Math.max(0, waitingTimeMinutes - freeWaitingMinutes);
@@ -1816,9 +1873,14 @@ export const updateRideLifecycle = async ({ rideId, driverId, nextStatus, paymen
       }
     }
 
-    if (driverPaymentCollection) {
-      ride.driverPaymentCollection = driverPaymentCollection;
+    // Reset user cancellation due after adding it to ride
+    if (ride.recovered_cancellation_due > 0) {
+      await User.findByIdAndUpdate(ride.userId, { $set: { pending_cancellation_due: 0 } });
     }
+  }
+
+  if (driverPaymentCollection) {
+    ride.driverPaymentCollection = driverPaymentCollection;
   }
 
   await ride.save();
@@ -1831,6 +1893,10 @@ export const updateRideLifecycle = async ({ rideId, driverId, nextStatus, paymen
       User.findByIdAndUpdate(ride.userId, { currentRideId: null }),
       Driver.findByIdAndUpdate(driverId, { isOnRide: false }),
     ]);
+
+    if (String(ride.paymentMethod || 'cash').trim().toLowerCase() === 'cash') {
+      await markUserCancellationDuesAsRecovered(ride.userId, ride._id);
+    }
 
     walletUpdate = await settleCompletedRideWallet({ rideId: ride._id });
     await consumeUserSubscriptionRide({ ride });
@@ -1860,20 +1926,26 @@ export const appendRideMessage = async ({ rideId, role, senderId, message }) => 
     throw new ApiError(400, 'Message is required');
   }
 
-  if (!['user', 'driver'].includes(role)) {
-    throw new ApiError(403, 'Only rider and driver can send ride messages');
-  }
-
-  await ensureRideParticipantAccess({ rideId, role, entityId: senderId });
-
   const ride = await Ride.findById(rideId);
-
   if (!ride) {
     throw new ApiError(404, 'Ride not found');
   }
 
+  let actualRole = role;
+  if (!['user', 'driver'].includes(actualRole)) {
+    if (String(ride.userId) === String(senderId)) {
+      actualRole = 'user';
+    } else if (String(ride.driverId) === String(senderId)) {
+      actualRole = 'driver';
+    } else {
+      throw new ApiError(403, 'Only rider and driver can send ride messages');
+    }
+  }
+
+  await ensureRideParticipantAccess({ rideId, role: actualRole, entityId: senderId });
+
   ride.messages.push({
-    senderRole: role,
+    senderRole: actualRole,
     senderId,
     message: trimmedMessage,
   });
@@ -2219,8 +2291,8 @@ export const submitRideFeedback = async ({ rideId, userId, rating, comment = '',
   const numericRating = Number(rating);
   const numericTip = Number(tipAmount || 0);
 
-  if (!Number.isInteger(numericRating) || numericRating < 1 || numericRating > 5) {
-    throw new ApiError(400, 'rating must be an integer between 1 and 5');
+  if (!Number.isInteger(numericRating) || numericRating < 0 || numericRating > 5) {
+    throw new ApiError(400, 'rating must be an integer between 0 and 5');
   }
 
   if (!Number.isFinite(numericTip) || numericTip < 0) {
@@ -2259,7 +2331,7 @@ export const submitRideFeedback = async ({ rideId, userId, rating, comment = '',
     throw new ApiError(409, 'Ride has no assigned driver');
   }
 
-  if (ride.feedback?.submittedAt) {
+  if (ride.feedback?.submittedAt && Number(ride.feedback?.rating || 0) > 0) {
     throw new ApiError(409, 'Feedback already submitted for this ride');
   }
 
@@ -2269,18 +2341,78 @@ export const submitRideFeedback = async ({ rideId, userId, rating, comment = '',
     throw new ApiError(404, 'Driver not found');
   }
 
-  ride.feedback = {
-    rating: numericRating,
-    comment: String(comment || '').trim(),
-    tipAmount: numericTip,
-    submittedAt: new Date(),
-  };
+  if (!ride.feedback) {
+    ride.feedback = {};
+  }
+  
+  if (numericRating > 0) {
+    ride.feedback.rating = numericRating;
+  }
+  
+  if (comment) {
+    ride.feedback.comment = String(comment || '').trim();
+  }
+  
+  // Only update tipAmount if we are not just updating the rating of an already-paid tip
+  const isUpdatingRatingOnly = Boolean(ride.feedback?.submittedAt);
+  if (!isUpdatingRatingOnly) {
+    ride.feedback.tipAmount = numericTip;
+  }
+  
+  ride.feedback.submittedAt = new Date();
 
-  driver.ratingCount = Number(driver.ratingCount || 0) + 1;
-  driver.totalRatingScore = Number(driver.totalRatingScore || 0) + numericRating;
-  driver.rating = Number((driver.totalRatingScore / driver.ratingCount).toFixed(1));
+  if (numericRating > 0) {
+    driver.ratingCount = Number(driver.ratingCount || 0) + 1;
+    driver.totalRatingScore = Number(driver.totalRatingScore || 0) + numericRating;
+    driver.rating = Number((driver.totalRatingScore / driver.ratingCount).toFixed(1));
+  }
+
+  if (numericTip > 0 && !isUpdatingRatingOnly) {
+    ride.driverEarnings = Math.round(((ride.driverEarnings || 0) + numericTip) * 100) / 100;
+    
+    // Log the cash tip in the wallet transaction history
+    await WalletTransaction.create([{
+        driverId: ride.driverId,
+        rideId: ride._id,
+        type: 'adjustment',
+        amount: numericTip,
+        balanceBefore: driver.wallet?.balance || 0,
+        balanceAfter: driver.wallet?.balance || 0,
+        cashLimit: driver.wallet?.cashLimit || 0,
+        isBlockedAfter: driver.wallet?.isBlocked || false,
+        description: 'Cash tip received directly from rider',
+        metadata: {
+           source: 'ride_tip',
+           provider: 'cash',
+           rideId: String(ride._id),
+           userId: String(userId),
+        }
+    }]);
+  }
 
   await Promise.all([ride.save(), driver.save()]);
 
   return populateRideRealtime(ride._id);
+};
+
+export const markUserCancellationDuesAsRecovered = async (userId, currentRideId, session = null) => {
+  const queryOptions = session ? { session } : {};
+  const pendingRides = await Ride.find({
+    userId,
+    cancellation_status: 'pending',
+  }).session(session);
+
+  if (pendingRides.length > 0) {
+    for (const pendingRide of pendingRides) {
+      pendingRide.cancellation_status = 'recovered';
+      pendingRide.recovery_status = 'recovered';
+      pendingRide.recovered_in_ride = currentRideId;
+      pendingRide.recovered_at = new Date();
+      await pendingRide.save({ session });
+    }
+  }
+
+  await User.findByIdAndUpdate(userId, {
+    $set: { pending_cancellation_due: 0 }
+  }, queryOptions);
 };

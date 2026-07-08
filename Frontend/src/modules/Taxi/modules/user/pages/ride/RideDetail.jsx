@@ -231,18 +231,55 @@ const RideDetail = () => {
           </div>
 
           <div className="space-y-3 pt-2">
-            <div className="flex justify-between items-center text-[13px] font-bold text-gray-500">
-              <span>Base Fare</span>
-              <span className="text-gray-900">Rs {details.baseFare}.00</span>
-            </div>
-            <div className="flex justify-between items-center text-[13px] font-bold text-gray-500">
-              <span>Taxes & Fees</span>
-              <span className="text-gray-900">Rs {details.taxes}.00</span>
-            </div>
-            <div className="flex justify-between items-center text-[16px] font-black text-gray-900 border-t border-gray-50 pt-3">
-              <span>Total Paid</span>
-              <span>Rs {details.fare}.00</span>
-            </div>
+            {details.statusLabel === 'Cancelled' ? (
+              <>
+                <div className="flex justify-between items-center text-[13px] font-bold text-gray-500">
+                  <span>Cancellation Fee</span>
+                  <span className="text-red-500">Rs {Number(ride?.cancellation_charge || 0).toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between items-center text-[13px] font-bold text-gray-500">
+                  <span>Reason</span>
+                  <span className="text-gray-900">{ride?.cancellation_reason || 'N/A'}</span>
+                </div>
+                <div className="flex justify-between items-center text-[13px] font-bold text-gray-500">
+                  <span>Fee Payment Status</span>
+                  <span className={ride?.cancellation_status === 'recovered' ? 'text-emerald-600' : 'text-amber-600 font-semibold'}>
+                    {ride?.cancellation_status === 'recovered' ? 'Recovered' : 'Pending'}
+                  </span>
+                </div>
+                {ride?.cancellation_status === 'recovered' && (
+                  <div className="flex justify-between items-center text-[11px] font-bold text-gray-400">
+                    <span>Recovered in trip</span>
+                    <span>#{String(ride?.recovered_in_ride || '').slice(-6).toUpperCase()}</span>
+                  </div>
+                )}
+                <div className="flex justify-between items-center text-[16px] font-black text-gray-900 border-t border-gray-50 pt-3">
+                  <span>Total Charges</span>
+                  <span>Rs {Number(ride?.cancellation_charge || 0).toFixed(2)}</span>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="flex justify-between items-center text-[13px] font-bold text-gray-500">
+                  <span>Base Fare</span>
+                  <span className="text-gray-900">Rs {details.baseFare}.00</span>
+                </div>
+                <div className="flex justify-between items-center text-[13px] font-bold text-gray-500">
+                  <span>Taxes & Fees</span>
+                  <span className="text-gray-900">Rs {details.taxes}.00</span>
+                </div>
+                {ride?.recovered_cancellation_due > 0 && (
+                  <div className="flex justify-between items-center text-[13px] font-bold text-red-500">
+                    <span>Previous Cancellation Due</span>
+                    <span>Rs {ride.recovered_cancellation_due}.00</span>
+                  </div>
+                )}
+                <div className="flex justify-between items-center text-[16px] font-black text-gray-900 border-t border-gray-50 pt-3">
+                  <span>Total Paid</span>
+                  <span>Rs {details.fare + Number(ride?.recovered_cancellation_due || 0)}.00</span>
+                </div>
+              </>
+            )}
           </div>
         </div>
 

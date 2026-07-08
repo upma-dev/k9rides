@@ -24,13 +24,8 @@ const ActionCard = ({ title, description, image, surfaceClass, titleClass, butto
               e.stopPropagation();
               navigate(path);
             }}
-            className="relative inline-flex items-center rounded-full px-3.5 py-2 text-[11px] font-black whitespace-nowrap text-white shadow-[0_12px_26px_rgba(2,6,23,0.16)] backdrop-blur-md bg-white/10 border border-white/35 overflow-hidden transition-all active:scale-95"
+            className={`relative inline-flex items-center rounded-full px-4 py-2 text-[12px] font-black whitespace-nowrap text-white shadow-md overflow-hidden transition-all active:scale-95 ${buttonClass}`}
           >
-            <span aria-hidden="true" className={`absolute inset-0 ${buttonClass} opacity-40`} />
-            <span
-              aria-hidden="true"
-              className="absolute inset-0 bg-[linear-gradient(180deg,rgba(255,255,255,0.45),rgba(255,255,255,0))] opacity-70"
-            />
             <span className="relative z-10 inline-flex items-center gap-2">
               {buttonText}
               <ArrowRight size={13} strokeWidth={3} className="translate-y-[0.5px]" />
@@ -69,7 +64,7 @@ const ActionsSection = () => {
           image="/1_Bike.png"
           surfaceClass="bg-gradient-to-br from-primary-orange/5/80 via-white/80 to-primary-orange/10/60"
           titleClass="text-slate-900"
-          buttonClass="bg-primary-orange/50"
+          buttonClass="bg-emerald-600"
           buttonText="Book Now"
           path={resolvePath('/ride/select-location')}
         />
@@ -80,7 +75,7 @@ const ActionsSection = () => {
           image="/5_Parcel.png"
           surfaceClass="bg-gradient-to-br from-indigo-50/80 via-white/80 to-indigo-100/60"
           titleClass="text-slate-900"
-          buttonClass="bg-indigo-500"
+          buttonClass="bg-indigo-600"
           buttonText="Send Now"
           path={resolvePath('/parcel/type')}
         />

@@ -43,7 +43,15 @@ const isEnabled = (value, fallback = true) => {
     return ['1', 'true', 'yes', 'on'].includes(String(value).trim().toLowerCase());
 };
 
-const transactionLabel = (type = '') => {
+const transactionLabel = (tx) => {
+    if (!tx) return 'Wallet transaction';
+    const type = typeof tx === 'string' ? tx : tx.type || '';
+    const source = String(tx.metadata?.source || '').toLowerCase();
+
+    if (type === 'adjustment' && source === 'ride_tip') {
+        return 'Ride tip';
+    }
+
     const labels = {
         ride_earning: 'Online ride earning',
         commission_deduction: 'Cash ride commission',
@@ -95,6 +103,10 @@ const transactionHint = (tx = {}) => {
         return tx.description || 'Received from rider wallet';
     }
 
+    if (tx.type === 'adjustment' && source === 'ride_tip') {
+        return tx.description || 'Tip received from rider';
+    }
+
     return tx.description || 'Updated by wallet activity';
 };
 
@@ -129,6 +141,12 @@ const normalizeWalletResponse = (payload) => {
         transactions: Array.isArray(data.transactions) ? data.transactions : [],
         withdrawalRequests: Array.isArray(data.withdrawalRequests) ? data.withdrawalRequests : [],
         settings: data.settings || {},
+        summary: data.summary || {
+            totalAppEarnings: 0,
+            onlineRideEarnings: 0,
+            cashRideCommission: 0,
+            totalTips: 0,
+        },
     };
 };
 
@@ -137,6 +155,7 @@ const WALLET_FILTERS = [
     { id: 'ride_earning', label: 'Online rides' },
     { id: 'commission_deduction', label: 'Cash commission' },
     { id: 'top_up', label: 'Top-ups' },
+    { id: 'ride_tip', label: 'Tips' },
     { id: 'adjustment', label: 'Adjustments' },
 ];
 
@@ -199,6 +218,20 @@ const DriverWallet = () => {
         salary: 0,
         isOwnerManagedDriver: false,
     });
+    const [backendSummary, setBackendSummary] = useState({
+        totalAppEarnings: 0,
+        onlineRideEarnings: 0,
+        cashRideCommission: 0,
+        totalTips: 0,
+    });
+    const [expandedTransactions, setExpandedTransactions] = useState({});
+
+    const toggleTransaction = (id) => {
+        setExpandedTransactions((prev) => ({
+            ...prev,
+            [id]: !prev[id],
+        }));
+    };
 
     const loadWallet = useCallback(async ({ quiet = false } = {}) => {
         if (!quiet) setRefreshing(true);
@@ -216,6 +249,7 @@ const DriverWallet = () => {
             setTransactions(next.transactions);
             setWithdrawalRequests(next.withdrawalRequests);
             setSettings(next.settings);
+            setBackendSummary(next.summary);
             setDriverProfile({
                 salary: toNumber(profile.salary, 0),
                 isOwnerManagedDriver: isOwnerManagedDriverProfile(profile),
@@ -234,6 +268,7 @@ const DriverWallet = () => {
         const socket = socketService.connect({ role: 'driver' });
         const onWalletUpdated = (payload) => {
             if (payload?.wallet) setWallet(payload.wallet);
+            if (payload?.summary) setBackendSummary(payload.summary);
             if (payload?.transaction) {
                 setTransactions((previous) => [
                     payload.transaction,
@@ -278,38 +313,24 @@ const DriverWallet = () => {
     }, [rules.minimumTopUp]);
 
     const walletSummary = useMemo(() => {
-        const onlineRideEarnings = transactions
-            .filter((tx) => tx.type === 'ride_earning')
-            .reduce((sum, tx) => sum + Math.max(Number(tx.amount || 0), 0), 0);
-        const cashRideCommission = transactions
-            .filter((tx) => tx.type === 'commission_deduction')
-            .reduce((sum, tx) => sum + Math.abs(Number(tx.amount || 0)), 0);
-        const totalAppEarnings = transactions
-            .filter((tx) => ['ride_earning', 'adjustment'].includes(tx.type))
-            .reduce((sum, tx) => {
-                const amount = Number(tx.amount || 0);
-                const source = String(tx.metadata?.source || tx.metadata?.category || '').toLowerCase();
-
-                if (tx.type === 'ride_earning') {
-                    return sum + Math.max(amount, 0);
-                }
-
-                return source === 'driver_incentive' ? sum + Math.max(amount, 0) : sum;
-            }, 0);
-
         return {
-            totalAppEarnings,
-            onlineRideEarnings,
-            cashRideCommission,
+            totalAppEarnings: backendSummary.totalAppEarnings || 0,
+            onlineRideEarnings: backendSummary.onlineRideEarnings || 0,
+            cashRideCommission: backendSummary.cashRideCommission || 0,
+            totalTips: backendSummary.totalTips || 0,
         };
-    }, [transactions]);
+    }, [backendSummary]);
 
     const filteredTransactions = useMemo(() => {
         if (activeFilter === 'all') {
             return transactions;
         }
 
-        return transactions.filter((tx) => tx.type === activeFilter);
+        if (activeFilter === 'ride_tip') {
+            return transactions.filter(tx => String(tx.metadata?.source) === 'ride_tip' || Number(tx.metadata?.tipAmount) > 0);
+        }
+
+        return transactions.filter((tx) => tx.type === activeFilter && String(tx.metadata?.source) !== 'ride_tip');
     }, [activeFilter, transactions]);
 
     const recentTransactions = useMemo(() => filteredTransactions.slice(0, 20), [filteredTransactions]);
@@ -769,15 +790,12 @@ const DriverWallet = () => {
                             </div>
                         </section>
 
-                        <section className="grid grid-cols-1 gap-3">
+                        <section className="space-y-3">
                             {driverProfile.isOwnerManagedDriver && (
                                 <StatPill label="Monthly salary" value={money(driverProfile.salary)} tone="good" />
                             )}
-                            <StatPill label={`${appName} earnings`} value={money(walletSummary.totalAppEarnings)} tone="good" />
-                            <StatPill label="Top-up minimum" value={money(rules.minimumTopUp)} tone="dark" />
-                            <div className="grid grid-cols-2 gap-3">
-                                <StatPill label="Online earnings" value={money(walletSummary.onlineRideEarnings)} tone="good" />
-                                <StatPill label="Cash commission" value={money(walletSummary.cashRideCommission)} tone="warn" />
+                            <div className="grid grid-cols-1 gap-3">
+                                <StatPill label="Cash commission deducted" value={money(walletSummary.cashRideCommission)} tone="warn" />
                             </div>
                         </section>
 
@@ -822,24 +840,54 @@ const DriverWallet = () => {
                                             initial={{ opacity: 0, y: 8 }}
                                             animate={{ opacity: 1, y: 0 }}
                                             transition={{ delay: Math.min(index * 0.02, 0.18) }}
-                                            className="flex items-center justify-between gap-3 rounded-[1.4rem] bg-white p-4 shadow-sm"
+                                            className="rounded-[1.4rem] bg-white p-4 shadow-sm"
                                         >
-                                            <div className="flex min-w-0 items-center gap-3">
-                                                <div className={`grid h-11 w-11 shrink-0 place-items-center rounded-2xl ${isDebit ? 'bg-rose-50 text-rose-600' : 'bg-emerald-50 text-emerald-700'}`}>
-                                                    {isDebit ? <ArrowDownLeft size={18} /> : <ArrowUpRight size={18} />}
+                                            <div className="flex items-center justify-between gap-3">
+                                                <div className="flex min-w-0 items-center gap-3">
+                                                    <div className={`grid h-11 w-11 shrink-0 place-items-center rounded-2xl ${isDebit ? 'bg-rose-50 text-rose-600' : 'bg-emerald-50 text-emerald-700'}`}>
+                                                        {isDebit ? <ArrowDownLeft size={18} /> : <ArrowUpRight size={18} />}
+                                                    </div>
+                                                    <div className="min-w-0">
+                                                        <p className="text-sm font-black text-slate-950">{transactionLabel(tx)}</p>
+                                                        <p className="mt-0.5 text-xs font-bold leading-5 text-slate-500 break-words" title={transactionHint(tx)}>
+                                                            {shortenText(transactionHint(tx))}
+                                                        </p>
+                                                        <p className="mt-1 text-[11px] font-bold text-slate-400">{formatDate(tx.createdAt)}</p>
+                                                    </div>
                                                 </div>
-                                                <div className="min-w-0">
-                                                    <p className="text-sm font-black text-slate-950">{transactionLabel(tx.type)}</p>
-                                                    <p className="mt-0.5 text-xs font-bold leading-5 text-slate-500 break-words" title={transactionHint(tx)}>
-                                                        {shortenText(transactionHint(tx))}
-                                                    </p>
-                                                    <p className="mt-1 text-[11px] font-bold text-slate-400">{formatDate(tx.createdAt)}</p>
+                                                <div className="shrink-0 text-right">
+                                                    <p className={`text-sm font-black ${isDebit ? 'text-rose-600' : 'text-emerald-700'}`}>{money(tx.amount)}</p>
+                                                    <p className="mt-1 text-[10px] font-black uppercase text-slate-400">Bal {money(tx.balanceAfter)}</p>
                                                 </div>
                                             </div>
-                                            <div className="shrink-0 text-right">
-                                                <p className={`text-sm font-black ${isDebit ? 'text-rose-600' : 'text-emerald-700'}`}>{money(tx.amount)}</p>
-                                                <p className="mt-1 text-[10px] font-black uppercase text-slate-400">Bal {money(tx.balanceAfter)}</p>
-                                            </div>
+                                            
+                                            {/* Extra Metadata Dropdown / Display */}
+                                            {Boolean((tx.metadata?.tipAmount && Number(tx.metadata.tipAmount) > 0) || (tx.type === 'adjustment' && tx.metadata?.source === 'ride_tip')) && (
+                                                <div className="mt-3">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => toggleTransaction(tx._id || tx.id || index)}
+                                                        className="flex w-full items-center justify-between border-t border-slate-100 pt-2 pb-1"
+                                                    >
+                                                        <span className="text-[10px] font-black uppercase tracking-widest text-emerald-600/70">View Breakdown</span>
+                                                        <span className="text-slate-400 text-xs font-bold">{expandedTransactions[tx._id || tx.id || index] ? 'Hide' : 'Show'}</span>
+                                                    </button>
+                                                    {expandedTransactions[tx._id || tx.id || index] && (
+                                                        <div className="pt-2 grid grid-cols-2 gap-2">
+                                                            {Number(tx.metadata?.farePortion) > 0 && (
+                                                                <div className="bg-slate-50 rounded-xl p-2.5 flex flex-col justify-center">
+                                                                    <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">Base Fare</span>
+                                                                    <span className="text-[11px] font-bold text-slate-700">{money(tx.metadata.farePortion)}</span>
+                                                                </div>
+                                                            )}
+                                                            <div className="bg-emerald-50 rounded-xl p-2.5 flex flex-col justify-center">
+                                                                <span className="text-[9px] font-black uppercase tracking-widest text-emerald-600/70">Tip Amount</span>
+                                                                <span className="text-[11px] font-bold text-emerald-700">{money(tx.metadata?.tipAmount || tx.amount)}</span>
+                                                            </div>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            )}
                                         </Motion.div>
                                     );
                                 })

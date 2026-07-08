@@ -86,6 +86,10 @@ const RotatingVehicleMarker = ({ position, iconUrl = deliveryIcon, heading = 0, 
           alt={title}
           className="h-12 w-12 object-contain drop-shadow-[0_8px_10px_rgba(15,23,42,0.35)]"
           draggable={false}
+          onError={(e) => {
+            e.currentTarget.onerror = null;
+            e.currentTarget.src = deliveryIcon;
+          }}
         />
       </div>
     </div>

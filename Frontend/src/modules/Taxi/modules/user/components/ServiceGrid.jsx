@@ -9,11 +9,9 @@ const ServiceTile = ({ icon, label, description, path, accentClass, loading }) =
 
   if (loading) {
     return (
-      <div className="flex w-full min-h-[112px] items-center justify-center">
-        <div className="flex h-[100px] w-[90%] animate-pulse flex-col items-center justify-center gap-2 rounded-[16px] border border-white/20 bg-white/65 px-1 py-1.5">
-        <div className="h-[72px] w-[72px] rounded-[16px] bg-gray-200" />
-          <div className="h-3 w-12 rounded-full bg-gray-200" />
-        </div>
+      <div className="flex w-full flex-col items-center justify-center gap-2">
+        <div className="h-[80px] w-[80px] animate-pulse rounded-[22px] bg-slate-200/60" />
+        <div className="h-2.5 w-14 animate-pulse rounded-full bg-slate-200/60" />
       </div>
     );
   }
@@ -21,22 +19,29 @@ const ServiceTile = ({ icon, label, description, path, accentClass, loading }) =
   return (
     <motion.button
       type="button"
-      whileHover={{ y: -1.5 }}
-      whileTap={{ scale: 0.98 }}
+      whileHover={{ y: -3, scale: 1.02 }}
+      whileTap={{ scale: 0.95 }}
       onClick={() => path && navigate(path)}
-      className="flex h-full min-h-[112px] w-full items-center justify-center transition-transform"
+      className="group flex flex-col items-center justify-start gap-2.5 outline-none"
     >
-      <div className="flex h-[108px] w-[92%] flex-col items-center justify-center gap-1.5 px-1 py-1">
-        <div className={`flex h-[82px] w-[82px] items-center justify-center rounded-[18px] ${accentClass || 'bg-gray-50'}`}>
-          <img src={icon} alt={label} className="h-[70px] w-[70px] object-contain drop-shadow-sm" />
-        </div>
+      <div className={`relative flex h-[80px] w-[80px] items-center justify-center rounded-[24px] shadow-sm transition-shadow duration-300 group-hover:shadow-md ${accentClass || 'bg-slate-50'}`}>
+        {/* Subtle inner glow */}
+        <div className="absolute inset-0 rounded-[24px] border border-white/40 mix-blend-overlay" />
+        
+        <motion.img 
+          src={icon} 
+          alt={label} 
+          initial={{ y: 0 }}
+          whileHover={{ y: -2 }}
+          transition={{ type: "spring", stiffness: 300 }}
+          className="h-[56px] w-[56px] object-contain drop-shadow-[0_4px_8px_rgba(0,0,0,0.08)]" 
+        />
+      </div>
 
-        <div className="flex flex-col items-center gap-0.5 text-center">
-          <span className="min-h-[24px] text-[10.5px] font-black leading-tight tracking-tight text-slate-900 line-clamp-2 uppercase">
-            {label}
-          </span>
-          <span className="sr-only">{description}</span>
-        </div>
+      <div className="flex flex-col items-center px-1">
+        <span className="text-[11.5px] font-bold tracking-wide text-slate-700 transition-colors duration-300 group-hover:text-slate-950">
+          {label}
+        </span>
       </div>
     </motion.button>
   );

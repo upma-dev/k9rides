@@ -559,6 +559,46 @@ const rideSchema = new mongoose.Schema(
         default: 0,
         min: 0,
       },
+      enable_cancellation_charge: {
+        type: Boolean,
+        default: true,
+      },
+      free_cancellation_time: {
+        type: Number,
+        default: 2,
+      },
+      fixed_cancellation_charge: {
+        type: Number,
+        default: 0,
+      },
+      percentage_cancellation_charge: {
+        type: Number,
+        default: 0,
+      },
+      charge_after_driver_accepted: {
+        type: Boolean,
+        default: true,
+      },
+      charge_after_driver_reached_pickup: {
+        type: Boolean,
+        default: true,
+      },
+      charge_after_otp: {
+        type: Boolean,
+        default: false,
+      },
+      max_cancellation_fee: {
+        type: Number,
+        default: 0,
+      },
+      enable_cancellation_reasons: {
+        type: Boolean,
+        default: true,
+      },
+      cancellation_policy_message: {
+        type: String,
+        default: '',
+      },
       resolvedAt: {
         type: Date,
         default: null,
@@ -577,6 +617,51 @@ const rideSchema = new mongoose.Schema(
     walletSettledAt: {
       type: Date,
       default: null,
+    },
+    cancelled_by: {
+      type: String,
+      default: '',
+      trim: true,
+    },
+    cancellation_reason: {
+      type: String,
+      default: '',
+      trim: true,
+    },
+    cancellation_charge: {
+      type: Number,
+      default: 0,
+    },
+    cancellation_status: {
+      type: String,
+      enum: ['none', 'pending', 'recovered', 'no_charge'],
+      default: 'none',
+    },
+    cancellation_time: {
+      type: Date,
+      default: null,
+    },
+    pending_cancellation_due: {
+      type: Number,
+      default: 0,
+    },
+    recovery_status: {
+      type: String,
+      enum: ['none', 'pending', 'recovered'],
+      default: 'none',
+    },
+    recovered_in_ride: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'TaxiRide',
+      default: null,
+    },
+    recovered_at: {
+      type: Date,
+      default: null,
+    },
+    recovered_cancellation_due: {
+      type: Number,
+      default: 0,
     },
     promo: {
       code: {
@@ -672,7 +757,7 @@ const rideSchema = new mongoose.Schema(
       rating: {
         type: Number,
         default: null,
-        min: 1,
+        min: 0,
         max: 5,
       },
       comment: {

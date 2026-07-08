@@ -84,6 +84,14 @@ const RideComplete = () => {
   const [selectedTip, setSelectedTip] = useState(() => Number(state.feedback?.tipAmount || 0));
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(Boolean(state.feedback?.submittedAt));
+  const [step, setStep] = useState(() => {
+    if (state.feedback?.submittedAt) {
+      if (Number(state.feedback?.rating || 0) === 0) return 'rating';
+      return 'success';
+    }
+    return 'payment';
+  });
+  const [showPaymentSuccess, setShowPaymentSuccess] = useState(false);
   const [showSubmittedOverlay, setShowSubmittedOverlay] = useState(false);
   const [shareToast, setShareToast] = useState(false);
   const [error, setError] = useState('');
@@ -114,6 +122,7 @@ const RideComplete = () => {
     timeChargeAmount: Number(state?.timeChargeAmount || 0),
     additionalCharge: Number(state?.additionalCharge || 0),
     adminExtraCharge: state?.adminExtraCharge || null,
+    cancellationCharge: Number(state?.recovered_cancellation_due || state?.cancellationCharge || 0),
     paymentMethod: state.paymentMethod || 'Cash',
     pickup: state.pickup || 'Pickup',
     drop: state.drop || 'Drop',
@@ -124,17 +133,26 @@ const RideComplete = () => {
       plate: 'Assigned',
       profileImage: '',
       vehicleImage: '',
-    }
+    },
+    promo: state.promo || null
   });
 
   const fare = rideDetails.fare;
-  const baseFare = rideDetails.baseFare;
+  const rawBaseFare = rideDetails.baseFare;
   const waitingChargeAmount = rideDetails.waitingChargeAmount;
   const distanceChargeAmount = rideDetails.distanceChargeAmount;
   const timeChargeAmount = rideDetails.timeChargeAmount;
   const additionalCharge = rideDetails.additionalCharge;
   const adminExtraChargeAmount = Number(rideDetails.adminExtraCharge?.amount || 0);
-  const totalBill = baseFare + waitingChargeAmount + distanceChargeAmount + timeChargeAmount + additionalCharge + adminExtraChargeAmount + Number(selectedTip || 0);
+  const cancellationCharge = rideDetails.cancellationCharge;
+  
+  const promoDiscountAmount = Number(rideDetails.promo?.discount_amount || 0);
+  const promoCode = rideDetails.promo?.code || '';
+  
+  // Merge cancellation charge into base fare so it's not shown separately to the user
+  const baseFare = Math.ceil(rawBaseFare + cancellationCharge);
+  
+  const totalBill = Math.ceil(baseFare + waitingChargeAmount + distanceChargeAmount + timeChargeAmount + additionalCharge + adminExtraChargeAmount - promoDiscountAmount + Number(selectedTip || 0));
   const paymentMethod = rideDetails.paymentMethod;
   const paymentMethodLabel = PAYMENT_OPTIONS.find((option) => option.id === selectedPaymentMethod)?.label || paymentMethod;
   const pickup = rideDetails.pickup;
@@ -149,8 +167,9 @@ const RideComplete = () => {
     ...driver,
     vehicleIconUrl: driver.vehicleIconUrl || state.vehicleIconUrl || state.vehicle?.vehicleIconUrl || state.vehicle?.icon || '',
   });
-  const fareDueNow = isCollectionPaid(paymentCollection) ? 0 : totalBill;
-  const payableNow = fareDueNow;
+  const rideBaseBill = Math.ceil(baseFare + waitingChargeAmount + distanceChargeAmount + timeChargeAmount + additionalCharge + adminExtraChargeAmount - promoDiscountAmount);
+  const fareDueNow = isCollectionPaid(paymentCollection) ? 0 : rideBaseBill;
+  const payableNow = fareDueNow + Number(selectedTip || 0);
   const isRideFinalized = ['completed', 'delivered'].includes(rideLiveStatus) || Boolean(state.feedback?.submittedAt);
   const tipsEnabled = String(tipSettings.enable_tips || '1') === '1';
   const minimumTipAmount = Number(tipSettings.min_tip_amount || 0);
@@ -209,9 +228,9 @@ const RideComplete = () => {
           const addAmt = Number(payload.additionalCharge ?? state.additionalCharge ?? 0);
           const resolvedBase = Number(
             payload.baseFare ??
-            (payload.fare ? (payload.fare - waitAmt - distAmt - timeAmt - addAmt) : null) ??
+            (payload.fare ? (payload.fare - waitAmt - distAmt - timeAmt - addAmt - Number(payload.recovered_cancellation_due || 0) - Number(payload.adminExtraCharge?.amount || 0)) : null) ??
             state.baseFare ??
-            (state.fare ? (state.fare - waitAmt - distAmt - timeAmt - addAmt) : null) ??
+            (state.fare ? (state.fare - waitAmt - distAmt - timeAmt - addAmt - Number(state.recovered_cancellation_due || 0) - Number(state.adminExtraCharge?.amount || state.adminExtraChargeAmount || 0)) : null) ??
             0
           );
 
@@ -223,14 +242,16 @@ const RideComplete = () => {
             timeChargeAmount: timeAmt,
             additionalCharge: addAmt,
             adminExtraCharge: payload.adminExtraCharge ?? state.adminExtraCharge ?? null,
+            cancellationCharge: Number(payload.recovered_cancellation_due ?? state.recovered_cancellation_due ?? state.cancellationCharge ?? 0),
             paymentMethod: payload.paymentMethod || state.paymentMethod || 'Cash',
             pickup: payload.pickupAddress || state.pickup || 'Pickup',
             drop: payload.dropAddress || state.drop || 'Drop',
             driver: payload.driver || state.driver || null,
+            promo: payload.promo ?? state.promo ?? null,
           });
         }
 
-        if (!active || !feedback) {
+        if (!active || !feedback || !feedback.submittedAt) {
           return;
         }
 
@@ -238,6 +259,11 @@ const RideComplete = () => {
         setComment(feedback.comment || '');
         setSelectedTip(Number(feedback.tipAmount || 0));
         setIsSubmitted(Boolean(feedback.submittedAt));
+        if (Number(feedback.rating || 0) === 0) {
+          setStep('rating');
+        } else {
+          setStep('success');
+        }
       } catch (rideError) {
         console.error('Failed to refresh completed ride receipt:', rideError);
       }
@@ -349,7 +375,7 @@ const RideComplete = () => {
       return;
     }
 
-    if (rating < 1) {
+    if (step === 'rating' && rating < 1) {
       setError('Please rate your driver before finishing.');
       return;
     }
@@ -378,24 +404,50 @@ const RideComplete = () => {
       setIsSubmitting(true);
       setError('');
 
-      let response;
+      if (step === 'rating') {
+        if (!rating || rating === 0) {
+           setError('Please provide a rating before submitting.');
+           return;
+        }
+        const response = await api.patch(`/rides/${rideId}/feedback`, {
+          rating,
+          comment,
+        });
+        
+        const payload = response?.data?.data || response?.data || response;
+        if (payload?.feedback?.submittedAt) {
+          setIsSubmitted(true);
+          setStep('success');
+          setShowSubmittedOverlay(true);
+          clearCurrentRide();
+          setTimeout(() => {
+            navigate(routeHome, { replace: true });
+          }, 2500);
+        }
+        return;
+      }
 
-      if (Number(payableNow || 0) > 0 && selectedPaymentMethod === 'online') {
+      let response;
+      const effectivePaymentMethod = selectedPaymentMethod;
+
+      if (Number(payableNow || 0) > 0 && effectivePaymentMethod === 'online') {
         const scriptLoaded = await loadRazorpayScript();
         if (!scriptLoaded) {
           throw new Error('Razorpay SDK failed to load');
         }
 
         const orderResponse = await api.post(`/rides/${rideId}/complete-payment/razorpay/order`, {
-          rating,
-          comment,
+          rating: 0,
+          comment: '',
           tipAmount: selectedTip || 0,
         });
-        const order = orderResponse?.data || orderResponse || {};
+        const orderPayload = orderResponse?.data?.data || orderResponse?.data || orderResponse || {};
 
-        if (!order.keyId || !order.orderId) {
+        if (!orderPayload.keyId || !orderPayload.orderId) {
           throw new Error('Unable to start ride payment');
         }
+
+        const order = orderPayload;
 
         let userInfo = {};
         try {
@@ -405,7 +457,7 @@ const RideComplete = () => {
         }
 
         response = await new Promise((resolve, reject) => {
-          const rzp = new window.Razorpay({
+          const options = {
             key: order.keyId,
             amount: order.amount,
             currency: order.currency || 'INR',
@@ -424,8 +476,8 @@ const RideComplete = () => {
               try {
                 const verifyResponse = await api.post(`/rides/${rideId}/complete-payment/razorpay/verify`, {
                   ...paymentResponse,
-                  rating,
-                  comment,
+                  rating: 0,
+                  comment: '',
                   tipAmount: selectedTip || 0,
                 });
                 resolve(verifyResponse);
@@ -436,7 +488,25 @@ const RideComplete = () => {
             theme: {
               color: '#0f172a',
             },
-          });
+          };
+
+          if (order.orderId?.startsWith('mock_order_') || order.id?.startsWith('mock_order_')) {
+            console.warn('⚠️ Bypassing Razorpay checkout due to mock order ID (development fallback)');
+            setTimeout(async () => {
+              try {
+                await options.handler({
+                  razorpay_payment_id: `mock_pay_${Date.now()}`,
+                  razorpay_order_id: order.orderId || order.id,
+                  razorpay_signature: 'mock_signature_bypass'
+                });
+              } catch (err) {
+                // handler already rejects
+              }
+            }, 1000);
+            return;
+          }
+
+          const rzp = new window.Razorpay(options);
 
           rzp.on('payment.failed', (event) => {
             reject(new Error(event?.error?.description || event?.error?.reason || 'Ride payment failed'));
@@ -444,34 +514,56 @@ const RideComplete = () => {
 
           rzp.open();
         });
-      } else if (Number(payableNow || 0) > 0 && selectedPaymentMethod === 'wallet') {
+      } else if (Number(payableNow || 0) > 0 && effectivePaymentMethod === 'wallet') {
         response = await api.post(`/rides/${rideId}/complete-payment/wallet`, {
-          rating,
-          comment,
+          rating: 0,
+          comment: '',
           tipAmount: selectedTip || 0,
         });
       } else {
         response = await api.patch(`/rides/${rideId}/feedback`, {
-          rating,
-          comment,
-          tipAmount: 0,
+          rating: 0,
+          comment: '',
+          tipAmount: selectedTip || 0,
         });
       }
 
       const payload = response?.data?.data || response?.data || response;
-      if (payload?.feedback) {
-        setRating(Number(payload.feedback.rating || rating));
-        setComment(payload.feedback.comment || comment);
-        setSelectedTip(Number(payload.feedback.tipAmount || 0));
-      }
       if (payload?.driverPaymentCollection) {
         setPaymentCollection(payload.driverPaymentCollection);
       }
-      setIsSubmitted(true);
-      setShowSubmittedOverlay(true);
-      clearCurrentRide();
+      
+      setShowPaymentSuccess(true);
+      setTimeout(() => {
+        setShowPaymentSuccess(false);
+        setStep('rating');
+      }, 1500);
     } catch (submitError) {
-      setError(submitError?.message || 'Could not submit feedback right now.');
+      console.error('[Payment Error]:', submitError);
+      const backendMessage = submitError?.response?.data?.message || submitError?.message;
+      
+      // If the payment/feedback was already submitted, treat it as a success!
+      if (submitError?.response?.status === 409 || (backendMessage && backendMessage.toLowerCase().includes('already submitted'))) {
+        if (step === 'rating') {
+          setIsSubmitted(true);
+          setStep('success');
+          setShowSubmittedOverlay(true);
+          clearCurrentRide();
+          setTimeout(() => {
+            navigate(routeHome, { replace: true });
+          }, 2500);
+        } else {
+          setShowPaymentSuccess(true);
+          setTimeout(() => {
+            setShowPaymentSuccess(false);
+            setStep('rating');
+          }, 1500);
+        }
+        return;
+      }
+
+      const finalError = backendMessage || 'Could not process request right now.';
+      setError(finalError);
     } finally {
       setIsSubmitting(false);
     }
@@ -485,7 +577,7 @@ const RideComplete = () => {
             initial={{ opacity: 0, y: -12 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -12 }}
-            className="fixed top-4 left-1/2 z-50 -translate-x-1/2 rounded-[14px] bg-slate-900 px-5 py-3 text-[12px] font-black text-white shadow-xl"
+            className="fixed top-4 left-1/2 z-50 -translate-x-1/2 rounded-[14px] bg-[#0F766E] px-5 py-3 text-[12px] font-black text-white shadow-xl"
           >
             Receipt copied
           </motion.div>
@@ -503,12 +595,12 @@ const RideComplete = () => {
             <div className="flex h-16 w-16 items-center justify-center rounded-full bg-emerald-500 shadow-[0_10px_25px_rgba(16,185,129,0.28)]">
               <CheckCircle2 size={30} className="text-white" />
             </div>
-            <p className="text-[20px] font-black text-slate-900">Thanks for rating your driver</p>
+            <p className="text-[20px] font-black text-[#0F766E]">Thanks for rating your driver</p>
             <p className="text-[13px] font-bold text-slate-500">Your feedback has been saved successfully.</p>
             <button
               type="button"
               onClick={() => navigate(routeHome, { replace: true })}
-              className="mt-2 rounded-[16px] bg-slate-900 px-6 py-3 text-[13px] font-black text-white shadow-[0_12px_24px_rgba(15,23,42,0.18)]"
+              className="mt-2 rounded-[16px] bg-[#0F766E] px-6 py-3 text-[13px] font-black text-white shadow-[0_12px_24px_rgba(15,23,42,0.18)]"
             >
               Continue
             </button>
@@ -527,7 +619,7 @@ const RideComplete = () => {
                 ? (serviceType === 'parcel' ? 'Delivery Completed' : 'Ride Completed')
                 : (serviceType === 'parcel' ? 'Reached Destination' : 'Reached Destination')}
             </p>
-            <h1 className="text-[22px] font-black text-slate-900">
+            <h1 className="text-[22px] font-black text-[#0F766E]">
               {isRideFinalized
                 ? (serviceType === 'parcel' ? 'Package delivered' : 'You have arrived')
                 : (serviceType === 'parcel' ? 'Package reached destination' : 'Driver reached destination')}
@@ -545,7 +637,7 @@ const RideComplete = () => {
         ) : null}
 
         <div className="overflow-hidden rounded-[22px] border border-white/80 bg-white/95 shadow-[0_12px_30px_rgba(15,23,42,0.08)]">
-          <div className="flex items-center justify-between bg-slate-900 px-4 py-3">
+          <div className="flex items-center justify-between bg-[#0F766E] px-4 py-3">
             <div className="flex items-center gap-2.5">
               <div className="flex h-8 w-8 items-center justify-center rounded-[10px] bg-white/10">
                 <Receipt size={14} className="text-primary-orange/40" />
@@ -571,13 +663,13 @@ const RideComplete = () => {
                 {driverImage ? (
                   <img src={driverImage} alt={driver.name} className="h-full w-full object-cover" />
                 ) : (
-                  <div className="flex h-full w-full items-center justify-center bg-slate-900 text-[18px] font-black text-white">
+                  <div className="flex h-full w-full items-center justify-center bg-[#0F766E] text-[18px] font-black text-white">
                     {getInitials(driver.name)}
                   </div>
                 )}
               </div>
               <div className="min-w-0 flex-1">
-                <p className="truncate text-[16px] font-black text-slate-900">{driver.name}</p>
+                <p className="truncate text-[16px] font-black text-[#0F766E]">{driver.name}</p>
                 <p className="truncate text-[11px] font-bold text-slate-500">
                   {driver.vehicleNumber || driver.plate || 'Assigned'} · {vehicleLabel}
                 </p>
@@ -605,11 +697,11 @@ const RideComplete = () => {
                 </div>
                 <div className="min-w-0 flex-1 space-y-3">
                   <div>
-                    <p className="truncate text-[13px] font-black text-slate-900">{pickup}</p>
+                    <p className="truncate text-[13px] font-black text-[#0F766E]">{pickup}</p>
                     <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-400">Pickup</p>
                   </div>
                   <div>
-                    <p className="truncate text-[13px] font-black text-slate-900">{drop}</p>
+                    <p className="truncate text-[13px] font-black text-[#0F766E]">{drop}</p>
                     <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-400">Drop</p>
                   </div>
                 </div>
@@ -619,30 +711,30 @@ const RideComplete = () => {
             <div className="rounded-[18px] border border-slate-100 bg-white p-3">
               <div className="flex items-center justify-between">
                 <span className="text-[12px] font-bold text-slate-500">Base fare</span>
-                <span className="text-[13px] font-black text-slate-900">Rs {baseFare.toFixed(2)}</span>
+                <span className="text-[13px] font-black text-[#0F766E]">Rs {baseFare.toFixed(2)}</span>
               </div>
               {waitingChargeAmount > 0 && (
                 <div className="mt-2 flex items-center justify-between">
                   <span className="text-[12px] font-bold text-slate-500">Wait time charge</span>
-                  <span className="text-[13px] font-black text-slate-900">Rs {waitingChargeAmount.toFixed(2)}</span>
+                  <span className="text-[13px] font-black text-[#0F766E]">Rs {waitingChargeAmount.toFixed(2)}</span>
                 </div>
               )}
               {timeChargeAmount > 0 && (
                 <div className="mt-2 flex items-center justify-between">
                   <span className="text-[12px] font-bold text-slate-500">Ride time charge</span>
-                  <span className="text-[13px] font-black text-slate-900">Rs {timeChargeAmount.toFixed(2)}</span>
+                  <span className="text-[13px] font-black text-[#0F766E]">Rs {timeChargeAmount.toFixed(2)}</span>
                 </div>
               )}
               {distanceChargeAmount > 0 && (
                 <div className="mt-2 flex items-center justify-between">
                   <span className="text-[12px] font-bold text-slate-500">Extra distance charge</span>
-                  <span className="text-[13px] font-black text-slate-900">Rs {distanceChargeAmount.toFixed(2)}</span>
+                  <span className="text-[13px] font-black text-[#0F766E]">Rs {distanceChargeAmount.toFixed(2)}</span>
                 </div>
               )}
               {additionalCharge > 0 && (
                 <div className="mt-2 flex items-center justify-between">
                   <span className="text-[12px] font-bold text-slate-500">Additional charge</span>
-                  <span className="text-[13px] font-black text-slate-900">Rs {additionalCharge.toFixed(2)}</span>
+                  <span className="text-[13px] font-black text-[#0F766E]">Rs {additionalCharge.toFixed(2)}</span>
                 </div>
               )}
               {adminExtraChargeAmount > 0 && (
@@ -651,29 +743,26 @@ const RideComplete = () => {
                   <span>Rs {adminExtraChargeAmount.toFixed(2)}</span>
                 </div>
               )}
+              {promoDiscountAmount > 0 && (
+                <div className="mt-2 flex items-center justify-between">
+                  <span className="text-[12px] font-bold text-emerald-600">Promo ({promoCode}) Applied</span>
+                  <span className="text-[13px] font-black text-emerald-600">-Rs {promoDiscountAmount.toFixed(2)}</span>
+                </div>
+              )}
               <div className="mt-2 flex items-center justify-between">
                 <span className="text-[12px] font-bold text-slate-500">Tip</span>
-                <span className="text-[13px] font-black text-slate-900">Rs {Number(selectedTip || 0).toFixed(2)}</span>
+                <span className="text-[13px] font-black text-[#0F766E]">Rs {Number(selectedTip || 0).toFixed(2)}</span>
               </div>
               <div className="mt-3 flex items-center justify-between border-t border-slate-100 pt-3">
-                <span className="text-[15px] font-black text-slate-900">Total</span>
-                <span className="text-[18px] font-black text-slate-900">Rs {totalBill.toFixed(2)}</span>
+                <span className="text-[15px] font-black text-[#0F766E]">Total</span>
+                <span className="text-[18px] font-black text-[#0F766E]">Rs {totalBill.toFixed(2)}</span>
               </div>
             </div>
           </div>
         </div>
 
-        <div className="rounded-[20px] border border-white/80 bg-white/95 px-4 py-4 shadow-[0_10px_24px_rgba(15,23,42,0.06)]">
-          {isSubmitted ? (
-            <div className="text-center">
-              <p className="text-center text-[10px] font-black uppercase tracking-[0.22em] text-emerald-500">
-                Feedback submitted
-              </p>
-              <p className="mt-2 text-[12px] font-bold text-slate-500">
-                Rating: {rating || 0}/5 {selectedTip > 0 ? `| Tip added: Rs ${Number(selectedTip || 0).toFixed(2)}` : '| No tip added'}
-              </p>
-            </div>
-          ) : (
+        {step === 'payment' && (
+          <div className="rounded-[20px] border border-white/80 bg-white/95 px-4 py-4 shadow-[0_10px_24px_rgba(15,23,42,0.06)]">
             <>
               <p className="text-center text-[10px] font-black uppercase tracking-[0.22em] text-slate-400">
                 {tipsEnabled ? 'Tip your driver' : 'Driver tips disabled'}
@@ -700,33 +789,146 @@ const RideComplete = () => {
                   </button>
                 ))}
               </div>
-            </>
-          )}
-        </div>
 
-        <div className="rounded-[20px] border border-white/80 bg-white/95 px-4 py-4 text-center shadow-[0_10px_24px_rgba(15,23,42,0.06)]">
-          <p className="text-[16px] font-black text-slate-900">How was your trip with {driver.name?.split(' ')[0] || 'your driver'}?</p>
-          <div className="mt-4 flex justify-center gap-2">
-            {[1, 2, 3, 4, 5].map((value) => (
-              <button
-                key={value}
-                type="button"
-                onClick={() => {
-                  setRating(value);
-                  setError('');
-                }}
-                disabled={isSubmitted}
-                className={`flex h-11 w-11 items-center justify-center rounded-[12px] transition-all ${rating >= value
-                  ? 'bg-primary-orange/50 shadow-[0_10px_20px_rgba(249,115,22,0.24)]'
-                  : 'bg-slate-100'
-                  } ${isSubmitted ? 'cursor-default' : ''}`}
-              >
-                <Star size={19} className={rating >= value ? 'fill-white text-white' : 'text-slate-300'} />
-              </button>
-            ))}
+              {/* Payment Method Selector for Outstanding Balance / Tip */}
+              {payableNow > 0 && !isSubmitted && (
+                <div className="mt-5 border-t border-slate-100 pt-4">
+                  <p className="text-center text-[10px] font-black uppercase tracking-[0.22em] text-slate-400 mb-3">
+                    Select Payment Method
+                  </p>
+                  <div className="grid grid-cols-3 gap-3">
+                    {PAYMENT_OPTIONS.map((method) => {
+                      const Icon = method.Icon;
+                      const isSelected = selectedPaymentMethod === method.id;
+                      return (
+                        <button
+                          key={method.id}
+                          type="button"
+                          onClick={() => {
+                            setSelectedPaymentMethod(method.id);
+                            setError('');
+                          }}
+                          className={`flex flex-col items-center justify-center py-4 rounded-2xl border-2 transition-all ${
+                            isSelected
+                              ? 'border-[#0F766E] bg-[#0F766E]/5'
+                              : 'border-slate-100 bg-slate-50/50 hover:border-[#0F766E]/30'
+                          }`}
+                        >
+                          <Icon 
+                            size={22} 
+                            className={isSelected ? 'text-[#0F766E]' : 'text-slate-400'} 
+                            strokeWidth={2.5} 
+                          />
+                          <span className={`text-[10px] font-bold uppercase tracking-wide mt-2 ${
+                            isSelected ? 'text-[#0F766E]' : 'text-slate-500'
+                          }`}>
+                            {method.id === 'cash' ? 'Cash' : method.label}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </>
+            
+            <AnimatePresence>
+              {showPaymentSuccess && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  className="absolute inset-0 z-10 flex flex-col items-center justify-center rounded-[20px] bg-white/95 backdrop-blur-sm"
+                >
+                  <div className="flex h-16 w-16 items-center justify-center rounded-full bg-emerald-500 shadow-[0_8px_20px_rgba(16,185,129,0.3)]">
+                    <CheckCircle2 size={32} className="text-white" strokeWidth={3} />
+                  </div>
+                  <p className="mt-4 text-[16px] font-black tracking-wide text-[#0F766E]">Payment Confirmed!</p>
+                  <p className="mt-1 text-[12px] font-bold text-slate-500">Processing tip...</p>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        )}
+
+        {(step === 'rating' || step === 'success') && (
+        <div className="rounded-[22px] border border-white/80 bg-white/95 px-5 py-6 text-center shadow-[0_12px_30px_rgba(15,23,42,0.08)]">
+          {step === 'success' && (
+            <div className="mb-6 text-center">
+              <p className="text-center text-[10px] font-black uppercase tracking-[0.22em] text-emerald-500">
+                Feedback submitted
+              </p>
+              <p className="mt-2 text-[12px] font-bold text-slate-500">
+                Rating: {rating || 0}/5 {selectedTip > 0 ? `| Tip added: Rs ${Number(selectedTip || 0).toFixed(2)}` : '| No tip added'}
+              </p>
+            </div>
+          )}
+          
+          <p className="text-[18px] font-black tracking-tight text-[#0F766E]">Rate your experience</p>
+          <p className="mt-1.5 text-[12px] font-bold text-slate-400">
+            How was your trip with <span className="text-slate-700">{driver.name?.split(' ')[0] || 'your driver'}</span>?
+          </p>
+          
+          <div className="mt-6 flex justify-center gap-2.5">
+            {[1, 2, 3, 4, 5].map((value) => {
+              let activeColor = 'bg-primary-orange/50 shadow-[0_10px_20px_rgba(249,115,22,0.24)]';
+              let starColor = 'fill-white text-white';
+              if (rating > 0) {
+                if (rating <= 2) {
+                  activeColor = 'bg-rose-500 shadow-[0_10px_20px_rgba(225,29,72,0.24)] border-rose-600';
+                } else if (rating === 3) {
+                  activeColor = 'bg-amber-500 shadow-[0_10px_20px_rgba(245,158,11,0.24)] border-amber-600';
+                } else {
+                  activeColor = 'bg-emerald-500 shadow-[0_10px_20px_rgba(10,185,129,0.24)] border-emerald-600';
+                }
+              }
+
+              return (
+                <motion.button
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
+                  key={value}
+                  type="button"
+                  onClick={() => {
+                    if (step !== 'success') {
+                      setRating(value);
+                      setError('');
+                    }
+                  }}
+                  disabled={step === 'success'}
+                  className={`flex h-12 w-12 items-center justify-center rounded-2xl transition-all duration-300 border ${
+                    rating >= value ? activeColor : 'bg-slate-50 border-slate-100 hover:bg-slate-100 hover:border-slate-200'
+                  } ${step === 'success' ? 'cursor-default' : ''}`}
+                >
+                  <Star size={22} className={`${rating >= value ? starColor : 'text-slate-300'} transition-colors duration-300`} />
+                </motion.button>
+              );
+            })}
           </div>
 
-          <div className="mt-4 rounded-[16px] border border-slate-100 bg-slate-50/80 px-3 py-3">
+          <div className="mt-3 h-6 flex items-center justify-center overflow-hidden">
+            <AnimatePresence mode="wait">
+              {rating > 0 && (
+                <motion.div
+                  key={rating}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  className={`text-[13px] font-black tracking-wide uppercase ${
+                    rating <= 2 ? 'text-rose-600' : rating === 3 ? 'text-amber-600' : 'text-emerald-600'
+                  }`}
+                >
+                  {rating === 1 && 'Terrible 😞'}
+                  {rating === 2 && 'Bad 😕'}
+                  {rating === 3 && 'Okay 😐'}
+                  {rating === 4 && 'Good 🙂'}
+                  {rating === 5 && 'Excellent 🤩'}
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+
+          <div className="mt-5 rounded-[18px] border border-slate-100 bg-slate-50/50 p-1">
             <div className="mb-2 flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.14em] text-slate-400">
               <MessageSquare size={14} />
               Add a note
@@ -736,27 +938,31 @@ const RideComplete = () => {
               onChange={(event) => setComment(event.target.value)}
               rows={3}
               maxLength={500}
-              disabled={isSubmitted}
+              disabled={step === 'success'}
               placeholder="Tell us about the trip"
-              className="w-full resize-none rounded-[12px] border border-slate-100 bg-white px-3 py-2 text-[13px] font-bold text-slate-900 outline-none placeholder:text-slate-300"
+              className="w-full resize-none rounded-[12px] border border-slate-100 bg-white px-3 py-2 text-[13px] font-bold text-[#0F766E] outline-none placeholder:text-slate-300"
             />
           </div>
+        </div>
+        )}
 
           {error ? <p className="mt-3 text-[12px] font-black text-red-500">{error}</p> : null}
 
           <button
             type="button"
             onClick={submitFeedback}
-            disabled={isSubmitting || isSubmitted || !isRideFinalized}
-            className="mt-4 flex w-full items-center justify-center gap-2 rounded-[16px] bg-slate-900 py-3.5 text-[14px] font-black text-white shadow-[0_12px_24px_rgba(15,23,42,0.18)] disabled:opacity-60"
+            disabled={isSubmitting || step === 'success' || !isRideFinalized}
+            className="mt-4 flex w-full items-center justify-center gap-2 rounded-[16px] bg-[#0F766E] py-3.5 text-[14px] font-black text-white shadow-[0_12px_24px_rgba(15,23,42,0.18)] disabled:opacity-60"
           >
             {isSubmitting
-              ? 'Saving your feedback...'
-              : isSubmitted
+              ? 'Processing...'
+              : step === 'success'
                 ? 'Feedback already saved'
                 : !isRideFinalized
                   ? 'Waiting for driver to finalize trip'
-                  : 'Submit rating'}
+                  : step === 'payment'
+                    ? (payableNow > 0 ? `Pay Rs ${payableNow.toFixed(2)}` : 'Continue to Rating')
+                    : 'Submit Rating'}
             <ChevronRight size={16} />
           </button>
 
@@ -772,7 +978,6 @@ const RideComplete = () => {
           </button>
         </div>
       </div>
-    </div>
   );
 };
 

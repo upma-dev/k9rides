@@ -6,6 +6,8 @@ import {
   Bike,
   Calendar,
   CheckCircle2,
+  ChevronDown,
+  ChevronUp,
   Clock,
   Filter,
   IndianRupee,
@@ -146,6 +148,11 @@ const normalizeRide = (ride) => {
   const passengerName = ride?.user?.name || 'Passenger';
   const earnings = getDriverEarnings(ride);
 
+  const baseFare = Number(ride?.baseFare || ride?.fare || 0);
+  const commission = Number(ride?.commissionAmount || 0);
+  const surge = Number(ride?.pricingSnapshot?.surgeAmount || 0);
+  const tip = Number(ride?.feedback?.tipAmount || 0);
+
   return {
     id: ride?.rideId || ride?._id || '',
     type,
@@ -155,12 +162,22 @@ const normalizeRide = (ride) => {
     shortDate: formatShortDate(timeSource),
     earnings,
     earningsLabel: formatCurrency(earnings),
+    baseFare,
+    commission,
+    surge,
+    tip,
+    promoCode: ride?.promo?.code || '',
+    promoDiscount: Number(ride?.promo?.discount_amount || 0),
     fareLabel: formatCurrency(ride?.fare || 0),
     pickup: buildLocationLabel(ride?.pickupAddress, ride?.pickupLocation, 'Pickup'),
     drop: buildLocationLabel(ride?.dropAddress, ride?.dropLocation, 'Drop'),
     status,
     paymentMethod: normalizePaymentLabel(ride),
     distanceKm: Number(ride?.estimatedDistanceMeters || 0) / 1000,
+    cancelled_by: ride?.cancelled_by || '',
+    cancellation_reason: ride?.cancellation_reason || '',
+    cancellation_time: ride?.cancellation_time || '',
+    cancellation_charge: ride?.cancellation_charge || 0,
   };
 };
 
@@ -185,42 +202,52 @@ const RideRequests = () => {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [statusFilter, setStatusFilter] = useState('all');
 
-  useEffect(() => {
-    let active = true;
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
 
-    const loadHistory = async () => {
+  const [expandedEarnings, setExpandedEarnings] = useState({});
+  const toggleEarnings = (id) => {
+    setExpandedEarnings((prev) => ({ ...prev, [id]: !prev[id] }));
+  };
+
+  const fetchHistory = async (currentPage, isLoadMore = false) => {
+    if (isLoadMore) {
+      setLoadingMore(true);
+    } else {
       setLoading(true);
       setError('');
+    }
 
-      try {
-        const response = await getDriverRideHistory({ limit: 100 });
-        const results = unwrap(response);
+    try {
+      const response = await getDriverRideHistory({ limit: 15, page: currentPage });
+      const results = unwrap(response);
+      const pagination = response?.data?.pagination || {};
 
-        if (!active) {
-          return;
-        }
+      const newRides = results.map(normalizeRide).filter((ride) => ride.id);
 
-        setRides(results.map(normalizeRide).filter((ride) => ride.id));
-      } catch (loadError) {
-        if (!active) {
-          return;
-        }
-
+      setRides((prev) => (isLoadMore ? [...prev, ...newRides] : newRides));
+      setHasMore(pagination.hasNextPage ?? (newRides.length === 15));
+    } catch (loadError) {
+      if (!isLoadMore) {
         setRides([]);
-        setError(loadError?.message || 'Could not load driver history.');
-      } finally {
-        if (active) {
-          setLoading(false);
-        }
       }
-    };
+      setError(loadError?.message || 'Could not load driver history.');
+    } finally {
+      setLoading(false);
+      setLoadingMore(false);
+    }
+  };
 
-    loadHistory();
-
-    return () => {
-      active = false;
-    };
+  useEffect(() => {
+    fetchHistory(1, false);
   }, []);
+
+  const handleLoadMore = () => {
+    const nextPage = page + 1;
+    setPage(nextPage);
+    fetchHistory(nextPage, true);
+  };
 
   const filteredHistory = useMemo(
     () => {
@@ -393,7 +420,12 @@ const RideRequests = () => {
                 </div>
                 <div className="text-right">
                   <p className="text-base font-black text-slate-900 leading-none">{item.earningsLabel}</p>
-                  <div className="flex items-center gap-1 justify-end mt-1">
+                  <div className="flex flex-wrap items-center gap-1 justify-end mt-1">
+                    {item.promoDiscount > 0 && (
+                      <span className="text-[8px] font-black uppercase tracking-widest px-2 py-1 rounded-full border border-emerald-200 bg-emerald-50 text-emerald-600">
+                        Promo Used
+                      </span>
+                    )}
                     <span className={`text-[8px] font-black uppercase tracking-widest px-2 py-1 rounded-full border ${statusBadgeClass(item.status)}`}>
                       {item.status}
                     </span>
@@ -435,6 +467,69 @@ const RideRequests = () => {
                 </div>
               </div>
 
+              {/* Earnings Breakdown */}
+              <div className="bg-slate-50 border border-slate-100 rounded-xl p-3 space-y-1.5 mt-2">
+                <button
+                  type="button"
+                  onClick={() => toggleEarnings(item.id)}
+                  className="flex w-full items-center justify-between border-b border-slate-200 pb-1"
+                >
+                  <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Earnings Breakdown</p>
+                  {expandedEarnings[item.id] ? <ChevronUp size={14} className="text-slate-400" /> : <ChevronDown size={14} className="text-slate-400" />}
+                </button>
+                {expandedEarnings[item.id] && (
+                  <div className="space-y-1.5 pt-1">
+                    <div className="flex justify-between items-center text-[11px] font-bold text-slate-600">
+                      <span>Base Fare</span>
+                      <span>{formatCurrency(item.baseFare)}</span>
+                    </div>
+                    {item.surge > 0 && (
+                      <div className="flex justify-between items-center text-[11px] font-bold text-slate-600">
+                        <span>Surge Amount</span>
+                        <span>{formatCurrency(item.surge)}</span>
+                      </div>
+                    )}
+                    {item.tip > 0 && (
+                      <div className="flex justify-between items-center text-[11px] font-bold text-emerald-600">
+                        <span>Tip</span>
+                        <span>{formatCurrency(item.tip)}</span>
+                      </div>
+                    )}
+                    {item.commission > 0 && (
+                      <div className="flex justify-between items-center text-[11px] font-bold text-rose-500">
+                        <span>Commission Deducted</span>
+                        <span>-{formatCurrency(item.commission)}</span>
+                      </div>
+                    )}
+                    <div className="flex justify-between items-center text-[12px] font-black text-slate-900 border-t border-slate-200 pt-1.5 mt-1.5">
+                      <span>Net Earnings</span>
+                      <span>{item.earningsLabel}</span>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {item.status === 'Cancelled' && (
+                <div className="rounded-xl border border-rose-100 bg-rose-50/50 p-3 space-y-1.5 text-[11px] font-bold text-rose-700">
+                  <div className="flex justify-between items-center">
+                    <span>Status</span>
+                    <span className="font-black uppercase tracking-wider">Ride Cancelled by {item.cancelled_by === 'user' ? 'User' : (item.cancelled_by || 'User')}</span>
+                  </div>
+                  {item.cancellation_reason && (
+                    <div className="flex justify-between items-center">
+                      <span>Reason</span>
+                      <span className="text-slate-700 font-semibold">{item.cancellation_reason}</span>
+                    </div>
+                  )}
+                  {item.cancellation_time && (
+                    <div className="flex justify-between items-center">
+                      <span>Time</span>
+                      <span className="text-slate-700 font-semibold">{formatDateLabel(item.cancellation_time)}</span>
+                    </div>
+                  )}
+                </div>
+              )}
+
               <div className="flex items-center justify-between rounded-xl border border-slate-100 bg-slate-50 px-3 py-2.5">
                 <div className="flex items-center gap-2 text-[10px] font-black text-slate-500 uppercase tracking-widest">
                   <User size={12} />
@@ -447,6 +542,21 @@ const RideRequests = () => {
               </div>
             </Motion.div>
           ))
+        )}
+        
+        {/* Pagination Load More */}
+        {filteredHistory.length > 0 && hasMore && (
+          <div className="flex justify-center pt-2 pb-6">
+            <button
+              type="button"
+              onClick={handleLoadMore}
+              disabled={loadingMore}
+              className="px-6 py-2.5 rounded-full bg-slate-100 text-slate-700 text-[11px] font-black uppercase tracking-widest hover:bg-slate-200 active:scale-95 transition-all disabled:opacity-50 flex items-center gap-2"
+            >
+              {loadingMore ? <Loader2 size={14} className="animate-spin" /> : null}
+              {loadingMore ? 'Loading...' : 'Load More'}
+            </button>
+          </div>
         )}
       </div>
 

@@ -140,6 +140,7 @@ const Chat = () => {
     const onRideJoined = (payload) => {
       if (String(payload?.rideId || '') === String(rideId)) {
         setChatError('');
+        setIsJoiningRide(false);
       }
     };
 

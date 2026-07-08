@@ -1,20 +1,20 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { 
-  ChevronRight, 
-  Save, 
-  Loader2, 
-  ArrowLeft, 
-  Video, 
-  Image as ImageIcon, 
-  Upload, 
-  X, 
-  Plus, 
-  Trash2, 
-  Globe, 
-  Link as LinkIcon, 
-  Mail, 
-  Phone, 
-  MapPin, 
+import {
+  ChevronRight,
+  Save,
+  Loader2,
+  ArrowLeft,
+  Video,
+  Image as ImageIcon,
+  Upload,
+  X,
+  Plus,
+  Trash2,
+  Globe,
+  Link as LinkIcon,
+  Mail,
+  Phone,
+  MapPin,
   FileText,
   Bold,
   Italic,
@@ -178,12 +178,12 @@ const LandingPageSettings = ({ defaultTab = 'general', defaultPage = 'about_us' 
   const location = useLocation();
   const queryParams = new URLSearchParams(location.search);
   const paramTab = queryParams.get('tab');
-  
+
   const [activeTab, setActiveTab] = useState(paramTab || defaultTab);
   const [activePage, setActivePage] = useState(defaultPage);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  
+
   // Settings State
   const [settings, setSettings] = useState({
     video_url: '',
@@ -235,7 +235,7 @@ const LandingPageSettings = ({ defaultTab = 'general', defaultPage = 'about_us' 
           .replace(/&quot;/g, '"')
           .replace(/&#39;/g, "'")
           .replace(/&#x2F;/g, '/') : '';
-          
+
         setSettings({
           video_url: data.video_url || '',
           logo_url: data.logo_url || '',
@@ -425,7 +425,7 @@ const LandingPageSettings = ({ defaultTab = 'general', defaultPage = 'about_us' 
       </div>
 
       <div className="max-w-6xl mx-auto flex flex-col lg:flex-row gap-8">
-        
+
         {/* Navigation Tabs */}
         <div className="w-full lg:w-64 shrink-0 space-y-2">
           {[
@@ -438,57 +438,56 @@ const LandingPageSettings = ({ defaultTab = 'general', defaultPage = 'about_us' 
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`w-full flex items-center justify-between p-3.5 rounded-xl transition-all border ${
-                activeTab === tab.id 
-                  ? 'bg-black text-white border-black shadow-lg shadow-black/10' 
+              className={`w-full flex items-center justify-between p-3.5 rounded-xl transition-all border ${activeTab === tab.id
+                  ? 'bg-black text-white border-black shadow-lg shadow-black/10'
                   : 'bg-white text-gray-600 hover:bg-gray-50 border-gray-100 shadow-sm'
-              }`}
+                }`}
             >
               <div className="flex items-center gap-3 font-bold text-[13px]">
                 {tab.icon} {tab.label}
               </div>
             </button>
           ))}
-          
+
           <div className="mt-8 p-4 bg-amber-50/50 border border-amber-200/50 rounded-xl space-y-3">
             <div className="flex items-center gap-2 text-[#C5902A] font-bold text-[12px] uppercase tracking-widest">
               <Globe size={16} /> Live Sync
             </div>
             <p className="text-[11px] font-semibold text-amber-800 leading-relaxed">
-              Updates saved here will propagate instantly to the public landing page at <a href="/landing-page" target="_blank" className="underline font-bold text-amber-900">/landing-page</a>.
+              Updates saved here will propagate instantly to the public landing page at <a href="/" target="_blank" className="underline font-bold text-amber-900">your website's home page (/)</a>.
             </p>
           </div>
         </div>
 
         {/* Form/Content Section */}
         <div className="flex-1 space-y-6">
-          
+
           {activeTab === 'general' && (
             <div className="space-y-6">
               <SectionCard title="Hero Section Configurations" subtitle="Edit main headers, descriptors, and media links">
                 <div className="grid grid-cols-1 gap-6">
-                  <InputField 
-                    label="Hero Main Title" 
-                    name="hero_title" 
-                    value={settings.hero_title} 
-                    onChange={handleChange} 
+                  <InputField
+                    label="Hero Main Title"
+                    name="hero_title"
+                    value={settings.hero_title}
+                    onChange={handleChange}
                     placeholder="All-in-One Platform for Rides, Food & Logistics"
                   />
                   <div className="space-y-1">
                     <label className="block text-xs font-semibold text-gray-500 mb-1.5">Hero Main Description</label>
-                    <textarea 
-                      value={settings.hero_description || ''} 
-                      onChange={(e) => handleChange('hero_description', e.target.value)} 
+                    <textarea
+                      value={settings.hero_description || ''}
+                      onChange={(e) => handleChange('hero_description', e.target.value)}
                       placeholder="K9 Rides is the multi-service super-app..."
                       rows={3}
                       className="w-full border border-gray-200 rounded-lg p-4 text-sm text-gray-800 bg-white focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-colors shadow-sm resize-y"
                     />
                   </div>
-                  <InputField 
-                    label="Promotional/Hero Video Link (YouTube embed link)" 
-                    name="video_url" 
-                    value={settings.video_url} 
-                    onChange={handleChange} 
+                  <InputField
+                    label="Promotional/Hero Video Link (YouTube embed link)"
+                    name="video_url"
+                    value={settings.video_url}
+                    onChange={handleChange}
                     placeholder="https://www.youtube.com/embed/dQw4w9WgXcQ"
                     info="Specify embed URL so it displays in an iframe player."
                   />
@@ -497,7 +496,7 @@ const LandingPageSettings = ({ defaultTab = 'general', defaultPage = 'about_us' 
 
               <SectionCard title="Branding Media Uploads" subtitle="Select files to preview and publish. Maximum file size is 5MB.">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  
+
                   {/* Brand Logo */}
                   <div className="space-y-2">
                     <label className="block text-xs font-semibold text-gray-500">Brand Logo Graphic</label>
@@ -610,7 +609,7 @@ const LandingPageSettings = ({ defaultTab = 'general', defaultPage = 'about_us' 
                 </div>
                 <InputField label="Support Contact Email" name="contact_email" value={settings.contact_email} onChange={handleChange} placeholder="k9bharatrides@gmail.com" />
                 <InputField label="Support Hotline Number" name="contact_phone" value={settings.contact_phone} onChange={handleChange} placeholder="+91 7358789910" />
-                
+
                 <div>
                   <label className="block text-xs font-semibold text-gray-500 mb-1.5">Map Latitude</label>
                   <input
@@ -640,12 +639,12 @@ const LandingPageSettings = ({ defaultTab = 'general', defaultPage = 'about_us' 
             <div className="space-y-6">
               <SectionCard title="Add Frequently Asked Question" subtitle="Create a Q&A record. Required values.">
                 <div className="space-y-4">
-                  <InputField 
-                    label="Question" 
-                    name="question" 
-                    value={faqInput.question} 
-                    onChange={(n, v) => setFaqInput(prev => ({ ...prev, question: v }))} 
-                    placeholder="E.g., How long do refunds take?" 
+                  <InputField
+                    label="Question"
+                    name="question"
+                    value={faqInput.question}
+                    onChange={(n, v) => setFaqInput(prev => ({ ...prev, question: v }))}
+                    placeholder="E.g., How long do refunds take?"
                   />
                   <div className="space-y-1">
                     <label className="block text-xs font-semibold text-gray-500 mb-1.5">Answer</label>
@@ -701,7 +700,7 @@ const LandingPageSettings = ({ defaultTab = 'general', defaultPage = 'about_us' 
           {activeTab === 'pages' && (
             <SectionCard title="Legal & Policy Pages Content" subtitle="Select a document below to edit its HTML representation">
               <div className="space-y-6">
-                
+
                 {/* Policy Page selector tabs */}
                 <div className="flex flex-wrap gap-2 border-b border-gray-100 pb-4">
                   {[
@@ -717,11 +716,10 @@ const LandingPageSettings = ({ defaultTab = 'general', defaultPage = 'about_us' 
                       key={page.id}
                       type="button"
                       onClick={() => setActivePage(page.id)}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-bold border transition-all ${
-                        activePage === page.id
+                      className={`px-3 py-1.5 rounded-lg text-xs font-bold border transition-all ${activePage === page.id
                           ? 'bg-indigo-50 text-indigo-600 border-indigo-200 font-black'
                           : 'bg-white text-gray-500 hover:text-gray-700 border-gray-200'
-                      }`}
+                        }`}
                     >
                       {page.label}
                     </button>
@@ -731,8 +729,8 @@ const LandingPageSettings = ({ defaultTab = 'general', defaultPage = 'about_us' 
                 {/* Custom Rich Text Editor */}
                 <div className="space-y-2">
                   <label className="block text-xs font-semibold text-gray-500">Document Markup Content</label>
-                  <RichTextEditor 
-                    value={settings.pages[activePage] || ''} 
+                  <RichTextEditor
+                    value={settings.pages[activePage] || ''}
                     onChange={(val) => handleNestedChange('pages', activePage, val)}
                   />
                 </div>

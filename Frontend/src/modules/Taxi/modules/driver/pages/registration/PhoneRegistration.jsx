@@ -16,7 +16,7 @@ import loginBg from '../../../../assets/images/driver-login-bg.png';
 const PhoneRegistration = () => {
     const navigate = useNavigate();
     const location = useLocation();
-    const { settings } = useSettings();
+    const { settings, activeLogo } = useSettings();
     const storedSession = getStoredDriverRegistrationSession();
     const searchParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
     const sharedReferralCode = String(
@@ -203,10 +203,10 @@ const PhoneRegistration = () => {
                     className="space-y-4 mb-6 flex flex-col items-center text-center"
                 >
                     <div className="flex flex-col items-center gap-3">
-                        {settings.general?.logo || settings.customization?.logo ? (
+                        {activeLogo || settings.general?.logo || settings.customization?.logo ? (
                             <div className="w-14 h-14 bg-white rounded-[1.25rem] flex items-center justify-center shadow-sm border border-slate-100 overflow-hidden">
                                 <img
-                                    src={settings.general?.logo || settings.customization?.logo}
+                                    src={activeLogo || settings.general?.logo || settings.customization?.logo}
                                     alt={appName}
                                     className="w-full h-full object-cover scale-110"
                                 />

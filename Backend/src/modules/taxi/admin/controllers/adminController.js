@@ -227,22 +227,22 @@ const serializeAdminBusBooking = (booking = {}) => {
     routeSnapshot: booking.routeSnapshot || {},
     user: booking.userId
       ? {
-          id: String(booking.userId?._id || booking.userId),
-          name: booking.userId?.name || '',
-          phone: booking.userId?.phone || '',
-          email: booking.userId?.email || '',
-        }
+        id: String(booking.userId?._id || booking.userId),
+        name: booking.userId?.name || '',
+        phone: booking.userId?.phone || '',
+        email: booking.userId?.email || '',
+      }
       : null,
     busService: booking.busServiceId
       ? {
-          id: String(booking.busServiceId?._id || booking.busServiceId),
-          busName: booking.busServiceId?.busName || booking.routeSnapshot?.busName || '',
-          operatorName: booking.busServiceId?.operatorName || booking.routeSnapshot?.operatorName || '',
-          serviceNumber: booking.busServiceId?.serviceNumber || '',
-          coachType: booking.busServiceId?.coachType || booking.routeSnapshot?.coachType || '',
-          busCategory: booking.busServiceId?.busCategory || booking.routeSnapshot?.busCategory || '',
-          route: booking.busServiceId?.route || null,
-        }
+        id: String(booking.busServiceId?._id || booking.busServiceId),
+        busName: booking.busServiceId?.busName || booking.routeSnapshot?.busName || '',
+        operatorName: booking.busServiceId?.operatorName || booking.routeSnapshot?.operatorName || '',
+        serviceNumber: booking.busServiceId?.serviceNumber || '',
+        coachType: booking.busServiceId?.coachType || booking.routeSnapshot?.coachType || '',
+        busCategory: booking.busServiceId?.busCategory || booking.routeSnapshot?.busCategory || '',
+        route: booking.busServiceId?.route || null,
+      }
       : null,
     seatSummary: {
       total: originalSeatIds.length,
@@ -303,7 +303,7 @@ const sendFile = async (res, filename, reportData, format) => {
 
     // Add headers
     worksheet.addRow(headers.map(h => String(h).toUpperCase()));
-    
+
     // Add rows
     rows.forEach(row => {
       worksheet.addRow(headers.map(h => row[h]));
@@ -319,7 +319,7 @@ const sendFile = async (res, filename, reportData, format) => {
 
     res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
     res.setHeader("Content-Disposition", `attachment; filename="${filename}.xlsx"`);
-    
+
     await workbook.xlsx.write(res);
     res.end();
   }
@@ -884,17 +884,17 @@ export const getAdminBusBookings = asyncHandler(async (req, res) => {
 
   const seatLayout = selectedBus
     ? flattenBusBlueprintSeats(selectedBus.blueprint).map((seat) => {
-        const booked = seatBookingMap.get(String(seat.id || ''));
-        return {
-          seatId: seat.id || '',
-          seatLabel: seat.label || seat.id || '',
-          variant: seat.variant || 'seat',
-          price: resolveBusSeatPrice(selectedBus, seat),
-          baseStatus: seat.status || 'available',
-          liveStatus: booked ? 'booked' : seat.status === 'blocked' ? 'blocked' : 'available',
-          booking: booked || null,
-        };
-      })
+      const booked = seatBookingMap.get(String(seat.id || ''));
+      return {
+        seatId: seat.id || '',
+        seatLabel: seat.label || seat.id || '',
+        variant: seat.variant || 'seat',
+        price: resolveBusSeatPrice(selectedBus, seat),
+        baseStatus: seat.status || 'available',
+        liveStatus: booked ? 'booked' : seat.status === 'blocked' ? 'blocked' : 'available',
+        booking: booked || null,
+      };
+    })
     : [];
 
   const summary = bookings.reduce(
@@ -946,13 +946,13 @@ export const getAdminBusBookings = asyncHandler(async (req, res) => {
     })),
     selectedBus: selectedBus
       ? {
-          id: String(selectedBus._id),
-          busName: selectedBus.busName || '',
-          operatorName: selectedBus.operatorName || '',
-          serviceNumber: selectedBus.serviceNumber || '',
-          route: selectedBus.route || {},
-          schedules: selectedSchedules,
-        }
+        id: String(selectedBus._id),
+        busName: selectedBus.busName || '',
+        operatorName: selectedBus.operatorName || '',
+        serviceNumber: selectedBus.serviceNumber || '',
+        route: selectedBus.route || {},
+        schedules: selectedSchedules,
+      }
       : null,
     schedules: selectedSchedules,
     summary,

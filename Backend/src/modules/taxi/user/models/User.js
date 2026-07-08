@@ -212,6 +212,10 @@ const userSchema = new mongoose.Schema(
       ref: 'TaxiRide',
       default: null,
     },
+    pending_cancellation_due: {
+      type: Number,
+      default: 0,
+    },
   },
   {
     collection: 'users',

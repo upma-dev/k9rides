@@ -232,6 +232,7 @@ adminRouter.get('/admin/countries', getCountries);
 adminRouter.get('/admin/service-locations', getServiceLocations);
 adminRouter.get('/admin/service-locations/nearby', getNearbyServiceLocations);
 adminRouter.get('/admin/notification-channels', getNotificationChannels);
+adminRouter.get('/admin/zones', getZones);
 adminRouter.use('/admin', authenticate(['admin']));
 
 adminRouter.get('/admin/permissions', getAdminPermissions);
@@ -407,7 +408,6 @@ adminRouter.get('/admin/trips', getIntercityTrips);
 
 adminRouter.get('/admin/wallet/withdrawals', getWithdrawals);
 
-adminRouter.get('/admin/zones', getZones);
 adminRouter.post('/admin/zones', createZone);
 adminRouter.patch('/admin/zones/:id', updateZone);
 adminRouter.delete('/admin/zones/:id', deleteZone);

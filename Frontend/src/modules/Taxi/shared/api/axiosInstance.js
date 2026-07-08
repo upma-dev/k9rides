@@ -187,7 +187,10 @@ api.interceptors.request.use(
   (config) => {
     syncAdminSessionBridge();
     const requestPath = String(config.url || '').split('?')[0];
-    const existingAuthorization = config.headers?.Authorization || config.headers?.authorization;
+    const existingAuthorization =
+      config.headers?.Authorization ||
+      config.headers?.authorization ||
+      (config.headers && typeof config.headers.get === 'function' ? config.headers.get('Authorization') : null);
 
     if (existingAuthorization) {
       return config;

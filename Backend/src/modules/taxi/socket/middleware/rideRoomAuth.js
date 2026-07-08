@@ -4,5 +4,5 @@ export const authorizeRideRoomAccess = async ({ socket, rideId }) =>
   ensureRideParticipantAccess({
     rideId,
     role: socket.auth.role,
-    entityId: socket.auth.sub,
+    entityId: socket.auth.sub || socket.auth.id || socket.auth._id || socket.auth.userId,
   });

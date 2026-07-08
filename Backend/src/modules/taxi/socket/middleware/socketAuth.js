@@ -17,8 +17,8 @@ export const attachSocketAuth = (io) => {
     try {
       socket.auth = getIdentityFromSocket(socket);
 
-      if (socket.auth.role === 'user') {
-        const user = await User.findById(socket.auth.sub).select('active isActive deletedAt').lean();
+      if (String(socket.auth.role || '').toLowerCase() === 'user') {
+        const user = await User.findById(socket.auth.sub || socket.auth.id || socket.auth._id || socket.auth.userId).select('active isActive deletedAt').lean();
 
         if (!user || user.deletedAt || user.isActive === false || user.active === false) {
           throw new ApiError(401, 'User account is not active');

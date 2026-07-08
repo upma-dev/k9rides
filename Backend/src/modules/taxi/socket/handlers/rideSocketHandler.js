@@ -45,14 +45,8 @@ export const registerRideSocketHandlers = ({ io, socket, onAsync }) => {
         room,
       });
 
-      const activeRide = await getActiveRideForIdentity({
-        role: socket.auth.role,
-        entityId: socket.auth.sub,
-      });
-
-      if (activeRide && String(activeRide._id) === String(ride._id)) {
-        socket.emit(SOCKET_EVENTS.RIDE_STATE, serializeRideRealtime(activeRide));
-      }
+      const populatedRide = await getRideDetails(ride._id);
+      socket.emit(SOCKET_EVENTS.RIDE_STATE, serializeRideRealtime(populatedRide));
     }),
   );
 
@@ -61,7 +55,7 @@ export const registerRideSocketHandlers = ({ io, socket, onAsync }) => {
     onAsync(socket, async () => {
       const ride = await getActiveRideForIdentity({
         role: socket.auth.role,
-        entityId: socket.auth.sub,
+        entityId: socket.auth.sub || socket.auth.id || socket.auth._id || socket.auth.userId,
       });
 
       if (!ride) {
@@ -91,7 +85,7 @@ export const registerRideSocketHandlers = ({ io, socket, onAsync }) => {
 
       const locationUpdate = await updateRideDriverLocation({
         rideId,
-        driverId: socket.auth.sub,
+        driverId: socket.auth.sub || socket.auth.id || socket.auth._id || socket.auth.userId,
         coordinates: normalizePoint(coordinates, 'coordinates'),
         heading,
         speed,
@@ -102,7 +96,7 @@ export const registerRideSocketHandlers = ({ io, socket, onAsync }) => {
       updateDriverRoute({
         io,
         rideId,
-        driverId: socket.auth.sub,
+        driverId: socket.auth.sub || socket.auth.id || socket.auth._id || socket.auth.userId,
         coordinates: locationUpdate.coordinates,
       });
     }),
@@ -123,7 +117,7 @@ export const registerRideSocketHandlers = ({ io, socket, onAsync }) => {
 
       const ride = await updateRideLifecycle({
         rideId,
-        driverId: socket.auth.sub,
+        driverId: socket.auth.sub || socket.auth.id || socket.auth._id || socket.auth.userId,
         nextStatus: status,
         paymentMethod,
         fare,
@@ -148,6 +142,10 @@ export const registerRideSocketHandlers = ({ io, socket, onAsync }) => {
         distanceChargeAmount: populatedRide.distanceChargeAmount || 0,
         timeChargeAmount: populatedRide.timeChargeAmount || 0,
         otp: populatedRide.otp || '',
+        fare: populatedRide.fare || 0,
+        baseFare: populatedRide.baseFare || 0,
+        additionalCharge: populatedRide.additionalCharge || 0,
+        recovered_cancellation_due: populatedRide.recovered_cancellation_due || 0,
       };
 
       io.to(getRideRoom(rideId)).emit(SOCKET_EVENTS.RIDE_STATUS_UPDATED, payload);
@@ -156,12 +154,12 @@ export const registerRideSocketHandlers = ({ io, socket, onAsync }) => {
       if (status === RIDE_LIVE_STATUS.COMPLETED) {
         const walletUpdate = ride.$locals?.walletUpdate;
         if (walletUpdate) {
-          io.to(getDriverRoom(socket.auth.sub)).emit('driver:wallet:updated', {
+          io.to(getDriverRoom(socket.auth.sub || socket.auth.id || socket.auth._id || socket.auth.userId)).emit('driver:wallet:updated', {
             wallet: walletUpdate.wallet,
             transaction: walletUpdate.transaction,
           });
         }
-        clearDriverRoute(socket.auth.sub);
+        clearDriverRoute(socket.auth.sub || socket.auth.id || socket.auth._id || socket.auth.userId);
       }
     }),
   );
@@ -174,7 +172,7 @@ export const registerRideSocketHandlers = ({ io, socket, onAsync }) => {
       const savedMessage = await appendRideMessage({
         rideId,
         role: socket.auth.role,
-        senderId: socket.auth.sub,
+        senderId: socket.auth.sub || socket.auth.id || socket.auth._id || socket.auth.userId,
         message,
       });
 

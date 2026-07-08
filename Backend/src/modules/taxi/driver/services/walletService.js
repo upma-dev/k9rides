@@ -315,8 +315,11 @@ export const settleCompletedRideWallet = async ({ rideId }) => {
     }
 
     const fare = normalizeAmount(ride.fare || 0, 'fare');
+    const recoveredDue = Number(ride.recovered_cancellation_due || 0);
+    const fareExcludingDue = Math.max(0, fare - recoveredDue);
+
     const surgeAmount = Math.max(0, normalizeAmount(ride?.pricingSnapshot?.ride_surge_amount || 0, 'surgeAmount'));
-    const commissionableFare = Math.max(0, normalizeAmount(fare - surgeAmount, 'commissionableFare'));
+    const commissionableFare = Math.max(0, normalizeAmount(fareExcludingDue - surgeAmount, 'commissionableFare'));
     const commissionConfig = await resolveCommissionConfigForRide(ride, session);
     const commissionAmount = computeCommissionAmount({
       fare: commissionableFare,
@@ -324,8 +327,28 @@ export const settleCompletedRideWallet = async ({ rideId }) => {
       value: commissionConfig.value,
     });
     const paymentMethod = normalizePaymentMethod(ride.paymentMethod);
-    const driverEarnings = Math.max(Math.round((fare - commissionAmount) * 100) / 100, 0);
-    const amount = paymentMethod === 'cash' ? -commissionAmount : driverEarnings;
+    
+    const cancellationFeeGoesTo = ride?.pricingSnapshot?.cancellation_fee_goes_to || 'admin';
+    const isDriverGetsCancellationFee = cancellationFeeGoesTo === 'driver' && recoveredDue > 0;
+
+    let driverEarnings = Math.max(Math.round((fareExcludingDue - commissionAmount) * 100) / 100, 0);
+    if (isDriverGetsCancellationFee) {
+        driverEarnings = Math.round((driverEarnings + recoveredDue) * 100) / 100;
+    }
+
+    const promoDiscountAmount = Math.max(0, Number(ride?.promo?.discount_amount || 0));
+    if (promoDiscountAmount > 0) {
+        // Platform subsidizes the promo, so we add it back to the driver's earnings
+        driverEarnings = Math.round((driverEarnings + promoDiscountAmount) * 100) / 100;
+    }
+
+    let adminOwedAmount = isDriverGetsCancellationFee ? commissionAmount : (commissionAmount + recoveredDue);
+    if (promoDiscountAmount > 0) {
+        // Platform's commission is reduced because they are paying for the promo
+        adminOwedAmount = Math.round((adminOwedAmount - promoDiscountAmount) * 100) / 100;
+    }
+
+    const amount = paymentMethod === 'cash' ? -adminOwedAmount : driverEarnings;
     const type = paymentMethod === 'cash' ? 'commission_deduction' : 'ride_earning';
 
     ride.paymentMethod = paymentMethod;
@@ -336,6 +359,7 @@ export const settleCompletedRideWallet = async ({ rideId }) => {
       setPriceId: ride.pricingSnapshot?.setPriceId || commissionConfig.setPriceId || null,
       admin_commission_type_from_driver: Number(commissionConfig.type ?? ride.pricingSnapshot?.admin_commission_type_from_driver ?? 1),
       admin_commission_from_driver: Number(commissionConfig.value ?? ride.pricingSnapshot?.admin_commission_from_driver ?? 0),
+      cancellation_fee_goes_to: cancellationFeeGoesTo,
       resolvedAt: ride.pricingSnapshot?.resolvedAt || new Date(),
     };
     await ride.save({ session });
@@ -351,7 +375,9 @@ export const settleCompletedRideWallet = async ({ rideId }) => {
       amount,
       type,
       description: paymentMethod === 'cash'
-        ? 'Commission deducted for cash ride'
+        ? (recoveredDue > 0 
+            ? (isDriverGetsCancellationFee ? 'Commission deducted for cash ride' : 'Commission & previous user cancellation due deducted') 
+            : 'Commission deducted for cash ride')
         : 'Driver earning credited for online ride',
       metadata: {
         fare,
@@ -363,6 +389,8 @@ export const settleCompletedRideWallet = async ({ rideId }) => {
         commissionSource: commissionConfig.source,
         commissionType: normalizeCommissionType(commissionConfig.type),
         commissionValue: Number(commissionConfig.value || 0),
+        recoveredCancellationDue: recoveredDue,
+        cancellationFeeGoesTo,
       },
       session,
     });

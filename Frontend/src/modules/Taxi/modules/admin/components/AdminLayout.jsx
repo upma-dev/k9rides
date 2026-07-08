@@ -110,6 +110,41 @@ const readAdminProfile = () => {
   }
 };
 
+const useCachedLogo = (src) => {
+  const [cachedSrc, setCachedSrc] = useState(src);
+  
+  useEffect(() => {
+    if (!src || src.startsWith('data:')) {
+      setCachedSrc(src);
+      return;
+    }
+    
+    const cacheKey = `img_cache_${src}`;
+    const cached = localStorage.getItem(cacheKey);
+    if (cached) {
+      setCachedSrc(cached);
+    } else {
+      setCachedSrc(src);
+    }
+    
+    fetch(src)
+      .then(res => res.blob())
+      .then(blob => {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+           const base64data = reader.result;
+           if (base64data !== cached) {
+               try { localStorage.setItem(cacheKey, base64data); } catch(e) {}
+               setCachedSrc(base64data);
+           }
+        }
+        reader.readAsDataURL(blob);
+      }).catch(() => setCachedSrc(src));
+  }, [src]);
+  
+  return cachedSrc;
+};
+
 const filterSidebarItemsByAccess = (items = [], adminProfile = {}) =>
   items.flatMap((item) => {
     const selfAllowed = !item.permission || hasAdminPermission(adminProfile, item.permission);
@@ -545,6 +580,8 @@ const AdminLayout = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { settings, activeLogo } = useSettings();
+  const cachedLogo = useCachedLogo(activeLogo);
+  const role = readAdminProfile()?.role || 'superadmin';
   const adminThemeColor = normalizeHexColor(settings.customization?.admin_theme_color, '#405189');
   const sidebarTextColor = normalizeHexColor(settings.customization?.sidebar_text_color, '#CBD5E1');
   const [isSidebarOpen] = useState(true);
@@ -588,6 +625,37 @@ const AdminLayout = () => {
     window.addEventListener('storage', syncAdminProfile);
     syncAdminProfile();
     return () => window.removeEventListener('storage', syncAdminProfile);
+  }, []);
+
+  // Global event listener to prevent negative values in number inputs
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const handleInput = (e) => {
+      if (e.target && e.target.tagName === 'INPUT' && e.target.type === 'number') {
+        if (e.target.value !== '' && Number(e.target.value) < 0) {
+          e.target.value = 0;
+          // Trigger change event for React to pick it up
+          e.target.dispatchEvent(new Event('input', { bubbles: true }));
+          e.target.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+      }
+    };
+    const handleKeyDown = (e) => {
+      if (e.target && e.target.tagName === 'INPUT' && e.target.type === 'number') {
+        if (e.key === '-' || e.key === 'e' || e.key === 'E') {
+          e.preventDefault();
+        }
+      }
+    };
+    
+    document.addEventListener('input', handleInput, true);
+    document.addEventListener('keydown', handleKeyDown, true);
+    
+    return () => {
+      document.removeEventListener('input', handleInput, true);
+      document.removeEventListener('keydown', handleKeyDown, true);
+    };
   }, []);
   useEffect(() => {
     if (typeof window === 'undefined') {
@@ -1260,7 +1328,7 @@ const AdminLayout = () => {
           <div className="group/sidebar-head relative mb-4 flex h-24 items-center border-b border-white/5 px-6">
             <div className="flex items-center gap-4">
               <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-white/5 bg-white/5 p-1 transition-all group-hover/sidebar-head:scale-105">
-                <img src={activeLogo || quickSpicyLogo} alt="K9 Rides" className="h-10 w-10 object-contain" />
+                <img src={cachedLogo || quickSpicyLogo} alt="K9 Rides" className="h-10 w-10 object-contain" />
               </div>
               {!isCollapsed && (
                 <div className="flex flex-col">

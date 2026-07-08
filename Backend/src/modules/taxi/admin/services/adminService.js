@@ -5355,6 +5355,16 @@ const toAdminRideRow = (ride) => {
       vehicleType: ride.driverId.vehicleType || '',
       vehicleNumber: ride.driverId.vehicleNumber || '',
     } : null,
+    cancelled_by: ride.cancelled_by || '',
+    cancellation_reason: ride.cancellation_reason || '',
+    cancellation_charge: Number(ride.cancellation_charge || 0),
+    cancellation_status: ride.cancellation_status || 'none',
+    pending_cancellation_due: Number(ride.pending_cancellation_due || 0),
+    recovery_status: ride.recovery_status || 'none',
+    recovered_in_ride: ride.recovered_in_ride ? String(ride.recovered_in_ride) : null,
+    recovered_at: ride.recovered_at || null,
+    cancellation_time: ride.cancellation_time || null,
+    recovered_cancellation_due: Number(ride.recovered_cancellation_due || 0),
   };
 };
 
@@ -5398,6 +5408,16 @@ const toAdminDeliveryRow = (ride) => {
       senderName: parcel.senderName || '',
       receiverName: parcel.receiverName || '',
     },
+    cancelled_by: ride.cancelled_by || '',
+    cancellation_reason: ride.cancellation_reason || '',
+    cancellation_charge: Number(ride.cancellation_charge || 0),
+    cancellation_status: ride.cancellation_status || 'none',
+    pending_cancellation_due: Number(ride.pending_cancellation_due || 0),
+    recovery_status: ride.recovery_status || 'none',
+    recovered_in_ride: ride.recovered_in_ride ? String(ride.recovered_in_ride) : null,
+    recovered_at: ride.recovered_at || null,
+    cancellation_time: ride.cancellation_time || null,
+    recovered_cancellation_due: Number(ride.recovered_cancellation_due || 0),
   };
 };
 
@@ -5440,6 +5460,16 @@ const toAdminIntercityTripRow = (ride) => {
     routeLabel: [fromCity, toCity].filter(Boolean).join(' -> '),
     tripType: intercity.tripType || '',
     travelDate: intercity.travelDate || '',
+    cancelled_by: ride.cancelled_by || '',
+    cancellation_reason: ride.cancellation_reason || '',
+    cancellation_charge: Number(ride.cancellation_charge || 0),
+    cancellation_status: ride.cancellation_status || 'none',
+    pending_cancellation_due: Number(ride.pending_cancellation_due || 0),
+    recovery_status: ride.recovery_status || 'none',
+    recovered_in_ride: ride.recovered_in_ride ? String(ride.recovered_in_ride) : null,
+    recovered_at: ride.recovered_at || null,
+    cancellation_time: ride.cancellation_time || null,
+    recovered_cancellation_due: Number(ride.recovered_cancellation_due || 0),
   };
 };
 
@@ -6145,6 +6175,16 @@ export const createSetPrice = async (payload, currentAdmin = null) => {
     cancellation_fee_goes_to: payload.cancellation_fee_goes_to ?? payload.fee_goes_to ?? 'admin',
     user_cancellation_fee_type: payload.user_cancellation_fee_type || 'percentage',
     driver_cancellation_fee_type: payload.driver_cancellation_fee_type || 'percentage',
+    enable_cancellation_charge: payload.enable_cancellation_charge ?? true,
+    free_cancellation_time: Number(payload.free_cancellation_time ?? 2),
+    fixed_cancellation_charge: Number(payload.fixed_cancellation_charge ?? 0),
+    percentage_cancellation_charge: Number(payload.percentage_cancellation_charge ?? 0),
+    charge_after_driver_accepted: payload.charge_after_driver_accepted ?? true,
+    charge_after_driver_reached_pickup: payload.charge_after_driver_reached_pickup ?? true,
+    charge_after_otp: payload.charge_after_otp ?? false,
+    max_cancellation_fee: Number(payload.max_cancellation_fee ?? 0),
+    enable_cancellation_reasons: payload.enable_cancellation_reasons ?? true,
+    cancellation_policy_message: String(payload.cancellation_policy_message || ''),
 
     order_number: Number(payload.order_number ?? payload.eta_sequence ?? 1),
     bill_status: Number(payload.bill_status ?? 1),
@@ -6182,6 +6222,9 @@ export const updateSetPrice = async (id, payload, currentAdmin = null) => {
     'shared_price_per_distance', 'shared_cancel_fee',
     'user_cancellation_fee', 'driver_cancellation_fee', 'cancellation_fee_goes_to',
     'user_cancellation_fee_type', 'driver_cancellation_fee_type',
+    'enable_cancellation_charge', 'free_cancellation_time', 'fixed_cancellation_charge',
+    'percentage_cancellation_charge', 'charge_after_driver_accepted', 'charge_after_driver_reached_pickup',
+    'charge_after_otp', 'max_cancellation_fee', 'enable_cancellation_reasons', 'cancellation_policy_message',
     'order_number', 'bill_status', 'status'
   ];
 

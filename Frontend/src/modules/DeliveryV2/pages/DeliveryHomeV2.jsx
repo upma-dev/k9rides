@@ -33,6 +33,7 @@ import { getHaversineDistance, calculateETA, calculateHeading } from '@/modules/
 import { useCompanyName } from "@food/hooks/useCompanyName";
 import { useNavigate } from 'react-router-dom';
 import useNotificationInbox from "@food/hooks/useNotificationInbox";
+import { useSettings } from '@/modules/Taxi/shared/context/SettingsContext';
 
 /** Minimal bottom-sheet popup (Restored from legacy FeedNavbar) */
 function BottomPopup({ isOpen, onClose, title, children, maxHeight = "85vh" }) {
@@ -78,6 +79,7 @@ function BottomPopup({ isOpen, onClose, title, children, maxHeight = "85vh" }) {
  */
 export default function DeliveryHomeV2({ tab = 'feed' }) {
   const navigate = useNavigate();
+  const { activeLogo } = useSettings();
   const { isOnline, toggleOnline, activeOrder, tripStatus, setRiderLocation, setActiveOrder, updateTripStatus, clearActiveOrder } = useDeliveryStore();
   const { isWithinRange, distanceToTarget } = useProximityCheck();
   const { acceptOrder, reachPickup, pickUpOrder, reachDrop, completeDelivery, resetTrip } = useOrderManager();
@@ -599,7 +601,7 @@ export default function DeliveryHomeV2({ tab = 'feed' }) {
                 onClick={() => navigate('/food/delivery/profile')}
                 className="w-10 h-10 rounded-full border border-white/20 p-0.5 shadow-xl overflow-hidden bg-white/5 cursor-pointer active:scale-95 transition-all"
              >
-                <img src={profileImage || "https://i.ibb.co/3m2Yh7r/K9 Rides-Brand-Image.png"} alt="Profile" className="w-full h-full object-cover rounded-full" />
+                <img src={activeLogo || profileImage || "https://i.ibb.co/3m2Yh7r/K9 Rides-Brand-Image.png"} alt="Logo" className="w-full h-full object-cover rounded-full" />
              </div>
              <button 
                onClick={async () => {

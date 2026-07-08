@@ -3004,6 +3004,66 @@ export const getMyWallet = async (req, res) => {
     .lean();
   const walletSettings = await getWalletSettings();
 
+  const [aggregationResult] = await WalletTransaction.aggregate([
+    { $match: { driverId: req.auth.sub } },
+    {
+      $group: {
+        _id: null,
+        onlineRideEarnings: {
+          $sum: {
+            $cond: [{ $eq: ["$type", "ride_earning"] }, { $max: ["$amount", 0] }, 0]
+          }
+        },
+        cashRideCommission: {
+          $sum: {
+            $cond: [{ $eq: ["$type", "commission_deduction"] }, { $abs: "$amount" }, 0]
+          }
+        },
+        totalTips: {
+          $sum: {
+            $cond: [
+              { $or: [{ $eq: ["$metadata.source", "ride_tip"] }, { $gt: ["$metadata.tipAmount", 0] }] },
+              {
+                $max: [
+                  { $cond: [{ $eq: ["$metadata.source", "ride_tip"] }, "$amount", "$metadata.tipAmount"] },
+                  0
+                ]
+              },
+              0
+            ]
+          }
+        },
+        totalAppEarnings: {
+          $sum: {
+            $cond: [
+              { $eq: ["$type", "ride_earning"] },
+              { $max: ["$amount", 0] },
+              {
+                $cond: [
+                  {
+                    $and: [
+                      { $eq: ["$type", "adjustment"] },
+                      { $in: ["$metadata.source", ["driver_incentive", "ride_tip"]] }
+                    ]
+                  },
+                  { $max: ["$amount", 0] },
+                  0
+                ]
+              }
+            ]
+          }
+        }
+      }
+    }
+  ]);
+
+  const summary = aggregationResult || {
+    onlineRideEarnings: 0,
+    cashRideCommission: 0,
+    totalTips: 0,
+    totalAppEarnings: 0
+  };
+
   res.json({
     success: true,
     data: {
@@ -3011,6 +3071,7 @@ export const getMyWallet = async (req, res) => {
       transactions,
       withdrawalRequests,
       settings: walletSettings,
+      summary,
     },
   });
 };

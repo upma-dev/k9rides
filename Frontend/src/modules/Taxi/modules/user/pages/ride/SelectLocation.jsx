@@ -7,26 +7,6 @@ import { useAppGoogleMapsLoader, INDIA_CENTER, HAS_VALID_GOOGLE_MAPS_KEY } from 
 import api from '../../../../shared/api/axiosInstance';
 import { getSavedLocation, getSavedLocationCoords, saveLocation } from '../../services/locationStore';
 
-const LOCATION_COORDS = {
-  'Pipaliyahana, Indore': [75.9048, 22.7039],
-  'Vijay Nagar': [75.8937, 22.7533],
-  'Vijay Nagar Square': [75.8947, 22.7518],
-  'Vijayawada': [80.6480, 16.5062],
-  'Vijay Nagar Police Station': [75.8934, 22.7506],
-  'Rajwada': [75.8553, 22.7187],
-  'Bhawarkua': [75.8586, 22.6926],
-  'MG Road': [75.8721, 22.7196],
-  'Palasia Square': [75.8863, 22.7242],
-  'LIG Colony': [75.8904, 22.7322],
-  'Scheme No 54': [75.8978, 22.7567],
-  'Bhangadh': [75.8438, 22.7552],
-  'AB Road': [75.8878, 22.7423],
-  'Geeta Bhawan': [75.8834, 22.7208],
-  'Sapna Sangeeta': [75.8587, 22.6984],
-  'Mahalaxmi Nagar': [75.9114, 22.7676],
-};
-
-const getCoords = (title, fallback = [75.8577, 22.7196]) => LOCATION_COORDS[title] || fallback;
 const DEFAULT_COORDS = [75.8577, 22.7196];
 const sanitizeLocationInput = (value) => String(value || '').replace(/^\s+/g, '').replace(/\s{2,}/g, ' ');
 
@@ -143,11 +123,14 @@ const SelectLocation = () => {
   const savedLocation = getSavedLocation();
   const savedPickupLabel = String(savedLocation?.address || '').trim();
   const savedPickupCoords = getSavedLocationCoords();
-  const [pickup, setPickup] = useState(() => routeState.pickup || savedPickupLabel || 'Pipaliyahana, Indore');
+  const [pickup, setPickup] = useState(() => routeState.pickup || savedPickupLabel || '');
   const [drop, setDrop] = useState(() => routeState.drop || '');
-  const [pickupCoords, setPickupCoords] = useState(() => routeState.pickupCoords || savedPickupCoords || getCoords(routeState.pickup || savedPickupLabel || 'Pipaliyahana, Indore'));
+  const [pickupCoords, setPickupCoords] = useState(() => routeState.pickupCoords || savedPickupCoords || null);
   const [dropCoords, setDropCoords] = useState(() => routeState.dropCoords || null);
   const [stops, setStops] = useState(() => routeState.stops || []);          // array of stop strings
+  const [confirmedPickup, setConfirmedPickup] = useState(() => routeState.pickup || savedPickupLabel || '');
+  const [confirmedDrop, setConfirmedDrop] = useState(() => routeState.drop || '');
+  const [confirmedStops, setConfirmedStops] = useState(() => routeState.stops || []);
   const [activeInput, setActiveInput] = useState('drop'); // 'pickup' | 'drop' | stopIdx
   const [showMapPicker, setShowMapPicker] = useState(false);
   const [mapCenter, setMapCenter] = useState(INDIA_CENTER);
@@ -158,6 +141,8 @@ const SelectLocation = () => {
   const [zonePaths, setZonePaths] = useState([]);
   const [remoteResults, setRemoteResults] = useState([]);
   const [isSearchingLocations, setIsSearchingLocations] = useState(false);
+  const [customError, setCustomError] = useState('');
+  const [isValidating, setIsValidating] = useState(false);
   const mapInstanceRef = useRef(null);
   const lastCenterRef = useRef(INDIA_CENTER);
   const geocoderRef = useRef(null);
@@ -170,24 +155,6 @@ const SelectLocation = () => {
   const navigate = useNavigate();
   const routePrefix = window.location.pathname.startsWith('/taxi/user') ? '/taxi/user' : '';
 
-  // All known locations â€” filtered live as user types
-  const allResults = [
-    { title: 'Vijay Nagar', address: 'Vijay Nagar, Indore, Madhya Pradesh' },
-    { title: 'Vijay Nagar Square', address: 'Vijay Nagar Square, Bhagyashree Colony, Indore' },
-    { title: 'Vijayawada', address: 'Vijayawada, Andhra Pradesh, India' },
-    { title: 'Vijay Nagar Police Station', address: 'Vijay Nagar Police Station, Sector D, Indore' },
-    { title: 'Rajwada', address: 'Rajwada, Old Palasia, Indore, MP' },
-    { title: 'Bhawarkua', address: 'Bhawarkua, Indore, Madhya Pradesh' },
-    { title: 'MG Road', address: 'MG Road, Indore, Madhya Pradesh' },
-    { title: 'Palasia Square', address: 'Palasia Square, AB Road, Indore' },
-    { title: 'LIG Colony', address: 'LIG Colony, Indore, Madhya Pradesh' },
-    { title: 'Scheme No 54', address: 'Scheme No 54, Vijay Nagar, Indore' },
-    { title: 'Bhangadh', address: 'Bhangadh, Indore, Madhya Pradesh' },
-    { title: 'AB Road', address: 'AB Road, Indore, Madhya Pradesh' },
-    { title: 'Geeta Bhawan', address: 'Geeta Bhawan, Indore, Madhya Pradesh' },
-    { title: 'Sapna Sangeeta', address: 'Sapna Sangeeta Road, Indore, MP' },
-    { title: 'Mahalaxmi Nagar', address: 'Mahalaxmi Nagar, Indore, Madhya Pradesh' },
-  ];
 
   const zoneBounds = useMemo(() => getBoundsFromPaths(zonePaths), [zonePaths]);
 
@@ -285,11 +252,6 @@ const SelectLocation = () => {
   const resolveCoords = async (label, fallback = DEFAULT_COORDS) => {
     if (!label || !String(label).trim()) {
       return fallback;
-    }
-
-    const knownCoords = LOCATION_COORDS[label];
-    if (knownCoords) {
-      return knownCoords;
     }
 
     if (!window.google?.maps?.Geocoder) {
@@ -414,17 +376,43 @@ const SelectLocation = () => {
   };
 
   const query = getQuery();
-  const localSearchResults = useMemo(
-    () =>
-      query.trim().length >= 1
-        ? allResults.filter(
-          (result) =>
-            result.title.toLowerCase().includes(query.toLowerCase())
-            || result.address.toLowerCase().includes(query.toLowerCase()),
-        )
-        : allResults.slice(0, 6),
-    [query],
-  );
+
+  const isQueryUnchanged = useMemo(() => {
+    if (activeInput === 'pickup' && query === confirmedPickup) return true;
+    if (activeInput === 'drop' && query === confirmedDrop) return true;
+    if (typeof activeInput === 'number' && query === confirmedStops[activeInput]) return true;
+    return false;
+  }, [activeInput, query, confirmedPickup, confirmedDrop, confirmedStops]);
+
+  // Hide keyboard on manual scroll/swipe or outside click
+  useEffect(() => {
+    const handleManualScroll = () => {
+      if (document.activeElement && document.activeElement.tagName === 'INPUT') {
+        document.activeElement.blur();
+      }
+    };
+
+    const handleOutsideClick = (e) => {
+      if (e.target && e.target.closest && e.target.closest('#location-input-card')) {
+        return;
+      }
+      if (document.activeElement && document.activeElement.tagName === 'INPUT') {
+        document.activeElement.blur();
+      }
+    };
+
+    window.addEventListener('touchmove', handleManualScroll, { passive: true });
+    window.addEventListener('wheel', handleManualScroll, { passive: true });
+    document.addEventListener('touchstart', handleOutsideClick, { passive: true });
+    document.addEventListener('mousedown', handleOutsideClick);
+
+    return () => {
+      window.removeEventListener('touchmove', handleManualScroll);
+      window.removeEventListener('wheel', handleManualScroll);
+      document.removeEventListener('touchstart', handleOutsideClick);
+      document.removeEventListener('mousedown', handleOutsideClick);
+    };
+  }, []);
 
   useEffect(() => {
     if (!query.trim() || query.trim().length < 3 || !HAS_VALID_GOOGLE_MAPS_KEY || !autocompleteServiceRef.current) {
@@ -461,6 +449,10 @@ const SelectLocation = () => {
           return;
         }
 
+        if (status !== 'OK') {
+            console.error('[Google Maps Autocomplete Error]', status, predictions);
+        }
+
         const nextResults = status === 'OK'
           ? predictions.slice(0, 6).map((prediction) => ({
             title: prediction.structured_formatting?.main_text || prediction.description,
@@ -480,8 +472,20 @@ const SelectLocation = () => {
     };
   }, [query, zoneBounds]);
 
+  const POPULAR_LOCATIONS = [
+    { title: 'Indore Junction', address: 'Railway Station, Chhoti Gwaltoli, Indore, Madhya Pradesh', coords: [75.8677, 22.7176] },
+    { title: 'Devi Ahilya Bai Holkar Airport', address: 'Devi Ahilyabai Holkar Airport, Indore, Madhya Pradesh', coords: [75.8011, 22.7214] },
+    { title: 'Vijay Nagar', address: 'Vijay Nagar Square, Indore, Madhya Pradesh', coords: [75.8970, 22.7533] },
+    { title: 'Rajwada Palace', address: 'Rajwada, Indore, Madhya Pradesh', coords: [75.8532, 22.7183] },
+    { title: 'Bhawarkua Square', address: 'Bhawarkua, Indore, Madhya Pradesh', coords: [75.8690, 22.6953] },
+  ];
+
   const searchResults = useMemo(() => {
-    const merged = [...remoteResults, ...localSearchResults];
+    if (query.trim().length === 0 || isQueryUnchanged) {
+      return POPULAR_LOCATIONS;
+    }
+
+    const merged = [...remoteResults];
     const seen = new Set();
 
     return merged.filter((result) => {
@@ -493,7 +497,7 @@ const SelectLocation = () => {
       seen.add(key);
       return true;
     });
-  }, [localSearchResults, remoteResults]);
+  }, [remoteResults, query]);
 
   const showMapToast = () => {
     // Reset map center to pickup or current location before opening
@@ -556,17 +560,28 @@ const SelectLocation = () => {
 
   const handleConfirmNavigate = async (optionalDrop, optionalDropCoords = null) => {
     const finalDrop = optionalDrop || drop;
-    const finalPickup = pickup || 'Pipaliyahana, Indore';
+    const finalPickup = pickup;
     
-    if (!finalDrop || finalDrop.trim().length === 0) return;
+    if (!finalDrop || finalDrop.trim().length === 0 || !finalPickup || finalPickup.trim().length === 0) return;
+
+    setCustomError('');
+    setIsValidating(true);
 
     const resolvedPickupCoords = pickupCoords || await resolveCoords(finalPickup);
     const resolvedDropCoords = optionalDropCoords || dropCoords || await resolveCoords(finalDrop);
 
-    if (!validateZoneSelection(resolvedPickupCoords) || !validateZoneSelection(resolvedDropCoords)) {
-      window.alert('Please choose pickup and drop locations inside the active service zone.');
+    try {
+      await api.post('/rides/validate-location', {
+        pickupCoords: resolvedPickupCoords,
+        dropCoords: resolvedDropCoords
+      });
+    } catch (err) {
+      setIsValidating(false);
+      setCustomError(err?.response?.data?.message || 'Service is not available in the selected location.');
       return;
     }
+
+    setIsValidating(false);
 
     saveLocation({
       address: finalPickup,
@@ -597,6 +612,7 @@ const SelectLocation = () => {
 
     if (activeInput === 'pickup') {
       setPickup(finalAddress);
+      setConfirmedPickup(finalAddress);
       setPickupCoords(selectedCoords);
       saveLocation({
         address: finalAddress,
@@ -606,11 +622,17 @@ const SelectLocation = () => {
       setActiveInput('drop');
     } else if (activeInput === 'drop') {
       setDrop(finalAddress);
+      setConfirmedDrop(finalAddress);
       setDropCoords(selectedCoords);
       // Auto-navigate if it's the destination
       handleConfirmNavigate(finalAddress, selectedCoords);
     } else if (typeof activeInput === 'number') {
       updateStop(activeInput, finalAddress);
+      setConfirmedStops(prev => {
+        const next = [...prev];
+        next[activeInput] = finalAddress;
+        return next;
+      });
     }
     setShowMapPicker(false);
   };
@@ -679,15 +701,9 @@ const SelectLocation = () => {
     const finalTitle = resolvedSelection.title || resolvedSelection.address;
     const resolvedCoords = selectedCoords || resolvedSelection.coords;
 
-    if (!validateZoneSelection(resolvedCoords)) {
-      window.alert('That location is outside your active service zone. Please choose a point inside the zone.');
-      return;
-    }
-
-    resetAutocompleteSessionToken();
-
     if (activeInput === 'pickup') {
       setPickup(finalTitle);
+      setConfirmedPickup(finalTitle);
       setPickupCoords(resolvedCoords);
       saveLocation({
         address: finalTitle,
@@ -697,10 +713,16 @@ const SelectLocation = () => {
       setActiveInput('drop');
     } else if (activeInput === 'drop') {
       setDrop(finalTitle);
+      setConfirmedDrop(finalTitle);
       setDropCoords(resolvedCoords);
       handleConfirmNavigate(finalTitle, resolvedCoords);
     } else if (typeof activeInput === 'number') {
       updateStop(activeInput, finalTitle);
+      setConfirmedStops(prev => {
+        const next = [...prev];
+        next[activeInput] = finalTitle;
+        return next;
+      });
       // Move to next stop or drop
       if (activeInput < stops.length - 1) {
         setActiveInput(activeInput + 1);
@@ -711,7 +733,14 @@ const SelectLocation = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[linear-gradient(180deg,#F8FAFC_0%,#F3F4F6_38%,#EEF2F7_100%)] max-w-lg mx-auto font-sans relative overflow-hidden pb-6">
+    <div 
+      className="min-h-screen bg-[linear-gradient(180deg,#F8FAFC_0%,#F3F4F6_38%,#EEF2F7_100%)] max-w-lg mx-auto font-sans relative overflow-hidden pb-6"
+      onClick={(e) => {
+        if (e.target.tagName !== 'INPUT' && document.activeElement && document.activeElement.tagName === 'INPUT') {
+          document.activeElement.blur();
+        }
+      }}
+    >
       <div className="absolute -top-20 right-[-40px] h-48 w-48 rounded-full bg-primary-orange/10/55 blur-3xl pointer-events-none" />
       <div className="absolute top-56 left-[-60px] h-56 w-56 rounded-full bg-emerald-100/50 blur-3xl pointer-events-none" />
       <div className="absolute bottom-16 right-[-40px] h-44 w-44 rounded-full bg-blue-100/50 blur-3xl pointer-events-none" />
@@ -730,11 +759,11 @@ const SelectLocation = () => {
                     onClick={() => setShowMapPicker(false)}
                     className="w-10 h-10 bg-white rounded-full shadow-lg flex items-center justify-center border border-slate-100 active:scale-95 transition-all"
                   >
-                    <ArrowLeft size={20} className="text-slate-900" strokeWidth={2.5} />
+                    <ArrowLeft size={20} className="text-[#0F766E]" strokeWidth={2.5} />
                   </button>
                   <div className="flex-1 bg-white rounded-2xl shadow-lg border border-slate-100 px-4 py-3">
                     <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-0.5">Select Point</p>
-                    <p className="text-[14px] font-semibold text-slate-900 truncate leading-tight">
+                    <p className="text-[14px] font-semibold text-[#0F766E] truncate leading-tight">
                       {isGeocoding ? 'Locating...' : pickedAddress}
                     </p>
                   </div>
@@ -749,7 +778,7 @@ const SelectLocation = () => {
                     <div className="w-16 h-16 bg-rose-50 rounded-full flex items-center justify-center mx-auto mb-4">
                       <X size={32} className="text-rose-400" />
                     </div>
-                    <p className="text-[16px] font-bold text-slate-900">Config Error</p>
+                    <p className="text-[16px] font-bold text-[#0F766E]">Config Error</p>
                     <p className="mt-2 text-[13px] font-medium text-slate-500">
                       Google Maps API Key is missing.
                     </p>
@@ -761,7 +790,7 @@ const SelectLocation = () => {
                     <div className="w-16 h-16 bg-rose-50 rounded-full flex items-center justify-center mx-auto mb-4">
                       <AlertTriangle size={32} className="text-rose-400" />
                     </div>
-                    <p className="text-[16px] font-bold text-slate-900">Load Failed</p>
+                    <p className="text-[16px] font-bold text-[#0F766E]">Load Failed</p>
                     <p className="mt-2 text-[13px] font-medium text-slate-500">
                       Map could not be loaded. Please check your browser console or network.
                     </p>
@@ -801,13 +830,13 @@ const SelectLocation = () => {
                     transition={{ type: 'spring', stiffness: 300, damping: 20 }}
                     className="flex flex-col items-center"
                   >
-                    <div className="w-10 h-10 bg-slate-900 rounded-2xl flex items-center justify-center shadow-2xl rotate-45 border-2 border-white">
+                    <div className="w-10 h-10 bg-[#0F766E] rounded-2xl flex items-center justify-center shadow-2xl rotate-45 border-2 border-white">
                       <div className="-rotate-45">
                         <MapIcon size={18} className="text-white fill-white/20" />
                       </div>
                     </div>
                     {/* Stick */}
-                    <div className="w-1 h-5 bg-slate-900 -mt-2 shadow-2xl" />
+                    <div className="w-1 h-5 bg-[#0F766E] -mt-2 shadow-2xl" />
                   </motion.div>
                   {/* Shadow Dot */}
                   <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-1 bg-black/30 rounded-full blur-sm" />
@@ -823,7 +852,7 @@ const SelectLocation = () => {
                 {isLocating ? (
                   <LoaderCircle size={20} className="animate-spin text-slate-400" />
                 ) : (
-                  <Navigation size={20} className="text-slate-900 fill-slate-900/10" />
+                  <Navigation size={20} className="text-[#0F766E] fill-slate-900/10" />
                 )}
               </button>
             </div>
@@ -835,14 +864,14 @@ const SelectLocation = () => {
                     <MapPin size={20} className="text-slate-400" />
                  </div>
                  <div className="min-w-0 flex-1">
-                    <h4 className="text-[15px] font-bold text-slate-900 leading-none">Confirm Spot</h4>
+                    <h4 className="text-[15px] font-bold text-[#0F766E] leading-none">Confirm Spot</h4>
                     <p className="text-[12px] font-medium text-slate-400 mt-1 line-clamp-1">{pickedAddress}</p>
                  </div>
               </div>
               <button
                 onClick={handleConfirmMapLocation}
                 disabled={isGeocoding}
-                className="w-full bg-slate-900 py-4 rounded-3xl text-white font-bold text-[15px] shadow-xl shadow-slate-200 flex items-center justify-center gap-2 active:scale-[0.98] transition-all disabled:opacity-50"
+                className="w-full bg-[#0F766E] py-4 rounded-3xl text-white font-bold text-[15px] shadow-xl shadow-slate-200 flex items-center justify-center gap-2 active:scale-[0.98] transition-all disabled:opacity-50"
               >
                 <Check size={18} strokeWidth={3} />
                 Confirm Location
@@ -852,24 +881,32 @@ const SelectLocation = () => {
         )}
       </AnimatePresence>
 
-      {/* Header */}
-      <header className="sticky top-0 z-30">
-        <div className="bg-white/70 backdrop-blur-md border-b border-white/70 shadow-[0_10px_20px_rgba(15,23,42,0.05)]">
+      {/* Sticky Header & Input Card Wrapper */}
+      <div className="sticky top-0 z-30 bg-[#F4F7F6]/95 backdrop-blur-md pb-2 shadow-[0_10px_20px_rgba(15,23,42,0.05)] border-b border-white/30">
+        {/* Header */}
+        <header className="relative z-30">
           <div className="px-5 py-4 flex items-center gap-3">
             <button onClick={() => navigate(-1)} className="p-2 -ml-2 active:scale-95 transition-all rounded-full">
-              <ArrowLeft size={22} className="text-slate-900" strokeWidth={3} />
+              <ArrowLeft size={22} className="text-[#0F766E]" strokeWidth={3} />
             </button>
             <div className="min-w-0">
               <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Ride</p>
-              <h1 className="mt-0.5 text-[20px] font-bold text-slate-900 tracking-tight leading-none truncate">Where to?</h1>
+              <h1 className="mt-0.5 text-[20px] font-bold text-[#0F766E] tracking-tight leading-none truncate">Where to?</h1>
             </div>
           </div>
-        </div>
-      </header>
+        </header>
 
       {/* Input Card */}
       <div className="relative z-10 px-5 pt-4">
-        <div className="bg-white/80 backdrop-blur-md rounded-[22px] p-4 shadow-[0_18px_44px_rgba(15,23,42,0.08)] border border-white/80">
+        <div 
+          id="location-input-card" 
+          className="bg-white/80 backdrop-blur-md rounded-[22px] p-4 shadow-[0_18px_44px_rgba(15,23,42,0.08)] border border-white/80"
+          onMouseLeave={() => {
+            if (document.activeElement && document.activeElement.tagName === 'INPUT') {
+              document.activeElement.blur();
+            }
+          }}
+        >
           <div className="space-y-3">
 
             {/* Pickup Row */}
@@ -889,7 +926,7 @@ const SelectLocation = () => {
                   onChange={(e) => setPickup(sanitizeLocationInput(e.target.value))}
                   onFocus={() => setActiveInput('pickup')}
                   placeholder="Your pickup location"
-                  className="w-full bg-transparent border-none text-[15px] font-medium text-slate-900 focus:outline-none placeholder:text-slate-300"
+                  className="w-full bg-transparent border-none text-[15px] font-medium text-[#0F766E] focus:outline-none placeholder:text-slate-300"
                 />
                 {pickup.length > 0 && (
                   <button onClick={() => setPickup('')} className="ml-2 shrink-0">
@@ -933,7 +970,7 @@ const SelectLocation = () => {
                         placeholder={`Stop ${idx + 1} location...`}
                         onFocus={() => setActiveInput(idx)}
                         onChange={(e) => updateStop(idx, sanitizeLocationInput(e.target.value))}
-                        className={`w-full bg-transparent border-none text-[15px] font-medium text-slate-900 focus:outline-none ${
+                        className={`w-full bg-transparent border-none text-[15px] font-medium text-[#0F766E] focus:outline-none ${
                           stop.trim().length > 0 ? 'placeholder:text-slate-300' : 'placeholder:text-indigo-300'
                         }`}
                       />
@@ -974,7 +1011,7 @@ const SelectLocation = () => {
                   placeholder="Enter drop location..."
                   onFocus={() => setActiveInput('drop')}
                   onChange={(e) => setDrop(sanitizeLocationInput(e.target.value))}
-                  className="w-full bg-transparent border-none text-[15px] font-medium text-slate-900 focus:outline-none placeholder:text-slate-300"
+                  className="w-full bg-transparent border-none text-[15px] font-medium text-[#0F766E] focus:outline-none placeholder:text-slate-300"
                 />
                 {drop.length > 0 && (
                   <button onClick={() => setDrop('')} className="ml-2 shrink-0">
@@ -987,6 +1024,7 @@ const SelectLocation = () => {
           </div>
         </div>
       </div>
+      </div>
 
       {/* Action Pills */}
       <div className="relative z-10 flex gap-3 px-5 my-4">
@@ -994,7 +1032,7 @@ const SelectLocation = () => {
           onClick={showMapToast}
           className="flex-1 flex items-center justify-center gap-2 bg-white/75 backdrop-blur-md border border-white/80 rounded-full py-2.5 shadow-[0_12px_26px_rgba(15,23,42,0.06)] active:scale-95 transition-all text-[13px] font-bold text-slate-800"
         >
-          <MapPin size={16} className="text-slate-900" />
+          <MapPin size={16} className="text-[#0F766E]" />
           <span>Select on map</span>
         </button>
         <button
@@ -1028,7 +1066,19 @@ const SelectLocation = () => {
       )}
 
       {/* Search Results */}
-      <div className="relative z-10 px-5 mb-4">
+      <div 
+        className="relative z-10 px-5 mb-4 pb-24"
+        onTouchMove={() => {
+          if (document.activeElement && document.activeElement.tagName === 'INPUT') {
+            document.activeElement.blur();
+          }
+        }}
+        onWheel={() => {
+          if (document.activeElement && document.activeElement.tagName === 'INPUT') {
+            document.activeElement.blur();
+          }
+        }}
+      >
         <h2 className="text-[14px] font-bold text-slate-400 mb-3 ml-1 uppercase tracking-widest">
           {query.trim().length > 0 ? 'Search Results' : 'Popular Locations'}
         </h2>
@@ -1049,7 +1099,7 @@ const SelectLocation = () => {
                   )}
                </div>
                <div className="flex-1">
-                  <h4 className="text-[15px] font-bold text-slate-900 leading-tight group-hover:text-emerald-600 transition-colors">Use Current Location</h4>
+                  <h4 className="text-[15px] font-bold text-[#0F766E] leading-tight group-hover:text-emerald-600 transition-colors">Use Current Location</h4>
                   <p className="text-[12px] text-slate-400 font-medium mt-0.5">Perfect for accurate pickup</p>
                </div>
                <ChevronRight size={16} className="text-slate-300" />
@@ -1067,7 +1117,52 @@ const SelectLocation = () => {
                   <MapPin size={18} strokeWidth={2.6} />
                 </div>
                 <div className="min-w-0">
-                  <h4 className="text-[15px] font-semibold text-slate-900 leading-tight">{result.title}</h4>
+                  <h4 className="text-[15px] font-semibold text-[#0F766E] leading-tight">{result.title}</h4>
+                  <p className="text-[13px] text-slate-500 font-medium mt-1 line-clamp-1">{result.address}</p>
+                </div>
+              </motion.button>
+            ))}
+          </div>
+        ) : query.trim().length === 0 ? (
+          <div className="bg-white/75 backdrop-blur-md rounded-2xl border border-white/80 overflow-hidden shadow-[0_14px_34px_rgba(15,23,42,0.06)]">
+            {/* Quick Go to Current Location */}
+            <motion.button
+              whileTap={{ scale: 0.99 }}
+              onClick={handleUseCurrentLocationResult}
+              className="w-full text-left flex items-center gap-3 px-4 py-3.5 border-b border-white/70 bg-emerald-50/30 hover:bg-emerald-50/50 transition-colors group"
+            >
+               <div className="w-10 h-10 rounded-2xl bg-white border border-emerald-100 shadow-sm flex items-center justify-center shrink-0">
+                  {isLocating ? (
+                     <LoaderCircle size={18} className="animate-spin text-emerald-500" />
+                  ) : (
+                     <Navigation size={18} className="text-emerald-500 fill-emerald-50" />
+                  )}
+               </div>
+               <div className="flex-1">
+                  <h4 className="text-[15px] font-bold text-[#0F766E] leading-tight group-hover:text-emerald-600 transition-colors">Use Current Location</h4>
+                  <p className="text-[12px] text-slate-400 font-medium mt-0.5">Perfect for accurate pickup</p>
+               </div>
+               <ChevronRight size={16} className="text-slate-300" />
+            </motion.button>
+
+            {[
+              { title: 'Airport Indore', address: 'Devi Ahilya Bai Holkar Airport, Indore' },
+              { title: 'Indore Junction', address: 'Indore Junction Railway Station, Indore' },
+              { title: 'Rajwada Palace', address: 'Rajwada Palace, Indore' },
+              { title: 'Bhawarkuan Square', address: 'Bhawarkuan, Indore' }
+            ].map((result, idx) => (
+              <motion.button
+                key={idx}
+                type="button"
+                whileTap={{ scale: 0.99 }}
+                onClick={() => handleSelectResult(result)}
+                className="w-full text-left flex items-start gap-3 px-4 py-3 border-b border-white/70 last:border-none hover:bg-white/60 transition-colors"
+              >
+                <div className="mt-0.5 w-10 h-10 rounded-2xl bg-white/70 border border-white/80 shadow-sm flex items-center justify-center shrink-0 text-slate-500">
+                  <MapPin size={18} strokeWidth={2.6} />
+                </div>
+                <div className="min-w-0">
+                  <h4 className="text-[15px] font-semibold text-[#0F766E] leading-tight">{result.title}</h4>
                   <p className="text-[13px] text-slate-500 font-medium mt-1 line-clamp-1">{result.address}</p>
                 </div>
               </motion.button>
@@ -1079,7 +1174,7 @@ const SelectLocation = () => {
               —
             </div>
             <p className="mt-3 text-[15px] font-semibold text-slate-600">
-              No results for <span className="text-slate-900">"{query}"</span>
+              No results for <span className="text-[#0F766E]">"{query}"</span>
             </p>
             <p className="text-[13px] font-medium text-slate-400 mt-1">Try a different search term</p>
           </div>
@@ -1104,14 +1199,30 @@ const SelectLocation = () => {
             initial={{ y: 80, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: 80, opacity: 0 }}
-            className="fixed bottom-6 left-5 right-5 z-40"
+            className="fixed bottom-6 left-5 right-5 z-40 flex flex-col gap-2"
           >
+            {customError && (
+              <div className="bg-rose-50 border border-rose-200 text-rose-600 px-4 py-3 rounded-2xl flex items-start gap-3 shadow-sm">
+                <AlertTriangle size={18} className="mt-0.5 shrink-0" />
+                <p className="text-[13px] font-medium leading-tight">{customError}</p>
+              </div>
+            )}
             <button
               onClick={() => handleConfirmNavigate()}
-              className="w-full bg-[#f8e001] py-4 rounded-3xl text-slate-900 font-bold text-[16px] shadow-[0_8px_30px_rgba(248,224,1,0.3)] flex items-center justify-center gap-2 active:scale-[0.98] transition-all"
+              disabled={isValidating}
+              className="w-full bg-emerald-600 py-4 rounded-3xl text-white font-bold text-[16px] shadow-[0_8px_30px_rgba(5,150,105,0.3)] flex items-center justify-center gap-2 active:scale-[0.98] transition-all disabled:opacity-50 disabled:active:scale-100"
             >
-              Confirm & Proceed
-              <ChevronRight size={18} strokeWidth={3} className="opacity-60" />
+              {isValidating ? (
+                <>
+                  <LoaderCircle size={18} className="animate-spin" />
+                  Validating...
+                </>
+              ) : (
+                <>
+                  Confirm & Proceed
+                  <ChevronRight size={18} strokeWidth={3} className="opacity-60" />
+                </>
+              )}
             </button>
           </motion.div>
         )}

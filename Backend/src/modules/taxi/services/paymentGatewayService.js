@@ -186,7 +186,7 @@ export const resolveConfiguredGatewayCredentials = async (gatewayKey) => {
     }
 
     if (!keyId || !keySecret || isDemoLikeValue(keyId) || isDemoLikeValue(keySecret)) {
-      throw new ApiError(500, 'Razorpay keys are demo placeholders. Configure real keys in Admin > Payment Gateways');
+      throw new ApiError(500, 'Razorpay keys are demo placeholders. Configure real keys in Admin > Payment Gateways or .env');
     }
 
     return { keyId, keySecret, environment };

@@ -17,6 +17,7 @@ import {
     ArrowLeft,
     Clock3,
     MapPinned,
+    Navigation,
 } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { GoogleMap, MarkerF, OverlayView, OverlayViewF, PolylineF } from '@react-google-maps/api';
@@ -352,6 +353,10 @@ const RotatingVehicleMarker = ({ position, iconUrl = carIcon, heading = 0, title
                     alt={title}
                     className="h-12 w-12 object-contain drop-shadow-[0_8px_10px_rgba(15,23,42,0.35)]"
                     draggable={false}
+                    onError={(e) => {
+                        e.currentTarget.onerror = null;
+                        e.currentTarget.src = carIcon;
+                    }}
                 />
             </div>
         </div>
@@ -466,9 +471,35 @@ const computeCommissionSummary = ({ fare = 0, pricingSnapshot = null, explicitCo
 
 const getSimulationPath = ({ routePath = [], from, to }) => {
     const path = routePath.length > 1 ? routePath : [from, to].filter(Boolean);
-    return path
+    const validPath = path
         .filter((point) => Number.isFinite(Number(point?.lat)) && Number.isFinite(Number(point?.lng)))
         .map((point) => ({ lat: Number(point.lat), lng: Number(point.lng) }));
+
+    if (validPath.length < 2) return validPath;
+
+    const interpolatedPath = [validPath[0]];
+    const stepMeters = 15; // smooth steps
+    
+    for (let i = 0; i < validPath.length - 1; i++) {
+        const p1 = validPath[i];
+        const p2 = validPath[i + 1];
+        const dist = getDistanceMeters(p1, p2);
+        
+        if (dist > stepMeters) {
+            const steps = Math.ceil(dist / stepMeters);
+            for (let j = 1; j <= steps; j++) {
+                const fraction = j / steps;
+                interpolatedPath.push({
+                    lat: p1.lat + (p2.lat - p1.lat) * fraction,
+                    lng: p1.lng + (p2.lng - p1.lng) * fraction
+                });
+            }
+        } else {
+            interpolatedPath.push(p2);
+        }
+    }
+    
+    return interpolatedPath;
 };
 
 const toRadians = (value) => Number(value) * (Math.PI / 180);
@@ -545,6 +576,7 @@ const buildPersistedTripState = (job = {}, overrides = {}) => {
         request: {
             type: currentType,
             title: getTripTitle(currentType),
+            baseFare: `Rs ${mergedJob.baseFare || mergedJob.fare || 0}`,
             fare: `Rs ${mergedJob.fare || 0}`,
             payment: mergedJob.paymentMethod || 'Cash',
             pickup: getAreaName(mergedJob.pickupAddress, formatAddressFromPoint(mergedJob.pickupLocation, 'Pickup area')),
@@ -598,7 +630,7 @@ const ActiveTrip = () => {
     const routeRideId = routeState?.rideId || routeState?.request?.rideId || '';
     const routeOtp = routeState?.request?.raw?.otp || routeState?.request?.otp || routeState?.otp || '';
     const [isHydratingTrip, setIsHydratingTrip] = useState(!routeRideId || !routeOtp);
-    const exitToDriverHome = React.useCallback((statusMessage = '') => {
+    const exitToDriverHome = React.useCallback((statusMessage = '', isCancelled = false) => {
         if (routeRideId) {
             clearStoredTripPhase(routeRideId);
             clearStoredTripUiState(routeRideId);
@@ -607,7 +639,9 @@ const ActiveTrip = () => {
 
         navigate('/taxi/driver/home', {
             replace: true,
-            state: statusMessage ? { statusMessage } : undefined,
+            state: isCancelled
+                ? { cancelled: true, statusMessage }
+                : (statusMessage ? { statusMessage } : undefined),
         });
     }, [navigate, routeRideId]);
 
@@ -865,7 +899,7 @@ const ActiveTrip = () => {
 
             clearStoredTripPhase(currentRideId);
             clearStoredTripUiState(currentRideId);
-            exitToDriverHome(payload.message || 'Ride was cancelled by the user.');
+            exitToDriverHome(payload.message || 'The user has cancelled this ride.', true);
         };
 
         const handleRideStatusUpdated = (payload = {}) => {
@@ -877,7 +911,7 @@ const ActiveTrip = () => {
             if (nextStatus === 'cancelled' || nextStatus === 'canceled') {
                 clearStoredTripPhase(currentRideId);
                 clearStoredTripUiState(currentRideId);
-                exitToDriverHome('Ride was cancelled by the user.');
+                exitToDriverHome('The user has cancelled this ride.', true);
                 return;
             }
 
@@ -1046,10 +1080,17 @@ const ActiveTrip = () => {
                 ? liveRequest
                 : effectiveState;
 
-        const restoredPhase = resolvePhaseFromJob({
+        let restoredPhase = resolvePhaseFromJob({
             ...routeJob,
             rideId,
         });
+
+        const liveStatus = String(routeJob?.liveStatus || routeJob?.status || '').toLowerCase();
+        if (restoredPhase === 'review' && liveStatus !== 'completed') {
+            restoredPhase = 'to_pickup';
+            clearStoredActiveTripSnapshot();
+            clearStoredTripPhase(rideId);
+        }
 
         setPhase((current) => (current === 'to_pickup' ? restoredPhase : current));
     }, [effectiveState, hydratedTripState, liveRaw, liveRequest, rideId]);
@@ -1159,7 +1200,8 @@ const ActiveTrip = () => {
         },
         pickup: getAreaName(liveRaw.pickupAddress || liveRequest?.pickup, formatAddressFromPoint(liveRaw.pickupLocation, 'Pickup area')),
         drop: getAreaName(liveRaw.dropAddress || liveRequest?.drop, formatAddressFromPoint(liveRaw.dropLocation, 'Drop area')),
-        fare: `Rs ${liveRaw.fare || effectiveState?.fare || 120}`,
+        baseFare: `Rs ${liveRaw.baseFare || effectiveState?.request?.raw?.baseFare || liveRequest?.baseFare || liveRaw.fare || 120}`,
+        fare: `Rs ${liveRaw.fare || effectiveState?.request?.raw?.fare || liveRequest?.fare || 120}`,
         payment: effectiveState?.paymentMethod || 'Online'
     } : {
         user: {
@@ -1169,7 +1211,8 @@ const ActiveTrip = () => {
         },
         pickup: getAreaName(liveRaw.pickupAddress || liveRequest?.pickup, formatAddressFromPoint(liveRaw.pickupLocation, 'Pickup area')),
         drop: getAreaName(liveRaw.dropAddress || liveRequest?.drop, formatAddressFromPoint(liveRaw.dropLocation, 'Drop area')),
-        fare: `Rs ${liveRaw.fare || effectiveState?.fare || 120}`,
+        baseFare: `Rs ${liveRaw.baseFare || effectiveState?.request?.raw?.baseFare || liveRequest?.baseFare || liveRaw.fare || 120}`,
+        fare: `Rs ${liveRaw.fare || effectiveState?.request?.raw?.fare || liveRequest?.fare || 120}`,
         payment: liveRequest?.payment || effectiveState?.paymentMethod || 'Online'
     };
 
@@ -1196,13 +1239,13 @@ const ActiveTrip = () => {
         : 0;
     const freeWaitingRemainingSeconds = Math.max(0, freeWaitingBeforeMinutes * 60 - waitingElapsedSeconds);
     const waitingChargeableMinutes = Math.max(0, Math.ceil(waitingElapsedSeconds / 60) - freeWaitingBeforeMinutes);
-    
+
     // Use database value if trip is in ongoing/arrived/completed phases
     const waitingCharge = ['ongoing', 'arrived', 'completed'].includes(resolvedStatus)
         ? Number(liveRaw?.waitingChargeAmount ?? effectiveState?.waitingChargeAmount ?? 0)
         : (waitingChargeableMinutes * waitingChargePerMinute);
 
-    const baseDisplayFare = liveRequest?.fare || tripData.fare;
+    const baseDisplayFare = liveRaw?.baseFare || liveRequest?.baseFare || tripData?.baseFare || tripData?.fare;
     const baseFareAmount = parseFareAmount(baseDisplayFare);
 
     const timeChargePerMinute = Math.max(0, Number(waitingPricing?.time_price ?? 0));
@@ -1213,19 +1256,21 @@ const ActiveTrip = () => {
     const tripDurationMinutes = tripStartedAt && tripArrivedAt
         ? Math.max(0, Math.floor((new Date(tripArrivedAt).getTime() - new Date(tripStartedAt).getTime()) / 60000))
         : 0;
-    
-    // Use database value if trip is completed or arrived at destination
-    const timeCharge = ['arrived', 'completed'].includes(resolvedStatus)
-        ? Number(liveRaw?.timeChargeAmount ?? effectiveState?.timeChargeAmount ?? 0)
-        : (tripDurationMinutes * timeChargePerMinute);
+
+    // Upfront fare already includes the estimated time. We do not charge for time again.
+    const timeCharge = 0;
 
     const additionalCharge = Number(liveRaw?.additionalCharge ?? effectiveState?.additionalCharge ?? 0);
     const adminExtraChargeAmount = Number(liveRaw?.adminExtraCharge?.amount ?? effectiveState?.adminExtraCharge?.amount ?? 0);
-    
+    const cancellationChargeAmount = Number(liveRaw?.recovered_cancellation_due ?? effectiveState?.recovered_cancellation_due ?? 0);
+    const promoDiscountAmount = Number(liveRaw?.promo?.discount_amount ?? effectiveState?.promo?.discount_amount ?? 0);
+    const promoCodeApplied = liveRaw?.promo?.code || effectiveState?.promo?.code || '';
+
     // Use the final consolidated fare computed and saved in the database if completed
-    const fareAmount = resolvedStatus === 'completed' && (liveRaw?.fare || effectiveState?.fare)
+    const rawFareAmount = resolvedStatus === 'completed' && (liveRaw?.fare || effectiveState?.fare)
         ? Number(liveRaw?.fare ?? effectiveState?.fare ?? 0)
-        : (baseFareAmount + waitingCharge + timeCharge + additionalCharge + adminExtraChargeAmount);
+        : Math.max(0, baseFareAmount + waitingCharge + timeCharge + additionalCharge + adminExtraChargeAmount + cancellationChargeAmount - promoDiscountAmount);
+    const fareAmount = Math.ceil(rawFareAmount);
 
     const displayFare = `Rs ${fareAmount}`;
     const canMarkArrived = true;
@@ -1246,7 +1291,7 @@ const ActiveTrip = () => {
         explicitDriverEarnings: liveRaw?.driverEarnings ?? effectiveState?.driverEarnings,
     });
     const paymentCollectionLabel = isParcel ? 'receiver' : 'rider';
-    const routeStrokeColor = '#000000';
+    const routeStrokeColor = '#0F766E';
     const routeAccentSoft = hexToRgba(routeStrokeColor, 0.08);
     const routeAccentMuted = hexToRgba(routeStrokeColor, 0.18);
     const routeAccentBorder = hexToRgba(routeStrokeColor, 0.18);
@@ -1276,6 +1321,12 @@ const ActiveTrip = () => {
         }
 
         window.open(`tel:${cleanPhone}`, '_self');
+    };
+
+    const openNavigation = () => {
+        if (activeDestination?.lat && activeDestination?.lng) {
+            window.open(`https://www.google.com/maps/dir/?api=1&destination=${activeDestination.lat},${activeDestination.lng}`, '_blank');
+        }
     };
 
     const openTripChat = () => {
@@ -1323,7 +1374,7 @@ const ActiveTrip = () => {
             : null;
 
         const logMsg = `[publishRideStatus] nextStatus=${nextStatus} waitingCharge=${waitingCharge} baseFareAmount=${baseFareAmount} fareAmount=${fareAmount} tripStatus=${tripStatus} phase=${phase}`;
-        api.post('/debug-log', { message: logMsg }).catch(() => {});
+        api.post('/debug-log', { message: logMsg }).catch(() => { });
 
         socketService.emit('ride:status:update', {
             rideId,
@@ -1334,6 +1385,7 @@ const ActiveTrip = () => {
             timeChargeAmount: timeCharge,
             distanceChargeAmount: 0,
             additionalCharge: additionalCharge,
+            recovered_cancellation_due: cancellationChargeAmount,
             fare: fareAmount,
             ...(driverPaymentCollection ? { driverPaymentCollection } : {}),
         });
@@ -1355,6 +1407,7 @@ const ActiveTrip = () => {
                         timeChargeAmount: timeCharge,
                         distanceChargeAmount: 0,
                         additionalCharge: additionalCharge,
+                        recovered_cancellation_due: cancellationChargeAmount,
                         fare: fareAmount,
                         driverPaymentCollection: buildDriverPaymentCollection({
                             mode: paymentMode,
@@ -1384,6 +1437,7 @@ const ActiveTrip = () => {
                     timeCharge: timeCharge,
                     additionalCharge: additionalCharge,
                     adminExtraChargeAmount: adminExtraChargeAmount,
+                    cancellationChargeAmount: cancellationChargeAmount,
                     driverEarnings: commissionSummary.driverEarnings,
                     commissionAmount: commissionSummary.commissionAmount,
                     pickup: tripData.pickup,
@@ -1402,7 +1456,7 @@ const ActiveTrip = () => {
         try {
             const driverToken = getLocalDriverToken();
             const logMsg = `[completeRideForUserSync API call] rideId=${rideId} waitingCharge=${waitingCharge} baseFareAmount=${baseFareAmount} fareAmount=${fareAmount} tripStatus=${tripStatus} phase=${phase}`;
-            api.post('/debug-log', { message: logMsg }).catch(() => {});
+            api.post('/debug-log', { message: logMsg }).catch(() => { });
             await api.patch(
                 `/rides/${rideId}/status`,
                 {
@@ -1792,6 +1846,8 @@ const ActiveTrip = () => {
 
     useEffect(() => () => stopSimulationTimer(), []);
 
+
+
     useEffect(() => {
         if (isSimulationEnabled) {
             return;
@@ -1884,13 +1940,13 @@ const ActiveTrip = () => {
             routePath.forEach((point) => bounds.extend(point));
             bounds.extend(driverPosition);
             bounds.extend(activeDestination);
-            map.fitBounds(bounds, 72);
+            map.fitBounds(bounds, { top: 140, right: 24, bottom: 280, left: 24 });
             return;
         }
 
         bounds.extend(driverPosition);
         bounds.extend(activeDestination);
-        map.fitBounds(bounds, 80);
+        map.fitBounds(bounds, { top: 140, right: 24, bottom: 280, left: 24 });
     }, [activeDestination, driverPosition, isSimulationRunning, map, routePath]);
 
     const handleOTPChange = (index, value) => {
@@ -2091,47 +2147,7 @@ const ActiveTrip = () => {
                     </div>
                 )}
 
-                <div className="absolute top-44 left-4 z-40 w-[190px] rounded-2xl border border-white/80 bg-white/94 px-3 py-3 shadow-lg backdrop-blur-md">
-                    <div className="mb-2 flex items-center justify-between gap-2">
-                        <div className="min-w-0">
-                            <p className="text-[8px] font-black uppercase tracking-[0.22em] text-slate-400">Simulation</p>
-                            <p className="mt-0.5 truncate text-[11px] font-black text-slate-900">
-                                {isSimulationRunning ? 'Following route' : isSimulationEnabled ? 'Paused' : 'Real GPS'}
-                            </p>
-                        </div>
-                        <span
-                            className={`h-2.5 w-2.5 shrink-0 rounded-full ${isSimulationRunning ? 'animate-pulse' : ''}`}
-                            style={{ backgroundColor: isSimulationEnabled ? routeStrokeColor : '#cbd5e1' }}
-                        />
-                    </div>
-                    <div className="mb-2 h-1.5 overflow-hidden rounded-full bg-slate-100">
-                        <div
-                            className="h-full rounded-full transition-all"
-                            style={{ backgroundColor: routeStrokeColor, width: `${isSimulationEnabled ? simulationProgress : 0}%` }}
-                        />
-                    </div>
-                    <div className="grid grid-cols-2 gap-2">
-                        <button
-                            type="button"
-                            onClick={isSimulationRunning ? pauseSimulation : isSimulationEnabled ? resumeSimulation : startSimulation}
-                            className="h-9 rounded-xl px-2 text-[9px] font-black uppercase tracking-wide text-white active:scale-95"
-                            style={{ backgroundColor: routeStrokeColor }}
-                        >
-                            {isSimulationRunning ? 'Pause' : isSimulationEnabled ? 'Resume' : 'Start'}
-                        </button>
-                        <button
-                            type="button"
-                            onClick={resetSimulation}
-                            disabled={!isSimulationEnabled}
-                            className="h-9 rounded-xl border border-slate-100 bg-slate-50 px-2 text-[9px] font-black uppercase tracking-wide text-slate-500 active:scale-95 disabled:opacity-40"
-                        >
-                            Reset
-                        </button>
-                    </div>
-                    <p className="mt-2 text-[9px] font-semibold leading-tight text-slate-400">
-                        Test mode emits live location events along this polyline.
-                    </p>
-                </div>
+
             </div>
 
             <div className="absolute bottom-0 left-0 right-0 z-40">
@@ -2142,9 +2158,9 @@ const ActiveTrip = () => {
                             initial={{ y: '100%' }}
                             animate={{ y: 0 }}
                             exit={{ y: '100%' }}
-                            className="bg-white rounded-t-[2.5rem] p-5 pb-8 shadow-2xl border-t border-slate-100 max-h-[85vh] overflow-y-auto overflow-x-hidden"
+                            className="bg-white rounded-t-[2.5rem] p-4 pb-5 shadow-2xl border-t border-slate-100 max-h-[85vh] overflow-y-auto overflow-x-hidden"
                         >
-                            <div className="flex items-center justify-between mb-6">
+                            <div className="flex items-center justify-between mb-4">
                                 <div className="flex items-center gap-3">
                                     <div className="w-12 h-12 bg-slate-50 rounded-2xl border border-slate-100 flex items-center justify-center">
                                         {isParcel ? <Package size={22} className="text-slate-900" /> : <User size={22} className="text-slate-400" />}
@@ -2162,12 +2178,13 @@ const ActiveTrip = () => {
                                     </div>
                                 </div>
                                 <div className="flex gap-2">
+                                    <button onClick={openNavigation} className="w-11 h-11 bg-slate-50 rounded-xl flex items-center justify-center text-slate-600 active:scale-95 transition-transform" aria-label="Open Navigation"><Navigation size={18} strokeWidth={2.5} /></button>
                                     <button onClick={openTripChat} className="w-11 h-11 bg-slate-50 rounded-xl flex items-center justify-center text-slate-600 active:scale-95 transition-transform" aria-label="Open trip chat"><MessageSquare size={18} strokeWidth={2.5} /></button>
                                     <button onClick={() => callContact(pickupContact?.phone)} className="w-11 h-11 bg-slate-50 rounded-xl flex items-center justify-center active:scale-95 transition-transform" style={{ color: routeStrokeColor }} aria-label="Call contact"><Phone size={18} strokeWidth={2.5} /></button>
                                 </div>
                             </div>
                             {(waitingPricing?.driver_cancellation_fee > 0 || waitingPricing?.waiting_charge > 0) && (
-                                <div className="mb-3 rounded-2xl border border-slate-100 bg-slate-50/50 px-4 py-3 text-[11px] font-bold text-slate-500 flex flex-col gap-1.5 shadow-sm">
+                                <div className="mb-2 rounded-2xl border border-slate-100 bg-slate-50/50 px-4 py-2.5 text-[11px] font-bold text-slate-500 flex flex-col gap-1 shadow-sm">
                                     <div className="flex items-center justify-between">
                                         <span>Waiting Charge Rate:</span>
                                         <span className="font-black text-slate-900">Rs {waitingPricing.waiting_charge}/min</span>
@@ -2184,7 +2201,7 @@ const ActiveTrip = () => {
                                     )}
                                 </div>
                             )}
-                            <div className="mb-4 rounded-2xl border border-slate-100 bg-slate-50/80 px-4 py-3">
+                            <div className="mb-3 rounded-2xl border border-slate-100 bg-slate-50/80 px-4 py-2.5">
                                 <div className="flex items-center justify-between gap-3">
                                     <div>
                                         <p className="text-[9px] font-black uppercase tracking-[0.22em] text-slate-400">Arrival Radius</p>
@@ -2210,8 +2227,8 @@ const ActiveTrip = () => {
                                     setPhase('otp_verification');
                                     publishRideStatus('arriving');
                                 }}
-                                className={`w-full h-15 text-white rounded-2xl flex items-center justify-center gap-3 text-[14px] font-semibold uppercase tracking-wide shadow-lg transition-opacity ${canMarkArrived ? '' : 'opacity-70'}`}
-                                style={{ backgroundColor: routeStrokeColor, boxShadow: `0 18px 30px ${routeAccentMuted}` }}
+                                className={`w-full h-13 text-white rounded-xl flex items-center justify-center gap-2 text-[13px] font-bold uppercase tracking-wide shadow-lg transition-opacity ${canMarkArrived ? '' : 'opacity-70'}`}
+                                style={{ backgroundColor: routeStrokeColor, boxShadow: `0 12px 24px ${routeAccentMuted}` }}
                             >
                                 {isParcel ? 'Arrived at Sender' : 'I Have Arrived'} <CheckCircle2 size={18} strokeWidth={3} />
                             </motion.button>
@@ -2322,7 +2339,7 @@ const ActiveTrip = () => {
                             initial={{ y: '100%' }}
                             animate={{ y: 0 }}
                             exit={{ y: '100%' }}
-                            className="bg-white rounded-t-[2.5rem] p-5 pb-8 shadow-2xl border-t border-slate-100 max-h-[85vh] overflow-y-auto overflow-x-hidden"
+                            className="bg-white rounded-t-[2.5rem] p-4 pb-5 shadow-2xl border-t border-slate-100 max-h-[85vh] overflow-y-auto overflow-x-hidden"
                         >
                             <div className="mb-5 rounded-[22px] border border-slate-100 bg-slate-50/85 px-4 py-3.5 shadow-[0_2px_10px_rgba(15,23,42,0.04)]">
                                 <div className="flex items-start justify-between gap-3">
@@ -2352,7 +2369,10 @@ const ActiveTrip = () => {
                                         <p className="text-[8px] font-semibold text-slate-400 uppercase tracking-wide">{isParcel ? 'Receiver' : 'Passenger'}</p>
                                     </div>
                                 </div>
-                                <button onClick={() => callContact(destinationContact?.phone)} className="shrink-0 w-9 h-9 bg-white rounded-lg border border-slate-100 flex items-center justify-center" style={{ color: routeStrokeColor }} aria-label="Call destination contact"><Phone size={16} strokeWidth={2.5} /></button>
+                                <div className="flex gap-2">
+                                    <button onClick={openNavigation} className="shrink-0 w-9 h-9 bg-white rounded-lg border border-slate-100 flex items-center justify-center text-slate-600 active:scale-95 transition-transform" aria-label="Open Navigation"><Navigation size={16} strokeWidth={2.5} /></button>
+                                    <button onClick={() => callContact(destinationContact?.phone)} className="shrink-0 w-9 h-9 bg-white rounded-lg border border-slate-100 flex items-center justify-center" style={{ color: routeStrokeColor }} aria-label="Call destination contact"><Phone size={16} strokeWidth={2.5} /></button>
+                                </div>
                             </div>
                             {isParcel && (
                                 <div className="mb-4 rounded-2xl border border-slate-100 bg-slate-50/80 px-4 py-3">
@@ -2436,6 +2456,30 @@ const ActiveTrip = () => {
                                                     <div className="flex items-center justify-between">
                                                         <span className="text-[10px] font-bold uppercase tracking-wider text-amber-500">Wait Time Charge</span>
                                                         <span className="text-[11px] font-black text-slate-900">Rs {waitingCharge.toFixed(2)}</span>
+                                                    </div>
+                                                )}
+                                                {additionalCharge > 0 && (
+                                                    <div className="flex items-center justify-between">
+                                                        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-700">Additional Charge</span>
+                                                        <span className="text-[11px] font-black text-slate-900">Rs {additionalCharge.toFixed(2)}</span>
+                                                    </div>
+                                                )}
+                                                {adminExtraChargeAmount > 0 && (
+                                                    <div className="flex items-center justify-between">
+                                                        <span className="text-[10px] font-bold uppercase tracking-wider text-amber-600">Admin Extra Charge</span>
+                                                        <span className="text-[11px] font-black text-slate-900">Rs {adminExtraChargeAmount.toFixed(2)}</span>
+                                                    </div>
+                                                )}
+                                                {promoDiscountAmount > 0 && (
+                                                    <div className="flex items-center justify-between">
+                                                        <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-600">Promo ({promoCodeApplied}) Applied</span>
+                                                        <span className="text-[11px] font-black text-emerald-600">-Rs {promoDiscountAmount.toFixed(2)}</span>
+                                                    </div>
+                                                )}
+                                                {cancellationChargeAmount > 0 && (
+                                                    <div className="flex items-center justify-between">
+                                                        <span className="text-[10px] font-bold uppercase tracking-wider text-red-500">Previous Cancellation Charge</span>
+                                                        <span className="text-[11px] font-black text-slate-900">Rs {cancellationChargeAmount.toFixed(2)}</span>
                                                     </div>
                                                 )}
                                             </div>
@@ -2618,9 +2662,9 @@ const ActiveTrip = () => {
                             key="review"
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
-                            className="bg-white rounded-t-[2.5rem] p-6 pb-8 shadow-2xl border-t border-slate-50 text-center max-h-[85vh] overflow-y-auto overflow-x-hidden"
+                            className="bg-white rounded-t-[2.5rem] p-4 pb-6 shadow-2xl border-t border-slate-50 text-center max-h-[85vh] overflow-y-auto overflow-x-hidden"
                         >
-                            <div className="mb-8 space-y-4">
+                            <div className="mb-6 space-y-4">
                                 <div className="w-12 h-12 rounded-xl flex items-center justify-center mx-auto shadow-lg" style={{ backgroundColor: routeStrokeColor }}><User size={24} className="text-white" /></div>
                                 <h3 className="text-xl font-semibold text-slate-900 uppercase tracking-tight">Rate Experience</h3>
                                 <div className="flex justify-center gap-2">

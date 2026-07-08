@@ -22,9 +22,9 @@ const partnerAvatars = [
 
 const DriverWelcome = () => {
     const navigate = useNavigate();
-    const { settings } = useSettings();
+    const { settings, activeLogo } = useSettings();
     const appName = settings.general?.app_name || 'App';
-    const appLogo = settings.general?.logo || settings.customization?.logo;
+    const appLogo = activeLogo || settings.general?.logo || settings.customization?.logo;
 
     const perks = [
         { icon: <Wallet size={18} />, title: 'Weekly Payouts', sub: 'Receive your earnings directly every week.' },

@@ -84,11 +84,11 @@ const getAuthenticatedDriverHome = (pathname = '') => (
         ? `${getPortalPrefix(pathname, 'owner')}/dashboard`
         : getAuthenticatedRole() === 'service_center'
             ? '/taxi/driver/service-center'
-        : getAuthenticatedRole() === 'service_center_staff'
-            ? '/taxi/driver/service-center'
-        : getAuthenticatedRole() === 'bus_driver'
-            ? '/taxi/driver/bus-home'
-            : '/taxi/driver/home'
+            : getAuthenticatedRole() === 'service_center_staff'
+                ? '/taxi/driver/service-center'
+                : getAuthenticatedRole() === 'bus_driver'
+                    ? '/taxi/driver/bus-home'
+                    : '/taxi/driver/home'
 );
 
 const getPendingDriverRoute = (pathname = '') => `${getPortalPrefix(pathname)}/registration-status`;

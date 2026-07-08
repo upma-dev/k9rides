@@ -16,6 +16,7 @@ import {
 import api from '../../../../shared/api/axiosInstance';
 import toast from 'react-hot-toast';
 import { useSettings } from '../../../../shared/context/SettingsContext';
+import apiClient from '../../../../../../services/api/axios';
 
 const SectionHeader = ({ title }) => (
   <div className="bg-slate-50 dark:bg-slate-800/50 border-l-4 border-indigo-600 p-2.5 mb-4 rounded-r-lg shadow-sm">
@@ -59,7 +60,8 @@ const MODULE_METADATA = {
     icon: UtensilsCrossed,
     colorClass: 'text-rose-500 bg-rose-50 dark:bg-rose-950/30',
     logos: [
-      { key: 'food', label: 'Restaurant App Logo', description: 'Logo shown to customers and restaurant dashboards.' },
+      { key: 'food', label: 'Restaurant App Logo', description: 'Logo shown to customers.' },
+      { key: 'food_restaurant', label: 'Restaurant Owner Logo', description: 'Logo shown on restaurant owner dashboards.' },
       { key: 'food_delivery_partner', label: 'Food Delivery Partner Logo', description: 'Logo shown on delivery partner portals.' }
     ]
   },
@@ -133,15 +135,15 @@ const LogoSettings = () => {
     setUploading(prev => ({ ...prev, [uploadKey]: true }));
 
     try {
-      const res = await api.post('/uploads/image', formData, {
+      const res = await apiClient.post('/uploads/image', formData, {
         headers: {
           'Content-Type': 'multipart/form-data'
         }
       });
 
-      const data = res.data || res;
-      if (data?.url) {
-        handleChange(key, type, data.url);
+      const url = res?.data?.data?.url || res?.data?.url || res?.url;
+      if (url) {
+        handleChange(key, type, url);
         toast.success(`${type === 'logo' ? 'Logo' : 'Favicon'} updated successfully!`);
       } else {
         toast.error('Upload failed. No URL returned.');

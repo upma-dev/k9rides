@@ -1048,6 +1048,7 @@ const toUserPayload = (user, options = {}) => ({
   referralCode: user.referralCode || '',
   referralCount: Number(user.referralCount || 0),
   currentRideId: user.currentRideId || null,
+  pending_cancellation_due: Number(user.pending_cancellation_due || 0),
   subscriptionSummary: options.subscriptionSummary || {
     activeCount: 0,
     hasUnlimitedPlan: false,

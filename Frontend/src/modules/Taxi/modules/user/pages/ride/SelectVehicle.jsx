@@ -6,7 +6,9 @@ import { GoogleMap, MarkerF, OverlayView, PolylineF } from '@react-google-maps/a
 import api from '../../../../shared/api/axiosInstance';
 import { HAS_VALID_GOOGLE_MAPS_KEY, useAppGoogleMapsLoader } from '../../../admin/utils/googleMaps';
 import { userService } from '../../services/userService';
+import { userAuthService } from '../../services/authService';
 import { useSettings } from '../../../../shared/context/SettingsContext';
+import { useAuthStore } from '../../../../../../core/auth/auth.store';
 import BikeIcon from '../../../../assets/icons/bike.png';
 import AutoIcon from '../../../../assets/icons/auto.png';
 import CarIcon from '../../../../assets/icons/car.png';
@@ -39,6 +41,15 @@ const toLatLng = (coords, fallback = { lat: 22.7196, lng: 75.8577 }) => {
 
   return fallback;
 };
+
+const getZoneServiceLocationId = (zone) =>
+  zone?.service_location_id?._id
+  || zone?.service_location_id?.id
+  || zone?.service_location_id
+  || zone?.service_location?._id
+  || zone?.service_location?.id
+  || zone?.service_location
+  || '';
 
 const getDriverPosition = (driver) => toLatLng(driver?.location?.coordinates, null);
 
@@ -272,9 +283,9 @@ const VehicleMapPreview = React.memo(({ center, dropPosition, stops = [], driver
           title="Pickup"
           icon={{
             path: window.google.maps.SymbolPath.CIRCLE,
-            fillColor: '#f8e001',
+            fillColor: '#059669',
             fillOpacity: 1,
-            strokeColor: '#111827',
+            strokeColor: '#ffffff',
             strokeWeight: 2,
             scale: 8,
           }}
@@ -593,13 +604,25 @@ const matchesTransportType = (rule, transportType) => {
 };
 
 const isPointInPolygon = (point, polygonCoordinates) => {
-  const x = point[0], y = point[1];
+  let x, y;
+  if (Array.isArray(point)) {
+    x = Number(point[0]);
+    y = Number(point[1]);
+  } else if (point && typeof point === 'object') {
+    x = Number(point.lng || point.longitude);
+    y = Number(point.lat || point.latitude);
+  }
+  
+  if (typeof x !== 'number' || typeof y !== 'number' || Number.isNaN(x) || Number.isNaN(y)) {
+    return false;
+  }
+
   let inside = false;
   for (let i = 0, j = polygonCoordinates.length - 1; i < polygonCoordinates.length; j = i++) {
     const xi = polygonCoordinates[i][0], yi = polygonCoordinates[i][1];
     const xj = polygonCoordinates[j][0], yj = polygonCoordinates[j][1];
     const intersect = ((yi > y) !== (yj > y))
-        && (x < (xj - xi) * (y - yi) / (yj - yi) + xi);
+      && (x < (xj - xi) * (y - yi) / (yj - yi) + xi);
     if (intersect) inside = !inside;
   }
   return inside;
@@ -608,11 +631,18 @@ const isPointInPolygon = (point, polygonCoordinates) => {
 const findZoneForLocation = (coords, zonesList) => {
   if (!coords || !Array.isArray(zonesList)) return null;
   for (const zone of zonesList) {
-    if ((zone.active !== false && String(zone.status || 'active').toLowerCase() === 'active') && zone.geometry?.coordinates) {
-      const type = zone.geometry.type;
-      const polys = type === 'Polygon' ? [zone.geometry.coordinates] : zone.geometry.coordinates;
-      for (const poly of polys) {
-        const ring = Array.isArray(poly[0]?.[0]) ? poly[0] : poly;
+    if (zone.active !== false && String(zone.status || 'active').toLowerCase() === 'active') {
+      if (zone.geometry?.coordinates) {
+        const type = zone.geometry.type;
+        const polys = type === 'Polygon' ? [zone.geometry.coordinates] : zone.geometry.coordinates;
+        for (const poly of polys) {
+          const ring = Array.isArray(poly[0]?.[0]) ? poly[0] : poly;
+          if (isPointInPolygon(coords, ring)) {
+            return zone;
+          }
+        }
+      } else if (Array.isArray(zone.coordinates) && zone.coordinates.length > 0) {
+        const ring = zone.coordinates.map(p => [Number(p.lng), Number(p.lat)]);
         if (isPointInPolygon(coords, ring)) {
           return zone;
         }
@@ -686,7 +716,7 @@ const findBestPricingRule = ({ rules, vehicleTypeId, serviceLocationId, zoneId, 
   return genericBoth || candidates[0];
 };
 
-const calculateEstimatedFare = ({ vehicle, pricingRule, distanceMeters, durationMinutes, transportType = 'taxi' }) => {
+const calculateEstimatedFare = ({ vehicle, pricingRule, distanceMeters, durationMinutes, pickupZone, transportType = 'taxi' }) => {
   const fallbackFare = getFallbackVehicleEstimate(vehicle?.raw || vehicle);
 
   if (!pricingRule) {
@@ -708,8 +738,10 @@ const calculateEstimatedFare = ({ vehicle, pricingRule, distanceMeters, duration
     ? toFiniteNumber(pricingRule.outstation_time_price, 0)
     : toFiniteNumber(pricingRule.time_price, 0);
   const serviceTax = toFiniteNumber(pricingRule.service_tax, 0);
-  // Include the ride surge set by admin — backend always adds this, so user must see it too
-  const rideSurgeAmount = toFiniteNumber(pricingRule.ride_surge_amount, 0);
+  // Include the ride surge set by admin — only if the zone actually has it enabled (matching backend)
+  const rideSurgeAmount = Boolean(pickupZone?.ride_surge_enabled)
+    ? toFiniteNumber(pricingRule.ride_surge_amount, 0)
+    : 0;
   const isWithinBaseDistance = baseDistance > 0 && distanceKm <= baseDistance;
   const extraDistanceKm = Math.max(0, distanceKm - baseDistance);
   const subtotal = isWithinBaseDistance
@@ -720,8 +752,8 @@ const calculateEstimatedFare = ({ vehicle, pricingRule, distanceMeters, duration
     return fallbackFare;
   }
 
-  const total = subtotal + (subtotal * serviceTax) / 100 + rideSurgeAmount;
-  return Math.max(0, Math.round(total));
+  const total = subtotal + (subtotal * serviceTax) / 100;
+  return Math.max(0, Math.round(total)) + rideSurgeAmount;
 };
 
 const getDropTime = (minutesAway = 0) => {
@@ -943,6 +975,26 @@ const ScrollIndicator = ({ show }) => (
 const SelectVehicle = () => {
   const location = useLocation();
   const routeState = location.state || {};
+  const { user, token, role, setAuth } = useAuthStore();
+  const pendingCancellationDue = Number(user?.pending_cancellation_due || 0);
+
+  useEffect(() => {
+    let active = true;
+    const fetchUser = async () => {
+      try {
+        const response = await userAuthService.getCurrentUser();
+        if (active && response?.data?.user) {
+          setAuth(response.data.user, token, role);
+        }
+      } catch (error) {
+        console.error('Failed to fetch current user:', error);
+      }
+    };
+    fetchUser();
+    return () => {
+      active = false;
+    };
+  }, [setAuth, token, role]);
   const [vehicles, setVehicles] = useState([]);
   const [availabilityByVehicleId, setAvailabilityByVehicleId] = useState({});
   const [selected, setSelected] = useState('');
@@ -1000,13 +1052,20 @@ const SelectVehicle = () => {
     () => (Array.isArray(routeState.stops) ? routeState.stops : []),
     [routeState.stops],
   );
-  const serviceLocationId = routeState.service_location_id || routeState.serviceLocationId || '';
+  
   const routePrefix = location.pathname.startsWith('/taxi/user') ? '/taxi/user' : '';
   const pickupPosition = useMemo(() => toLatLng(pickupCoords), [pickupCoords]);
   const dropPosition = useMemo(() => toLatLng(dropCoords, null), [dropCoords]);
   const { isLoaded: isMapLoaded, loadError: mapLoadError } = useAppGoogleMapsLoader();
   const minScheduledAt = useMemo(() => getMinScheduledDateTime(), []);
   const maxScheduledAt = useMemo(() => getMaxScheduledDateTime(), []);
+
+  const matchedZone = useMemo(() => findZoneForLocation(pickupCoords, zones), [pickupCoords, zones]);
+  const matchedZoneId = matchedZone?._id || matchedZone?.id || null;
+
+  const effectiveServiceLocationId = useMemo(() => {
+    return routeState.service_location_id || routeState.serviceLocationId || getZoneServiceLocationId(matchedZone) || null;
+  }, [routeState.service_location_id, routeState.serviceLocationId, matchedZone]);
 
   const handleScroll = () => {
     if (!scrollRef.current) return;
@@ -1106,7 +1165,16 @@ const SelectVehicle = () => {
         if (!active) {
           return;
         }
-        setZones(response?.data?.data || response?.data || []);
+        const payload = response?.data;
+        if (Array.isArray(payload?.results)) {
+          setZones(payload.results);
+        } else if (Array.isArray(payload?.data)) {
+          setZones(payload.data);
+        } else if (Array.isArray(payload)) {
+          setZones(payload);
+        } else {
+          setZones([]);
+        }
       } catch {
         if (active) {
           setZones([]);
@@ -1199,8 +1267,7 @@ const SelectVehicle = () => {
     };
   }, [dropCoords, dropPosition, isMapLoaded, mapLoadError, pickupCoords, pickupPosition, stops]);
 
-  const matchedZone = useMemo(() => findZoneForLocation(pickupCoords, zones), [pickupCoords, zones]);
-  const matchedZoneId = matchedZone?._id || matchedZone?.id || null;
+
 
   const pricedVehicles = useMemo(
     () =>
@@ -1209,7 +1276,7 @@ const SelectVehicle = () => {
         const pricingRule = findBestPricingRule({
           rules: pricingRules,
           vehicleTypeId: vehicle.vehicleTypeId,
-          serviceLocationId,
+          serviceLocationId: effectiveServiceLocationId,
           zoneId: matchedZoneId,
           transportType: resolvedVehicleTransportType,
         });
@@ -1222,11 +1289,12 @@ const SelectVehicle = () => {
             pricingRule,
             distanceMeters: tripMetrics.distanceMeters,
             durationMinutes: tripMetrics.durationMinutes,
+            pickupZone: matchedZone,
             transportType: resolvedVehicleTransportType,
-          }),
+          }) + pendingCancellationDue,
         };
       }),
-    [pricingRules, serviceLocationId, matchedZoneId, tripMetrics.distanceMeters, tripMetrics.durationMinutes, vehicles],
+    [pricingRules, effectiveServiceLocationId, matchedZoneId, tripMetrics.distanceMeters, tripMetrics.durationMinutes, vehicles, pendingCancellationDue],
   );
 
   const isFarePending = isResolvingTripMetrics || isLoadingPricingRules;
@@ -1311,9 +1379,9 @@ const SelectVehicle = () => {
   const bidRideSettings = settings?.bidRide || {};
   const selectedBidStepAmount = shouldUseDriverBidding
     ? toConfiguredPositiveInteger(
-        bidRideSettings.bidding_amount_increase_or_decrease,
-        Number(selectedVehicle?.bidStepAmount || 10),
-      )
+      bidRideSettings.bidding_amount_increase_or_decrease,
+      Number(selectedVehicle?.bidStepAmount || 10),
+    )
     : Number(selectedVehicle?.bidStepAmount || 10);
   const bidLowPercentage = clampPercentage(bidRideSettings.user_bidding_low_percentage, 10);
   const bidHighPercentage = clampPercentage(bidRideSettings.user_bidding_high_percentage, 20);
@@ -1321,19 +1389,19 @@ const SelectVehicle = () => {
   const normalizedBidHighPercentage = Math.max(bidLowPercentage, bidHighPercentage);
   const selectedBidFloorFare = shouldUseDriverBidding
     ? alignBidAmountToStep({
-        baseFare: Number(selectedVehicle?.price || 0),
-        amount: Number(selectedVehicle?.price || 0) * (1 + (normalizedBidLowPercentage / 100)),
-        stepAmount: selectedBidStepAmount,
-        direction: 'up',
-      })
+      baseFare: Number(selectedVehicle?.price || 0),
+      amount: Number(selectedVehicle?.price || 0) * (1 + (normalizedBidLowPercentage / 100)),
+      stepAmount: selectedBidStepAmount,
+      direction: 'up',
+    })
     : Number(selectedVehicle?.price || 0);
   const selectedBidCeilingMaxFare = shouldUseDriverBidding
     ? alignBidAmountToStep({
-        baseFare: Number(selectedVehicle?.price || 0),
-        amount: Number(selectedVehicle?.price || 0) * (1 + (normalizedBidHighPercentage / 100)),
-        stepAmount: selectedBidStepAmount,
-        direction: 'up',
-      })
+      baseFare: Number(selectedVehicle?.price || 0),
+      amount: Number(selectedVehicle?.price || 0) * (1 + (normalizedBidHighPercentage / 100)),
+      stepAmount: selectedBidStepAmount,
+      direction: 'up',
+    })
     : Number(selectedVehicle?.price || 0);
   const selectedBidSteps = shouldUseDriverBidding
     ? Math.max(0, Math.round((selectedBidCeilingMaxFare - selectedBidFloorFare) / selectedBidStepAmount))
@@ -1373,7 +1441,7 @@ const SelectVehicle = () => {
   const applyPromoCode = async (rawCode) => {
     const code = String(rawCode || '').trim().toUpperCase();
 
-    if (!serviceLocationId) {
+    if (!effectiveServiceLocationId) {
       setPromoError('Pickup zone is missing for this ride.');
       setPromoFeedback('');
       return false;
@@ -1399,7 +1467,7 @@ const SelectVehicle = () => {
       const response = await userService.validatePromo({
         code,
         fare: Number(selectedVehicle.price || 0),
-        service_location_id: serviceLocationId,
+        service_location_id: effectiveServiceLocationId,
         transport_type: resolvedTransportType,
       });
       const payload = unwrap(response);
@@ -1427,7 +1495,7 @@ const SelectVehicle = () => {
     let active = true;
 
     const loadPromos = async () => {
-      if (!serviceLocationId) {
+      if (!effectiveServiceLocationId) {
         if (active) {
           setAvailablePromos([]);
           clearAppliedPromo('');
@@ -1439,7 +1507,7 @@ const SelectVehicle = () => {
 
       try {
         const response = await userService.getAvailablePromos({
-          service_location_id: serviceLocationId,
+          service_location_id: effectiveServiceLocationId,
           transport_type: resolvedTransportType,
           limit: 20,
         });
@@ -1473,7 +1541,7 @@ const SelectVehicle = () => {
     return () => {
       active = false;
     };
-  }, [resolvedTransportType, serviceLocationId]);
+  }, [resolvedTransportType, effectiveServiceLocationId]);
 
   useEffect(() => {
     if (!appliedPromo?.promo?.code || !selectedVehicle) {
@@ -1487,7 +1555,7 @@ const SelectVehicle = () => {
         const response = await userService.validatePromo({
           code: appliedPromo.promo.code,
           fare: Number(selectedVehicle.price || 0),
-          service_location_id: serviceLocationId,
+          service_location_id: effectiveServiceLocationId,
           transport_type: resolvedTransportType,
         });
         const payload = unwrap(response);
@@ -1514,7 +1582,7 @@ const SelectVehicle = () => {
     return () => {
       active = false;
     };
-  }, [appliedPromo?.promo?.code, resolvedTransportType, selectedVehicle?.price, serviceLocationId]);
+  }, [appliedPromo?.promo?.code, resolvedTransportType, selectedVehicle?.price, effectiveServiceLocationId]);
 
   useEffect(() => {
     const timer = setTimeout(handleScroll, 200);
@@ -1572,7 +1640,7 @@ const SelectVehicle = () => {
                 vehicleIconType: vehicle.iconType,
                 lng: pickupCoords[0],
                 lat: pickupCoords[1],
-                service_location_id: routeState.service_location_id || routeState.serviceLocationId || '',
+                service_location_id: effectiveServiceLocationId,
                 transport_type: vehicle.transportType || routeState.transport_type || routeState.transportType || 'taxi',
               },
             });
@@ -1623,27 +1691,9 @@ const SelectVehicle = () => {
 
     fetchVehicleAvailabilities(vehicles, { replace: true });
 
-    const pollSelectedVehicle = () => {
-      if (document.visibilityState !== 'visible') {
-        return;
-      }
-
-      const activeVehicle =
-        vehicles.find((vehicle) => vehicle.id === selected)
-        || vehicles.find((vehicle) => vehicle.vehicleTypeId);
-
-      if (!activeVehicle) {
-        return;
-      }
-
-      fetchVehicleAvailabilities([activeVehicle], { silent: true });
-    };
-
-    intervalId = setInterval(pollSelectedVehicle, 8000);
-
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible') {
-        pollSelectedVehicle();
+        // Option to refresh if needed
       }
     };
 
@@ -1651,10 +1701,9 @@ const SelectVehicle = () => {
 
     return () => {
       active = false;
-      clearInterval(intervalId);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, [pickupCoords, routeState.serviceLocationId, routeState.service_location_id, routeState.transportType, routeState.transport_type, selected, vehicles]);
+  }, [pickupCoords, effectiveServiceLocationId, routeState.transportType, routeState.transport_type, selected, vehicles]);
 
   const openPicker = (inputRef) => {
     if (typeof inputRef.current?.showPicker === 'function') {
@@ -1694,7 +1743,7 @@ const SelectVehicle = () => {
         pickupCoords,
         dropCoords,
         stops,
-        service_location_id: routeState.service_location_id || routeState.serviceLocationId || '',
+        service_location_id: effectiveServiceLocationId,
         transport_type: resolvedTransportType,
         vehicle: selectedVehicle,
         vehicleTypeId: selectedVehicle.vehicleTypeId,
@@ -1821,11 +1870,10 @@ const SelectVehicle = () => {
             <button
               type="button"
               onClick={() => openPicker(scheduledAtInputRef)}
-              className={`flex w-[42px] shrink-0 flex-col items-center justify-center rounded-[12px] border px-1 py-2 text-[10px] font-medium ${
-                rideMode === 'schedule'
+              className={`flex w-[42px] shrink-0 flex-col items-center justify-center rounded-[12px] border px-1 py-2 text-[10px] font-medium ${rideMode === 'schedule'
                   ? 'border-slate-900 bg-slate-900 text-white'
                   : 'border-slate-200 bg-white text-slate-600'
-              }`}
+                }`}
             >
               <Clock3 size={14} strokeWidth={2.2} />
               <span className="mt-1">{rideMode === 'schedule' ? 'Later' : 'Now'}</span>
@@ -1881,11 +1929,10 @@ const SelectVehicle = () => {
                   initial={{ opacity: 0, y: 12 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.4, delay: i * 0.04, ease: [0.23, 1, 0.32, 1] }}
-                  className={`overflow-hidden rounded-[18px] border transition-all ${
-                    isSelected
+                  className={`overflow-hidden rounded-[18px] border transition-all ${isSelected
                       ? 'border-slate-200 bg-[#fbfaf8] shadow-[0_6px_16px_rgba(15,23,42,0.08)]'
                       : 'border-transparent bg-white'
-                  }`}
+                    }`}
                 >
                   <div
                     role={canSelectVehicle ? 'button' : undefined}
@@ -1905,9 +1952,8 @@ const SelectVehicle = () => {
                         setSelected(v.id);
                       }
                     }}
-                    className={`flex items-center gap-3 px-3 py-3 text-left ${
-                      canSelectVehicle ? 'cursor-pointer' : 'cursor-default opacity-55'
-                    }`}
+                    className={`flex items-center gap-3 px-3 py-3 text-left ${canSelectVehicle ? 'cursor-pointer' : 'cursor-default opacity-55'
+                      }`}
                   >
                     <div className="flex w-[52px] shrink-0 flex-col items-center">
                       <div className="flex h-9 w-full items-center justify-center">
@@ -1927,9 +1973,20 @@ const SelectVehicle = () => {
                           </p>
                         </div>
                         <div className="shrink-0 text-right">
-                          <span className={`block text-[20px] font-semibold leading-none ${isUnavailable && rideMode !== 'schedule' ? 'text-slate-300' : 'text-slate-900'}`}>
-                            {fareLabel}
-                          </span>
+                          <div className={`flex flex-col items-end ${isUnavailable && rideMode !== 'schedule' ? 'text-slate-300' : 'text-slate-900'}`}>
+                            {isSelected && appliedPromo ? (
+                              <>
+                                <span className="text-[12px] text-slate-400 line-through leading-none mb-1">{fareLabel}</span>
+                                <span className="block text-[20px] font-semibold leading-none text-emerald-600">
+                                  {formatCurrency(discountedSelectedFare)}
+                                </span>
+                              </>
+                            ) : (
+                              <span className="block text-[20px] font-semibold leading-none">
+                                {fareLabel}
+                              </span>
+                            )}
+                          </div>
                           {isSelected && (
                             <div className="mt-1 flex items-center justify-end gap-2">
                               <button
@@ -2005,9 +2062,8 @@ const SelectVehicle = () => {
             <button
               type="button"
               onClick={() => setShowCouponModal(true)}
-              className={`flex items-center justify-center gap-2 border-r border-slate-200 px-3 py-2.5 text-[12px] font-medium ${
-                appliedPromo ? 'text-emerald-700' : 'text-slate-700'
-              }`}
+              className={`flex items-center justify-center gap-2 border-r border-slate-200 px-3 py-2.5 text-[12px] font-medium ${appliedPromo ? 'text-emerald-700' : 'text-slate-700'
+                }`}
             >
               <TicketPercent size={14} strokeWidth={2.3} className={appliedPromo ? 'text-emerald-600' : 'text-slate-500'} />
               <span>{appliedPromo?.promo?.code || (availablePromos.length ? `Coupon ${availablePromos.length}` : 'Coupon')}</span>
@@ -2022,9 +2078,8 @@ const SelectVehicle = () => {
           </div>
 
           {(appliedPromo || promoError || promoFeedback) && (
-            <div className={`mt-2 rounded-[12px] border px-3 py-2 ${
-              promoError ? 'border-rose-100 bg-rose-50/70' : 'border-emerald-100 bg-emerald-50/70'
-            }`}>
+            <div className={`mt-2 rounded-[12px] border px-3 py-2 ${promoError ? 'border-rose-100 bg-rose-50/70' : 'border-emerald-100 bg-emerald-50/70'
+              }`}>
               {appliedPromo && !promoError ? (
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
@@ -2056,11 +2111,10 @@ const SelectVehicle = () => {
             whileTap={canProceed ? { scale: 0.98 } : undefined}
             disabled={!canProceed}
             onClick={handleBook}
-            className={`mt-3 flex w-full items-center justify-center rounded-[8px] px-4 py-3.5 text-[16px] font-medium transition ${
-              canProceed
-                ? 'bg-[#1f1f1f] text-white'
+            className={`mt-3 flex w-full items-center justify-center rounded-[8px] px-4 py-3.5 text-[16px] font-medium transition ${canProceed
+                ? 'bg-emerald-600 text-white'
                 : 'bg-slate-200 text-slate-400'
-            }`}
+              }`}
           >
             {selectedVehicle
               ? isFarePending
@@ -2231,7 +2285,7 @@ const SelectVehicle = () => {
                 <button
                   type="button"
                   onClick={proceedToBooking}
-                  className="flex-1 rounded-[18px] bg-[#f8e001] px-4 py-3 text-[13px] font-black uppercase tracking-[0.14em] text-slate-900 shadow-[0_12px_28px_-4px_rgba(248,224,1,0.4)]"
+                  className="flex-1 rounded-[18px] bg-emerald-600 px-4 py-3 text-[13px] font-black uppercase tracking-[0.14em] text-white shadow-[0_12px_28px_-4px_rgba(5,150,105,0.4)]"
                 >
                   Send Bid
                 </button>
@@ -2241,169 +2295,166 @@ const SelectVehicle = () => {
         )}
 
         <AnimatePresence>
-        {showCouponModal && (
-          <React.Fragment key="coupon-modal">
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setShowCouponModal(false)}
-              className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[100] max-w-lg mx-auto"
-            />
-            <motion.div
-              initial={{ y: '100%' }}
-              animate={{ y: 0 }}
-              exit={{ y: '100%' }}
-              transition={{ type: 'spring', damping: 26, stiffness: 320 }}
-              className="fixed bottom-0 left-0 right-0 max-w-lg mx-auto bg-white rounded-t-[28px] px-5 pt-4 pb-8 z-[101]"
-            >
-              <div className="w-10 h-1 bg-slate-200 rounded-full mx-auto mb-5" />
-              <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-500 mb-1">Coupons</p>
-              <h3 className="text-[18px] font-bold text-slate-900">Apply for this zone</h3>
-              <p className="mt-1 text-[12px] font-bold text-slate-500">
-                Only coupons created for this service location show here.
-              </p>
-
-              <div className="mt-5 flex gap-2">
-                <input
-                  type="text"
-                  value={promoCodeInput}
-                  onChange={(event) => {
-                    setPromoCodeInput(event.target.value.toUpperCase());
-                    setPromoError('');
-                    setPromoFeedback('');
-                  }}
-                  placeholder="Enter coupon code"
-                  className="min-w-0 flex-1 rounded-[16px] border border-slate-200 px-4 py-3 text-[13px] font-semibold text-slate-900 outline-none transition focus:border-emerald-300"
-                />
-                <button
-                  type="button"
-                  disabled={Boolean(applyingPromoCode) || !selectedVehicle}
-                  onClick={async () => {
-                    const applied = await applyPromoCode(promoCodeInput);
-                    if (applied) {
-                      setShowCouponModal(false);
-                    }
-                  }}
-                  className="rounded-[16px] bg-slate-950 px-4 py-3 text-[12px] font-black uppercase tracking-[0.14em] text-white disabled:opacity-60"
-                >
-                  {applyingPromoCode ? 'Applying' : 'Apply'}
-                </button>
-              </div>
-
-              {(promoError || promoFeedback) && (
-                <p className={`mt-3 text-[11px] font-semibold ${promoError ? 'text-rose-500' : 'text-emerald-600'}`}>
-                  {promoError || promoFeedback}
+          {showCouponModal && (
+            <React.Fragment key="coupon-modal">
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => setShowCouponModal(false)}
+                className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[100] max-w-lg mx-auto"
+              />
+              <motion.div
+                initial={{ y: '100%' }}
+                animate={{ y: 0 }}
+                exit={{ y: '100%' }}
+                transition={{ type: 'spring', damping: 26, stiffness: 320 }}
+                className="fixed bottom-0 left-0 right-0 max-w-lg mx-auto bg-white rounded-t-[28px] px-5 pt-4 pb-8 z-[101]"
+              >
+                <div className="w-10 h-1 bg-slate-200 rounded-full mx-auto mb-5" />
+                <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-500 mb-1">Coupons</p>
+                <h3 className="text-[18px] font-bold text-slate-900">Apply for this zone</h3>
+                <p className="mt-1 text-[12px] font-bold text-slate-500">
+                  Only coupons created for this service location show here.
                 </p>
-              )}
 
-              <div className="mt-5 max-h-[46vh] space-y-2 overflow-y-auto pr-1">
-                {isLoadingPromos ? (
-                  <div className="flex items-center gap-2 rounded-[18px] border border-slate-100 bg-slate-50 px-4 py-4">
-                    <LoaderCircle size={16} className="animate-spin text-slate-500" />
-                    <span className="text-[12px] font-semibold text-slate-600">Loading available coupons</span>
-                  </div>
-                ) : availablePromos.length ? (
-                  availablePromos.map((promo) => {
-                    const isApplied = String(appliedPromo?.promo?.code || '').toUpperCase() === String(promo?.code || '').toUpperCase();
-
-                    return (
-                      <div
-                        key={promo?._id || promo?.code}
-                        className={`rounded-[18px] border px-4 py-4 ${
-                          isApplied ? 'border-emerald-200 bg-emerald-50/70' : 'border-slate-100 bg-slate-50/70'
-                        }`}
-                      >
-                        <div className="flex items-start justify-between gap-3">
-                          <div className="min-w-0">
-                            <div className="flex items-center gap-2">
-                              <p className="truncate text-[14px] font-black text-slate-900">{promo?.code}</p>
-                              {isApplied && <CheckCircle2 size={14} className="text-emerald-600" strokeWidth={2.6} />}
-                            </div>
-                            <p className="mt-1 text-[11px] font-medium text-slate-600">{formatPromoSummary(promo)}</p>
-                          </div>
-                          <button
-                            type="button"
-                            disabled={Boolean(applyingPromoCode)}
-                            onClick={async () => {
-                              const applied = await applyPromoCode(promo?.code);
-                              if (applied) {
-                                setShowCouponModal(false);
-                              }
-                            }}
-                            className={`shrink-0 rounded-full px-3 py-2 text-[10px] font-black uppercase tracking-[0.14em] ${
-                              isApplied ? 'bg-emerald-600 text-white' : 'bg-white text-slate-800 border border-slate-200'
-                            } disabled:opacity-60`}
-                          >
-                            {applyingPromoCode === String(promo?.code || '').toUpperCase() ? 'Applying' : isApplied ? 'Applied' : 'Use'}
-                          </button>
-                        </div>
-                      </div>
-                    );
-                  })
-                ) : (
-                  <div className="rounded-[18px] border border-slate-100 bg-slate-50 px-4 py-4">
-                    <p className="text-[12px] font-semibold text-slate-600">
-                      No coupons are active for this zone right now.
-                    </p>
-                  </div>
-                )}
-              </div>
-            </motion.div>
-          </React.Fragment>
-        )}
-        {showPaymentModal && (
-          <React.Fragment key="payment-modal">
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setShowPaymentModal(false)}
-              className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[100] max-w-lg mx-auto"
-            />
-            <motion.div
-              initial={{ y: '100%' }}
-              animate={{ y: 0 }}
-              exit={{ y: '100%' }}
-              transition={{ type: 'spring', damping: 26, stiffness: 320 }}
-              className="fixed bottom-0 left-0 right-0 max-w-lg mx-auto bg-white rounded-t-[28px] px-5 pt-4 pb-10 z-[101]"
-            >
-              <div className="w-10 h-1 bg-slate-200 rounded-full mx-auto mb-5" />
-              <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Payment</p>
-              <h3 className="text-[18px] font-bold text-slate-900 mb-5">Select Method</h3>
-              <div className="space-y-2.5">
-                {paymentOptions.map(({ id, stateValue, label, sub, Icon, bg, color }) => (
-                  <motion.button
-                    key={stateValue}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={() => {
-                      setPaymentMethod(stateValue);
-                      setShowPaymentModal(false);
+                <div className="mt-5 flex gap-2">
+                  <input
+                    type="text"
+                    value={promoCodeInput}
+                    onChange={(event) => {
+                      setPromoCodeInput(event.target.value.toUpperCase());
+                      setPromoError('');
+                      setPromoFeedback('');
                     }}
-                    className={`w-full flex items-center gap-3.5 p-4 rounded-[18px] border-2 transition-all ${
-                      paymentMethod === stateValue ? 'border-primary-orange/20 bg-primary-orange/5/40' : 'border-slate-100 bg-slate-50/50'
-                    }`}
+                    placeholder="Enter coupon code"
+                    className="min-w-0 flex-1 rounded-[16px] border border-slate-200 px-4 py-3 text-[13px] font-semibold text-slate-900 outline-none transition focus:border-emerald-300"
+                  />
+                  <button
+                    type="button"
+                    disabled={Boolean(applyingPromoCode) || !selectedVehicle}
+                    onClick={async () => {
+                      const applied = await applyPromoCode(promoCodeInput);
+                      if (applied) {
+                        setShowCouponModal(false);
+                      }
+                    }}
+                    className="rounded-[16px] bg-slate-950 px-4 py-3 text-[12px] font-black uppercase tracking-[0.14em] text-white disabled:opacity-60"
                   >
-                    <div className={`w-10 h-10 rounded-[12px] ${bg} flex items-center justify-center shrink-0`}>
-                      <Icon size={18} className={color} strokeWidth={2} />
+                    {applyingPromoCode ? 'Applying' : 'Apply'}
+                  </button>
+                </div>
+
+                {(promoError || promoFeedback) && (
+                  <p className={`mt-3 text-[11px] font-semibold ${promoError ? 'text-rose-500' : 'text-emerald-600'}`}>
+                    {promoError || promoFeedback}
+                  </p>
+                )}
+
+                <div className="mt-5 max-h-[46vh] space-y-2 overflow-y-auto pr-1">
+                  {isLoadingPromos ? (
+                    <div className="flex items-center gap-2 rounded-[18px] border border-slate-100 bg-slate-50 px-4 py-4">
+                      <LoaderCircle size={16} className="animate-spin text-slate-500" />
+                      <span className="text-[12px] font-semibold text-slate-600">Loading available coupons</span>
                     </div>
-                    <div className="flex-1 text-left">
-                      <p className="text-[14px] font-bold text-slate-900">{label}</p>
-                      <p className="text-[11px] font-bold text-slate-400">{sub}</p>
+                  ) : availablePromos.length ? (
+                    availablePromos.map((promo) => {
+                      const isApplied = String(appliedPromo?.promo?.code || '').toUpperCase() === String(promo?.code || '').toUpperCase();
+
+                      return (
+                        <div
+                          key={promo?._id || promo?.code}
+                          className={`rounded-[18px] border px-4 py-4 ${isApplied ? 'border-emerald-200 bg-emerald-50/70' : 'border-slate-100 bg-slate-50/70'
+                            }`}
+                        >
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="min-w-0">
+                              <div className="flex items-center gap-2">
+                                <p className="truncate text-[14px] font-black text-slate-900">{promo?.code}</p>
+                                {isApplied && <CheckCircle2 size={14} className="text-emerald-600" strokeWidth={2.6} />}
+                              </div>
+                              <p className="mt-1 text-[11px] font-medium text-slate-600">{formatPromoSummary(promo)}</p>
+                            </div>
+                            <button
+                              type="button"
+                              disabled={Boolean(applyingPromoCode)}
+                              onClick={async () => {
+                                const applied = await applyPromoCode(promo?.code);
+                                if (applied) {
+                                  setShowCouponModal(false);
+                                }
+                              }}
+                              className={`shrink-0 rounded-full px-3 py-2 text-[10px] font-black uppercase tracking-[0.14em] ${isApplied ? 'bg-emerald-600 text-white' : 'bg-white text-slate-800 border border-slate-200'
+                                } disabled:opacity-60`}
+                            >
+                              {applyingPromoCode === String(promo?.code || '').toUpperCase() ? 'Applying' : isApplied ? 'Applied' : 'Use'}
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })
+                  ) : (
+                    <div className="rounded-[18px] border border-slate-100 bg-slate-50 px-4 py-4">
+                      <p className="text-[12px] font-semibold text-slate-600">
+                        No coupons are active for this zone right now.
+                      </p>
                     </div>
-                    {paymentMethod === stateValue && (
-                      <div className="w-5 h-5 rounded-full bg-primary-orange/50 flex items-center justify-center shrink-0">
-                        <svg width="8" height="6" viewBox="0 0 8 6" fill="none">
-                          <path d="M1 3L3 5L7 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                        </svg>
+                  )}
+                </div>
+              </motion.div>
+            </React.Fragment>
+          )}
+          {showPaymentModal && (
+            <React.Fragment key="payment-modal">
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => setShowPaymentModal(false)}
+                className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[100] max-w-lg mx-auto"
+              />
+              <motion.div
+                initial={{ y: '100%' }}
+                animate={{ y: 0 }}
+                exit={{ y: '100%' }}
+                transition={{ type: 'spring', damping: 26, stiffness: 320 }}
+                className="fixed bottom-0 left-0 right-0 max-w-lg mx-auto bg-white rounded-t-[28px] px-5 pt-4 pb-10 z-[101]"
+              >
+                <div className="w-10 h-1 bg-slate-200 rounded-full mx-auto mb-5" />
+                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Payment</p>
+                <h3 className="text-[18px] font-bold text-slate-900 mb-5">Select Method</h3>
+                <div className="space-y-2.5">
+                  {paymentOptions.map(({ id, stateValue, label, sub, Icon, bg, color }) => (
+                    <motion.button
+                      key={stateValue}
+                      whileTap={{ scale: 0.98 }}
+                      onClick={() => {
+                        setPaymentMethod(stateValue);
+                        setShowPaymentModal(false);
+                      }}
+                      className={`w-full flex items-center gap-3.5 p-4 rounded-[18px] border-2 transition-all ${paymentMethod === stateValue ? 'border-primary-orange/20 bg-primary-orange/5/40' : 'border-slate-100 bg-slate-50/50'
+                        }`}
+                    >
+                      <div className={`w-10 h-10 rounded-[12px] ${bg} flex items-center justify-center shrink-0`}>
+                        <Icon size={18} className={color} strokeWidth={2} />
                       </div>
-                    )}
-                  </motion.button>
-                ))}
-              </div>
-            </motion.div>
-          </React.Fragment>
-        )}
+                      <div className="flex-1 text-left">
+                        <p className="text-[14px] font-bold text-slate-900">{label}</p>
+                        <p className="text-[11px] font-bold text-slate-400">{sub}</p>
+                      </div>
+                      {paymentMethod === stateValue && (
+                        <div className="w-5 h-5 rounded-full bg-primary-orange/50 flex items-center justify-center shrink-0">
+                          <svg width="8" height="6" viewBox="0 0 8 6" fill="none">
+                            <path d="M1 3L3 5L7 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                          </svg>
+                        </div>
+                      )}
+                    </motion.button>
+                  ))}
+                </div>
+              </motion.div>
+            </React.Fragment>
+          )}
         </AnimatePresence>
       </AnimatePresence>
     </div>

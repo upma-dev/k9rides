@@ -21,9 +21,9 @@ import { useSettings } from '../../../../shared/context/SettingsContext';
 
 const RegistrationDashboard = () => {
     const navigate = useNavigate();
-    const { settings } = useSettings();
+    const { settings, activeLogo } = useSettings();
     const appName = settings.general?.app_name || 'App';
-    const appLogo = settings.general?.logo || settings.customization?.logo;
+    const appLogo = activeLogo || settings.general?.logo || settings.customization?.logo;
 
     const steps = [
         { id: 'personal', title: 'Personal Information', sub: 'ID & Profile', icon: <User size={18} /> },

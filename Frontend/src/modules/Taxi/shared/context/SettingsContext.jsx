@@ -149,14 +149,22 @@ export const SettingsProvider = ({ children }) => {
 
   useEffect(() => {
     const pathname = location.pathname;
-    if (pathname.startsWith('/admin') || pathname.startsWith('/taxi/admin') || pathname.startsWith('/taxi/owner')) {
+    if (pathname.startsWith('/admin') || pathname.startsWith('/taxi/admin') || pathname.startsWith('/taxi/owner') || pathname.startsWith('/food/admin')) {
       setActiveModule('admin');
-    } else if (pathname.startsWith('/food/delivery') || pathname.startsWith('/delivery')) {
-      setActiveModule('delivery');
+    } else if (pathname.startsWith('/food/delivery')) {
+      setActiveModule('food_delivery_partner');
+    } else if (pathname.startsWith('/food/restaurant') || pathname.startsWith('/restaurant')) {
+      setActiveModule('food_restaurant');
     } else if (pathname.startsWith('/food')) {
       setActiveModule('food');
+    } else if (pathname.startsWith('/taxi/driver')) {
+      setActiveModule('taxi_driver');
     } else if (pathname.startsWith('/taxi')) {
       setActiveModule('taxi');
+    } else if (pathname.startsWith('/delivery/partner')) {
+      setActiveModule('delivery_partner');
+    } else if (pathname.startsWith('/delivery')) {
+      setActiveModule('delivery');
     } else {
       setActiveModule('landing');
     }

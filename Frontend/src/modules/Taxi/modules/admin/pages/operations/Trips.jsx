@@ -216,7 +216,7 @@ const Trips = () => {
                               exit={{ opacity: 0, height: 0 }}
                               className="bg-slate-50/50 p-6 border-t border-slate-100"
                             >
-                              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                                 <div className="space-y-4">
                                   <h3 className="text-[11px] font-black uppercase tracking-wider text-slate-400">Trip Locations</h3>
                                   <div className="space-y-3">
@@ -255,12 +255,67 @@ const Trips = () => {
                                       <span>Distance Charge</span>
                                       <span className="font-bold">₹{(row.raw?.distanceChargeAmount || 0).toFixed(2)}</span>
                                     </div>
+                                    {row.raw?.recovered_cancellation_due > 0 && (
+                                      <div className="flex justify-between items-center text-[13px] text-red-500">
+                                        <span>Previous Cancellation Due</span>
+                                        <span className="font-bold">₹{Number(row.raw.recovered_cancellation_due).toFixed(2)}</span>
+                                      </div>
+                                    )}
                                     <div className="pt-2 mt-2 border-t border-slate-100 flex justify-between items-center text-[15px] font-black text-slate-900">
-                                      <span>Total Final Fare</span>
-                                      <span>₹{(row.raw?.fare || 0).toFixed(2)}</span>
+                                      <span>Total Payable</span>
+                                      <span>₹{(Number(row.raw?.fare || 0) + Number(row.raw?.recovered_cancellation_due || 0)).toFixed(2)}</span>
                                     </div>
                                   </div>
                                 </div>
+                                {row.tripStatus === 'CANCELLED' && (
+                                  <div className="space-y-4">
+                                    <h3 className="text-[11px] font-black uppercase tracking-wider text-rose-500">Cancellation Details</h3>
+                                    <div className="bg-white rounded-lg border border-slate-200 p-4 space-y-2 text-[13px] text-slate-600">
+                                      <div className="flex justify-between items-center">
+                                        <span>Cancelled By</span>
+                                        <span className="font-bold text-slate-800 capitalize">{row.raw?.cancelled_by || 'User'}</span>
+                                      </div>
+                                      <div className="flex justify-between items-center">
+                                        <span>Reason</span>
+                                        <span className="font-bold text-slate-800">{row.raw?.cancellation_reason || 'N/A'}</span>
+                                      </div>
+                                      <div className="flex justify-between items-center">
+                                        <span>Cancellation Time</span>
+                                        <span className="font-bold text-slate-800">{formatDate(row.raw?.cancellation_time || row.date)}</span>
+                                      </div>
+                                      <div className="flex justify-between items-center">
+                                        <span>Status at Cancellation</span>
+                                        <span className="font-bold text-slate-800">{row.raw?.liveStatus || row.raw?.rideStatus || 'N/A'}</span>
+                                      </div>
+                                      <div className="flex justify-between items-center">
+                                        <span>Free Cancellation?</span>
+                                        <span className="font-bold text-slate-800">{Number(row.raw?.cancellation_charge || 0) === 0 ? 'Yes' : 'No'}</span>
+                                      </div>
+                                      <div className="flex justify-between items-center">
+                                        <span>Cancellation Fee</span>
+                                        <span className="font-bold text-red-500">₹{(row.raw?.cancellation_charge || 0).toFixed(2)}</span>
+                                      </div>
+                                      <div className="flex justify-between items-center">
+                                        <span>Status</span>
+                                        <span className={`font-bold ${row.raw?.cancellation_status === 'recovered' ? 'text-emerald-600' : 'text-amber-600'}`}>
+                                          {row.raw?.cancellation_status === 'recovered' ? 'Recovered' : 'Pending'}
+                                        </span>
+                                      </div>
+                                      {row.raw?.cancellation_status === 'recovered' && (
+                                        <>
+                                          <div className="flex justify-between items-center">
+                                            <span>Recovery Ride ID</span>
+                                            <span className="font-bold text-indigo-600">{row.raw?.recovered_in_ride ? `REQ_${String(row.raw?.recovered_in_ride).slice(-12).toUpperCase()}` : 'N/A'}</span>
+                                          </div>
+                                          <div className="flex justify-between items-center">
+                                            <span>Recovery Time</span>
+                                            <span className="font-bold text-slate-800">{formatDate(row.raw?.recovered_at)}</span>
+                                          </div>
+                                        </>
+                                      )}
+                                    </div>
+                                  </div>
+                                )}
                               </div>
                             </motion.div>
                           </td>

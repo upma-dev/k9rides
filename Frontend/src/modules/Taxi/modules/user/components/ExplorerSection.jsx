@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
 import indiaGateImg from '@/assets/india_gate_real.png';
@@ -30,6 +30,31 @@ const ExplorerSection = () => {
       drop: 'Rajwada Palace, Indore',
     },
   ];
+
+  const scrollContainerRef = useRef(null);
+
+  useEffect(() => {
+    const container = scrollContainerRef.current;
+    if (!container) return;
+
+    let animationFrameId;
+    let scrollAmount = 0;
+
+    const scroll = () => {
+      if (container) {
+        container.scrollLeft += 1;
+        // If reached the end, reset to 0
+        if (container.scrollLeft + container.clientWidth >= container.scrollWidth - 1) {
+          container.scrollLeft = 0;
+        }
+      }
+      animationFrameId = requestAnimationFrame(scroll);
+    };
+
+    animationFrameId = requestAnimationFrame(scroll);
+
+    return () => cancelAnimationFrame(animationFrameId);
+  }, []);
 
   const indiaCities = [
     {
@@ -77,7 +102,11 @@ const ExplorerSection = () => {
           </p>
         </div>
 
-        <div className="flex gap-4 overflow-x-auto no-scrollbar scroll-smooth pb-5 px-1">
+        <div 
+          ref={scrollContainerRef}
+          className="flex gap-4 overflow-x-auto no-scrollbar pb-5 px-1 flex-nowrap"
+          style={{ scrollBehavior: 'auto' }}
+        >
           {indiaCities.map((city, idx) => (
             <button
               key={idx}
@@ -89,6 +118,10 @@ const ExplorerSection = () => {
                 <img
                   src={city.image}
                   alt={city.title}
+                  onError={(e) => {
+                    e.target.onerror = null;
+                    e.target.src = 'https://images.unsplash.com/photo-1524492412937-b28074a5d7da?auto=format&fit=crop&w=400&q=80';
+                  }}
                   className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-slate-900/20 to-transparent"></div>

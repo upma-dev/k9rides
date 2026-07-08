@@ -11,12 +11,12 @@ const landingPageSettingSchema = new mongoose.Schema(
     // Media & Video
     video_url: { type: String, default: '' },
     logo_url: { type: String, default: '' },
-    
+
     // Hero Section Content
     hero_title: { type: String, default: '' },
     hero_description: { type: String, default: '' },
     hero_image_url: { type: String, default: '' },
-    
+
     // why_us graphic
     why_us_image_url: { type: String, default: '' },
 

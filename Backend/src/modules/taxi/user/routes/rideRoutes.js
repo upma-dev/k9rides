@@ -19,11 +19,13 @@ import {
   updateRideStatus,
   verifyRazorpayRideCompletion,
   verifyRazorpayRideTip,
+  validateLocation,
 } from '../controllers/rideController.js';
 
 export const rideRouter = Router();
 
 rideRouter.post('/', authenticateOrResolveUser(['user']), asyncHandler(createRide));
+rideRouter.post('/validate-location', asyncHandler(validateLocation));
 rideRouter.get('/', authenticateOrResolveUser(['user', 'driver']), asyncHandler(listMyRides));
 rideRouter.get('/app-settings/tip', asyncHandler(getRideAppTipSettings));
 rideRouter.get('/available-drivers', asyncHandler(listAvailableDrivers));

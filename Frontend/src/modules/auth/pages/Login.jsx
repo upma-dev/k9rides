@@ -5,8 +5,9 @@ import { Phone, Lock, ArrowRight, ArrowLeft, ShieldCheck, Loader2, UtensilsCross
 import { toast } from "sonner"
 import apiClient, { authAPI } from "@food/api"
 import { setUnifiedAuthData, isUnifiedAuthenticated } from "@food/utils/auth"
+import { useSettings } from "../../Taxi/shared/context/SettingsContext"
 
-const K9_LOGO = "/k9 logo.png"
+const K9_LOGO = "/k9-logo.png"
 const COMPANY_NAME = "K9 Rides"
 
 export default function UnifiedOTPFastLogin({ viewType = "auth" }) {
@@ -24,6 +25,7 @@ export default function UnifiedOTPFastLogin({ viewType = "auth" }) {
   const navigate = useNavigate()
   const location = useLocation()
   const submitting = useRef(false)
+  const { activeLogo } = useSettings()
 
   const getWebFcmTokenForLogin = async () => {
     if (typeof window === "undefined" || typeof navigator === "undefined") {
@@ -394,7 +396,7 @@ export default function UnifiedOTPFastLogin({ viewType = "auth" }) {
             className="flex items-center gap-4 mb-16"
           >
             <div className="w-12 h-12 flex items-center justify-center bg-white rounded-xl shadow-lg overflow-hidden">
-              <img src={K9_LOGO} alt={COMPANY_NAME} className="w-full h-full object-cover" />
+              <img src={activeLogo || K9_LOGO} alt={COMPANY_NAME} className="w-full h-full object-cover" />
             </div>
             <h1 className="text-3xl font-black tracking-tight">{COMPANY_NAME}</h1>
           </motion.div>
@@ -464,7 +466,7 @@ export default function UnifiedOTPFastLogin({ viewType = "auth" }) {
             >
               {/* K9 Logo */}
               <img 
-                src={K9_LOGO} 
+                src={activeLogo || K9_LOGO} 
                 alt={COMPANY_NAME} 
                 className="w-[84px] h-[84px] rounded-full object-cover shadow-lg mb-6" 
               />

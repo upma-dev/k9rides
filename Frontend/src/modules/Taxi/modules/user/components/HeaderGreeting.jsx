@@ -8,11 +8,6 @@ import taxiIcon from '@food/assets/category-icons/taxi.png.png';
 
 import { useSettings } from '../../../shared/context/SettingsContext';
 
-const fallingCoins = [
-  { id: 1, left: '24%', delay: 0 },
-  { id: 2, left: '50%', delay: 0.65 },
-  { id: 3, left: '72%', delay: 1.2 },
-];
 
 const HeaderGreeting = () => {
   const navigate = useNavigate();
@@ -26,8 +21,8 @@ const HeaderGreeting = () => {
   const walletPath = `${routePrefix}/wallet`;
   const isTaxi = window.location.pathname.includes('/taxi');
   const theme = {
-    activeBg: isTaxi ? 'bg-[#2563eb]' : 'bg-[#d82c23]',
-    activeHex: isTaxi ? '#2563eb' : '#d82c23',
+    activeBg: isTaxi ? 'bg-[#059669]' : 'bg-[#d82c23]',
+    activeHex: isTaxi ? '#059669' : '#d82c23',
     inactiveHex: isTaxi ? '#0c1428' : '#6e0d09',
     containerHex: isTaxi ? '#111d3a' : '#9c1c16',
   };
@@ -58,7 +53,7 @@ const HeaderGreeting = () => {
   return (
     <>
       <div 
-        className="w-full rounded-b-[2rem] pb-2 shadow-none overflow-visible"
+        className="w-full pb-0 shadow-none overflow-visible"
         style={{ backgroundColor: theme.containerHex }}
       >
       {/* Top Location / Header Greeting Row */}
@@ -115,42 +110,10 @@ const HeaderGreeting = () => {
 
         <button
           onClick={() => navigate(walletPath)}
-          className="relative w-12 h-12 overflow-hidden rounded-full border border-white/10 bg-white/10 flex items-center justify-center shadow-[0_12px_30px_rgba(15,23,42,0.08)] shrink-0 active:scale-95 transition-transform"
+          className="relative flex h-11 w-11 items-center justify-center rounded-full border border-white/20 bg-white/10 backdrop-blur-md shadow-sm shrink-0 active:scale-95 transition-all hover:bg-white/20 hover:border-white/30"
         >
-          <motion.div
-            className="absolute inset-x-2 top-1 h-3 rounded-full bg-gradient-to-b from-amber-200/20 to-transparent"
-            animate={{ opacity: [0.15, 0.35, 0.15] }}
-            transition={{ duration: 2.4, repeat: Infinity, ease: 'easeInOut' }}
-          />
-
-          {fallingCoins.map((coin) => (
-            <motion.span
-              key={coin.id}
-              aria-hidden="true"
-              className="absolute top-1 block h-1.5 w-1.5 rounded-full bg-gradient-to-br from-amber-300 to-yellow-500 shadow-[0_1px_4px_rgba(245,158,11,0.45)]"
-              style={{ left: coin.left }}
-              animate={{
-                y: [0, 10, 16],
-                opacity: [0, 1, 1, 0],
-                scale: [0.85, 1, 0.92],
-              }}
-              transition={{
-                duration: 1.8,
-                delay: coin.delay,
-                repeat: Infinity,
-                repeatDelay: 0.8,
-                ease: 'easeIn',
-              }}
-            />
-          ))}
-
-          <motion.div
-            className="relative z-10"
-            animate={{ y: [0, -1, 0], rotate: [0, -2, 0] }}
-            transition={{ duration: 2.6, repeat: Infinity, ease: 'easeInOut' }}
-          >
-            <Wallet size={20} className="text-white" strokeWidth={2.5} />
-          </motion.div>
+          <Wallet size={18} className="text-white" strokeWidth={2.5} />
+          <span className="absolute top-[10px] right-[10px] h-2 w-2 rounded-full bg-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.8)]" />
         </button>
       </div>
 
@@ -194,26 +157,22 @@ const HeaderGreeting = () => {
       </div>
     </div>
 
-      {/* Search Bar (Sticky Viewport, turns white on scroll) */}
+      {/* Search Bar (Sticky Viewport) */}
       <div 
-        className={`sticky top-0 z-[70] transition-all duration-300 pt-2 pb-3 px-5 ${
+        className={`sticky top-0 z-[70] transition-all duration-300 -mt-4 pt-4 pb-4 px-5 ${
           isScrolled 
-            ? 'shadow-[0_4px_20px_rgba(0,0,0,0.06)] border-b border-gray-100/80' 
+            ? 'shadow-[0_4px_20px_rgba(0,0,0,0.15)] border-b border-transparent' 
             : 'border-b border-transparent'
         }`}
         style={{
-          background: isScrolled ? 'rgba(255, 255, 255, 0.98)' : theme.containerHex
+          background: theme.containerHex
         }}
       >
         <motion.button
           type="button"
           whileTap={{ scale: 0.99 }}
           onClick={() => navigate(selectLocationPath)}
-          className={`flex w-full items-center gap-2 rounded-[18px] border border-transparent px-3.5 py-3.5 text-left transition-all duration-300 ${
-            isScrolled 
-              ? 'bg-gray-100/80 hover:bg-gray-100 shadow-none' 
-              : 'bg-white shadow-sm'
-          }`}
+          className="flex w-full items-center gap-2 rounded-[18px] border border-transparent bg-white px-3.5 py-3.5 text-left shadow-sm transition-all duration-300 hover:bg-gray-50"
         >
           <Search size={16} className="text-slate-400" strokeWidth={2.5} />
           <span className="min-w-0 flex-1 truncate text-[12px] font-bold text-slate-400">

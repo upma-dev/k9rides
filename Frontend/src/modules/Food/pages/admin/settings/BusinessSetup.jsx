@@ -1,28 +1,74 @@
 import { useState, useRef, useEffect } from "react";
-import { Info, Phone, Upload, X, Loader2 } from "lucide-react";
+import { Info, Phone, Upload, X, Loader2, Globe, Settings, Car, UtensilsCrossed, Truck, Save, Trash2, Image as ImageIcon } from "lucide-react";
 import { toast } from "sonner";
 import { adminAPI } from "@food/api";
 import { setCachedSettings, updateFavicon, updateTitle } from "@food/utils/businessSettings";
+import taxiAPI from "../../../../Taxi/shared/api/axiosInstance";
+import { useSettings } from "../../../../Taxi/shared/context/SettingsContext";
+import apiClient from "../../../../../services/api/axios";
+
 const debugLog = (...args) => {}
 const debugWarn = (...args) => {}
 const debugError = (...args) => {}
 
+const MODULE_METADATA = {
+  landing: {
+    label: "Landing Website",
+    description: "Branding for the master home page and informational sections.",
+    icon: Globe,
+    colorClass: "text-sky-500 bg-sky-50",
+    logos: [
+      { key: "landing", label: "Landing Page Logo", description: "Main logo shown on the landing website header/footer." },
+      { key: "landing_user", label: "User Portal Logo", description: "Logo for the main customer web portal and landing page users." }
+    ]
+  },
+  admin: {
+    label: "Admin Control Panels",
+    description: "Branding for the global administration interface sidebars.",
+    icon: Settings,
+    colorClass: "text-indigo-500 bg-indigo-50",
+    logos: [
+      { key: "admin", label: "Admin Dashboard Logo", description: "Logo shown on admin control panels." }
+    ]
+  },
+  taxi: {
+    label: "Taxi / Rides App",
+    description: "Branding for cab booking, taxi tracking, and driver portals.",
+    icon: Car,
+    colorClass: "text-amber-500 bg-amber-50",
+    logos: [
+      { key: "taxi", label: "Taxi Passenger Logo", description: "Logo shown to passengers booking taxi rides." },
+      { key: "taxi_driver", label: "Taxi Driver Logo", description: "Logo shown to taxi drivers in driver-specific screens." }
+    ]
+  },
+  food: {
+    label: "Food Delivery App",
+    description: "Branding for restaurant order tracking, user carts, and checkout.",
+    icon: UtensilsCrossed,
+    colorClass: "text-rose-500 bg-rose-50",
+    logos: [
+      { key: "food", label: "Restaurant App Logo", description: "Logo shown to customers." },
+      { key: "food_restaurant", label: "Restaurant Owner Logo", description: "Logo shown on restaurant owner dashboards." },
+      { key: "food_delivery_partner", label: "Food Delivery Partner Logo", description: "Logo shown on delivery partner portals." }
+    ]
+  },
+  delivery: {
+    label: "Delivery Logistics App",
+    description: "Branding for parcel cargo onboarding and delivery agent portals.",
+    icon: Truck,
+    colorClass: "text-emerald-500 bg-emerald-50",
+    logos: [
+      { key: "delivery", label: "Logistics Client Logo", description: "Logo shown to customers sending/tracking shipments." },
+      { key: "delivery_partner", label: "Logistics Partner Logo", description: "Logo shown to cargo/delivery agents." }
+    ]
+  }
+};
+
 
 export default function BusinessSetup() {
+  const { refreshSettings } = useSettings();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [logoPreview, setLogoPreview] = useState(null);
-  const [logoFile, setLogoFile] = useState(null);
-  const logoInputRef = useRef(null);
-
-  const [restaurantLogoPreview, setRestaurantLogoPreview] = useState(null);
-  const [restaurantLogoFile, setRestaurantLogoFile] = useState(null);
-  const restaurantLogoInputRef = useRef(null);
-
-  const [deliveryPartnerLogoPreview, setDeliveryPartnerLogoPreview] = useState(null);
-  const [deliveryPartnerLogoFile, setDeliveryPartnerLogoFile] = useState(null);
-  const deliveryPartnerLogoInputRef = useRef(null);
-
   const [formData, setFormData] = useState({
     companyName: "",
     email: "",
@@ -34,9 +80,15 @@ export default function BusinessSetup() {
     region: "",
   });
 
+  const [taxiLogos, setTaxiLogos] = useState({ logos: {}, favicons: {} });
+  const [logoSettingsLoading, setLogoSettingsLoading] = useState(true);
+  const [savingLogoSettings, setSavingLogoSettings] = useState(false);
+  const [logoUploading, setLogoUploading] = useState({});
+
   // Fetch business settings on mount
   useEffect(() => {
     fetchBusinessSettings();
+    fetchTaxiBrandingSettings();
   }, []);
 
   const fetchBusinessSettings = async () => {
@@ -56,17 +108,6 @@ export default function BusinessSetup() {
           pincode: settings.pincode || "",
           region: settings.region || "India",
         });
-
-        // Set logo preview if it exists
-        if (settings.logo?.url) {
-          setLogoPreview(settings.logo.url);
-        }
-        if (settings.restaurantLogo?.url) {
-          setRestaurantLogoPreview(settings.restaurantLogo.url);
-        }
-        if (settings.deliveryPartnerLogo?.url) {
-          setDeliveryPartnerLogoPreview(settings.deliveryPartnerLogo.url);
-        }
       }
     } catch (error) {
       debugError("Error fetching business settings:", error);
@@ -146,26 +187,12 @@ export default function BusinessSetup() {
         files.deliveryPartnerLogo = deliveryPartnerLogoFile;
       }
 
-      const response = await adminAPI.updateBusinessSettings(dataToSend, files);
+      const response = await adminAPI.updateBusinessSettings(dataToSend);
       const updatedSettings = response?.data?.data || response?.data;
 
       if (updatedSettings) {
         // Update global cache immediately
         setCachedSettings(updatedSettings);
-
-        // Update preview with new URL if file was uploaded
-        if (updatedSettings.logo?.url) {
-          setLogoPreview(updatedSettings.logo.url);
-          setLogoFile(null);
-        }
-        if (updatedSettings.restaurantLogo?.url) {
-          setRestaurantLogoPreview(updatedSettings.restaurantLogo.url);
-          setRestaurantLogoFile(null);
-        }
-        if (updatedSettings.deliveryPartnerLogo?.url) {
-          setDeliveryPartnerLogoPreview(updatedSettings.deliveryPartnerLogo.url);
-          setDeliveryPartnerLogoFile(null);
-        }
       }
 
       toast.success("Business settings saved successfully");
@@ -182,19 +209,94 @@ export default function BusinessSetup() {
 
   const handleReset = () => {
     fetchBusinessSettings();
-    setLogoFile(null);
-    setRestaurantLogoFile(null);
-    setDeliveryPartnerLogoFile(null);
-    if (logoInputRef.current) {
-      logoInputRef.current.value = "";
-    }
-    if (restaurantLogoInputRef.current) {
-      restaurantLogoInputRef.current.value = "";
-    }
-    if (deliveryPartnerLogoInputRef.current) {
-      deliveryPartnerLogoInputRef.current.value = "";
-    }
     toast.info("Form reset to saved values");
+  };
+
+  const fetchTaxiBrandingSettings = async () => {
+    try {
+      setLogoSettingsLoading(true);
+      const res = await taxiAPI.get('/admin/general-settings/customize');
+      const customizationData = res.data?.settings || {};
+      setTaxiLogos({
+        logos: customizationData.logos || {},
+        favicons: customizationData.favicons || {}
+      });
+    } catch (err) {
+      console.error('Failed to load branding configurations:', err);
+    } finally {
+      setLogoSettingsLoading(false);
+    }
+  };
+
+  const handleTaxiLogoChange = (key, type, value) => {
+    setTaxiLogos(prev => ({
+      ...prev,
+      [type === 'logo' ? 'logos' : 'favicons']: {
+        ...prev[type === 'logo' ? 'logos' : 'favicons'],
+        [key]: value
+      }
+    }));
+  };
+
+  const handleTaxiFileUpload = async (e, key, type) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const isValidFormat = file.type === 'image/svg+xml' || file.type.startsWith('image/');
+    if (!isValidFormat) {
+      toast.error('Invalid file format. Please upload an image or SVG file.');
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const uploadKey = `${key}_${type}`;
+    setLogoUploading(prev => ({ ...prev, [uploadKey]: true }));
+
+    try {
+      const res = await apiClient.post('/uploads/image', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+
+      const url = res?.data?.data?.url || res?.data?.url || res?.url;
+      if (url) {
+        handleTaxiLogoChange(key, type, url);
+        toast.success(`${type === 'logo' ? 'Logo' : 'Favicon'} uploaded successfully!`);
+      } else {
+        toast.error('Upload failed. No URL returned.');
+      }
+    } catch (err) {
+      console.error('Upload error:', err);
+      toast.error('Failed to upload file');
+    } finally {
+      setLogoUploading(prev => ({ ...prev, [uploadKey]: false }));
+    }
+  };
+
+  const handleSaveTaxiLogos = async () => {
+    try {
+      setSavingLogoSettings(true);
+      const res = await taxiAPI.get('/admin/general-settings/customize');
+      const currentCustomization = res.data?.settings || {};
+
+      const updatedCustomization = {
+        ...currentCustomization,
+        logos: taxiLogos.logos,
+        favicons: taxiLogos.favicons
+      };
+
+      await taxiAPI.patch('/admin/general-settings/customize', { settings: updatedCustomization });
+      toast.success('Branding settings updated successfully!');
+      refreshSettings();
+    } catch (err) {
+      console.error('Update error:', err);
+      toast.error('Failed to save branding configurations');
+    } finally {
+      setSavingLogoSettings(false);
+    }
   };
 
 
@@ -358,206 +460,6 @@ export default function BusinessSetup() {
               </div>
             </div>
 
-            {/* Logos upload section */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1.5">General Logo</label>
-                <input
-                  ref={logoInputRef}
-                  type="file"
-                  accept="image/png,image/jpeg,image/jpg,image/webp"
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (!file) return;
-
-                    const allowedTypes = ["image/png", "image/jpeg", "image/jpg", "image/webp"];
-                    if (!allowedTypes.includes(file.type)) {
-                      toast.error("Invalid file type. Please upload PNG, JPG, JPEG, or WEBP.");
-                      return;
-                    }
-
-                    const maxSize = 5 * 1024 * 1024; // 5MB
-                    if (file.size > maxSize) {
-                      toast.error("File size exceeds 5MB limit.");
-                      return;
-                    }
-
-                    setLogoFile(file);
-                    const reader = new FileReader();
-                    reader.onloadend = () => {
-                      setLogoPreview(reader.result);
-                    };
-                    reader.readAsDataURL(file);
-                  }}
-                  className="hidden"
-                />
-                <div
-                  onClick={() => logoInputRef.current?.click()}
-                  className="border border-dashed border-slate-300 rounded-lg bg-slate-50/60 h-28 flex items-center justify-center cursor-pointer hover:bg-slate-100 transition-colors relative overflow-hidden"
-                >
-                  {logoPreview ? (
-                    <>
-                      <img
-                        src={logoPreview}
-                        alt="Logo preview"
-                        className="w-full h-full object-contain"
-                      />
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setLogoPreview(null);
-                          setLogoFile(null);
-                          if (logoInputRef.current) {
-                            logoInputRef.current.value = "";
-                          }
-                        }}
-                        className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors"
-                      >
-                        <X className="w-3 h-3" />
-                      </button>
-                    </>
-                  ) : (
-                    <div className="text-center">
-                      <Upload className="w-5 h-5 text-slate-400 mx-auto mb-1" />
-                      <p className="text-xs text-slate-400">Click to upload general logo</p>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1.5">Restaurant Logo</label>
-                <input
-                  ref={restaurantLogoInputRef}
-                  type="file"
-                  accept="image/png,image/jpeg,image/jpg,image/webp"
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (!file) return;
-
-                    const allowedTypes = ["image/png", "image/jpeg", "image/jpg", "image/webp"];
-                    if (!allowedTypes.includes(file.type)) {
-                      toast.error("Invalid file type. Please upload PNG, JPG, JPEG, or WEBP.");
-                      return;
-                    }
-
-                    const maxSize = 5 * 1024 * 1024; // 5MB
-                    if (file.size > maxSize) {
-                      toast.error("File size exceeds 5MB limit.");
-                      return;
-                    }
-
-                    setRestaurantLogoFile(file);
-                    const reader = new FileReader();
-                    reader.onloadend = () => {
-                      setRestaurantLogoPreview(reader.result);
-                    };
-                    reader.readAsDataURL(file);
-                  }}
-                  className="hidden"
-                />
-                <div
-                  onClick={() => restaurantLogoInputRef.current?.click()}
-                  className="border border-dashed border-slate-300 rounded-lg bg-slate-50/60 h-28 flex items-center justify-center cursor-pointer hover:bg-slate-100 transition-colors relative overflow-hidden"
-                >
-                  {restaurantLogoPreview ? (
-                    <>
-                      <img
-                        src={restaurantLogoPreview}
-                        alt="Restaurant Logo preview"
-                        className="w-full h-full object-contain"
-                      />
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setRestaurantLogoPreview(null);
-                          setRestaurantLogoFile(null);
-                          if (restaurantLogoInputRef.current) {
-                            restaurantLogoInputRef.current.value = "";
-                          }
-                        }}
-                        className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors"
-                      >
-                        <X className="w-3 h-3" />
-                      </button>
-                    </>
-                  ) : (
-                    <div className="text-center">
-                      <Upload className="w-5 h-5 text-slate-400 mx-auto mb-1" />
-                      <p className="text-xs text-slate-400">Click to upload restaurant logo</p>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1.5">Delivery Partner Logo</label>
-                <input
-                  ref={deliveryPartnerLogoInputRef}
-                  type="file"
-                  accept="image/png,image/jpeg,image/jpg,image/webp"
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (!file) return;
-
-                    const allowedTypes = ["image/png", "image/jpeg", "image/jpg", "image/webp"];
-                    if (!allowedTypes.includes(file.type)) {
-                      toast.error("Invalid file type. Please upload PNG, JPG, JPEG, or WEBP.");
-                      return;
-                    }
-
-                    const maxSize = 5 * 1024 * 1024; // 5MB
-                    if (file.size > maxSize) {
-                      toast.error("File size exceeds 5MB limit.");
-                      return;
-                    }
-
-                    setDeliveryPartnerLogoFile(file);
-                    const reader = new FileReader();
-                    reader.onloadend = () => {
-                      setDeliveryPartnerLogoPreview(reader.result);
-                    };
-                    reader.readAsDataURL(file);
-                  }}
-                  className="hidden"
-                />
-                <div
-                  onClick={() => deliveryPartnerLogoInputRef.current?.click()}
-                  className="border border-dashed border-slate-300 rounded-lg bg-slate-50/60 h-28 flex items-center justify-center cursor-pointer hover:bg-slate-100 transition-colors relative overflow-hidden"
-                >
-                  {deliveryPartnerLogoPreview ? (
-                    <>
-                      <img
-                        src={deliveryPartnerLogoPreview}
-                        alt="Delivery Partner Logo preview"
-                        className="w-full h-full object-contain"
-                      />
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setDeliveryPartnerLogoPreview(null);
-                          setDeliveryPartnerLogoFile(null);
-                          if (deliveryPartnerLogoInputRef.current) {
-                            deliveryPartnerLogoInputRef.current.value = "";
-                          }
-                        }}
-                        className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors"
-                      >
-                        <X className="w-3 h-3" />
-                      </button>
-                    </>
-                  ) : (
-                    <div className="text-center">
-                      <Upload className="w-5 h-5 text-slate-400 mx-auto mb-1" />
-                      <p className="text-xs text-slate-400">Click to upload delivery partner logo</p>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
           </div>
 
           {/* Save Button Section */}
@@ -593,6 +495,182 @@ export default function BusinessSetup() {
               </div>
             </div>
           </div>
+        </div>
+
+        {/* Dynamic Module-Specific branding */}
+        <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-4 lg:p-6 mt-6">
+          <div className="border-b border-slate-100 pb-4 mb-5 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <ImageIcon size={18} className="text-blue-600 animate-pulse" />
+              <h2 className="text-sm font-semibold text-slate-900">Module-Specific Branding Logos</h2>
+            </div>
+            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Dynamic Setup</span>
+          </div>
+
+          {logoSettingsLoading ? (
+            <div className="flex flex-col items-center justify-center py-10 gap-3">
+              <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
+              <p className="text-xs text-slate-400 uppercase tracking-wider">Loading branding parameters...</p>
+            </div>
+          ) : (
+            <div className="space-y-6">
+              {Object.entries(MODULE_METADATA).map(([key, meta]) => {
+                const IconComponent = meta.icon;
+                const faviconUrl = taxiLogos.favicons[key] || '';
+                
+                return (
+                  <div key={key} className="border border-slate-100 rounded-xl p-4 hover:shadow-sm transition-all duration-300">
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4 pb-3 border-b border-slate-100">
+                      <div className="flex items-center gap-2.5">
+                        <div className="p-2 rounded-lg bg-slate-100 text-slate-600 shrink-0">
+                          <IconComponent size={18} />
+                        </div>
+                        <div>
+                          <h4 className="text-[13px] font-bold text-slate-800">{meta.label}</h4>
+                          <p className="text-[10px] text-slate-400 mt-0.5">{meta.description}</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="space-y-4">
+                      {/* Sub-Logos Section */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {meta.logos.map((logoMeta) => {
+                          const logoUrl = taxiLogos.logos[logoMeta.key] || '';
+                          return (
+                            <div key={logoMeta.key} className="bg-slate-50 rounded-xl p-3.5 border border-slate-100 flex flex-col justify-between">
+                              <div className="mb-2">
+                                <span className="text-[11px] font-bold text-slate-700">{logoMeta.label}</span>
+                                <p className="text-[9px] text-slate-400 mt-0.5">{logoMeta.description}</p>
+                              </div>
+
+                              <div className="flex items-center gap-3 mt-2">
+                                {/* Logo Preview */}
+                                <div className="h-14 w-20 rounded-lg border border-slate-200 bg-white p-1.5 flex items-center justify-center overflow-hidden shrink-0">
+                                  {logoUrl ? (
+                                    <img src={logoUrl} alt={logoMeta.label} className="max-h-full max-w-full object-contain" />
+                                  ) : (
+                                    <div className="text-center">
+                                      <ImageIcon className="w-4 h-4 mx-auto text-slate-300" />
+                                      <span className="text-[8px] text-slate-400 block mt-0.5">No Logo</span>
+                                    </div>
+                                  )}
+                                </div>
+
+                                {/* Actions */}
+                                <div className="flex-1 flex gap-1.5">
+                                  <label className={`flex-1 flex items-center justify-center gap-1 py-1.5 px-2 rounded-lg border border-blue-600/20 bg-blue-50/50 hover:bg-blue-50 text-blue-600 text-[10px] font-semibold cursor-pointer transition-all active:scale-95 ${
+                                    logoUploading[`${logoMeta.key}_logo`] ? 'opacity-50 pointer-events-none' : ''
+                                  }`}>
+                                    {logoUploading[`${logoMeta.key}_logo`] ? (
+                                      <Loader2 size={11} className="animate-spin" />
+                                    ) : (
+                                      <Upload size={11} />
+                                    )}
+                                    Upload
+                                    <input 
+                                      type="file" 
+                                      accept="image/svg+xml,image/*" 
+                                      onChange={(e) => handleTaxiFileUpload(e, logoMeta.key, 'logo')} 
+                                      className="hidden" 
+                                    />
+                                  </label>
+
+                                  {logoUrl && (
+                                    <button
+                                      type="button"
+                                      onClick={() => handleTaxiLogoChange(logoMeta.key, 'logo', '')}
+                                      className="p-1.5 rounded-lg border border-red-100 text-red-500 hover:bg-red-50 transition-all"
+                                    >
+                                      <Trash2 size={12} />
+                                    </button>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+
+                      {/* Favicon Upload */}
+                      <div className="bg-slate-50 rounded-xl p-3.5 border border-slate-100">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-[11px] font-bold text-slate-600">Module Favicon</span>
+                          <span className="text-[8px] text-slate-400">SVG/ICO, 1:1 ratio</span>
+                        </div>
+
+                        <div className="flex items-center gap-3">
+                          {/* Favicon Preview */}
+                          <div className="h-12 w-12 rounded-lg border border-slate-200 bg-white p-1.5 flex items-center justify-center overflow-hidden shrink-0">
+                            {faviconUrl ? (
+                              <img src={faviconUrl} alt="Favicon" className="h-6 w-6 object-contain" />
+                            ) : (
+                              <div className="text-center">
+                                <ImageIcon className="w-4 h-4 mx-auto text-slate-300" />
+                                <span className="text-[8px] text-slate-400 block mt-0.5">None</span>
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Actions */}
+                          <div className="flex-1 flex gap-1.5">
+                            <label className={`flex-1 flex items-center justify-center gap-1 py-1.5 px-2 rounded-lg border border-blue-600/20 bg-blue-50/50 hover:bg-blue-50 text-blue-600 text-[10px] font-semibold cursor-pointer transition-all active:scale-95 ${
+                              logoUploading[`${key}_favicon`] ? 'opacity-50 pointer-events-none' : ''
+                            }`}>
+                              {logoUploading[`${key}_favicon`] ? (
+                                <Loader2 size={11} className="animate-spin" />
+                              ) : (
+                                <Upload size={11} />
+                              )}
+                              Upload Favicon
+                              <input 
+                                type="file" 
+                                accept="image/svg+xml,image/x-icon,image/png,image/jpeg" 
+                                onChange={(e) => handleTaxiFileUpload(e, key, 'favicon')} 
+                                className="hidden" 
+                              />
+                            </label>
+
+                            {faviconUrl && (
+                              <button
+                                type="button"
+                                onClick={() => handleTaxiLogoChange(key, 'favicon', '')}
+                                className="p-1.5 rounded-lg border border-red-100 text-red-500 hover:bg-red-50 transition-all"
+                              >
+                                <Trash2 size={12} />
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+
+              {/* Action Bar */}
+              <div className="flex justify-end pt-4 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={handleSaveTaxiLogos}
+                  disabled={savingLogoSettings}
+                  className="px-6 py-2.5 text-xs font-semibold rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors disabled:opacity-50 flex items-center gap-2 shadow-sm"
+                >
+                  {savingLogoSettings ? (
+                    <>
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      Saving Branding...
+                    </>
+                  ) : (
+                    <>
+                      <Save size={13} />
+                      Save Branding Settings
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

@@ -6,20 +6,23 @@ import { GoogleMap, MarkerF, OverlayView, OverlayViewF, PolylineF } from '@react
 import { HAS_VALID_GOOGLE_MAPS_KEY, useAppGoogleMapsLoader } from '../../../admin/utils/googleMaps';
 import { socketService } from '../../../../shared/api/socket';
 import api from '../../../../shared/api/axiosInstance';
-import { BACKEND_ORIGIN } from '../../../../shared/api/runtimeConfig';
+import { getLocalUserToken } from '../../services/authService';
 import { clearCurrentRide, getCurrentRide, saveCurrentRide } from '../../services/currentRideService';
+import { useAuthStore } from '../../../../../../core/auth/auth.store';
 import carIcon from '../../../../assets/icons/car.png';
 import bikeIcon from '../../../../assets/icons/bike.png';
 import autoIcon from '../../../../assets/icons/auto.png';
 import deliveryIcon from '../../../../assets/icons/Delivery.png';
 import { useSettings } from '../../../../shared/context/SettingsContext';
+import { BACKEND_ORIGIN } from '../../../../shared/api/runtimeConfig';
+import toast from 'react-hot-toast';
 
 const MAP_CONTAINER_STYLE = { width: '100%', height: '100%' };
 const DEFAULT_CENTER = { lat: 22.7196, lng: 75.8577 };
 const TERMINAL_STATUSES = new Set(['completed', 'cancelled', 'delivered']);
 const ACTIVE_RIDE_VALIDATE_MS = 15000;
 const COMPLETED_TRACKING_STATUSES = new Set(['completed', 'delivered']);
-const POST_RIDE_REDIRECT_STATUSES = new Set(['arrived', 'completed', 'delivered']);
+const POST_RIDE_REDIRECT_STATUSES = new Set(['completed', 'delivered']);
 
 const toLatLng = (coords, fallback = DEFAULT_CENTER) => {
   const [lng, lat] = coords || [];
@@ -87,6 +90,10 @@ const RotatingVehicleMarker = ({ position, iconUrl = carIcon, heading = 0, title
           alt={title}
           className="h-12 w-12 object-contain drop-shadow-[0_8px_10px_rgba(15,23,42,0.35)]"
           draggable={false}
+          onError={(e) => {
+            e.currentTarget.onerror = null;
+            e.currentTarget.src = carIcon;
+          }}
         />
       </div>
     </div>
@@ -319,6 +326,9 @@ const RideTracking = () => {
   const [showCancellationBillModal, setShowCancellationBillModal] = useState(false);
   const [shareToast, setShareToast] = useState(false);
   const [shareSheetOpen, setShareSheetOpen] = useState(false);
+  const [selectedReason, setSelectedReason] = useState('');
+  const [otherReasonText, setOtherReasonText] = useState('');
+  const [showReasonSelection, setShowReasonSelection] = useState(false);
   const [rideRealtime, setRideRealtime] = useState(null);
   const [routePath, setRoutePath] = useState([]);
   const [routeError, setRouteError] = useState('');
@@ -415,10 +425,18 @@ const RideTracking = () => {
     ? Number(rideRealtime?.waitingChargeAmount ?? state.waitingChargeAmount ?? 0)
     : (waitingChargeableMinutes * waitingChargePerMinute);
   const additionalCharge = Number(rideRealtime?.additionalCharge ?? state.additionalCharge ?? 0);
+  const distanceChargeAmount = Number(rideRealtime?.distanceChargeAmount ?? state.distanceChargeAmount ?? 0);
+  const timeChargeAmount = Number(rideRealtime?.timeChargeAmount ?? state.timeChargeAmount ?? 0);
   const adminExtraChargeAmount = Number(rideRealtime?.adminExtraCharge?.amount ?? state.adminExtraCharge?.amount ?? 0);
+  
+  const { user } = useAuthStore();
+  const pendingCancellationDue = Number(rideRealtime?.pending_cancellation_due || state.pending_cancellation_due || user?.pending_cancellation_due || 0);
+  const applicableCancellationDue = tripStatus === 'completed' ? 0 : pendingCancellationDue;
+
+  const promoDiscountAmount = Number(rideRealtime?.promo?.discount_amount ?? state?.promo?.discount_amount ?? 0);
   const currentTotalFare = ['arrived', 'completed'].includes(tripStatus)
-    ? Math.round(Number(fare || 0) + adminExtraChargeAmount)
-    : Math.round(Number(fare || 0) + waitingCharge + additionalCharge + adminExtraChargeAmount);
+    ? Math.max(0, Math.round(Number(fare || 0) + adminExtraChargeAmount + applicableCancellationDue))
+    : Math.max(0, Math.round(Number(fare || 0) + waitingCharge + distanceChargeAmount + timeChargeAmount + additionalCharge + adminExtraChargeAmount + applicableCancellationDue));
   const isWaitingForOtp = Boolean(waitingStartedAt) && !['started', 'ongoing', 'arrived', 'completed', 'cancelled', 'delivered'].includes(tripStatus);
   const vehicleIcon = getTrackingVehicleIcon(trackingSnapshot, driver);
   const displayDriverHeading = useMemo(() => {
@@ -464,6 +482,27 @@ const RideTracking = () => {
   const hasAutoFramedMapRef = useRef(false);
   const lastMapPanPositionRef = useRef(null);
 
+  const isChargeableConditionMet = useMemo(() => {
+    if (waitingPricing.enable_cancellation_charge === false) return false;
+    
+    const acceptedAt = rideRealtime?.acceptedAt || state.acceptedAt;
+    if (acceptedAt) {
+      const freeMin = Number(waitingPricing.free_cancellation_time || 2);
+      const timeSinceAccepted = (Date.now() - new Date(acceptedAt).getTime()) / 60000;
+      if (timeSinceAccepted < freeMin) return false;
+    }
+    
+    const liveStatusLower = String(rideRealtime?.liveStatus || rideRealtime?.status || state.liveStatus || state.status || '').toLowerCase();
+    const isOtpStage = ['waiting_for_otp', 'otp_verification'].includes(liveStatusLower);
+    const isReachedStage = !!rideRealtime?.arrivedAt || !!state.arrivedAt || liveStatusLower === 'arrived';
+    const isAcceptedStage = !!driver || !!acceptedAt || liveStatusLower === 'accepted';
+    
+    if (isOtpStage) return waitingPricing.charge_after_otp || waitingPricing.charge_after_driver_reached_pickup || waitingPricing.charge_after_driver_accepted;
+    if (isReachedStage) return waitingPricing.charge_after_driver_reached_pickup || waitingPricing.charge_after_driver_accepted;
+    if (isAcceptedStage) return waitingPricing.charge_after_driver_accepted;
+    return false;
+  }, [waitingPricing, rideRealtime, state, driver]);
+
   useEffect(() => {
     latestStateRef.current = state;
   }, [state]);
@@ -481,20 +520,28 @@ const RideTracking = () => {
     lastMapPanPositionRef.current = null;
   }, [rideId, tripStatus, activeDestination.lat, activeDestination.lng]);
 
-  const handleCancelRide = async () => {
+  const handleCancelRide = async (reasonOverride = null) => {
+    const finalReason = reasonOverride || (selectedReason === 'Others' ? otherReasonText : selectedReason) || 'User cancelled';
+
+    if (['started', 'ongoing', 'in_trip', 'completed'].includes(tripStatus)) {
+      toast.error('Ride cancellation is not allowed after the trip has started.');
+      return;
+    }
+
     try {
       if (rideId) {
-        const response = await api.patch(`/rides/${rideId}/cancel`);
+        const response = await api.patch(`/rides/${rideId}/cancel`, { reason: finalReason });
         const bill = response?.data?.data?.cancellationBill;
         if (bill && (Number(bill.cancellationFee) > 0 || Number(bill.waitingCharge) > 0)) {
           setCancellationBill(bill);
           setShowCancellationBillModal(true);
           setShowCancelConfirm(false);
+          setShowReasonSelection(false);
           return;
         }
       }
-    } catch (_error) {
-      // If the ride has already advanced or ended, we still clear the local state below.
+    } catch (err) {
+      toast.error(err?.response?.data?.message || err.message || 'Failed to cancel ride');
     }
     clearCurrentRide();
     navigate('/taxi/user');
@@ -581,6 +628,7 @@ const RideTracking = () => {
         baseFare: sourceRealtime?.baseFare ?? state.baseFare ?? fare ?? 0,
         additionalCharge: sourceRealtime?.additionalCharge ?? state.additionalCharge ?? 0,
         adminExtraCharge: sourceRealtime?.adminExtraCharge ?? state.adminExtraCharge ?? null,
+        recovered_cancellation_due: sourceRealtime?.recovered_cancellation_due ?? state.recovered_cancellation_due ?? 0,
       };
 
       saveCurrentRide(completedRideSnapshot);
@@ -639,6 +687,8 @@ const RideTracking = () => {
             baseFare: payload?.baseFare || latestStateRef.current.baseFare || 0,
             waitingChargeAmount: payload?.waitingChargeAmount || latestStateRef.current.waitingChargeAmount || 0,
             distanceChargeAmount: payload?.distanceChargeAmount || latestStateRef.current.distanceChargeAmount || 0,
+            additionalCharge: payload?.additionalCharge || latestStateRef.current.additionalCharge || 0,
+            recovered_cancellation_due: payload?.recovered_cancellation_due || latestStateRef.current.recovered_cancellation_due || 0,
             paymentMethod: payload?.paymentMethod || latestStateRef.current.paymentMethod || 'Cash',
             vehicleIconType: payload?.vehicleIconType || latestStateRef.current.vehicleIconType || '',
             vehicleIconUrl: payload?.vehicleIconUrl || latestStateRef.current.vehicleIconUrl || '',
@@ -676,6 +726,8 @@ const RideTracking = () => {
               baseFare: payload?.baseFare || latestStateRef.current.baseFare || 0,
               waitingChargeAmount: payload?.waitingChargeAmount || latestStateRef.current.waitingChargeAmount || 0,
               distanceChargeAmount: payload?.distanceChargeAmount || latestStateRef.current.distanceChargeAmount || 0,
+              additionalCharge: payload?.additionalCharge || latestStateRef.current.additionalCharge || 0,
+              recovered_cancellation_due: payload?.recovered_cancellation_due || latestStateRef.current.recovered_cancellation_due || 0,
               paymentMethod: payload?.paymentMethod || latestStateRef.current.paymentMethod || 'Cash',
               vehicleIconType: payload?.vehicleIconType || latestStateRef.current.vehicleIconType || '',
               vehicleIconUrl: payload?.vehicleIconUrl || latestStateRef.current.vehicleIconUrl || '',
@@ -862,6 +914,8 @@ const RideTracking = () => {
         waitingChargeAmount: payload.waitingChargeAmount ?? prev?.waitingChargeAmount ?? latestState.waitingChargeAmount ?? 0,
         distanceChargeAmount: payload.distanceChargeAmount ?? prev?.distanceChargeAmount ?? latestState.distanceChargeAmount ?? 0,
         timeChargeAmount: payload.timeChargeAmount ?? prev?.timeChargeAmount ?? latestState.timeChargeAmount ?? 0,
+        additionalCharge: payload.additionalCharge ?? prev?.additionalCharge ?? latestState.additionalCharge ?? 0,
+        recovered_cancellation_due: payload.recovered_cancellation_due ?? prev?.recovered_cancellation_due ?? latestState.recovered_cancellation_due ?? 0,
         driver: mergeDriverSnapshot(prev?.driver || latestFallbackDriver, payload.driver || {}),
       }));
 
@@ -897,6 +951,8 @@ const RideTracking = () => {
           waitingChargeAmount: payload.waitingChargeAmount ?? latestState.waitingChargeAmount ?? 0,
           distanceChargeAmount: payload.distanceChargeAmount ?? latestState.distanceChargeAmount ?? 0,
           timeChargeAmount: payload.timeChargeAmount ?? latestState.timeChargeAmount ?? 0,
+          additionalCharge: payload.additionalCharge ?? latestState.additionalCharge ?? 0,
+          recovered_cancellation_due: payload.recovered_cancellation_due ?? latestState.recovered_cancellation_due ?? 0,
           driver: mergeDriverSnapshot(latestFallbackDriver, payload.driver || {}),
         };
         setRideRealtime(realtimeSnapshot);
@@ -1164,7 +1220,7 @@ const RideTracking = () => {
             initial={{ opacity: 0, y: -16 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -16 }}
-            className="fixed top-4 left-1/2 -translate-x-1/2 z-[200] bg-slate-900 text-white px-5 py-3 rounded-[14px] text-[12px] font-black shadow-xl whitespace-nowrap"
+            className="fixed top-4 left-1/2 -translate-x-1/2 z-[200] bg-[#0F766E] text-white px-5 py-3 rounded-[14px] text-[12px] font-black shadow-xl whitespace-nowrap"
           >
             Ride details copied!
           </motion.div>
@@ -1188,7 +1244,7 @@ const RideTracking = () => {
               className="w-full max-w-md rounded-[28px] bg-white p-5 shadow-2xl"
             >
               <p className="text-[11px] font-black uppercase tracking-[0.22em] text-slate-400">Share Ride</p>
-              <h3 className="mt-2 text-[20px] font-black tracking-tight text-slate-900">Send trip details</h3>
+              <h3 className="mt-2 text-[20px] font-black tracking-tight text-[#0F766E]">Send trip details</h3>
               <p className="mt-1 text-[12px] font-bold text-slate-500">Choose how you want to share this ongoing ride.</p>
 
               <div className="mt-5 grid grid-cols-2 gap-3">
@@ -1198,7 +1254,7 @@ const RideTracking = () => {
                     onClick={handleShare}
                     className="rounded-[18px] border border-slate-200 bg-slate-50 px-4 py-4 text-left"
                   >
-                    <p className="text-[13px] font-black text-slate-900">System share</p>
+                    <p className="text-[13px] font-black text-[#0F766E]">System share</p>
                     <p className="mt-1 text-[11px] font-bold text-slate-500">Open phone share apps</p>
                   </button>
                 ) : null}
@@ -1214,7 +1270,7 @@ const RideTracking = () => {
                   rel="noreferrer"
                   className="rounded-[18px] border border-slate-200 bg-slate-50 px-4 py-4 text-left"
                 >
-                  <p className="text-[13px] font-black text-slate-900">WhatsApp</p>
+                  <p className="text-[13px] font-black text-[#0F766E]">WhatsApp</p>
                   <p className="mt-1 text-[11px] font-bold text-slate-500">Share in chat</p>
                 </a>
                 <a
@@ -1227,7 +1283,7 @@ const RideTracking = () => {
                   })).sms}
                   className="rounded-[18px] border border-slate-200 bg-slate-50 px-4 py-4 text-left"
                 >
-                  <p className="text-[13px] font-black text-slate-900">SMS</p>
+                  <p className="text-[13px] font-black text-[#0F766E]">SMS</p>
                   <p className="mt-1 text-[11px] font-bold text-slate-500">Open messages</p>
                 </a>
                 <button
@@ -1235,7 +1291,7 @@ const RideTracking = () => {
                   onClick={handleCopyShareText}
                   className="rounded-[18px] border border-slate-200 bg-slate-50 px-4 py-4 text-left"
                 >
-                  <p className="text-[13px] font-black text-slate-900">Copy details</p>
+                  <p className="text-[13px] font-black text-[#0F766E]">Copy details</p>
                   <p className="mt-1 text-[11px] font-bold text-slate-500">Copy to clipboard</p>
                 </button>
               </div>
@@ -1243,7 +1299,7 @@ const RideTracking = () => {
               <button
                 type="button"
                 onClick={() => setShareSheetOpen(false)}
-                className="mt-4 h-12 w-full rounded-[18px] bg-slate-900 text-[12px] font-black uppercase tracking-[0.16em] text-white"
+                className="mt-4 h-12 w-full rounded-[18px] bg-[#0F766E] text-[12px] font-black uppercase tracking-[0.16em] text-white"
               >
                 Close
               </button>
@@ -1256,14 +1312,14 @@ const RideTracking = () => {
         {!HAS_VALID_GOOGLE_MAPS_KEY ? (
           <div className="flex h-full w-full items-center justify-center bg-slate-200 px-6 text-center">
             <div className="rounded-[18px] bg-white/90 px-4 py-4 shadow-sm">
-              <p className="text-[12px] font-bold text-slate-900">Google Maps key missing</p>
+              <p className="text-[12px] font-bold text-[#0F766E]">Google Maps key missing</p>
               <p className="mt-1 text-[11px] font-bold text-slate-500">Set `VITE_GOOGLE_MAPS_API_KEY` in `frontend/.env`.</p>
             </div>
           </div>
         ) : loadError ? (
           <div className="flex h-full w-full items-center justify-center bg-slate-200 px-6 text-center">
             <div className="rounded-[18px] bg-white/90 px-4 py-4 shadow-sm">
-              <p className="text-[12px] font-bold text-slate-900">Google Maps failed to load</p>
+              <p className="text-[12px] font-bold text-[#0F766E]">Google Maps failed to load</p>
               <p className="mt-1 text-[11px] font-bold text-slate-500">Check the browser key restrictions and reload.</p>
             </div>
           </div>
@@ -1285,14 +1341,26 @@ const RideTracking = () => {
             }}
           >
             {routePath.length > 1 && hasLiveDriverLocation && (
-              <PolylineF
-                path={routePath}
-                options={{
-                  strokeColor: '#111827',
-                  strokeOpacity: 0.9,
-                  strokeWeight: 5,
-                }}
-              />
+              <>
+                <PolylineF
+                  path={routePath}
+                  options={{
+                    strokeColor: '#000000',
+                    strokeOpacity: 0.16,
+                    strokeWeight: 9,
+                    zIndex: 10,
+                  }}
+                />
+                <PolylineF
+                  path={routePath}
+                  options={{
+                    strokeColor: '#0F766E',
+                    strokeOpacity: 0.95,
+                    strokeWeight: 5,
+                    zIndex: 20,
+                  }}
+                />
+              </>
             )}
             {hasLiveDriverLocation ? (
               <RotatingVehicleMarker
@@ -1329,7 +1397,7 @@ const RideTracking = () => {
         onClick={() => navigate(routeHome)}
         className="absolute top-8 left-4 z-10 w-10 h-10 bg-white/90 backdrop-blur-md rounded-[12px] shadow-[0_4px_14px_rgba(15,23,42,0.10)] border border-white/80 flex items-center justify-center"
       >
-        <ChevronLeft size={18} className="text-slate-900" strokeWidth={2.5} />
+        <ChevronLeft size={18} className="text-[#0F766E]" strokeWidth={2.5} />
       </motion.button>
 
       <div className="absolute top-8 left-16 right-4 z-10 bg-white/90 backdrop-blur-md rounded-[14px] px-3.5 py-2.5 shadow-[0_4px_14px_rgba(15,23,42,0.08)] border border-white/80">
@@ -1403,13 +1471,13 @@ const RideTracking = () => {
                 </div>
                 {/* Rating Badge */}
                 <div className="absolute -bottom-1 -right-1 bg-yellow-400 px-1.5 py-0.5 rounded-full border-2 border-white flex items-center gap-0.5 shadow-md">
-                  <Star size={9} className="text-slate-900 fill-slate-900" />
-                  <span className="text-[9px] font-black text-slate-900">{driver.rating || '4.9'}</span>
+                  <Star size={9} className="text-[#0F766E] fill-slate-900" />
+                  <span className="text-[9px] font-black text-[#0F766E]">{driver.rating || '4.9'}</span>
                 </div>
               </div>
 
               <div className="min-w-0 pt-0.5">
-                <h3 className="truncate text-[17px] font-black text-slate-900 leading-tight tracking-tight">
+                <h3 className="truncate text-[17px] font-black text-[#0F766E] leading-tight tracking-tight">
                   {driver.name || 'James Bond'}
                 </h3>
                 <p className="text-[13px] font-black text-[#f97316] mt-1 tracking-tight">
@@ -1425,7 +1493,7 @@ const RideTracking = () => {
             {otp && (
               <div className="bg-[#fff9ef] border border-[#fef3c7] rounded-[20px] px-3 py-3 flex flex-col items-center justify-center min-w-[80px] shadow-sm">
                 <span className="text-[9px] font-black text-primary-orange/50 uppercase tracking-[0.18em] mb-1 leading-none">OTP</span>
-                <span className="text-[18px] font-black text-slate-900 tracking-tighter leading-none">{otp}</span>
+                <span className="text-[18px] font-black text-[#0F766E] tracking-tighter leading-none">{otp}</span>
               </div>
             )}
           </div>
@@ -1461,7 +1529,7 @@ const RideTracking = () => {
                     <p className={`text-[9px] font-black uppercase tracking-[0.22em] ${waitingCharge > 0 ? 'text-rose-600' : 'text-amber-600'}`}>
                       {waitingCharge > 0 ? 'Paid Waiting' : 'Free Waiting'}
                     </p>
-                    <p className="mt-1 text-[22px] font-black tracking-tight text-slate-900">
+                    <p className="mt-1 text-[22px] font-black tracking-tight text-[#0F766E]">
                       {formatTimerClock(waitingCharge > 0 ? waitingElapsedSeconds - (freeWaitingBeforeMinutes * 60) : waitingElapsedSeconds)}
                     </p>
                   </div>
@@ -1475,7 +1543,7 @@ const RideTracking = () => {
                   ) : (
                     <>
                       <p className="text-[9px] font-black uppercase tracking-[0.18em] text-slate-400">Free Left</p>
-                      <p className="mt-1 text-[13px] font-black text-slate-900">{formatTimerClock(freeWaitingRemainingSeconds)}</p>
+                      <p className="mt-1 text-[13px] font-black text-[#0F766E]">{formatTimerClock(freeWaitingRemainingSeconds)}</p>
                     </>
                   )}
                 </div>
@@ -1483,11 +1551,11 @@ const RideTracking = () => {
               <div className={`mt-4 grid gap-3 ${waitingCharge > 0 ? 'grid-cols-3' : 'grid-cols-2'}`}>
                 <div className="rounded-2xl bg-white px-3 py-3 shadow-sm">
                   <p className="text-[9px] font-black uppercase tracking-[0.18em] text-slate-400">Free Before</p>
-                  <p className="mt-1 text-[13px] font-black text-slate-900">{formatWholeMinutes(freeWaitingBeforeMinutes)}</p>
+                  <p className="mt-1 text-[13px] font-black text-[#0F766E]">{formatWholeMinutes(freeWaitingBeforeMinutes)}</p>
                 </div>
                 <div className="rounded-2xl bg-white px-3 py-3 shadow-sm">
                   <p className="text-[9px] font-black uppercase tracking-[0.18em] text-slate-400">Rate</p>
-                  <p className="mt-1 text-[13px] font-black text-slate-900">Rs {waitingChargePerMinute}/min</p>
+                  <p className="mt-1 text-[13px] font-black text-[#0F766E]">Rs {waitingChargePerMinute}/min</p>
                 </div>
                 {waitingCharge > 0 && (
                   <div className="rounded-2xl bg-amber-100 px-3 py-3 shadow-sm border border-amber-200/60">
@@ -1500,24 +1568,27 @@ const RideTracking = () => {
           )}
 
           {/* Pricing Policy Card */}
-          {(waitingPricing?.user_cancellation_fee > 0 || waitingPricing?.waiting_charge > 0) && (
+          {(waitingPricing?.percentage_cancellation_charge > 0 || waitingPricing?.fixed_cancellation_charge > 0 || waitingPricing?.user_cancellation_fee > 0 || waitingPricing?.waiting_charge > 0) && (
             <div className="rounded-[22px] border border-slate-100 bg-slate-50/50 p-4 shadow-sm">
               <p className="text-[9px] font-black uppercase tracking-[0.22em] text-slate-400 mb-2">Ride Rules & Pricing Policies</p>
               <div className="grid grid-cols-2 gap-3 text-[11px] font-bold text-slate-600">
-                {waitingPricing?.user_cancellation_fee > 0 && (
-                  <div className="bg-white p-3 rounded-2xl border border-slate-100/50 shadow-sm flex items-center justify-between">
-                    <span>Cancellation Fee</span>
-                    <span className="font-black text-slate-900">
-                      {waitingPricing.user_cancellation_fee_type === 'percentage'
-                        ? `${waitingPricing.user_cancellation_fee}%`
-                        : `Rs ${waitingPricing.user_cancellation_fee}`}
-                    </span>
+                {(waitingPricing?.percentage_cancellation_charge > 0 || waitingPricing?.fixed_cancellation_charge > 0 || waitingPricing?.user_cancellation_fee > 0) && (
+                  <div className="bg-white p-3 rounded-2xl border border-slate-100/50 shadow-sm flex flex-col justify-center gap-1">
+                    <div className="flex items-center justify-between">
+                      <span>Cancellation Fee</span>
+                      <span className="font-black text-[#0F766E]">
+                        {waitingPricing.user_cancellation_fee_type === 'percentage'
+                          ? `${waitingPricing.percentage_cancellation_charge || waitingPricing.user_cancellation_fee || 0}%`
+                          : `Rs ${waitingPricing.fixed_cancellation_charge || waitingPricing.user_cancellation_fee || 0}`}
+                      </span>
+                    </div>
+                    <span className="text-[8.5px] font-medium leading-tight text-slate-400 mt-0.5">Will be added to your next ride</span>
                   </div>
                 )}
                 {waitingPricing?.waiting_charge > 0 && (
                   <div className="bg-white p-3 rounded-2xl border border-slate-100/50 shadow-sm flex items-center justify-between">
                     <span>Waiting Charge</span>
-                    <span className="font-black text-slate-900">Rs {waitingPricing.waiting_charge}/min</span>
+                    <span className="font-black text-[#0F766E]">Rs {waitingPricing.waiting_charge}/min</span>
                   </div>
                 )}
               </div>
@@ -1540,7 +1611,7 @@ const RideTracking = () => {
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-[9px] font-black uppercase tracking-[0.18em] text-slate-400 mb-0.5">Vehicle</p>
-              <p className="text-[15px] font-black text-slate-900 leading-tight truncate">{vehicleLabel}</p>
+              <p className="text-[15px] font-black text-[#0F766E] leading-tight truncate">{vehicleLabel}</p>
               <p className="text-[12px] font-bold text-slate-500 mt-0.5 truncate">{vehicleDetails || 'Blue'}</p>
             </div>
           </div>
@@ -1569,7 +1640,7 @@ const RideTracking = () => {
 
           {/* Footer: Fare & Cancellation Section */}
           <div className="pt-2 border-t border-slate-50 space-y-3">
-            {['started', 'ongoing'].includes(tripStatus) ? (
+            {['started', 'ongoing', 'arrived'].includes(tripStatus) ? (
               // TRIP STARTED: Show Premium Detailed Bill Breakdown
               <div className="bg-slate-50/70 border border-slate-100 rounded-2xl p-4 shadow-sm space-y-3">
                 <div className="flex justify-between items-center border-b border-slate-150 pb-2">
@@ -1581,32 +1652,91 @@ const RideTracking = () => {
                       Admin-Managed Charges
                     </span>
                   </div>
-                  <span className="text-[9px] font-black bg-emerald-100 text-emerald-700 px-2.5 py-1 rounded-lg uppercase tracking-wider border border-emerald-250/50 shadow-sm animate-pulse">
-                    In Trip
+                  <span className={`text-[9px] font-black px-2.5 py-1 rounded-lg uppercase tracking-wider border shadow-sm animate-pulse ${tripStatus === 'arrived' ? 'bg-amber-100 text-amber-700 border-amber-200' : 'bg-emerald-100 text-emerald-700 border-emerald-250/50'}`}>
+                    {tripStatus === 'arrived' ? 'Payment Pending' : 'In Trip'}
                   </span>
                 </div>
                 
                 <div className="space-y-2.5">
                   <div className="flex justify-between items-center text-xs">
                     <span className="font-semibold text-slate-500">Starting Base Fare</span>
-                    <span className="font-bold text-slate-900">Rs {Math.round(Number(fare || 0))}</span>
+                    <span className="font-bold text-[#0F766E]">Rs {Math.round(Number(trackingSnapshot.baseFare || fare || 0))}</span>
                   </div>
                   {waitingCharge > 0 && (
-                    <div className="flex justify-between items-center text-xs">
-                      <span className="font-semibold text-slate-500">Waiting Charge</span>
-                      <span className="font-bold text-slate-900">Rs {waitingCharge}</span>
+                    <div className="mt-2.5 space-y-2 pt-2.5 border-t border-slate-200/50">
+                      <div className="flex justify-between items-center text-xs">
+                        <span className="font-semibold text-slate-500">Waiting Charge</span>
+                        <span className="font-bold text-[#0F766E]">Rs {waitingCharge}</span>
+                      </div>
+                    </div>
+                  )}
+                  {distanceChargeAmount > 0 && (
+                    <div className="mt-2.5 space-y-2 pt-2.5 border-t border-slate-200/50">
+                      <div className="flex justify-between items-center text-xs">
+                        <span className="font-semibold text-slate-500">Extra Distance Charge</span>
+                        <span className="font-bold text-[#0F766E]">Rs {distanceChargeAmount}</span>
+                      </div>
+                    </div>
+                  )}
+                  {timeChargeAmount > 0 && (
+                    <div className="mt-2.5 space-y-2 pt-2.5 border-t border-slate-200/50">
+                      <div className="flex justify-between items-center text-xs">
+                        <span className="font-semibold text-slate-500">Extra Time Charge</span>
+                        <span className="font-bold text-[#0F766E]">Rs {timeChargeAmount}</span>
+                      </div>
+                    </div>
+                  )}
+                  {additionalCharge > 0 && (
+                    <div className="mt-2.5 space-y-2 pt-2.5 border-t border-slate-200/50">
+                      <div className="flex justify-between items-center text-xs">
+                        <span className="font-semibold text-slate-500">Additional Charge</span>
+                        <span className="font-bold text-[#0F766E]">Rs {additionalCharge}</span>
+                      </div>
+                    </div>
+                  )}
+                  {adminExtraChargeAmount > 0 && (
+                    <div className="mt-2.5 space-y-2 pt-2.5 border-t border-slate-200/50">
+                      <div className="flex justify-between items-center text-xs text-amber-600">
+                        <span className="font-semibold">Admin Extra Charge</span>
+                        <span className="font-bold">Rs {adminExtraChargeAmount}</span>
+                      </div>
                     </div>
                   )}
                   {waitingPricing?.ride_surge_enabled && waitingPricing?.ride_surge_amount > 0 && (
-                    <div className="flex justify-between items-center text-xs text-amber-600">
-                      <span className="font-semibold">Surge Amount (Admin Configured)</span>
-                      <span className="font-bold">+Rs {waitingPricing.ride_surge_amount}</span>
+                    <div className="mt-2.5 space-y-2 pt-2.5 border-t border-slate-200/50">
+                      <div className="flex justify-between items-center text-xs text-amber-600">
+                        <span className="font-semibold">Surge Amount (Admin Configured)</span>
+                        <span className="font-bold">+Rs {waitingPricing.ride_surge_amount}</span>
+                      </div>
                     </div>
                   )}
-                  <div className="h-px bg-slate-200/60 my-1" />
+
+                  {tripStatus === 'arrived' && (
+                    <div className="mt-3 p-3 bg-amber-50/80 border border-amber-100 rounded-xl shadow-sm text-center">
+                      <p className="text-[10.5px] font-black text-amber-700 uppercase tracking-wider leading-tight">
+                        Reached Destination
+                      </p>
+                      <p className="text-[10px] font-bold text-amber-600/80 mt-1 uppercase tracking-wide">
+                        Please pay the driver and wait for them to finalize the trip
+                      </p>
+                    </div>
+                  )}
+
+                  <div className="h-px bg-slate-200/60 my-1 mt-2.5" />
+                  
+                  {trackingSnapshot.promo && trackingSnapshot.promo.discount_amount > 0 && (
+                    <div className="flex justify-between items-center text-xs mb-2">
+                      <div className="flex flex-col">
+                        <span className="font-bold text-emerald-600">Promo Applied ({trackingSnapshot.promo.code})</span>
+                        <span className="text-[9px] font-bold text-emerald-600/80 uppercase mt-0.5 tracking-wider">Discount Saved</span>
+                      </div>
+                      <span className="text-[14px] font-bold text-emerald-600">-Rs {trackingSnapshot.promo.discount_amount}</span>
+                    </div>
+                  )}
+
                   <div className="flex justify-between items-center text-xs">
                     <div className="flex flex-col">
-                      <span className="font-extrabold text-slate-900">Current Total Fare</span>
+                      <span className="font-extrabold text-[#0F766E]">Current Total Fare</span>
                       <span className="text-[9px] font-black text-slate-400 uppercase mt-0.5 tracking-wider">Payment via {paymentMethod}</span>
                     </div>
                     <span className="text-[18px] font-black text-slate-950">Rs {currentTotalFare}.00</span>
@@ -1631,12 +1761,32 @@ const RideTracking = () => {
                       </span>
                     )}
                   </div>
-                  {waitingCharge > 0 && (
-                    <div className="flex items-center gap-2 mt-1">
-                      <span className="text-[10px] font-bold text-slate-400">Base Rs {Math.round(Number(fare || 0))}</span>
-                      <span className="text-[10px] font-bold text-amber-600">+ Rs {waitingCharge} waiting</span>
-                    </div>
-                  )}
+
+                  <div className="mt-1.5 flex flex-col gap-0.5">
+                    {trackingSnapshot.promo && trackingSnapshot.promo.discount_amount > 0 && (
+                      <div className="flex flex-col">
+                        <div className="flex items-center gap-2">
+                          <span className="text-[10px] font-bold text-slate-400">Base Fare Rs {Math.round(Number(trackingSnapshot.baseFare || currentTotalFare + trackingSnapshot.promo.discount_amount))}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-[10px] font-bold text-emerald-600">Promo ({trackingSnapshot.promo.code}) Applied</span>
+                          <span className="text-[10px] font-bold text-emerald-600/80">- Rs {trackingSnapshot.promo.discount_amount}</span>
+                        </div>
+                      </div>
+                    )}
+
+                    {waitingCharge > 0 && (!trackingSnapshot.promo || !trackingSnapshot.promo.discount_amount) && (
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] font-bold text-slate-400">Base Rs {Math.round(Number(trackingSnapshot.baseFare || fare || 0))}</span>
+                        <span className="text-[10px] font-bold text-amber-600">+ Rs {waitingCharge} waiting</span>
+                      </div>
+                    )}
+                    {waitingCharge > 0 && trackingSnapshot.promo && trackingSnapshot.promo.discount_amount > 0 && (
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] font-bold text-amber-600">Wait Charge Added: + Rs {waitingCharge}</span>
+                      </div>
+                    )}
+                  </div>
                 </div>
                 <motion.button
                   whileTap={{ scale: 0.96 }}
@@ -1658,36 +1808,112 @@ const RideTracking = () => {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              onClick={() => setShowCancelConfirm(false)}
+              onClick={() => {
+                setShowCancelConfirm(false);
+                setShowReasonSelection(false);
+              }}
               className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[100] max-w-lg mx-auto"
             />
-            <motion.div
-              initial={{ scale: 0.92, opacity: 0, y: 40 }}
-              animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ scale: 0.92, opacity: 0, y: 40 }}
-              className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[82%] max-w-sm bg-white rounded-[28px] p-7 z-[101] shadow-2xl text-center"
-            >
-              <div className="w-14 h-14 bg-red-50 rounded-[18px] flex items-center justify-center mx-auto mb-4">
-                <AlertTriangle size={26} className="text-red-400" strokeWidth={2} />
-              </div>
-              <h3 className="text-[18px] font-bold text-slate-900 mb-1.5">Cancel your ride?</h3>
-              <p className="text-[13px] font-bold text-slate-400 mb-6 leading-relaxed">Your captain is already on the way.</p>
-              <div className="space-y-2.5">
-                <motion.button
-                  whileTap={{ scale: 0.97 }}
-                  onClick={handleCancelRide}
-                  className="w-full bg-slate-900 text-white py-3.5 rounded-[16px] text-[13px] font-bold uppercase tracking-widest"
-                >
-                  Yes, Cancel
-                </motion.button>
-                <button
-                  onClick={() => setShowCancelConfirm(false)}
-                  className="w-full py-3.5 text-[13px] font-bold text-slate-400 uppercase tracking-widest"
-                >
-                  No, Go Back
-                </button>
-              </div>
-            </motion.div>
+            {showReasonSelection ? (
+              <motion.div
+                initial={{ scale: 0.92, opacity: 0, y: 40 }}
+                animate={{ scale: 1, opacity: 1, y: 0 }}
+                exit={{ scale: 0.92, opacity: 0, y: 40 }}
+                className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[88%] max-w-sm bg-white rounded-[28px] p-7 z-[101] shadow-2xl text-center"
+              >
+                <h3 className="text-[17px] font-black text-[#0F766E] mb-4 uppercase tracking-wider">Select Reason</h3>
+                <div className="space-y-2 text-left mb-6 max-h-[240px] overflow-y-auto pr-1">
+                  {[
+                    'Driver asked to cancel',
+                    'Long waiting time',
+                    'Wrong address shown',
+                    'Changed my mind',
+                    'Others'
+                  ].map((reason) => (
+                    <label key={reason} className="flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 cursor-pointer border border-slate-100/60 transition-colors">
+                      <input
+                        type="radio"
+                        name="cancel_reason"
+                        checked={selectedReason === reason}
+                        onChange={() => setSelectedReason(reason)}
+                        className="h-4 w-4 text-[#0F766E] focus:ring-slate-900 border-gray-355"
+                      />
+                      <span className="text-[13px] font-semibold text-slate-700">{reason}</span>
+                    </label>
+                  ))}
+
+                  {selectedReason === 'Others' && (
+                    <input
+                      type="text"
+                      placeholder="Enter reason here..."
+                      className="w-full mt-2 border border-slate-200 rounded-xl px-4 py-2.5 text-xs outline-none focus:border-slate-400"
+                      value={otherReasonText}
+                      onChange={(e) => setOtherReasonText(e.target.value)}
+                    />
+                  )}
+                </div>
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setShowReasonSelection(false)}
+                    className="flex-1 py-3 bg-slate-100 text-slate-600 rounded-xl text-xs font-bold uppercase tracking-wider"
+                  >
+                    Back
+                  </button>
+                  <button
+                    disabled={!selectedReason || (selectedReason === 'Others' && !otherReasonText)}
+                    onClick={() => handleCancelRide()}
+                    className="flex-1 py-3 bg-red-500 hover:bg-red-650 text-white rounded-xl text-xs font-bold uppercase tracking-wider shadow-lg disabled:opacity-50"
+                  >
+                    Cancel Ride
+                  </button>
+                </div>
+              </motion.div>
+            ) : (
+              <motion.div
+                initial={{ scale: 0.92, opacity: 0, y: 40 }}
+                animate={{ scale: 1, opacity: 1, y: 0 }}
+                exit={{ scale: 0.92, opacity: 0, y: 40 }}
+                className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[88%] max-w-sm bg-white rounded-[28px] p-7 z-[101] shadow-2xl text-center"
+              >
+                <div className="w-14 h-14 bg-red-50 rounded-[18px] flex items-center justify-center mx-auto mb-4">
+                  <AlertTriangle size={26} className="text-red-400" strokeWidth={2} />
+                </div>
+                <h3 className="text-[18px] font-black text-[#0F766E] mb-1.5">Cancel Ride?</h3>
+                <p className="text-[13px] font-semibold text-slate-400 leading-relaxed mb-4">
+                  Are you sure you want to cancel this ride?
+                </p>
+                {waitingPricing?.cancellation_policy_message ? (
+                  <p className="text-[11px] font-semibold text-red-500 bg-red-50/50 rounded-xl p-3 mb-6 leading-relaxed text-left border border-red-100/30">
+                    {waitingPricing.cancellation_policy_message}
+                  </p>
+                ) : (
+                  <p className="text-[11px] font-semibold text-slate-400 mb-6 leading-relaxed">
+                    Cancellation charges may apply based on the platform policy.
+                  </p>
+                )}
+                <div className="space-y-2.5">
+                  <motion.button
+                    whileTap={{ scale: 0.97 }}
+                    onClick={() => setShowCancelConfirm(false)}
+                    className="w-full bg-[#00BFA5] text-white py-3.5 rounded-[16px] text-[13px] font-bold uppercase tracking-widest shadow-lg"
+                  >
+                    No, Keep Ride
+                  </motion.button>
+                  <button
+                    onClick={() => {
+                      if (waitingPricing.enable_cancellation_reasons) {
+                        setShowReasonSelection(true);
+                      } else {
+                        handleCancelRide('User cancelled');
+                      }
+                    }}
+                    className="w-full py-3 text-[13px] font-bold text-slate-400 hover:text-red-500 uppercase tracking-widest transition-colors"
+                  >
+                    Yes, Cancel Ride
+                  </button>
+                </div>
+              </motion.div>
+            )}
           </>
         )}
 
@@ -1709,7 +1935,7 @@ const RideTracking = () => {
               <div className="w-14 h-14 bg-red-50 rounded-[18px] flex items-center justify-center mx-auto mb-4">
                 <FileText size={26} className="text-red-500" strokeWidth={2} />
               </div>
-              <h3 className="text-[18px] font-black text-slate-900 text-center mb-1.5">Cancellation Receipt</h3>
+              <h3 className="text-[18px] font-black text-[#0F766E] text-center mb-1.5">Cancellation Receipt</h3>
               <p className="text-[12px] font-bold text-slate-400 text-center mb-6">
                 Your ride has been cancelled. Waiting time and cancellation fees are calculated below:
               </p>
@@ -1728,7 +1954,7 @@ const RideTracking = () => {
                   <span className="text-slate-800">Rs {cancellationBill?.waitingCharge || 0}.00</span>
                 </div>
                 <div className="flex justify-between items-center pt-2.5 border-t border-slate-100/60 font-black text-[14px]">
-                  <span className="text-slate-900">Total Deducted</span>
+                  <span className="text-[#0F766E]">Total Deducted</span>
                   <span className="text-red-500">Rs {cancellationBill?.totalCancellationFee || 0}.00</span>
                 </div>
               </div>
@@ -1736,7 +1962,7 @@ const RideTracking = () => {
               <motion.button
                 whileTap={{ scale: 0.97 }}
                 onClick={handleCloseCancellationBill}
-                className="w-full bg-slate-900 text-white py-3.5 rounded-[16px] text-[13px] font-bold uppercase tracking-widest"
+                className="w-full bg-[#0F766E] text-white py-3.5 rounded-[16px] text-[13px] font-bold uppercase tracking-widest"
               >
                 Okay
               </motion.button>
