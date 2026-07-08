@@ -575,18 +575,43 @@ export default function DeliveryHomeV2({ tab = 'feed' }) {
 
 
   const handleCenterMap = () => {
-    if (mapRef.current && useDeliveryStore.getState().riderLocation) {
-      const loc = useDeliveryStore.getState().riderLocation;
-      mapRef.current.panTo({ 
-        lat: parseFloat(loc.lat || loc.latitude), 
-        lng: parseFloat(loc.lng || loc.longitude) 
-      });
+    if (navigator.geolocation) {
+       navigator.geolocation.getCurrentPosition((pos) => {
+           const lat = pos.coords.latitude;
+           const lng = pos.coords.longitude;
+           setRiderLocation({ lat, lng, heading: pos.coords.heading || 0 });
+           if (mapRef.current) {
+               mapRef.current.panTo({ lat, lng });
+           }
+           if (isOnline) {
+               deliveryAPI.updateLocation(lat, lng, true).catch(() => {});
+           }
+           toast.success("Location updated");
+       }, (err) => {
+           toast.error("Could not fetch location");
+           console.warn(err);
+       }, { enableHighAccuracy: true });
+    } else {
+        if (mapRef.current && useDeliveryStore.getState().riderLocation) {
+          const loc = useDeliveryStore.getState().riderLocation;
+          mapRef.current.panTo({ 
+            lat: parseFloat(loc.lat || loc.latitude), 
+            lng: parseFloat(loc.lng || loc.longitude) 
+          });
+        }
     }
   };
 
   const handleMapClick = (lat, lng) => {
     if (activeOrder || incomingOrder || showVerification) {
       setIsModalMinimized(true);
+    }
+    if (lat && lng) {
+        setRiderLocation({ lat, lng, heading: 0 });
+        if (isOnline) {
+             deliveryAPI.updateLocation(lat, lng, true).catch(() => {});
+        }
+        toast.success("Location updated manually");
     }
   };
 
@@ -676,14 +701,14 @@ export default function DeliveryHomeV2({ tab = 'feed' }) {
                   </div>
                 </div>
               ) : (
-                <div className="bg-white/5 rounded-2xl p-4 flex items-center border border-white/5 shadow-sm backdrop-blur-md">
+                <div className="bg-white/95 rounded-2xl p-4 flex items-center border border-gray-100 shadow-xl backdrop-blur-md">
                   <div className="flex items-center gap-4">
-                    <div className="w-10 h-10 bg-green-500/10 rounded-full flex items-center justify-center">
-                      <div className={`w-2 h-2 rounded-full ${isOnline ? 'bg-green-500 animate-pulse' : 'bg-gray-500'}`} />
+                    <div className={`w-10 h-10 rounded-full flex items-center justify-center ${isOnline ? 'bg-green-100' : 'bg-gray-100'}`}>
+                      <div className={`w-2 h-2 rounded-full ${isOnline ? 'bg-green-500 animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.8)]' : 'bg-gray-500'}`} />
                     </div>
                     <div>
-                      <h3 className="text-white font-black text-[11px] uppercase tracking-widest leading-none mb-1">{isOnline ? 'System Online' : 'System Offline'}</h3>
-                      <p className="text-gray-400 text-[10px] font-bold uppercase tracking-tight">{isOnline ? 'Waiting for order requests' : 'Go online to receive jobs'}</p>
+                      <h3 className="text-gray-900 font-black text-[12px] uppercase tracking-widest leading-none mb-1">{isOnline ? 'System Online' : 'System Offline'}</h3>
+                      <p className="text-gray-500 text-[10px] font-bold uppercase tracking-tight">{isOnline ? 'Waiting for order requests' : 'Go online to receive jobs'}</p>
                     </div>
                   </div>
                 </div>

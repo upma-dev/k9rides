@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MapPin, ChevronDown, Search, Mic, Bell, CheckCircle2, Tag, Gift, AlertCircle, Clock, BellOff, X, ChevronRight, ShoppingBag, Sparkles, Utensils, Car } from 'lucide-react';
 import {
@@ -40,8 +40,9 @@ export default function HomeHeader({
   isCategoryStuck = false,
 }) {
   const navigate = useNavigate();
+  const routeLocation = useLocation();
 
-  const isTaxi = window.location.pathname.includes('/taxi');
+  const isTaxi = routeLocation.pathname.includes('/taxi');
   const theme = {
     activeBg: isTaxi ? 'bg-[#2563eb]' : 'bg-[#d82c23]',
     activeHex: isTaxi ? '#2563eb' : '#d82c23',
@@ -373,7 +374,7 @@ export default function HomeHeader({
             <button
               onClick={() => navigate('/food/user')}
               className={`custom-tab overflow-visible ${
-                window.location.pathname.includes('/food')
+                routeLocation.pathname.includes('/food')
                   ? 'custom-tab-active'
                   : 'custom-tab-inactive'
               }`}
@@ -386,7 +387,7 @@ export default function HomeHeader({
             <button
               onClick={() => navigate('/taxi/user')}
               className={`custom-tab overflow-visible ${
-                window.location.pathname.includes('/taxi')
+                routeLocation.pathname.includes('/taxi')
                   ? 'custom-tab-active'
                   : 'custom-tab-inactive'
               }`}

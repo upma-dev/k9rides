@@ -274,6 +274,7 @@ const LocationMapSection = () => {
                   }
                 }}
                 options={{
+                  gestureHandling: 'cooperative',
                   disableDefaultUI: true,
                   zoomControl: true,
                   clickableIcons: false,

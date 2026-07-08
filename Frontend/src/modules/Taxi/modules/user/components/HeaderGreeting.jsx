@@ -19,7 +19,7 @@ const HeaderGreeting = () => {
   const routePrefix = location.pathname.startsWith('/taxi/user') ? '/taxi/user' : '';
   const selectLocationPath = `${routePrefix}/ride/select-location`;
   const walletPath = `${routePrefix}/wallet`;
-  const isTaxi = window.location.pathname.includes('/taxi');
+  const isTaxi = location.pathname.includes('/taxi');
   const theme = {
     activeBg: isTaxi ? 'bg-[#059669]' : 'bg-[#d82c23]',
     activeHex: isTaxi ? '#059669' : '#d82c23',
@@ -132,7 +132,7 @@ const HeaderGreeting = () => {
           <button
             onClick={() => navigate('/food/user')}
             className={`custom-tab overflow-visible ${
-              window.location.pathname.includes('/food')
+              location.pathname.includes('/food')
                 ? 'custom-tab-active'
                 : 'custom-tab-inactive'
             }`}
@@ -145,7 +145,7 @@ const HeaderGreeting = () => {
           <button
             onClick={() => navigate('/taxi/user')}
             className={`custom-tab overflow-visible ${
-              window.location.pathname.includes('/taxi')
+              location.pathname.includes('/taxi')
                 ? 'custom-tab-active'
                 : 'custom-tab-inactive'
             }`}

@@ -68,6 +68,7 @@ const DeliveryTrackingMap = ({
   }, []);
 
   const { isLoaded } = useJsApiLoader({
+    id: 'google-map-script',
     googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY,
     libraries: LIBRARIES,
   });
@@ -319,6 +320,38 @@ const DeliveryTrackingMap = ({
 
   const zoom = useMemo(() => 15, []);
 
+  // 4. Baseline Directions Management
+  useEffect(() => {
+    if (!isLoaded || !restaurantCoords || !customerCoords || baselineDirections) return;
+    
+    // Prevent multiple concurrent fetches
+    if (baselineDirections === 'FETCHING') return;
+    
+    setBaselineDirections('FETCHING');
+
+    try {
+      const ds = new window.google.maps.DirectionsService();
+      ds.route(
+        {
+          origin: restaurantCoords,
+          destination: customerCoords,
+          travelMode: window.google.maps.TravelMode.DRIVING,
+        },
+        (result, status) => {
+          if (status === 'OK' && result) {
+            setBaselineDirections(result);
+          } else {
+            console.error('[DeliveryTrackingMap] Baseline Directions failed:', status);
+            setBaselineDirections({ failed: true });
+          }
+        }
+      );
+    } catch (err) {
+      console.error('[DeliveryTrackingMap] Baseline directions query failed:', err);
+      setBaselineDirections({ failed: true });
+    }
+  }, [isLoaded, restaurantCoords, customerCoords, baselineDirections]);
+
   const baselineDirectionsServiceOptions = useMemo(() => {
     if (!restaurantCoords || !customerCoords) return null;
     return {
@@ -328,7 +361,9 @@ const DeliveryTrackingMap = ({
     };
   }, [restaurantCoords?.lat, restaurantCoords?.lng, customerCoords?.lat, customerCoords?.lng]);
 
-  if (!isLoaded) return <div className="w-full h-full bg-gray-100 animate-pulse" />;
+  const mapReady = isLoaded || !!window?.google?.maps;
+
+  if (!mapReady) return <div className="w-full h-full bg-gray-100 animate-pulse" />;
 
   return (
     <div className="relative w-full h-full overflow-hidden rounded-2xl shadow-inner border border-gray-100">
@@ -353,25 +388,7 @@ const DeliveryTrackingMap = ({
         }}
       >
         {/* 1. PERSISTENT BASELINE (Full journey: Restaurant -> Customer) */}
-        {!baselineDirections && baselineDirectionsServiceOptions && (
-           <DirectionsService
-             options={baselineDirectionsServiceOptions}
-             callback={(r, s) => { 
-                debugLog('?? Baseline Directions Status:', s);
-
-                if (s === 'OK' && r) {
-                    const points = r.routes[0]?.overview_path?.length || 0;
-                    debugLog(`? Baseline directions SET with ${points} points`);
-                    setBaselineDirections(r); 
-                } else if (s !== 'OK') {
-                  console.error('[DeliveryTrackingMap] DirectionsService failed:', s);
-                }
-             }}
-           />
-        )}
-
-        {/* 1. PERSISTENT BASELINE (Full journey: Restaurant -> Customer) */}
-        {baselineDirections && (
+        {baselineDirections && !baselineDirections.failed && baselineDirections !== 'FETCHING' && (
           <Polyline
             path={baselineDirections.routes[0].overview_path}
             options={{

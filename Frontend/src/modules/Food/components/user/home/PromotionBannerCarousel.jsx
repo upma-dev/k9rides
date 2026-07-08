@@ -13,7 +13,10 @@ const PromotionBannerCarousel = ({ zoneId: propZoneId }) => {
   const zoneId = propZoneId || localStorage.getItem('userZoneId');
 
   const fetchBanners = useCallback(async () => {
-    if (!zoneId) return;
+    if (!zoneId) {
+      setLoading(false);
+      return;
+    }
     try {
       setLoading(true);
       const response = await publicGetOnce(`/food/hero-banners/home-promotion/public?zoneId=${zoneId}`);

@@ -191,7 +191,7 @@ const Home = () => {
   const location = useLocation();
   const { settings } = useSettings();
   const appName = settings.general?.app_name || 'App';
-  const isTaxi = window.location.pathname.includes('/taxi');
+  const isTaxi = location.pathname.includes('/taxi');
   const theme = {
     activeBg: isTaxi ? 'bg-[#2563eb]' : 'bg-[#d82c23]',
     activeHex: isTaxi ? '#2563eb' : '#d82c23',

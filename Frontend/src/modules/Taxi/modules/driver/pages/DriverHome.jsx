@@ -2448,6 +2448,20 @@ const DriverHome = () => {
                         onLoad={onLoad}
                         onUnmount={onUnmount}
                         options={mapOptions}
+                        onClick={(e) => {
+                            if (!e.latLng) return;
+                            const newCoords = [e.latLng.lng(), e.latLng.lat()];
+                            driverCoordsRef.current = newCoords;
+                            setDriverCoords(newCoords);
+                            persistStoredDriverInfo({
+                                location: { coordinates: newCoords },
+                                coordinates: newCoords
+                            });
+                            if (isOnline) {
+                                socketService.emit('locationUpdate', { coordinates: newCoords });
+                            }
+                            setStatusMessage('Location updated manually.');
+                        }}
                     >
                         <Marker
                             position={driverPosition}

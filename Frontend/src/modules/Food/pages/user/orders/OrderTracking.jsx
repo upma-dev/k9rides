@@ -846,8 +846,28 @@ export default function OrderTracking() {
         }
 
         if (finalOrderData) {
+          let extraCoords = null;
+          let extraAddress = null;
+          if (!getRestaurantCoordsFromOrder(finalOrderData)) {
+            const resId = typeof finalOrderData.restaurantId === 'string' 
+              ? finalOrderData.restaurantId 
+              : (finalOrderData.restaurantId?._id || finalOrderData.restaurantId?.id);
+            if (resId) {
+              try {
+                const rRes = await restaurantAPI.getRestaurantById(resId);
+                const rData = rRes?.data?.data?.restaurant;
+                if (rData) {
+                  if (rData.location?.coordinates && Array.isArray(rData.location.coordinates) && rData.location.coordinates.length >= 2) {
+                    extraCoords = rData.location.coordinates;
+                  }
+                  extraAddress = rData.location?.formattedAddress || rData.location?.address || rData.address || null;
+                }
+              } catch (e) {}
+            }
+          }
+
           setOrder(prev => {
-            const transformedOrder = transformOrderForTracking(finalOrderData, prev);
+            const transformedOrder = transformOrderForTracking(finalOrderData, prev, extraCoords, extraAddress);
             const ui = mapOrderToTrackingUiStatus(transformedOrder);
             terminalPollStopRef.current = ui === 'delivered' || ui === 'cancelled';
             return transformedOrder;
@@ -866,8 +886,23 @@ export default function OrderTracking() {
           try {
             const matchedOrder = await resolveOrderFromList(orderId);
             if (matchedOrder) {
+              let extraCoords = null;
+              let extraAddress = null;
+              if (!getRestaurantCoordsFromOrder(matchedOrder)) {
+                const resId = typeof matchedOrder.restaurantId === 'string' ? matchedOrder.restaurantId : (matchedOrder.restaurantId?._id || matchedOrder.restaurantId?.id);
+                if (resId) {
+                  try {
+                    const rRes = await restaurantAPI.getRestaurantById(resId);
+                    const rData = rRes?.data?.data?.restaurant;
+                    if (rData) {
+                      if (rData.location?.coordinates && Array.isArray(rData.location.coordinates) && rData.location.coordinates.length >= 2) extraCoords = rData.location.coordinates;
+                      extraAddress = rData.location?.formattedAddress || rData.location?.address || rData.address || null;
+                    }
+                  } catch (e) {}
+                }
+              }
               if (!isSubscribed) return;
-              setOrder(prev => transformOrderForTracking(matchedOrder, prev));
+              setOrder(prev => transformOrderForTracking(matchedOrder, prev, extraCoords, extraAddress));
               setError(null);
               setLoading(false);
               return;
