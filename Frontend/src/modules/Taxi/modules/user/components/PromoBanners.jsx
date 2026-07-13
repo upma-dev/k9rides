@@ -68,8 +68,14 @@ const PromoBanners = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="px-4 space-y-5 mb-8">
-      <div className="mb-3 ml-2 flex items-center justify-between">
+    <div className="px-5 space-y-6 mb-8 mt-2">
+      <motion.div 
+        initial={{ opacity: 0, x: -10 }}
+        whileInView={{ opacity: 1, x: 0 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.4 }}
+        className="mb-4 ml-1 flex items-center justify-between"
+      >
         <h2 className="text-[20px] font-black text-slate-900 tracking-tight">Recommended for you</h2>
         <motion.div 
           animate={{ rotate: [0, 15, -15, 0] }} 
@@ -78,7 +84,7 @@ const PromoBanners = () => {
         >
           <Sparkles size={16} className="text-amber-500" />
         </motion.div>
-      </div>
+      </motion.div>
 
       <div className="grid grid-cols-2 gap-3.5">
         {rotatingCards.map((card, index) => (
@@ -130,22 +136,32 @@ const PromoBanners = () => {
               initial={{ opacity: 0, x: -10 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.5 }}
-              className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.2em] text-cyan-200 backdrop-blur-md border border-white/10 shadow-sm"
+              className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1.5 text-[10.5px] font-black uppercase tracking-[0.2em] text-cyan-300 backdrop-blur-md border border-white/20 shadow-[0_4px_12px_rgba(0,0,0,0.1)]"
             >
-              <Zap size={11} strokeWidth={3} className="text-cyan-200" />
+              <Zap size={12} strokeWidth={3} className="text-cyan-300" />
               Special Offer
             </motion.div>
 
-            <h3 className="mt-4 text-[22px] font-black leading-tight tracking-tight text-white drop-shadow-md">
-              Better savings on your next ride.
+            <h3 className="mt-4 text-[24px] font-black leading-tight tracking-tight text-white drop-shadow-md">
+              Better savings <br className="hidden sm:block" />on your next ride.
             </h3>
-            <p className="mt-2 text-[12.5px] font-semibold leading-relaxed text-slate-300">Book quickly & unlock exclusive discounts.</p>
+            <p className="mt-2.5 text-[13px] font-bold leading-relaxed text-slate-300 max-w-[200px]">Book quickly & unlock exclusive discounts today.</p>
 
-            <div className="mt-5 inline-flex items-center gap-2 rounded-full bg-white px-5 py-2.5 text-[13px] font-black text-slate-900 shadow-[0_8px_20px_rgba(255,255,255,0.15)] transition-all duration-300 group-hover:scale-105 group-hover:shadow-[0_12px_25px_rgba(255,255,255,0.25)]">
-              Ride Now
-              <ArrowRight size={16} strokeWidth={3} />
+            <div className="mt-6 relative inline-flex group/btn">
+              <div className="absolute -inset-1 bg-gradient-to-r from-cyan-400 to-emerald-400 rounded-full blur opacity-40 group-hover/btn:opacity-75 transition duration-500 group-hover/btn:duration-200"></div>
+              <div className="relative inline-flex items-center gap-2 rounded-full bg-white px-5 py-2.5 text-[13px] font-black text-slate-900 transition-all duration-300 group-hover/btn:scale-105">
+                Ride Now
+                <ArrowRight size={16} strokeWidth={3} />
+              </div>
             </div>
           </div>
+          
+          {/* Shimmer Effect overlay */}
+          <motion.div 
+            animate={{ x: ["-100%", "200%"] }}
+            transition={{ duration: 3, repeat: Infinity, ease: "linear", delay: 1 }}
+            className="absolute inset-0 z-20 w-[50%] bg-gradient-to-r from-transparent via-white/10 to-transparent skew-x-[-20deg] pointer-events-none"
+          />
         </div>
       </motion.div>
     </div>

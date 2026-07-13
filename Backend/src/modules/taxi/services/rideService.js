@@ -489,7 +489,6 @@ export const getDriverIdsBlockedByUpcomingScheduledRides = async (
     driverId: { $in: normalizedDriverIds },
     scheduledAt: {
       $ne: null,
-      $gte: windowStart,
       $lte: windowEnd,
     },
     status: { $in: [RIDE_STATUS.ACCEPTED, RIDE_STATUS.ONGOING] },
@@ -713,57 +712,46 @@ export const resolveSetPriceForRide = async ({ serviceLocationId = null, zoneId 
   }
 
   const normalizedTransportType = String(transportType || 'taxi').trim().toLowerCase() || 'taxi';
-  const filters = [
-    // 1. Specific zone, specific transport type
-    {
+  
+  const transportFilters = normalizedTransportType === 'intercity'
+    ? [ { transport_type: 'intercity' }, { transport_type: 'both' }, { enable_outstation_ride: true } ]
+    : [ { transport_type: normalizedTransportType }, { transport_type: 'both' } ];
+
+  const filters = [];
+
+  // Priority 1: Zone match
+  for (const tFilter of transportFilters) {
+    filters.push({
       vehicle_type: vehicleTypeId,
       active: 1,
       status: 'active',
       ...(serviceLocationId ? { service_location_id: serviceLocationId } : {}),
       ...(zoneId ? { zone_id: zoneId } : {}),
-      transport_type: normalizedTransportType,
-    },
-    // 2. Specific zone, both transport types
-    {
-      vehicle_type: vehicleTypeId,
-      active: 1,
-      status: 'active',
-      ...(serviceLocationId ? { service_location_id: serviceLocationId } : {}),
-      ...(zoneId ? { zone_id: zoneId } : {}),
-      transport_type: 'both',
-    },
-    // 3. Fallback: service location, specific transport type (no zone)
-    {
+      ...tFilter,
+    });
+  }
+
+  // Priority 2: Fallback to service location (no zone)
+  for (const tFilter of transportFilters) {
+    filters.push({
       vehicle_type: vehicleTypeId,
       active: 1,
       status: 'active',
       ...(serviceLocationId ? { service_location_id: serviceLocationId } : {}),
       zone_id: null,
-      transport_type: normalizedTransportType,
-    },
-    // 4. Fallback: service location, both transport types (no zone)
-    {
+      ...tFilter,
+    });
+  }
+
+  // Priority 3: Global fallback
+  for (const tFilter of transportFilters) {
+    filters.push({
       vehicle_type: vehicleTypeId,
       active: 1,
       status: 'active',
-      ...(serviceLocationId ? { service_location_id: serviceLocationId } : {}),
-      zone_id: null,
-      transport_type: 'both',
-    },
-    // 5. Global fallback (no zone, no service location)
-    {
-      vehicle_type: vehicleTypeId,
-      active: 1,
-      status: 'active',
-      transport_type: normalizedTransportType,
-    },
-    {
-      vehicle_type: vehicleTypeId,
-      active: 1,
-      status: 'active',
-      transport_type: 'both',
-    },
-  ];
+      ...tFilter,
+    });
+  }
 
   for (const filter of filters) {
     const match = await SetPrice.findOne(filter).sort({ updatedAt: -1, createdAt: -1 }).lean();
@@ -945,16 +933,19 @@ export const createRideRecord = async ({
     }
     const isIntercity = normalizedTransportType === 'intercity';
     const distanceKm = Math.max(0, safeEstimatedDistanceMeters / 1000);
-    const basePrice = isIntercity && pricingRule.outstation_base_price !== undefined && pricingRule.outstation_base_price !== null
+    const basePrice = isIntercity
       ? Math.max(0, Number(pricingRule.outstation_base_price || 0))
       : Math.max(0, Number(pricingRule.base_price || 0));
-    const baseDistance = isIntercity && pricingRule.outstation_base_distance !== undefined && pricingRule.outstation_base_distance !== null
+
+    const baseDistance = isIntercity
       ? Math.max(0, Number(pricingRule.outstation_base_distance || 0))
       : Math.max(0, Number(pricingRule.base_distance || 0));
-    const pricePerDistance = isIntercity && pricingRule.outstation_price_per_distance !== undefined && pricingRule.outstation_price_per_distance !== null
+
+    const pricePerDistance = isIntercity
       ? Math.max(0, Number(pricingRule.outstation_price_per_distance || 0))
       : Math.max(0, Number(pricingRule.price_per_distance || 0));
-    const timePrice = isIntercity && pricingRule.outstation_time_price !== undefined && pricingRule.outstation_time_price !== null
+
+    const timePrice = isIntercity
       ? Math.max(0, Number(pricingRule.outstation_time_price || 0))
       : Math.max(0, Number(pricingRule.time_price || 0));
     const serviceTaxPercent = Math.max(0, Number(pricingRule.service_tax || 0));
@@ -985,9 +976,7 @@ export const createRideRecord = async ({
   const isOutstationBiddingFlow = normalizedServiceType === 'intercity';
   const pricingNegotiationMode =
     supportsBidding && requestedBookingMode === 'bidding'
-      ? isOutstationBiddingFlow
-        ? 'driver_bid'
-        : 'user_increment_only'
+      ? 'driver_bid'
       : 'none';
   const effectiveBookingMode = pricingNegotiationMode === 'driver_bid' ? 'bidding' : 'normal';
   const configuredBidStepAmount = pricingNegotiationMode !== 'none'
@@ -1274,10 +1263,21 @@ export const getRideDetails = async (rideId) => {
   const ride = await Ride.findById(rideId)
     .populate('deliveryId')
     .populate('userId', 'name phone')
-    .populate('driverId', 'name phone profileImage vehicleType vehicleIconType vehicleNumber vehicleColor vehicleMake vehicleModel vehicleImage rating');
+    .populate('driverId', 'name phone profileImage vehicleType vehicleIconType vehicleNumber vehicleColor vehicleMake vehicleModel vehicleImage rating vehicleTypeId');
 
   if (!ride) {
     throw new ApiError(404, 'Ride not found');
+  }
+
+  // If the ride was created before the icon was uploaded, fetch it fresh now
+  if (!ride.vehicleIconUrl) {
+    const vehicleTypeId = ride.vehicleTypeId || ride.driverId?.vehicleTypeId;
+    if (vehicleTypeId) {
+      const vehicleType = await Vehicle.findById(vehicleTypeId).select('map_icon icon image').lean();
+      if (vehicleType) {
+        ride.vehicleIconUrl = vehicleType.map_icon || vehicleType.icon || vehicleType.image || '';
+      }
+    }
   }
 
   return ride;
@@ -1287,11 +1287,24 @@ export const getRideRoom = (rideId) => `ride_${rideId}`;
 
 const activeRideStatuses = [RIDE_STATUS.SEARCHING, RIDE_STATUS.ACCEPTED, RIDE_STATUS.ONGOING];
 
-const populateRideRealtime = async (rideId) =>
-  Ride.findById(rideId)
+const populateRideRealtime = async (rideId) => {
+  const ride = await Ride.findById(rideId)
     .populate('deliveryId')
     .populate('userId', 'name phone')
-    .populate('driverId', 'name phone profileImage vehicleType vehicleIconType vehicleNumber vehicleColor vehicleMake vehicleModel vehicleImage rating');
+    .populate('driverId', 'name phone profileImage vehicleType vehicleIconType vehicleNumber vehicleColor vehicleMake vehicleModel vehicleImage rating vehicleTypeId');
+
+  if (ride && !ride.vehicleIconUrl) {
+    const vehicleTypeId = ride.vehicleTypeId || ride.driverId?.vehicleTypeId;
+    if (vehicleTypeId) {
+      const vehicleType = await Vehicle.findById(vehicleTypeId).select('map_icon icon image').lean();
+      if (vehicleType) {
+        ride.vehicleIconUrl = vehicleType.map_icon || vehicleType.icon || vehicleType.image || '';
+      }
+    }
+  }
+
+  return ride;
+};
 
 export const serializeRideRealtime = (ride) => ({
   rideId: String(ride._id),

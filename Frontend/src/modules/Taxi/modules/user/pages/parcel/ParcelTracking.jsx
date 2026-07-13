@@ -14,7 +14,10 @@ import {
   Receipt,
   Clock, 
   ShieldCheck, 
-  ChevronRight
+  ChevronRight,
+  Banknote,
+  CreditCard,
+  Wallet
 } from 'lucide-react';
 import { GoogleMap, MarkerF, OverlayView, OverlayViewF, PolylineF } from '@react-google-maps/api';
 import { HAS_VALID_GOOGLE_MAPS_KEY, useAppGoogleMapsLoader } from '../../../admin/utils/googleMaps';
@@ -22,6 +25,7 @@ import { socketService } from '../../../../shared/api/socket';
 import api from '../../../../shared/api/axiosInstance';
 import { BACKEND_ORIGIN } from '../../../../shared/api/runtimeConfig';
 import { clearCurrentRide, getCurrentRide, saveCurrentRide } from '../../services/currentRideService';
+import { useAuthStore } from '../../../../../../core/auth/auth.store';
 
 // Assets (Using the same icons as RideTracking)
 import carIcon from '../../../../assets/icons/car.png';
@@ -143,6 +147,27 @@ const getInitials = (name = '') =>
     .map((part) => part[0]?.toUpperCase() || '')
     .join('') || 'DC';
 
+const PAYMENT_OPTIONS = [
+  { id: 'cash', label: 'COD / Cash', sub: 'Pay driver directly', Icon: Banknote },
+  { id: 'online', label: 'Online', sub: 'UPI, cards or Razorpay', Icon: CreditCard },
+  { id: 'wallet', label: 'Wallet', sub: 'Use in-app wallet balance', Icon: Wallet },
+];
+
+const loadRazorpayScript = () =>
+  new Promise((resolve) => {
+    if (window.Razorpay) {
+      resolve(true);
+      return;
+    }
+
+    const script = document.createElement('script');
+    script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+    script.async = true;
+    script.onload = () => resolve(true);
+    script.onerror = () => resolve(false);
+    document.body.appendChild(script);
+  });
+
 const ParcelTracking = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -157,11 +182,26 @@ const ParcelTracking = () => {
   const [routePath, setRoutePath] = useState([]);
   const [drawerOpen, setDrawerOpen] = useState(true);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
+  const [showCancellationBillModal, setShowCancellationBillModal] = useState(false);
+  const [cancellationBill, setCancellationBill] = useState(null);
+  const [showReasonSelection, setShowReasonSelection] = useState(false);
+  const [selectedReason, setSelectedReason] = useState('');
+  const [otherReasonText, setOtherReasonText] = useState('');
   const [shareToast, setShareToast] = useState(false);
   const [map, setMap] = useState(null);
+  const [step, setStep] = useState(() => {
+    if (state.feedback?.submittedAt) {
+      if (Number(state.feedback?.rating || 0) === 0) return 'rating';
+      return 'success';
+    }
+    return 'payment';
+  });
+  const [showPaymentSuccess, setShowPaymentSuccess] = useState(false);
+  const [showSubmittedOverlay, setShowSubmittedOverlay] = useState(false);
   const [rating, setRating] = useState(() => Number(state.feedback?.rating || 0));
   const [comment, setComment] = useState(() => state.feedback?.comment || '');
   const [selectedTip, setSelectedTip] = useState(() => Number(state.feedback?.tipAmount || 0));
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState('online');
   const [isSubmittingFeedback, setIsSubmittingFeedback] = useState(false);
   const [isFeedbackSubmitted, setIsFeedbackSubmitted] = useState(Boolean(state.feedback?.submittedAt));
   const [feedbackError, setFeedbackError] = useState('');
@@ -202,6 +242,12 @@ const ParcelTracking = () => {
     );
   }, [activeDestination, driverPosition, rideRealtime?.driverLocation?.heading, routePath]);
   const fare = rideRealtime?.fare || state.fare || 45;
+  const waitingPricing = rideRealtime?.pricingSnapshot || state.pricingSnapshot || {};
+  const { user } = useAuthStore();
+  const pendingCancellationDue = Number(rideRealtime?.pending_cancellation_due || state.pending_cancellation_due || user?.pending_cancellation_due || 0);
+  const applicableCancellationDue = tripStatus === 'completed' || tripStatus === 'delivered' ? 0 : pendingCancellationDue;
+  const currentTotalFare = Math.max(0, Math.round(Number(fare || 0) + applicableCancellationDue));
+  
   const otp = String(rideRealtime?.otp || state.otp || '');
   const completedAt = rideRealtime?.completedAt || state.completedAt || Date.now();
   const isDeliveryCompleted = COMPLETED_TRACKING_STATUSES.has(tripStatus);
@@ -248,7 +294,7 @@ const ParcelTracking = () => {
 
   useEffect(() => {
     const feedback = rideRealtime?.feedback || state.feedback || null;
-    if (!feedback) {
+    if (!feedback || !feedback.submittedAt) {
       return;
     }
 
@@ -256,6 +302,11 @@ const ParcelTracking = () => {
     setComment(feedback.comment || '');
     setSelectedTip(Number(feedback.tipAmount || 0));
     setIsFeedbackSubmitted(Boolean(feedback.submittedAt));
+    if (Number(feedback.rating || 0) === 0) {
+      setStep('rating');
+    } else {
+      setStep('success');
+    }
   }, [rideRealtime?.feedback, state.feedback]);
 
   useEffect(() => {
@@ -647,57 +698,161 @@ const ParcelTracking = () => {
       return;
     }
 
-    if (rating < 1) {
-      setFeedbackError('Please rate your delivery driver before finishing.');
-      return;
-    }
+    if (step === 'rating') {
+      if (rating < 1) {
+        setFeedbackError('Please rate your delivery driver before finishing.');
+        return;
+      }
+      try {
+        setIsSubmittingFeedback(true);
+        setFeedbackError('');
+        const response = await api.patch(`/rides/${rideId}/feedback`, {
+          rating,
+          comment,
+        });
 
-    if (!tipsEnabled && Number(selectedTip || 0) > 0) {
-      setFeedbackError('Tips are currently disabled.');
-      return;
-    }
+        const payload = response?.data?.data || response?.data || response;
+        if (payload?.feedback?.submittedAt) {
+          setIsFeedbackSubmitted(true);
+          setStep('success');
+          setShowSubmittedOverlay(true);
+          
+          saveCurrentRide({
+            ...latestStateRef.current,
+            ...(rideRealtime || {}),
+            rideId,
+            driver,
+            fare,
+            paymentMethod: rideRealtime?.paymentMethod || state.paymentMethod || 'Cash',
+            status: tripStatus,
+            liveStatus: tripStatus,
+            completedAt: payload?.completedAt || completedAt,
+            feedback: payload.feedback,
+          });
 
-    if (tipsEnabled && Number(selectedTip || 0) > 0 && minimumTipAmount > 0 && Number(selectedTip || 0) < minimumTipAmount) {
-      setFeedbackError(`Minimum tip amount is Rs ${minimumTipAmount}.`);
+          setTimeout(() => {
+            navigate(userHomeRoute, { replace: true });
+          }, 2500);
+        }
+        return;
+      } catch (error) {
+        console.error('Error submitting parcel feedback:', error);
+        setFeedbackError(error?.response?.data?.message || error?.message || 'Could not submit rating.');
+      } finally {
+        setIsSubmittingFeedback(false);
+      }
       return;
     }
 
     try {
       setIsSubmittingFeedback(true);
       setFeedbackError('');
-      const response = await api.patch(`/rides/${rideId}/feedback`, {
-        rating,
-        comment,
-        tipAmount: selectedTip || 0,
-      });
-      const payload = unwrapApiPayload(response) || {};
-      const feedback = payload?.feedback || {
-        rating,
-        comment,
-        tipAmount: selectedTip || 0,
-        submittedAt: new Date().toISOString(),
-      };
 
-      setRideRealtime((prev) => ({
-        ...(prev || {}),
-        feedback,
-        completedAt: payload?.completedAt || prev?.completedAt || Date.now(),
-      }));
-      setIsFeedbackSubmitted(true);
-      saveCurrentRide({
-        ...latestStateRef.current,
-        ...(rideRealtime || {}),
-        rideId,
-        driver,
-        fare,
-        paymentMethod: rideRealtime?.paymentMethod || state.paymentMethod || 'Cash',
-        status: tripStatus,
-        liveStatus: tripStatus,
-        completedAt: payload?.completedAt || completedAt,
-        feedback,
-      });
+      let response;
+
+      if (selectedPaymentMethod === 'online') {
+        const scriptLoaded = await loadRazorpayScript();
+        if (!scriptLoaded) {
+          throw new Error('Razorpay SDK failed to load');
+        }
+
+        const orderResponse = await api.post(`/rides/${rideId}/tip/razorpay/order`, {
+          rating: 0,
+          comment: '',
+          tipAmount: selectedTip || 0,
+        });
+        
+        const orderPayload = orderResponse?.data?.data || orderResponse?.data || orderResponse || {};
+
+        if (!orderPayload.keyId || !orderPayload.orderId) {
+          throw new Error('Unable to start tip payment');
+        }
+
+        const order = orderPayload;
+
+        let userInfo = {};
+        try {
+          userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
+        } catch {
+          userInfo = {};
+        }
+
+        response = await new Promise((resolve, reject) => {
+          const options = {
+            key: order.keyId,
+            amount: order.amount,
+            currency: order.currency || 'INR',
+            name: 'K9 Rides',
+            description: `Tip for delivery captain`,
+            order_id: order.orderId,
+            prefill: {
+              name: userInfo?.name || '',
+              email: userInfo?.email || '',
+              contact: userInfo?.phone ? `+91${userInfo.phone}` : '',
+            },
+            modal: {
+              ondismiss: () => reject(new Error('Tip payment was cancelled')),
+            },
+            handler: async (paymentResponse) => {
+              try {
+                const verifyResponse = await api.post(`/rides/${rideId}/tip/razorpay/verify`, {
+                  ...paymentResponse,
+                  rating: 0,
+                  comment: '',
+                  tipAmount: selectedTip || 0,
+                });
+                resolve(verifyResponse);
+              } catch (verifyError) {
+                reject(new Error(verifyError?.message || 'Tip payment verification failed'));
+              }
+            },
+            theme: {
+              color: '#0f172a',
+            },
+          };
+
+          const rzp = new window.Razorpay(options);
+
+          rzp.on('payment.failed', (event) => {
+            reject(new Error(event?.error?.description || event?.error?.reason || 'Tip payment failed'));
+          });
+
+          rzp.open();
+        });
+      } else if (Number(selectedTip || 0) > 0 && selectedPaymentMethod === 'wallet') {
+        response = await api.post(`/rides/${rideId}/complete-payment/wallet`, {
+          rating: 0,
+          comment: '',
+          tipAmount: selectedTip || 0,
+        });
+      } else {
+        response = await api.patch(`/rides/${rideId}/feedback`, {
+          rating: 0,
+          comment: '',
+          tipAmount: selectedTip || 0,
+        });
+      }
+
+      setShowPaymentSuccess(true);
+      setTimeout(() => {
+        setShowPaymentSuccess(false);
+        setStep('rating');
+      }, 1500);
+
     } catch (error) {
-      setFeedbackError(error?.message || 'Could not submit feedback right now.');
+      console.error('Error submitting tip payment:', error);
+      const backendMessage = error?.response?.data?.message || error?.message;
+      
+      if (error?.response?.status === 409 || (backendMessage && backendMessage.toLowerCase().includes('already submitted'))) {
+        setShowPaymentSuccess(true);
+        setTimeout(() => {
+          setShowPaymentSuccess(false);
+          setStep('rating');
+        }, 1500);
+        return;
+      }
+
+      setFeedbackError(backendMessage || 'Could not process tip payment right now.');
     } finally {
       setIsSubmittingFeedback(false);
     }
@@ -766,7 +921,7 @@ const ParcelTracking = () => {
       <motion.div
         initial={{ y: 300 }}
         animate={{ y: 0 }}
-        className="absolute bottom-0 left-0 right-0 z-20 bg-white rounded-t-[40px] shadow-[0_-20px_60px_rgba(0,0,0,0.1)] p-6 pb-8 border-t border-gray-100"
+        className="absolute bottom-0 left-0 right-0 z-20 bg-white rounded-t-[40px] shadow-[0_-20px_60px_rgba(0,0,0,0.1)] p-6 pb-8 border-t border-gray-100 max-h-[85vh] overflow-y-auto scrollbar-hide overscroll-contain"
       >
         <div className="w-12 h-1.5 bg-gray-100 rounded-full mx-auto mb-6" />
 
@@ -851,102 +1006,173 @@ const ParcelTracking = () => {
               </div>
             </div>
 
-            <div className="rounded-[20px] border border-white/80 bg-white/95 px-4 py-4 shadow-[0_10px_24px_rgba(15,23,42,0.06)]">
-              {isFeedbackSubmitted ? (
-                <div className="text-center">
-                  <p className="text-center text-[10px] font-black uppercase tracking-[0.22em] text-emerald-500">Feedback submitted</p>
-                  <p className="mt-2 text-[12px] font-bold text-slate-500">
-                    Rating: {rating || 0}/5 {selectedTip > 0 ? `| Tip added: Rs ${Number(selectedTip || 0).toFixed(2)}` : '| No tip added'}
-                  </p>
+            {step === 'payment' && (
+              <div className="relative overflow-hidden rounded-[20px] border border-white/80 bg-white/95 px-4 py-4 shadow-[0_10px_24px_rgba(15,23,42,0.06)]">
+                <p className="text-center text-[10px] font-black uppercase tracking-[0.22em] text-slate-400">
+                  {tipsEnabled ? 'Tip your delivery driver' : 'Driver tips disabled'}
+                </p>
+                {tipsEnabled && minimumTipAmount > 0 ? (
+                  <p className="mt-2 text-center text-[11px] font-bold text-slate-500">Minimum tip amount: Rs {minimumTipAmount}</p>
+                ) : null}
+                <div className="mt-3 flex flex-wrap justify-center gap-2">
+                  {availableTipOptions.map((amount) => (
+                    <button
+                      key={amount}
+                      type="button"
+                      onClick={() => {
+                        setSelectedTip(amount);
+                        setFeedbackError('');
+                      }}
+                      disabled={!tipsEnabled && amount > 0}
+                      className={`rounded-full border px-4 py-2 text-[11px] font-black transition-all ${
+                        selectedTip === amount ? 'border-primary-orange/50 bg-primary-orange/50 text-white shadow-[0_8px_18px_rgba(249,115,22,0.24)]' : 'border-slate-100 bg-slate-50 text-slate-600'
+                      } ${!tipsEnabled && amount > 0 ? 'cursor-not-allowed opacity-50' : ''}`}
+                    >
+                      {amount === 0 ? 'No tip' : `Rs ${amount}`}
+                    </button>
+                  ))}
                 </div>
-              ) : (
-                <>
-                  <p className="text-center text-[10px] font-black uppercase tracking-[0.22em] text-slate-400">
-                    {tipsEnabled ? 'Tip your delivery driver' : 'Driver tips disabled'}
-                  </p>
-                  {tipsEnabled && minimumTipAmount > 0 ? (
-                    <p className="mt-2 text-center text-[11px] font-bold text-slate-500">Minimum tip amount: Rs {minimumTipAmount}</p>
-                  ) : null}
-                  <div className="mt-3 flex flex-wrap justify-center gap-2">
-                    {availableTipOptions.map((amount) => (
-                      <button
-                        key={amount}
-                        type="button"
-                        onClick={() => {
-                          setSelectedTip(amount);
-                          setFeedbackError('');
-                        }}
-                        disabled={!tipsEnabled && amount > 0}
-                        className={`rounded-full border px-4 py-2 text-[11px] font-black transition-all ${
-                          selectedTip === amount ? 'border-primary-orange/50 bg-primary-orange/50 text-white shadow-[0_8px_18px_rgba(249,115,22,0.24)]' : 'border-slate-100 bg-slate-50 text-slate-600'
-                        } ${!tipsEnabled && amount > 0 ? 'cursor-not-allowed opacity-50' : ''}`}
-                      >
-                        {amount === 0 ? 'No tip' : `Rs ${amount}`}
-                      </button>
-                    ))}
+
+                {Number(selectedTip || 0) > 0 && (
+                  <div className="mt-5 border-t border-slate-100 pt-4">
+                    <p className="text-center text-[10px] font-black uppercase tracking-[0.22em] text-slate-400 mb-3">
+                      Select Tip Payment Method
+                    </p>
+                    <div className="grid grid-cols-3 gap-3">
+                      {PAYMENT_OPTIONS.map((method) => {
+                        const Icon = method.Icon;
+                        const isSelected = selectedPaymentMethod === method.id;
+                        return (
+                          <button
+                            key={method.id}
+                            type="button"
+                            onClick={() => {
+                              setSelectedPaymentMethod(method.id);
+                              setFeedbackError('');
+                            }}
+                            className={`flex flex-col items-center justify-center py-4 rounded-2xl border-2 transition-all ${
+                              isSelected
+                                ? 'border-[#0F766E] bg-[#0F766E]/5'
+                                : 'border-slate-100 bg-slate-50/50 hover:border-[#0F766E]/30'
+                            }`}
+                          >
+                            <Icon 
+                              size={22} 
+                              className={isSelected ? 'text-[#0F766E]' : 'text-slate-400'} 
+                              strokeWidth={2.5} 
+                            />
+                            <span className={`text-[10px] font-bold uppercase tracking-wide mt-2 ${
+                              isSelected ? 'text-[#0F766E]' : 'text-slate-500'
+                            }`}>
+                              {method.id === 'cash' ? 'Cash' : method.label}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
                   </div>
-                </>
-              )}
-            </div>
-
-            <div className="rounded-[20px] border border-white/80 bg-white/95 px-4 py-4 text-center shadow-[0_10px_24px_rgba(15,23,42,0.06)]">
-              <p className="text-[16px] font-black text-slate-900">How was your delivery with {driver.name?.split(' ')[0] || 'your driver'}?</p>
-              <div className="mt-4 flex justify-center gap-2">
-                {[1, 2, 3, 4, 5].map((value) => (
-                  <button
-                    key={value}
-                    type="button"
-                    onClick={() => {
-                      setRating(value);
-                      setFeedbackError('');
-                    }}
-                    disabled={isFeedbackSubmitted}
-                    className={`flex h-11 w-11 items-center justify-center rounded-[12px] transition-all ${
-                      rating >= value ? 'bg-primary-orange/50 shadow-[0_10px_20px_rgba(249,115,22,0.24)]' : 'bg-slate-100'
-                    } ${isFeedbackSubmitted ? 'cursor-default' : ''}`}
-                  >
-                    <Star size={19} className={rating >= value ? 'fill-white text-white' : 'text-slate-300'} />
-                  </button>
-                ))}
+                )}
+                
+                <AnimatePresence>
+                  {showPaymentSuccess && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      className="absolute inset-0 z-10 flex flex-col items-center justify-center rounded-[20px] bg-white/95 backdrop-blur-sm"
+                    >
+                      <div className="flex h-16 w-16 items-center justify-center rounded-full bg-emerald-500 shadow-[0_8px_20px_rgba(16,185,129,0.3)]">
+                        <CheckCircle2 size={32} className="text-white" strokeWidth={3} />
+                      </div>
+                      <p className="mt-4 text-[16px] font-black tracking-wide text-[#0F766E]">Payment Confirmed!</p>
+                      <p className="mt-1 text-[12px] font-bold text-slate-500">Processing tip...</p>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
+            )}
 
-              <div className="mt-4 rounded-[16px] border border-slate-100 bg-slate-50/80 px-3 py-3">
-                <textarea
-                  value={comment}
-                  onChange={(event) => setComment(event.target.value)}
-                  rows={3}
-                  maxLength={500}
-                  disabled={isFeedbackSubmitted}
-                  placeholder="Tell us about the delivery"
-                  className="w-full resize-none rounded-[12px] border border-slate-100 bg-white px-3 py-2 text-[13px] font-bold text-slate-900 outline-none placeholder:text-slate-300"
-                />
+            {(step === 'rating' || step === 'success') && (
+              <div className="rounded-[20px] border border-white/80 bg-white/95 px-4 py-4 text-center shadow-[0_10px_24px_rgba(15,23,42,0.06)]">
+                {step === 'success' && (
+                  <div className="mb-6 text-center">
+                    <p className="text-center text-[10px] font-black uppercase tracking-[0.22em] text-emerald-500">
+                      Feedback submitted
+                    </p>
+                    <p className="mt-2 text-[12px] font-bold text-slate-500">
+                      Rating: {rating || 0}/5 {selectedTip > 0 ? `| Tip added: Rs ${Number(selectedTip || 0).toFixed(2)}` : '| No tip added'}
+                    </p>
+                  </div>
+                )}
+                
+                <p className="text-[16px] font-black text-slate-900">How was your delivery with {driver.name?.split(' ')[0] || 'your driver'}?</p>
+                <div className="mt-4 flex justify-center gap-2">
+                  {[1, 2, 3, 4, 5].map((value) => (
+                    <button
+                      key={value}
+                      type="button"
+                      onClick={() => {
+                        if (step !== 'success') {
+                          setRating(value);
+                          setFeedbackError('');
+                        }
+                      }}
+                      disabled={step === 'success'}
+                      className={`flex h-11 w-11 items-center justify-center rounded-[12px] transition-all ${
+                        rating >= value ? 'bg-primary-orange/50 shadow-[0_10px_20px_rgba(249,115,22,0.24)]' : 'bg-slate-100'
+                      } ${step === 'success' ? 'cursor-default' : ''}`}
+                    >
+                      <Star size={19} className={rating >= value ? 'fill-white text-white' : 'text-slate-300'} />
+                    </button>
+                  ))}
+                </div>
+
+                <div className="mt-4 rounded-[16px] border border-slate-100 bg-slate-50/80 px-3 py-3">
+                  <textarea
+                    value={comment}
+                    onChange={(event) => setComment(event.target.value)}
+                    rows={3}
+                    maxLength={500}
+                    disabled={step === 'success'}
+                    placeholder="Tell us about the delivery"
+                    className="w-full resize-none rounded-[12px] border border-slate-100 bg-white px-3 py-2 text-[13px] font-bold text-slate-900 outline-none placeholder:text-slate-300"
+                  />
+                </div>
               </div>
+            )}
 
-              {feedbackError ? <p className="mt-3 text-[12px] font-black text-red-500">{feedbackError}</p> : null}
+            {feedbackError ? <p className="mt-3 text-[12px] font-black text-red-500">{feedbackError}</p> : null}
 
-              <button
-                type="button"
-                onClick={submitParcelFeedback}
-                disabled={isSubmittingFeedback || isFeedbackSubmitted}
-                className="mt-4 flex w-full items-center justify-center gap-2 rounded-[16px] bg-slate-900 py-3.5 text-[14px] font-black text-white shadow-[0_12px_24px_rgba(15,23,42,0.18)] disabled:opacity-60"
-              >
-                {isSubmittingFeedback ? 'Saving your feedback...' : isFeedbackSubmitted ? 'Feedback already saved' : 'Submit rating'}
-                <ChevronRight size={16} />
-              </button>
+            <button
+              type="button"
+              onClick={submitParcelFeedback}
+              disabled={isSubmittingFeedback || step === 'success'}
+              className="mt-4 flex w-full items-center justify-center gap-2 rounded-[16px] bg-[#0F766E] py-3.5 text-[14px] font-black text-white shadow-[0_12px_24px_rgba(15,23,42,0.18)] disabled:opacity-60"
+            >
+              {isSubmittingFeedback 
+                ? 'Processing...' 
+                : step === 'success' 
+                  ? 'Feedback already saved' 
+                  : step === 'payment'
+                    ? (selectedTip > 0) 
+                      ? `Pay Tip Rs ${selectedTip} via ${selectedPaymentMethod === 'cash' ? 'Cash' : selectedPaymentMethod === 'wallet' ? 'Wallet' : 'Online'} & Continue`
+                      : 'Continue to Rating'
+                    : 'Submit rating'}
+              <ChevronRight size={16} />
+            </button>
 
-              <button
-                type="button"
-                onClick={() => {
-                  clearCurrentRide();
-                  navigate(userHomeRoute, { replace: true });
-                }}
-                className="mt-3 text-[12px] font-black text-slate-500"
-              >
-                Continue home
-              </button>
-            </div>
+            <button
+              type="button"
+              onClick={() => {
+                clearCurrentRide();
+                navigate(userHomeRoute, { replace: true });
+              }}
+              className="mt-3 text-[12px] font-black text-slate-500"
+            >
+              Continue home
+            </button>
           </div>
-        ) : (
+      ) : (
         <div className="space-y-6">
           {/* Driver Info Section */}
           <div className="flex items-center justify-between">
@@ -998,8 +1224,11 @@ const ParcelTracking = () => {
             <div>
               <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Estimated Fare</p>
               <div className="flex items-center gap-2">
-                <span className="text-xl font-black text-gray-900">₹{fare}</span>
+                <span className="text-xl font-black text-gray-900">₹{currentTotalFare}</span>
                 <span className="px-2 py-0.5 rounded-md bg-gray-100 text-[10px] font-black text-gray-500 uppercase tracking-widest">{state.paymentMethod || 'Cash'}</span>
+                {applicableCancellationDue > 0 && (
+                  <span className="px-2 py-0.5 rounded-md bg-red-50 text-[10px] font-black text-red-500 uppercase tracking-widest">+₹{applicableCancellationDue} Cancel Due</span>
+                )}
               </div>
             </div>
             <motion.button
@@ -1018,28 +1247,199 @@ const ParcelTracking = () => {
       <AnimatePresence>
         {showCancelConfirm && (
           <>
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowCancelConfirm(false)} className="fixed inset-0 bg-slate-950/40 backdrop-blur-sm z-[100] max-w-lg mx-auto" />
-            <motion.div initial={{ scale: 0.9, opacity: 0, y: 40 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.9, opacity: 0, y: 40 }} className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[85%] max-w-sm bg-white rounded-[40px] p-8 z-[101] shadow-2xl text-center">
-              <div className="w-16 h-16 bg-red-50 rounded-[24px] flex items-center justify-center mx-auto mb-6 text-red-500">
-                <AlertTriangle size={32} strokeWidth={2.5} />
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => {
+                setShowCancelConfirm(false);
+                setShowReasonSelection(false);
+              }}
+              className="fixed inset-0 bg-slate-950/40 backdrop-blur-sm z-[100] max-w-lg mx-auto"
+            />
+            {showReasonSelection ? (
+              <motion.div
+                initial={{ scale: 0.92, opacity: 0, y: 40 }}
+                animate={{ scale: 1, opacity: 1, y: 0 }}
+                exit={{ scale: 0.92, opacity: 0, y: 40 }}
+                className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[88%] max-w-sm bg-white rounded-[28px] p-7 z-[101] shadow-2xl text-center"
+              >
+                <h3 className="text-[17px] font-black text-gray-900 mb-4 uppercase tracking-wider">Select Reason</h3>
+                <div className="space-y-2 text-left mb-6 max-h-[240px] overflow-y-auto pr-1">
+                  {[
+                    'Driver asked to cancel',
+                    'Long waiting time',
+                    'Wrong address shown',
+                    'Changed my mind',
+                    'Others'
+                  ].map((reason) => (
+                    <label key={reason} className="flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 cursor-pointer border border-slate-100/60 transition-colors">
+                      <input
+                        type="radio"
+                        name="cancel_reason"
+                        checked={selectedReason === reason}
+                        onChange={() => setSelectedReason(reason)}
+                        className="h-4 w-4 text-gray-900 focus:ring-slate-900 border-gray-355"
+                      />
+                      <span className="text-[13px] font-semibold text-slate-700">{reason}</span>
+                    </label>
+                  ))}
+
+                  {selectedReason === 'Others' && (
+                    <input
+                      type="text"
+                      placeholder="Enter reason here..."
+                      className="w-full mt-2 border border-slate-200 rounded-xl px-4 py-2.5 text-xs outline-none focus:border-slate-400"
+                      value={otherReasonText}
+                      onChange={(e) => setOtherReasonText(e.target.value)}
+                    />
+                  )}
+                </div>
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setShowReasonSelection(false)}
+                    className="flex-1 py-3 bg-slate-100 text-slate-600 rounded-xl text-xs font-bold uppercase tracking-wider"
+                  >
+                    Back
+                  </button>
+                  <button
+                    disabled={!selectedReason || (selectedReason === 'Others' && !otherReasonText)}
+                    onClick={() => {
+                      const finalReason = selectedReason === 'Others' ? otherReasonText : selectedReason;
+                      api.patch(`/rides/${rideId}/cancel`, { reason: finalReason }).then((res) => {
+                        const bill = res?.data?.data?.cancellationBill;
+                        if (bill && (Number(bill.cancellationFee) > 0 || Number(bill.waitingCharge) > 0)) {
+                          setCancellationBill(bill);
+                          setShowCancellationBillModal(true);
+                          setShowCancelConfirm(false);
+                          setShowReasonSelection(false);
+                        } else {
+                          clearCurrentRide();
+                          navigate(userHomeRoute, { replace: true });
+                        }
+                      }).catch(() => {
+                        clearCurrentRide();
+                        navigate(userHomeRoute, { replace: true });
+                      });
+                    }}
+                    className="flex-1 py-3 bg-red-500 hover:bg-red-650 text-white rounded-xl text-xs font-bold uppercase tracking-wider shadow-lg disabled:opacity-50"
+                  >
+                    Cancel Delivery
+                  </button>
+                </div>
+              </motion.div>
+            ) : (
+              <motion.div
+                initial={{ scale: 0.9, opacity: 0, y: 40 }}
+                animate={{ scale: 1, opacity: 1, y: 0 }}
+                exit={{ scale: 0.9, opacity: 0, y: 40 }}
+                className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[85%] max-w-sm bg-white rounded-[40px] p-8 z-[101] shadow-2xl text-center"
+              >
+                <div className="w-16 h-16 bg-red-50 rounded-[24px] flex items-center justify-center mx-auto mb-6 text-red-500">
+                  <AlertTriangle size={32} strokeWidth={2.5} />
+                </div>
+                <h3 className="text-xl font-black text-gray-900 mb-2">Cancel Delivery?</h3>
+                {waitingPricing?.cancellation_policy_message ? (
+                  <p className="text-[11px] font-semibold text-red-500 bg-red-50/50 rounded-xl p-3 mb-6 leading-relaxed text-left border border-red-100/30">
+                    {waitingPricing.cancellation_policy_message}
+                  </p>
+                ) : (
+                  <p className="text-sm font-bold text-gray-400 mb-8 leading-relaxed">
+                    Your delivery agent is already moving. Cancellation may incur charges.
+                  </p>
+                )}
+                <div className="flex flex-col gap-3">
+                  <motion.button
+                    whileTap={{ scale: 0.96 }}
+                    onClick={() => {
+                      if (waitingPricing?.enable_cancellation_reasons !== false) {
+                        setShowReasonSelection(true);
+                      } else {
+                        api.patch(`/rides/${rideId}/cancel`, { reason: 'User cancelled' }).then((res) => {
+                          const bill = res?.data?.data?.cancellationBill;
+                          if (bill && (Number(bill.cancellationFee) > 0 || Number(bill.waitingCharge) > 0)) {
+                            setCancellationBill(bill);
+                            setShowCancellationBillModal(true);
+                            setShowCancelConfirm(false);
+                            setShowReasonSelection(false);
+                          } else {
+                            clearCurrentRide();
+                            navigate(userHomeRoute, { replace: true });
+                          }
+                        }).catch(() => {
+                          clearCurrentRide();
+                          navigate(userHomeRoute, { replace: true });
+                        });
+                      }
+                    }}
+                    className="w-full bg-red-500 text-white py-5 rounded-[24px] text-sm font-black uppercase tracking-widest shadow-xl shadow-red-500/20"
+                  >
+                    Yes, Cancel
+                  </motion.button>
+                  <button onClick={() => setShowCancelConfirm(false)} className="w-full py-4 text-sm font-black text-gray-400 uppercase tracking-widest">Keep Tracking</button>
+                </div>
+              </motion.div>
+            )}
+          </>
+        )}
+
+        {showCancellationBillModal && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => {
+                setShowCancellationBillModal(false);
+                clearCurrentRide();
+                navigate(userHomeRoute, { replace: true });
+              }}
+              className="fixed inset-0 bg-slate-950/40 backdrop-blur-sm z-[100] max-w-lg mx-auto"
+            />
+            <motion.div
+              initial={{ scale: 0.92, opacity: 0, y: 40 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.92, opacity: 0, y: 40 }}
+              className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[85%] max-w-sm bg-white rounded-[28px] p-7 z-[101] shadow-2xl"
+            >
+              <div className="w-14 h-14 bg-red-50 rounded-[18px] flex items-center justify-center mx-auto mb-4">
+                <FileText size={26} className="text-red-500" strokeWidth={2} />
               </div>
-              <h3 className="text-xl font-black text-gray-900 mb-2">Cancel Delivery?</h3>
-              <p className="text-sm font-bold text-gray-400 mb-8 leading-relaxed">Your delivery agent is already moving. Cancellation may incur charges.</p>
-              <div className="flex flex-col gap-3">
-                <motion.button
-                  whileTap={{ scale: 0.96 }}
-                  onClick={() => {
-                    api.patch(`/rides/${rideId}/cancel`).finally(() => {
-                      clearCurrentRide();
-                      navigate(userHomeRoute, { replace: true });
-                    });
-                  }}
-                  className="w-full bg-red-500 text-white py-5 rounded-[24px] text-sm font-black uppercase tracking-widest shadow-xl shadow-red-500/20"
-                >
-                  Yes, Cancel
-                </motion.button>
-                <button onClick={() => setShowCancelConfirm(false)} className="w-full py-4 text-sm font-black text-gray-400 uppercase tracking-widest">Keep Tracking</button>
+              <h3 className="text-[18px] font-black text-gray-900 text-center mb-1.5">Cancellation Receipt</h3>
+              <p className="text-[12px] font-bold text-slate-400 text-center mb-6">
+                Your delivery has been cancelled. Waiting time and cancellation fees are calculated below:
+              </p>
+
+              <div className="space-y-3.5 border-t border-b border-slate-100 py-4 mb-6">
+                <div className="flex justify-between items-center text-xs font-bold text-slate-500">
+                  <span>Standard Cancellation Fee</span>
+                  <span className="text-slate-800">₹{cancellationBill?.cancellationFee || 0}.00</span>
+                </div>
+                <div className="flex justify-between items-center text-xs font-bold text-slate-500">
+                  <span>Waiting Time</span>
+                  <span className="text-slate-800">{cancellationBill?.waitingTimeMinutes || 0} mins</span>
+                </div>
+                <div className="flex justify-between items-center text-xs font-bold text-slate-500">
+                  <span>Waiting Charge</span>
+                  <span className="text-slate-800">₹{cancellationBill?.waitingCharge || 0}.00</span>
+                </div>
+                <div className="flex justify-between items-center pt-2.5 border-t border-slate-100/60 font-black text-[14px]">
+                  <span className="text-gray-900">Total Deducted</span>
+                  <span className="text-red-500">₹{cancellationBill?.totalCancellationFee || 0}.00</span>
+                </div>
               </div>
+
+              <motion.button
+                whileTap={{ scale: 0.97 }}
+                onClick={() => {
+                  setShowCancellationBillModal(false);
+                  clearCurrentRide();
+                  navigate(userHomeRoute, { replace: true });
+                }}
+                className="w-full bg-gray-900 text-white py-3.5 rounded-[16px] text-[13px] font-bold uppercase tracking-widest"
+              >
+                Okay
+              </motion.button>
             </motion.div>
           </>
         )}

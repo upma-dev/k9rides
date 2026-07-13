@@ -180,7 +180,7 @@ const IncomingRideRequest = ({
           animate={{ y: 0, scale: 1 }}
           exit={{ y: 80, scale: 0.96 }}
           transition={{ type: 'spring', stiffness: 360, damping: 34 }}
-          className="relative w-full max-w-[430px] overflow-hidden rounded-[28px] bg-white shadow-[0_30px_90px_rgba(0,0,0,0.28)]"
+          className="relative w-full max-w-[430px] overflow-x-hidden overflow-y-auto rounded-[28px] bg-white shadow-[0_30px_90px_rgba(0,0,0,0.28)] max-h-[calc(100dvh-2rem)]"
         >
           {!isPreviewMode ? (
             <div className="absolute inset-x-0 top-0 h-1 bg-slate-100">

@@ -517,7 +517,7 @@ const ModeSwitcher = ({ mode, setMode }) => {
 
   const options = [
     { id: ADMIN_MODE, label: 'Admin', subtitle: 'Core control panel' },
-    { id: OWNER_MODE, label: 'Owner', subtitle: 'Owner management modules' },
+    // { id: OWNER_MODE, label: 'Owner', subtitle: 'Owner management modules' },
   ];
 
   const active = options.find((option) => option.id === mode) || options[0];
@@ -770,7 +770,7 @@ const AdminLayout = () => {
               { label: 'Airport', path: '/taxi/admin/pricing/airport', permission: 'airports.view' },
               { label: 'App Modules', path: '/taxi/admin/pricing/app-modules', permission: 'settings.view' },
               { label: 'Vehicle Type', path: '/taxi/admin/pricing/vehicle-type', permission: 'vehicle_types.view' },
-              {
+              /*{
                 label: 'Rental',
                 subItems: [
                   { label: 'Service Stores', path: '/taxi/admin/pricing/service-stores', permission: 'service_stores.view' },
@@ -781,7 +781,7 @@ const AdminLayout = () => {
                   { label: 'Rental Package Types', path: '/taxi/admin/pricing/rental-packages', permission: 'rental.view' },
                   { label: 'Package Pricing', path: '/taxi/admin/pricing/package-pricing', permission: 'rental.view' },
                 ],
-              },
+              },*/
               { label: 'Set Price', path: '/taxi/admin/pricing/set-price', permission: 'set_prices.view' },
               { label: 'Goods Types', path: '/taxi/admin/pricing/goods-types', permission: 'goods_types.view' },
             ],
@@ -865,7 +865,7 @@ const AdminLayout = () => {
               { label: 'Referral Translation', path: '/taxi/admin/referrals/translation', permission: 'referrals.view' },
             ],
           },
-          { icon: Briefcase, label: 'Owner Management', path: '/taxi/admin/owners/dashboard', permission: 'owners.view' },
+          // { icon: Briefcase, label: 'Owner Management', path: '/taxi/admin/owners/dashboard', permission: 'owners.view' },
           {
             icon: FileText,
             label: 'Report',
@@ -873,7 +873,7 @@ const AdminLayout = () => {
               { label: 'User Report', path: '/taxi/admin/reports/user', permission: 'reports.view' },
               { label: 'Driver Report', path: '/taxi/admin/reports/driver', permission: 'reports.view' },
               { label: 'Driver Duty Report', path: '/taxi/admin/reports/driver-duty', permission: 'reports.view' },
-              { label: 'Owner Report', path: '/taxi/admin/reports/owner', permission: 'reports.view' },
+              // { label: 'Owner Report', path: '/taxi/admin/reports/owner', permission: 'reports.view' },
               { label: 'Finance Report', path: '/taxi/admin/reports/finance', permission: 'reports.view' },
               { label: 'Fleet Finance Report', path: '/taxi/admin/reports/fleet-finance', permission: 'reports.view' },
             ],
@@ -960,6 +960,7 @@ const AdminLayout = () => {
     []
   );
 
+  /*
   const ownerSections = useMemo(
     () => [
       {
@@ -995,13 +996,14 @@ const AdminLayout = () => {
     ],
     []
   );
+  */
 
   const isOwnerRoute = location.pathname.startsWith('/taxi/admin/owners') || location.pathname.startsWith('/taxi/admin/fleet');
   const isAdminChatRoute = pathMatches(location.pathname, '/taxi/admin/chat');
-  const mode = isOwnerRoute ? OWNER_MODE : ADMIN_MODE;
+  const mode = ADMIN_MODE;
   const sidebarSections = useMemo(
-    () => filterSidebarSectionsByAccess(mode === OWNER_MODE ? ownerSections : adminSections, adminProfile),
-    [adminProfile, adminSections, mode, ownerSections],
+    () => filterSidebarSectionsByAccess(adminSections, adminProfile),
+    [adminProfile, adminSections],
   );
   const unreadCountsByPath = useMemo(
     () => ({
@@ -1328,7 +1330,7 @@ const AdminLayout = () => {
           <div className="group/sidebar-head relative mb-4 flex h-24 items-center border-b border-white/5 px-6">
             <div className="flex items-center gap-4">
               <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-white/5 bg-white/5 p-1 transition-all group-hover/sidebar-head:scale-105">
-                <img src={cachedLogo || quickSpicyLogo} alt="K9 Rides" className="h-10 w-10 object-contain" />
+                <img src={cachedLogo || settings?.logos?.admin || settings?.logos?.landing} alt="K9 Rides" className="h-10 w-10 object-contain" />
               </div>
               {!isCollapsed && (
                 <div className="flex flex-col">

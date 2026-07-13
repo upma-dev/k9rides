@@ -8,12 +8,7 @@ import { socketService } from '../../../../shared/api/socket';
 import { getLocalUserToken, userAuthService } from '../../services/authService';
 import { getCurrentRide, isActiveCurrentRide, saveCurrentRide } from '../../services/currentRideService';
 import { useAppGoogleMapsLoader, HAS_VALID_GOOGLE_MAPS_KEY } from '../../../admin/utils/googleMaps';
-import LuxuryIcon from '@/assets/icons/Luxury.png';
-import PremiumIcon from '@/assets/icons/Premium.png';
-import SuvIcon from '@/assets/icons/SUV.png';
-import BikeIcon from '@/assets/icons/bike.png';
-import CarIcon from '@/assets/icons/car.png';
-import AutoIcon from '@/assets/icons/auto.png';
+// Vehicle icons removed in favor of admin settings
 
 const MAP_OPTIONS = {
   disableDefaultUI: true,
@@ -101,13 +96,7 @@ const toLatLng = (coords, fallback = { lat: 22.7196, lng: 75.8577 }) => {
 };
 
 const getVehicleIcon = (type = 'car') => {
-  const val = String(type).toLowerCase();
-  if (val.includes('bike') || val.includes('2wheel')) return BikeIcon;
-  if (val.includes('auto')) return AutoIcon;
-  if (val.includes('lux')) return LuxuryIcon;
-  if (val.includes('premium')) return PremiumIcon;
-  if (val.includes('suv')) return SuvIcon;
-  return CarIcon;
+  return null;
 };
 
 const getOverlayCenterOffset = (width, height) => ({
@@ -164,23 +153,25 @@ const BlinkingVehicleMarker = ({ marker, iconUrl }) => (
           }}
         />
       ))}
-      <motion.img
-        src={iconUrl || BikeIcon}
-        alt="Available vehicle"
-        draggable={false}
-        className="relative h-9 w-9 object-contain drop-shadow-[0_6px_8px_rgba(15,23,42,0.34)]"
-        style={{ rotate: `${marker.heading}deg` }}
-        animate={{
-          scale: [1, 1.16, 1],
-          opacity: [0.78, 1, 0.78],
-        }}
-        transition={{
-          repeat: Infinity,
-          duration: 1.35,
-          delay: marker.delay,
-          ease: 'easeInOut',
-        }}
-      />
+        {iconUrl && (
+          <motion.img
+            src={iconUrl}
+            alt="Available vehicle"
+            draggable={false}
+            className="relative h-9 w-9 object-contain drop-shadow-[0_6px_8px_rgba(15,23,42,0.34)]"
+            style={{ rotate: `${marker.heading}deg` }}
+            animate={{
+              scale: [1, 1.16, 1],
+              opacity: [0.78, 1, 0.78],
+            }}
+            transition={{
+              repeat: Infinity,
+              duration: 1.35,
+              delay: marker.delay,
+              ease: 'easeInOut',
+            }}
+          />
+        )}
     </div>
   </OverlayView>
 );
@@ -963,11 +954,13 @@ const ParcelSearchingDriver = () => {
 
                     <div className="relative h-20 w-24 shrink-0">
                       <div className="absolute right-0 top-0 h-20 w-20 overflow-hidden rounded-[24px] bg-[#1d2333] border-4 border-white shadow-xl flex items-center justify-center">
-                        <img
-                          src={driver.vehicleIconUrl || availableVehicleIcon || BikeIcon}
-                          className="h-12 w-12 object-contain brightness-0 invert opacity-90"
-                          alt="Vehicle"
-                        />
+                        {(driver.vehicleIconUrl || availableVehicleIcon) && (
+                          <img
+                            src={driver.vehicleIconUrl || availableVehicleIcon}
+                            className="h-12 w-12 object-contain brightness-0 invert opacity-90"
+                            alt="Vehicle"
+                          />
+                        )}
                       </div>
                       <div className="absolute -left-2 bottom-0 h-16 w-16 overflow-hidden rounded-full border-[4px] border-white shadow-2xl bg-slate-200">
                         <img

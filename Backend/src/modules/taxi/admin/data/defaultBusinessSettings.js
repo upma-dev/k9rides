@@ -70,7 +70,7 @@ export const createDefaultBusinessSettings = () => ({
     maximum_time_for_accept_reject_bidding_ride: '60',
     maximum_time_for_find_drivers_for_bitting_ride: '300',
     maximum_time_for_find_drivers_for_regular_ride: '300',
-    trip_accept_reject_duration_for_driver: '15',
+    trip_accept_reject_duration_for_driver: '10',
     driver_search_radius: '5',
     bidding_ride_maximum_distance: '50',
     user_can_make_a_ride_after_x_miniutes: '15',

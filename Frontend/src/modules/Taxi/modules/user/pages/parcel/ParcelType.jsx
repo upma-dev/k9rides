@@ -1,12 +1,11 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { 
   ArrowLeft, 
   ChevronRight, 
   MapPin,
-  ArrowRight,
-  Megaphone
+  ArrowRight
 } from 'lucide-react';
 import api from '../../../../shared/api/axiosInstance';
 
@@ -14,7 +13,6 @@ import trucksImg from '../../../../assets/images/delivery/trucks.png';
 import bikeImg from '../../../../assets/images/delivery/bike.png';
 import moversImg from '../../../../assets/images/delivery/movers.png';
 
-const Motion = motion;
 const PARCEL_BOOKING_DRAFT_KEY = 'parcelBookingDraft';
 
 const DELIVERY_CATEGORY_OPTIONS = [
@@ -118,7 +116,7 @@ const ParcelType = () => {
            <motion.div 
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-white rounded-[24px] p-4 flex items-center gap-4 shadow-lg border border-white/50"
+            className="bg-white rounded-[24px] p-4 flex items-center gap-4 shadow-lg border border-white/50 cursor-pointer"
             onClick={() => navigate('/taxi/user/parcel/details', { state: { editPickup: true } })}
            >
              <div className="w-10 h-10 rounded-full bg-emerald-50 flex items-center justify-center shrink-0">
@@ -148,16 +146,12 @@ const ParcelType = () => {
               onClick={() => handleCategorySelect(cat)}
               className="bg-white rounded-[24px] p-4 flex flex-col items-center gap-4 shadow-md border border-slate-100/50 hover:shadow-xl transition-shadow aspect-[0.85/1]"
             >
-              <div className="flex-1 flex items-center justify-center w-full">
-                <img 
-                  src={cat.img} 
-                  alt={cat.title} 
-                  className="w-full h-auto object-contain max-h-[80px] drop-shadow-md"
-                />
+              <div className="bg-[#F5F8FF] w-full rounded-2xl p-3 mb-2 aspect-square flex items-center justify-center overflow-hidden">
+                <img src={cat.img} alt={cat.title} className="w-full h-full object-contain" />
               </div>
-              <p className="text-[12px] font-black text-slate-800 text-center leading-tight">
+              <span className="text-[11px] font-bold text-slate-800 text-center leading-tight">
                 {cat.title}
-              </p>
+              </span>
             </motion.button>
           ))}
         </div>

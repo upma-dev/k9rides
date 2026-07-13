@@ -220,6 +220,7 @@ const LocationMapSection = () => {
                 mapContainerStyle={MAP_CONTAINER_STYLE}
                 center={{ lat: centerCoords.lat, lng: centerCoords.lon }}
                 zoom={DEFAULT_ZOOM}
+                options={{ disableDefaultUI: true, zoomControl: false }}
                 onLoad={(nextMap) => setMap(nextMap)}
                 onUnmount={() => setMap(null)}
                 onDragStart={() => {
@@ -274,7 +275,6 @@ const LocationMapSection = () => {
                   }
                 }}
                 options={{
-                  gestureHandling: 'cooperative',
                   disableDefaultUI: true,
                   zoomControl: true,
                   clickableIcons: false,

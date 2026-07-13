@@ -119,6 +119,8 @@ const isPointInAnyZone = (point, zonePaths) => {
 const SelectLocation = () => {
   const location = useLocation();
   const routeState = location.state || {};
+  const searchParams = new URLSearchParams(location.search);
+  const rideType = routeState.rideType || searchParams.get('rideType') || 'normal';
   const serviceLocationId = routeState.service_location_id || routeState.serviceLocationId || '';
   const savedLocation = getSavedLocation();
   const savedPickupLabel = String(savedLocation?.address || '').trim();
@@ -573,7 +575,8 @@ const SelectLocation = () => {
     try {
       await api.post('/rides/validate-location', {
         pickupCoords: resolvedPickupCoords,
-        dropCoords: resolvedDropCoords
+        dropCoords: resolvedDropCoords,
+        rideType,
       });
     } catch (err) {
       setIsValidating(false);
@@ -597,6 +600,10 @@ const SelectLocation = () => {
         pickupCoords: resolvedPickupCoords,
         dropCoords: resolvedDropCoords,
         service_location_id: serviceLocationId,
+        rideType,
+        transport_type: rideType === 'outstation' ? 'intercity' : 'taxi',
+        transportType: rideType === 'outstation' ? 'intercity' : 'taxi',
+        intercity: rideType === 'outstation',
       },
     });
   };

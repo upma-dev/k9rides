@@ -121,7 +121,6 @@ const driverSchema = new mongoose.Schema(
     },
     vehicleType: {
       type: String,
-      enum: VEHICLE_TYPES,
       required: true,
     },
     vehicleTypeId: {

@@ -6,7 +6,6 @@ import { buildAvatarFallback } from './activityHelpers';
 const ActivityCard = ({ type, title, address, date, time, status, statusTone, price, onClick, driverName, driverImage, vehicleImage, eyebrow }) => {
   const [vehicleBroken, setVehicleBroken] = useState(false);
   const [driverBroken, setDriverBroken] = useState(false);
-  const resolvedVehicleImage = vehicleBroken ? (type === 'parcel' ? '/5_Parcel.png' : '/1_Bike.png') : vehicleImage;
   const resolvedDriverImage = driverBroken ? buildAvatarFallback(driverName) : driverImage;
   const vehicleAlt = type === 'parcel' ? 'Parcel' : type === 'bus' ? 'Bus' : type === 'pooling' ? 'Pooling vehicle' : 'Vehicle';
 
@@ -19,13 +18,15 @@ const ActivityCard = ({ type, title, address, date, time, status, statusTone, pr
     >
       <div className="flex items-start gap-3 sm:gap-4">
         <div className="relative h-[64px] w-[64px] shrink-0 overflow-hidden rounded-2xl border border-slate-200 bg-slate-50 sm:h-[72px] sm:w-[72px]">
-          <img
-            src={resolvedVehicleImage}
-            alt={vehicleAlt}
-            className="h-full w-full object-cover"
-            draggable={false}
-            onError={() => setVehicleBroken(true)}
-          />
+          {!vehicleBroken && vehicleImage && (
+            <img
+              src={vehicleImage}
+              alt={vehicleAlt}
+              className="h-full w-full object-cover"
+              draggable={false}
+              onError={() => setVehicleBroken(true)}
+            />
+          )}
           <div className="absolute bottom-1.5 right-1.5 h-7 w-7 overflow-hidden rounded-full border-2 border-white bg-white">
             <img
               src={resolvedDriverImage}

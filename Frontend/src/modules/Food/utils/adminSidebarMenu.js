@@ -1,21 +1,35 @@
 export const adminSidebarMenu = [
   {
-    type: "link",
-    label: "Dashboard",
-    path: "/admin/food",
-    icon: "LayoutDashboard",
-  },
-  {
-    type: "link",
-    label: "Point of Sale",
-    path: "/admin/food/point-of-sale",
-    icon: "CreditCard",
-  },
-  {
-    type: "link",
-    label: "Real Time Status",
-    path: "/admin/food/status-monitor",
-    icon: "MapPin",
+    type: "section",
+    label: "HOME",
+    items: [
+      {
+        type: "expandable",
+        label: "Admin Management",
+        icon: "UserCog",
+        subItems: [
+          { label: "Admins", path: "/admin/food/management/admins" },
+        ],
+      },
+      {
+        type: "link",
+        label: "Dashboard",
+        path: "/admin/food",
+        icon: "LayoutDashboard",
+      },
+      {
+        type: "link",
+        label: "Point of Sale",
+        path: "/admin/food/point-of-sale",
+        icon: "CreditCard",
+      },
+      {
+        type: "link",
+        label: "Real Time Status",
+        path: "/admin/food/status-monitor",
+        icon: "MapPin",
+      },
+    ],
   },
   {
     type: "section",

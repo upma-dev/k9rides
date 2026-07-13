@@ -1,154 +1,70 @@
-import React, { useEffect, useState } from 'react';
+import React, { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Car, MapPin, Clock } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { userService } from '../services/userService';
-import toast from 'react-hot-toast';
-
-const ServiceTile = ({ icon, label, description, path, accentClass, loading }) => {
-  const navigate = useNavigate();
-
-  if (loading) {
-    return (
-      <div className="flex w-full flex-col items-center justify-center gap-2">
-        <div className="h-[80px] w-[80px] animate-pulse rounded-[22px] bg-slate-200/60" />
-        <div className="h-2.5 w-14 animate-pulse rounded-full bg-slate-200/60" />
-      </div>
-    );
-  }
-
-  return (
-    <motion.button
-      type="button"
-      whileHover={{ y: -3, scale: 1.02 }}
-      whileTap={{ scale: 0.95 }}
-      onClick={() => path && navigate(path)}
-      className="group flex flex-col items-center justify-start gap-2.5 outline-none"
-    >
-      <div className={`relative flex h-[80px] w-[80px] items-center justify-center rounded-[24px] shadow-sm transition-shadow duration-300 group-hover:shadow-md ${accentClass || 'bg-slate-50'}`}>
-        {/* Subtle inner glow */}
-        <div className="absolute inset-0 rounded-[24px] border border-white/40 mix-blend-overlay" />
-        
-        <motion.img 
-          src={icon} 
-          alt={label} 
-          initial={{ y: 0 }}
-          whileHover={{ y: -2 }}
-          transition={{ type: "spring", stiffness: 300 }}
-          className="h-[56px] w-[56px] object-contain drop-shadow-[0_4px_8px_rgba(0,0,0,0.08)]" 
-        />
-      </div>
-
-      <div className="flex flex-col items-center px-1">
-        <span className="text-[11.5px] font-bold tracking-wide text-slate-700 transition-colors duration-300 group-hover:text-slate-950">
-          {label}
-        </span>
-      </div>
-    </motion.button>
-  );
-};
+import { useSettings } from '../../../shared/context/SettingsContext';
 
 const ServiceGrid = () => {
-  const [services, setServices] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
+  const { settings } = useSettings();
 
-  const getServiceKey = (service, index) => {
-    const label = String(service?.label || '').trim();
-    const path = String(service?.path || '').trim();
-    return label || path ? `${label || 'service'}-${path || index}` : `service-${index}`;
-  };
-
-  const getPath = (module) => {
-    if (module.transport_type === 'delivery') return '/taxi/user/parcel/type';
-    if (module.service_type === 'rental') return '/taxi/user/rental';
-    if (module.service_type === 'outstation') return '/taxi/user/intercity';
-    if (module.service_type === 'pooling' || module.name.toLowerCase().includes('pooling')) {
-      return '/taxi/user/pooling';
+  const services = useMemo(() => [
+    {
+      id: 'daily',
+      title: 'Daily Rides',
+      icon: Car,
+      color: 'bg-emerald-500',
+      shadow: 'shadow-emerald-500/20',
+      action: () => navigate('/taxi/user/ride/select-location'),
+      adminIconKey: 'rideIcon'
+    },
+    {
+      id: 'intercity',
+      title: 'Intercity',
+      icon: MapPin,
+      color: 'bg-blue-500',
+      shadow: 'shadow-blue-500/20',
+      action: () => navigate('/taxi/user/ride/select-location?type=outstation'),
+      adminIconKey: 'intercityIcon'
+    },
+    {
+      id: 'rental',
+      title: 'Rentals',
+      icon: Clock,
+      color: 'bg-orange-500',
+      shadow: 'shadow-orange-500/20',
+      action: () => navigate('/taxi/user/rental/select'),
+      adminIconKey: 'rentalIcon'
     }
-    
-    // Default taxi paths based on name/keywords if needed, or just generic select-location
-    if (module.name.toLowerCase().includes('cab') || module.name.toLowerCase().includes('taxi')) {
-        return '/taxi/user/ride/select-location';
-    }
-    return '/taxi/user/ride/select-location';
-  };
-
-  const getAccent = (index) => {
-    const accnets = [
-      'bg-[linear-gradient(135deg,#FFF7ED_0%,#FFE5C2_100%)]', // Orange
-      'bg-[linear-gradient(135deg,#FEFCE8_0%,#FDE68A_100%)]', // Yellow
-      'bg-[linear-gradient(135deg,#EFF6FF_0%,#DBEAFE_100%)]', // Blue
-      'bg-[linear-gradient(135deg,#F5F3FF_0%,#E9D5FF_100%)]', // Purple
-      'bg-[linear-gradient(135deg,#ECFDF5_0%,#A7F3D0_100%)]', // Green
-      'bg-[linear-gradient(135deg,#FFF1F2_0%,#FECDD3_100%)]', // Rose
-    ];
-    return accnets[index % accnets.length];
-  };
-
-  useEffect(() => {
-    const fetchServices = async () => {
-      try {
-        setLoading(true);
-        const res = await userService.getAppModules();
-        
-        // Extract results: res could be { results: [] } or { data: { results: [] } } depending on service
-        const results = res?.results || res?.data?.results || [];
-        
-        // Only show active modules
-        const activeModules = results.filter(m => m.active);
-        
-        const mapped = activeModules.map((m, idx) => ({
-          icon: m.mobile_menu_icon,
-          label: m.name,
-          description: m.short_description,
-          path: getPath(m),
-          accentClass: getAccent(idx)
-        }));
-        
-        setServices(mapped);
-      } catch (err) {
-        console.error('Failed to load services:', err);
-        toast.error('Could not load services');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchServices();
-  }, []);
-
-  const optionCount = loading ? '...' : services.length;
-  const optionLabel = services.length === 1 ? 'option' : 'options';
+  ], [navigate]);
 
   return (
-    <div className="px-5">
-      <motion.section
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.45, ease: 'easeOut' }}
-        className="py-1"
-      >
-        <div className="flex items-start justify-between gap-3">
-          <div>
-            <p className="text-[10px] font-black uppercase tracking-[0.26em] text-slate-400">Services</p>
-            <h2 className="mt-1 text-[18px] font-black tracking-tight text-slate-900">Choose your ride</h2>
-            <p className="mt-0.5 text-[11px] font-bold text-slate-500">Tap to start quickly.</p>
-          </div>
-
-          <div className="rounded-full border border-white/80 bg-white/90 px-3 py-2 text-[11px] font-black text-slate-600 shadow-sm">
-            {optionCount} {optionLabel}
-          </div>
-        </div>
-
-        <div className="mt-4 grid auto-rows-fr grid-cols-3 gap-3 md:grid-cols-4">
-          {loading ? (
-             [...Array(4)].map((_, i) => <ServiceTile key={i} loading />)
-          ) : (
-            services.map((service, index) => (
-              <ServiceTile key={getServiceKey(service, index)} {...service} />
-            ))
-          )}
-        </div>
-      </motion.section>
+    <div className="px-5 mb-6">
+      <div className="grid grid-cols-3 gap-3">
+        {services.map((service, index) => {
+          const adminIcon = settings?.services?.[service.adminIconKey] || '';
+          
+          return (
+            <motion.div
+              key={service.id}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.1 }}
+              onClick={service.action}
+              className="flex flex-col items-center justify-center gap-2 p-3 rounded-2xl bg-white shadow-[0_8px_20px_rgba(15,23,42,0.06)] border border-slate-100 cursor-pointer hover:shadow-lg transition-all"
+            >
+              <div className={`w-12 h-12 rounded-full flex items-center justify-center ${service.color} ${service.shadow} text-white`}>
+                {adminIcon ? (
+                  <img src={adminIcon} alt={service.title} className="w-6 h-6 object-contain filter brightness-0 invert" />
+                ) : (
+                  <service.icon size={20} />
+                )}
+              </div>
+              <span className="text-[11px] font-black tracking-tight text-slate-700">{service.title}</span>
+            </motion.div>
+          );
+        })}
+      </div>
     </div>
   );
 };

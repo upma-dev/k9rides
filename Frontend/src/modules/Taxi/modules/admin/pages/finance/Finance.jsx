@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 
 import { adminService } from '../../services/adminService';
+import { Link } from 'react-router-dom';
 
 const Finance = () => {
   const [settlements, setSettlements] = React.useState([]);
@@ -25,16 +26,16 @@ const Finance = () => {
   React.useEffect(() => {
     const fetchFinance = async () => {
       try {
-        const response = await adminService.getWithdrawals();
+        const response = await adminService.getDriverWithdrawalSummaries();
         const results = response?.data?.results || [];
         
         const mapped = results.map(w => ({
-          id: w.transactionId || `#WTH${Math.floor(Math.random()*1000)}`,
-          driver: w.driver_id?.name || 'Unknown Driver',
-          amount: `₹${w.amount || 0}`,
-          method: w.payment_method || 'Bank Transfer',
-          status: w.status ? w.status.charAt(0).toUpperCase() + w.status.slice(1) : 'Pending',
-          date: w.createdAt ? new Date(w.createdAt).toLocaleDateString() : 'N/A'
+          id: w.latest_request_id ? `#${String(w.latest_request_id).slice(-6).toUpperCase()}` : `#WTH${Math.floor(Math.random()*1000)}`,
+          driver: w.driver?.name || 'Unknown Driver',
+          amount: `₹${w.pending_amount || 0}`,
+          method: 'Bank Transfer',
+          status: 'Pending',
+          date: w.last_request_at ? new Date(w.last_request_at).toLocaleDateString() : 'N/A'
         }));
         
         setSettlements(mapped);
@@ -60,9 +61,12 @@ const Finance = () => {
            <button className="bg-gray-50 border border-gray-200 text-gray-600 px-4 py-2 rounded-lg text-[13px] font-bold hover:bg-gray-100 flex items-center gap-2">
              <Download size={16} /> Tax Reports
            </button>
-           <button className="bg-black text-white px-4 py-2 rounded-lg text-[13px] font-bold hover:opacity-80 flex items-center gap-2">
+           <Link 
+             to="/taxi/admin/drivers/wallet/withdrawals"
+             className="bg-black text-white px-4 py-2 rounded-lg text-[13px] font-bold hover:opacity-80 flex items-center gap-2 inline-flex"
+           >
              <Wallet size={16} /> Process Payouts
-           </button>
+           </Link>
         </div>
       </div>
 

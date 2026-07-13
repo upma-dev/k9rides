@@ -13,7 +13,7 @@ const HeaderGreeting = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { settings, activeLogo } = useSettings();
-  const appLogo = activeLogo || settings.general?.logo || settings.customization?.logo || '/k9-logo.png';
+  const appLogo = activeLogo || settings.general?.logo || settings.customization?.logo || '';
   const appName = settings.general?.app_name || 'App';
   const [locationLabel, setLocationLabel] = useState(getSavedLocationLabel);
   const routePrefix = location.pathname.startsWith('/taxi/user') ? '/taxi/user' : '';

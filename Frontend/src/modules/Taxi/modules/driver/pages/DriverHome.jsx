@@ -21,7 +21,8 @@ import {
     Shield,
     Mail,
     BarChart2,
-    Check
+    Check,
+    X
 } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { GoogleMap, Marker } from '@react-google-maps/api';
@@ -1904,7 +1905,7 @@ const DriverHome = () => {
     };
 
     return (
-        <div className="h-screen w-full bg-[#E5E7EB] font-sans select-none overflow-hidden relative text-slate-900 border-x border-slate-200 shadow-2xl max-w-md mx-auto">
+        <div className="h-[100dvh] w-full bg-[#E5E7EB] font-sans select-none overflow-hidden relative text-slate-900 border-x border-slate-200 shadow-2xl max-w-md mx-auto">
             {/* Overlay for Ride Request Modal */}
             <IncomingRideRequest
                 visible={showRequest && Boolean(currentRequest)}
@@ -2298,7 +2299,7 @@ const DriverHome = () => {
                                     onClick={() => setIsScheduleSheetOpen(false)}
                                     className="grid h-10 w-10 place-items-center rounded-full border border-slate-200 bg-slate-50 text-slate-500 active:scale-95"
                                 >
-                                    <ChevronRight size={18} className="rotate-45" />
+                                    <X size={20} />
                                 </button>
                             </div>
 

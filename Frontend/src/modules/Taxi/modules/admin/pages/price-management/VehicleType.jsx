@@ -968,7 +968,7 @@ const VehicleType = ({ mode: propMode }) => {
             <label className={labelClass}>Operational Scope *</label>
             <select value={formData.is_taxi} onChange={(e) => updateForm('is_taxi', e.target.value)} className={inputClass}>
               <option value="">Select Scope</option>
-              {transportTypes.map(t => (
+              {transportTypeOptions.map(t => (
                 <option key={t.id || t._id} value={t.name}>{t.display_name}</option>
               ))}
             </select>

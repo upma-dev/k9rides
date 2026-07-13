@@ -88,6 +88,7 @@ const RentalLocationTracker = () => {
     let cancelled = false;
 
     const syncActiveRental = async () => {
+      /*
       try {
         const response = await userService.getActiveRentalBooking();
         const payload = response?.data?.data || response?.data || null;
@@ -135,6 +136,7 @@ const RentalLocationTracker = () => {
       } catch {
         // Keep current tracker state on transient sync errors.
       }
+      */
     };
 
     syncActiveRental();

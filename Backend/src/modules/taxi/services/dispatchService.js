@@ -14,7 +14,7 @@ import {
 import { Delivery } from '../user/models/Delivery.js';
 import { getRideRoom, resolveSetPriceForRide } from './rideService.js';
 import { SOCKET_EVENTS } from '../socket/events.js';
-import { resolveTransportDispatchConfig } from './transportSettingsService.js';
+import { resolveTransportDispatchConfig, getTransportRideSettings } from './transportSettingsService.js';
 import { sendPushNotificationToEntities } from './pushNotificationService.js';
 
 const activeDispatches = new Map();
@@ -1103,6 +1103,7 @@ const dispatchAttempt = async (rideId, attemptIndex = 0) => {
       maxDistance: radius,
       vehicleTypeId: ride.vehicleTypeId,
       vehicleTypeIds: dispatchVehicleTypeIds,
+      transportType: normalizeRideTransportType(ride),
     });
     const effectiveRadius = Number.isFinite(searchRadiusMeters) && searchRadiusMeters > 0
       ? searchRadiusMeters
@@ -1189,23 +1190,23 @@ export const startDispatchFlow = async (ride) => {
   stopDispatchFlow(ride._id);
 
   const scheduledAt = ride?.scheduledAt ? new Date(ride.scheduledAt) : null;
-  const delayMs = scheduledAt ? scheduledAt.getTime() - Date.now() : 0;
   const bookingMode = String(ride?.bookingMode || 'normal').trim().toLowerCase();
   const shouldDispatchImmediately = bookingMode === 'bidding';
 
-  if (!shouldDispatchImmediately && scheduledAt && Number.isFinite(delayMs) && delayMs > 0) {
-    const rideId = String(ride._id);
-    const timer = setTimeout(() => {
-      scheduledDispatchTimers.delete(rideId);
-      dispatchAttempt(ride._id, 0).catch((error) => {
-        console.error('Scheduled dispatch failed', error);
-      });
-    }, delayMs);
-
-    scheduledDispatchTimers.set(rideId, timer);
-    return;
+  let searchBufferMs = 15 * 60 * 1000;
+  try {
+    const settings = await getTransportRideSettings();
+    const bufferMinutes = Number(settings.minimum_time_for_starting_trip_drivers_for_schedule_ride);
+    if (Number.isFinite(bufferMinutes) && bufferMinutes > 0) {
+      searchBufferMs = bufferMinutes * 60 * 1000;
+    }
+  } catch (error) {
+    console.error('Failed to get scheduled ride search buffer', error);
   }
 
+  const delayMs = scheduledAt ? scheduledAt.getTime() - Date.now() - searchBufferMs : 0;
+
+  // Dispatch scheduled rides immediately so drivers can accept and get assigned in advance
   await dispatchAttempt(ride._id, 0);
 };
 
@@ -1263,6 +1264,7 @@ export const notifyLateAvailableDriver = async (driverId) => {
       maxDistance: radius,
       vehicleTypeId: ride.vehicleTypeId,
       vehicleTypeIds: dispatchVehicleTypeIds,
+      transportType: normalizeRideTransportType(ride),
     });
 
     const matchedDriver = drivers.find((item) => String(item._id) === driverKey);

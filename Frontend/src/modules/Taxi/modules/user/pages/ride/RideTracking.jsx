@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Phone, MessageCircle, AlertTriangle, Shield, Star, ChevronLeft, Share2, Clock3, FileText } from 'lucide-react';
+import { Phone, MessageCircle, AlertTriangle, Shield, Star, ChevronLeft, Share2, Clock3, FileText, ChevronDown, X } from 'lucide-react';
 import { GoogleMap, MarkerF, OverlayView, OverlayViewF, PolylineF } from '@react-google-maps/api';
 import { HAS_VALID_GOOGLE_MAPS_KEY, useAppGoogleMapsLoader } from '../../../admin/utils/googleMaps';
 import { socketService } from '../../../../shared/api/socket';
@@ -9,10 +9,6 @@ import api from '../../../../shared/api/axiosInstance';
 import { getLocalUserToken } from '../../services/authService';
 import { clearCurrentRide, getCurrentRide, saveCurrentRide } from '../../services/currentRideService';
 import { useAuthStore } from '../../../../../../core/auth/auth.store';
-import carIcon from '../../../../assets/icons/car.png';
-import bikeIcon from '../../../../assets/icons/bike.png';
-import autoIcon from '../../../../assets/icons/auto.png';
-import deliveryIcon from '../../../../assets/icons/Delivery.png';
 import { useSettings } from '../../../../shared/context/SettingsContext';
 import { BACKEND_ORIGIN } from '../../../../shared/api/runtimeConfig';
 import toast from 'react-hot-toast';
@@ -74,7 +70,7 @@ const getVehicleMarkerOffset = (width, height) => ({
   y: -(height / 2),
 });
 
-const RotatingVehicleMarker = ({ position, iconUrl = carIcon, heading = 0, title = 'Driver' }) => (
+const RotatingVehicleMarker = ({ position, iconUrl, heading = 0, title = 'Driver' }) => (
   <OverlayViewF
     position={position}
     mapPaneName={OverlayView.OVERLAY_MOUSE_TARGET}
@@ -85,16 +81,14 @@ const RotatingVehicleMarker = ({ position, iconUrl = carIcon, heading = 0, title
         className="flex h-11 w-11 items-center justify-center transition-transform duration-500 ease-out"
         style={{ transform: `rotate(${normalizeHeading(heading)}deg)` }}
       >
-        <img
-          src={iconUrl || carIcon}
-          alt={title}
-          className="h-12 w-12 object-contain drop-shadow-[0_8px_10px_rgba(15,23,42,0.35)]"
-          draggable={false}
-          onError={(e) => {
-            e.currentTarget.onerror = null;
-            e.currentTarget.src = carIcon;
-          }}
-        />
+        {iconUrl && (
+          <img
+            src={iconUrl}
+            alt={title}
+            className="h-12 w-12 object-contain drop-shadow-[0_8px_10px_rgba(15,23,42,0.35)]"
+            draggable={false}
+          />
+        )}
       </div>
     </div>
   </OverlayViewF>
@@ -113,13 +107,7 @@ const getTrackingVehicleIcon = (ride, driver) => {
 
   if (customIcon) return customIcon;
 
-  const serviceType = String(ride?.serviceType || ride?.type || '').toLowerCase();
-  const iconType = String(ride?.vehicleIconType || driver?.vehicleIconType || driver?.vehicleType || '').toLowerCase();
-
-  if (serviceType === 'parcel') return deliveryIcon;
-  if (iconType.includes('bike')) return bikeIcon;
-  if (iconType.includes('auto')) return autoIcon;
-  return carIcon;
+  return null;
 };
 
 const getInitials = (name = '') =>
@@ -201,20 +189,21 @@ const getScheduledCountdownLabel = (value, now = Date.now()) => {
     return 'Pickup window is open';
   }
 
-  const totalMinutes = Math.ceil(diffMs / 60000);
-  const days = Math.floor(totalMinutes / (60 * 24));
-  const hours = Math.floor((totalMinutes % (60 * 24)) / 60);
-  const minutes = totalMinutes % 60;
+  const totalSeconds = Math.floor(diffMs / 1000);
+  const days = Math.floor(totalSeconds / (3600 * 24));
+  const hours = Math.floor((totalSeconds % (3600 * 24)) / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
 
   if (days > 0) {
-    return `Starts in ${days}d ${hours}h`;
+    return `Starts in ${days}d ${hours}h ${minutes}m ${seconds}s`;
   }
 
   if (hours > 0) {
-    return `Starts in ${hours}h ${minutes}m`;
+    return `Starts in ${hours}h ${minutes}m ${seconds}s`;
   }
 
-  return `Starts in ${minutes}m`;
+  return `Starts in ${minutes}m ${seconds}s`;
 };
 
 const mergeDriverSnapshot = (baseDriver = {}, incomingDriver = {}) => {
@@ -584,17 +573,13 @@ const RideTracking = () => {
   }, [rideRealtime?.arrivedAt, state.arrivedAt, tripStatus]);
 
   useEffect(() => {
-    if (!isWaitingForOtp) {
-      return undefined;
-    }
-
     setWaitingNow(Date.now());
     const intervalId = window.setInterval(() => {
       setWaitingNow(Date.now());
     }, 1000);
 
     return () => window.clearInterval(intervalId);
-  }, [isWaitingForOtp]);
+  }, []);
 
   const exitTracking = useMemo(
     () => () => {
@@ -1448,11 +1433,34 @@ const RideTracking = () => {
         </div>
       ) : null}
 
+      <AnimatePresence>
+        {!drawerOpen && (
+          <motion.button
+            initial={{ opacity: 0, y: 50 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 50 }}
+            onClick={() => setDrawerOpen(true)}
+            className="absolute bottom-10 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2 bg-slate-900 text-white px-5 py-3 rounded-full shadow-xl border border-white/10"
+          >
+            <ChevronLeft size={16} strokeWidth={3} className="rotate-90 text-emerald-400" />
+            <span className="text-[12px] font-black uppercase tracking-widest">View Ride Info</span>
+          </motion.button>
+        )}
+      </AnimatePresence>
+
       <motion.div
-        animate={{ y: drawerOpen ? 0 : 420 }}
+        animate={{ y: drawerOpen ? 0 : "100%" }}
         className="absolute bottom-0 left-0 right-0 bg-white shadow-[0_-12px_44px_rgba(15,23,42,0.12)] z-20 rounded-t-[28px] border-t border-slate-100/50"
       >
-        <div className="w-12 h-1.5 bg-slate-200/60 rounded-full mx-auto mt-2.5 mb-3.5 cursor-pointer hover:bg-slate-300 transition-colors" onClick={() => setDrawerOpen(!drawerOpen)} />
+        <div className="relative flex justify-center items-center mt-2.5 mb-3.5">
+          <div className="w-12 h-1.5 bg-slate-200/60 rounded-full cursor-pointer hover:bg-slate-300 transition-colors" onClick={() => setDrawerOpen(!drawerOpen)} />
+          <button 
+            onClick={() => setDrawerOpen(!drawerOpen)} 
+            className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center justify-center w-6 h-6 rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200"
+          >
+            {drawerOpen ? <X size={14} strokeWidth={3} /> : <ChevronLeft size={14} strokeWidth={3} className="rotate-90" />}
+          </button>
+        </div>
 
         <div className="px-4 pb-6 space-y-3.5">
           {/* Header Section: Driver & OTP */}
@@ -1613,8 +1621,12 @@ const RideTracking = () => {
                   className="w-full h-full object-contain"
                   onError={() => setVehicleImageBroken(true)}
                 />
-              ) : (
+              ) : vehicleIcon ? (
                 <img src={vehicleIcon} alt={vehicleLabel} className="h-6 w-6 object-contain opacity-60" />
+              ) : (
+                <span className="text-2xl select-none">
+                  {serviceType === 'parcel' ? '📦' : '🚗'}
+                </span>
               )}
             </div>
             <div className="flex-1 min-w-0">

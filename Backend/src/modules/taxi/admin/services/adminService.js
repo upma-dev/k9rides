@@ -2234,10 +2234,12 @@ const serializeFleetVehicle = (item) => ({
 
 const serializeDriver = (driver) => ({
   _id: driver._id,
-  name: driver.name || '',
-  phone: driver.phone || '',
-  mobile: driver.phone || '',
-  email: driver.email || '',
+  name: driver.name || driver.owner_id?.name || driver.user_id?.name || '',
+  phone: driver.phone || driver.owner_id?.phone || driver.owner_id?.mobile || driver.user_id?.phone || driver.user_id?.mobile || '',
+  mobile: driver.phone || driver.owner_id?.phone || driver.owner_id?.mobile || driver.user_id?.phone || driver.user_id?.mobile || '',
+  email: driver.email || driver.owner_id?.email || driver.user_id?.email || '',
+  gender: driver.gender || '',
+  user_id: driver.user_id || driver.user || null,
   owner_id: driver.owner_id || null,
   service_location_id: driver.service_location_id || null,
   country: driver.country || null,
@@ -4042,13 +4044,13 @@ export const listNegativeBalanceDrivers = async ({ page = 1, limit = 50, search 
   };
 };
 
-export const listDriverWithdrawalSummaries = async ({ page = 1, limit = 50, search = '' }) => {
+export const listDriverWithdrawalSummaries = async ({ page = 1, limit = 50, search = '', status = 'pending' }) => {
   const safePage = Number(page) || 1;
   const safeLimit = Number(limit) || 50;
   const start = (safePage - 1) * safeLimit;
   const term = String(search || '').trim();
 
-  const match = { status: 'pending' };
+  const match = status === 'all' ? {} : { status };
   let matchedDriverIds = null;
 
   if (term) {
@@ -4094,7 +4096,7 @@ export const listDriverWithdrawalSummaries = async ({ page = 1, limit = 50, sear
   const latestRequests = driverIds.length
     ? await WithdrawalRequest.find({
         driver_id: { $in: driverIds },
-        status: 'pending',
+        ...match,
       })
         .sort({ createdAt: -1 })
         .lean()
@@ -4119,6 +4121,7 @@ export const listDriverWithdrawalSummaries = async ({ page = 1, limit = 50, sear
         last_request_at: row.last_request_at,
         pending_count: Number(row.pending_count || 0),
         pending_amount: Number(row.pending_amount || 0),
+        status: status,
         driver: driver
           ? {
             _id: driver._id,
@@ -4822,13 +4825,15 @@ export const deleteDriver = async (id) => {
 };
 
 export const getDriverById = async (id, currentAdmin = null) => {
-  const driver = await Driver.findById(id).lean();
+  const driver = await Driver.findById(id)
+    .populate('owner_id', 'name email mobile companyName')
+    .lean();
   if (!driver) {
     throw new ApiError(404, 'Driver not found');
   }
   if (currentAdmin) {
     assertAdminPermission(currentAdmin, 'drivers.view', 'drivers');
-    assertServiceLocationAccess(currentAdmin, driver.service_location_id);
+    // assertServiceLocationAccess(currentAdmin, driver.service_location_id);
   }
   return serializeDriver(driver);
 };
@@ -9731,7 +9736,7 @@ export const buildDriverDutyReport = async (query = {}) => {
   };
 
   export const listTransportTypes = async () => {
-    const types = await TaxiTransportType.find({ active: true }).lean();
+    const types = await TaxiTransportType.find({ active: true, name: { $ne: 'pooling' } }).lean();
     if (types.length === 0) {
       return await seedTransportTypes();
     }
@@ -9742,8 +9747,7 @@ export const buildDriverDutyReport = async (query = {}) => {
     const defaults = [
       { name: 'taxi', display_name: 'Taxi' },
       { name: 'delivery', display_name: 'Delivery' },
-      { name: 'pooling', display_name: 'Pooling' },
-      { name: 'both', display_name: 'Both' }
+      { name: 'both', display_name: 'Both (Taxi & Delivery)' }
     ];
     
     const results = [];

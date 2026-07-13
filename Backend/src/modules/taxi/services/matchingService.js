@@ -32,7 +32,7 @@ const normalizeVehicleTypeIds = (vehicleTypeIds = [], vehicleTypeId = null) => {
   return [...new Set(values.map((value) => String(value || '').trim()).filter(Boolean))];
 };
 
-const buildDriverMatchFilters = ({ zoneId, vehicleTypeId, vehicleTypeIds, vehicleTypeKeys }) => {
+export const buildDriverMatchFilters = ({ zoneId, vehicleTypeId, vehicleTypeIds, vehicleTypeKeys, transportType }) => {
   const normalizedVehicleTypeIds = normalizeVehicleTypeIds(vehicleTypeIds, vehicleTypeId);
   const normalizedVehicleTypeKeys = Array.isArray(vehicleTypeKeys)
     ? [...new Set(vehicleTypeKeys.map(normalizeVehicleKey).filter(Boolean))]
@@ -51,13 +51,51 @@ const buildDriverMatchFilters = ({ zoneId, vehicleTypeId, vehicleTypeIds, vehicl
       ? { $or: vehicleTypeClauses }
       : vehicleTypeClauses[0] || {};
 
-  return {
+  let transportFilter = {};
+  if (transportType) {
+    if (transportType === 'taxi') {
+      transportFilter = { registerFor: { $in: ['taxi', 'both', 'all'] } };
+    } else if (transportType === 'delivery') {
+      transportFilter = { registerFor: { $in: ['delivery', 'both', 'all'] } };
+    } else if (transportType === 'intercity' || transportType === 'outstation') {
+      transportFilter = {
+        $or: [
+          { registerFor: { $in: ['intercity', 'outstation', 'all'] } },
+          {
+            registerFor: { $in: ['taxi', 'both', 'all'] },
+            serviceCategories: { $in: ['outstation', 'Outstation', 'intercity', 'Intercity'] }
+          }
+        ]
+      };
+    } else {
+      transportFilter = { registerFor: { $in: [transportType, 'both', 'all'] } };
+    }
+  }
+
+  const baseFilters = {
     isOnline: true,
     isOnRide: false,
     'wallet.isBlocked': { $ne: true },
     ...(zoneId ? { zoneId } : {}),
-    ...vehicleTypeFilter,
   };
+
+  const andClauses = [];
+
+  if (Object.keys(vehicleTypeFilter).length > 0) {
+    andClauses.push(vehicleTypeFilter);
+  }
+  
+  if (Object.keys(transportFilter).length > 0) {
+    andClauses.push(transportFilter);
+  }
+
+  if (andClauses.length > 1) {
+    return { ...baseFilters, $and: andClauses };
+  } else if (andClauses.length === 1) {
+    return { ...baseFilters, ...andClauses[0] };
+  }
+
+  return baseFilters;
 };
 
 export const findZoneByPickup = async (pickupCoords) => {
@@ -194,11 +232,13 @@ const findDriversForZone = async ({
   limit,
   normalizedVehicleTypeIds,
   vehicleTypeKeys,
+  transportType,
 }) => {
   const commonFilters = buildDriverMatchFilters({
     zoneId,
     vehicleTypeIds: normalizedVehicleTypeIds,
     vehicleTypeKeys,
+    transportType,
   });
   const selectedFields =
     'name phone socketId vehicleTypeId vehicleType vehicleIconType vehicleNumber vehicleColor vehicleMake vehicleModel rating location zoneId isOnline isOnRide routeBooking';
@@ -237,6 +277,7 @@ export const matchDrivers = async (pickupCoords, options = {}) => {
     limit = DISPATCH_TOP_DRIVERS,
     vehicleTypeId,
     vehicleTypeIds,
+    transportType,
   } = options;
   const normalizedVehicleTypeIds = normalizeVehicleTypeIds(vehicleTypeIds, vehicleTypeId);
   const allowedVehicles = normalizedVehicleTypeIds.length
@@ -251,10 +292,14 @@ export const matchDrivers = async (pickupCoords, options = {}) => {
   let drivers = await findDriversForZone({
     zoneId: zone?._id || null,
     coordinates,
-    effectiveMaxDistance,
+    effectiveMaxDistance:
+      zoneBoundaryCapMeters && zoneBoundaryCapMeters < effectiveMaxDistance
+        ? zoneBoundaryCapMeters
+        : effectiveMaxDistance,
     limit,
     normalizedVehicleTypeIds,
     vehicleTypeKeys,
+    transportType,
   });
 
   console.log('[matchDrivers] findDriversForZone returned:', drivers.map(d => ({ id: d._id, name: d.name, vehicleTypeId: d.vehicleTypeId, isOnline: d.isOnline, isOnRide: d.isOnRide })));
@@ -272,6 +317,7 @@ export const matchDrivers = async (pickupCoords, options = {}) => {
       limit,
       normalizedVehicleTypeIds,
       vehicleTypeKeys,
+      transportType,
     });
 
     const fallbackBlockedDriverIds = await getDriverIdsBlockedByUpcomingScheduledRides(
@@ -329,12 +375,13 @@ export const matchDrivers = async (pickupCoords, options = {}) => {
 
       // Query again to get this driver
       drivers = await findDriversForZone({
-        zoneId: zone?._id || null,
+        zoneId: null,
         coordinates,
         effectiveMaxDistance,
         limit,
         normalizedVehicleTypeIds,
         vehicleTypeKeys,
+        transportType,
       });
 
       const fallbackBlockedDriverIds = await getDriverIdsBlockedByUpcomingScheduledRides(

@@ -126,6 +126,8 @@ const EditRestaurant = lazy(() => import("@food/pages/admin/restaurant/EditResta
 const AdminLogin = lazy(() => import("@food/pages/admin/auth/AdminLogin"));
 const AdminSignup = lazy(() => import("@food/pages/admin/auth/AdminSignup"));
 const AdminForgotPassword = lazy(() => import("@food/pages/admin/auth/AdminForgotPassword"));
+const FoodSubadmins = lazy(() => import("@food/pages/admin/management/FoodSubadmins"));
+const FoodSubadminCreate = lazy(() => import("@food/pages/admin/management/FoodSubadminCreate"));
 
 export default function AdminRouter() {
   return (
@@ -252,9 +254,14 @@ export default function AdminRouter() {
             <Route path="restaurant-withdraws" element={<RestaurantWithdraws />} />
             <Route path="withdraw-method" element={<WithdrawMethod />} />
             
-            <Route path="employee-role" element={<EmployeeRole />} />
-            <Route path="employees" element={<EmployeeList />} />
-            <Route path="employees/add" element={<AddEmployee />} />
+             <Route path="employee-role" element={<Navigate to="../management/admins" replace />} />
+             <Route path="employees" element={<Navigate to="../management/admins" replace />} />
+             <Route path="employees/add" element={<Navigate to="../management/admins/create" replace />} />
+
+            {/* SUBADMIN MANAGEMENT */}
+            <Route path="management/admins" element={<FoodSubadmins />} />
+            <Route path="management/admins/create" element={<FoodSubadminCreate />} />
+            <Route path="management/admins/edit/:id" element={<FoodSubadminCreate />} />
 
             {/* SYSTEM & BUSINESS SETTINGS */}
             <Route path="business-setup" element={<BusinessSetup />} />

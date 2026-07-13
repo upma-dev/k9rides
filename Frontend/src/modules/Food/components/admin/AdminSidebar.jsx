@@ -397,9 +397,11 @@ export default function AdminSidebar({ isOpen = false, onClose, onCollapseChange
         }
       }
 
-      const next = {}
+      const next = { [sectionKey]: true }
       Object.keys(prev).forEach((key) => {
-        next[key] = key === sectionKey
+        if (key !== sectionKey) {
+          next[key] = false
+        }
       })
       return next
     })
@@ -627,27 +629,24 @@ export default function AdminSidebar({ isOpen = false, onClose, onCollapseChange
         <div className="shrink-0 px-3 py-3 border-b border-neutral-800/60 bg-neutral-900 animate-[fadeIn_0.4s_ease-out]">
           <div className="flex items-center justify-between mb-3">
             {!isCollapsed && (
-              <div className="flex items-center gap-2 animate-[slideIn_0.3s_ease-out]">
-                <div className="w-24 h-12 rounded-lg flex items-center justify-center shadow-black/20">
-                  {activeLogo || logoUrl ? (
-                    <img
-                      src={activeLogo || logoUrl || quickSpicyLogo}
-                      alt={companyName || "Company"}
-                      className="w-24 h-10 object-contain"
-                      loading="lazy"
-                      onError={(e) => {
-                        if (e.target.src !== quickSpicyLogo) {
-                          e.target.src = quickSpicyLogo
-                        }
-                      }}
-                    />
-                  ) : companyName ? (
-                    <span className="text-xs font-semibold text-white px-2 truncate">
-                      {companyName}
+              <div className="flex items-center gap-3.5 animate-[slideIn_0.3s_ease-out]">
+                <div className="flex h-11 w-11 items-center justify-center rounded-xl border border-white/5 bg-white/5 p-1 transition-all">
+                  <img
+                    src={activeLogo || logoUrl}
+                    alt="K9 Food"
+                    className="h-9 w-9 object-contain"
+                  />
+                </div>
+                <div className="flex flex-col">
+                  <h3 className="text-[15px] font-extrabold leading-tight text-white tracking-tight">
+                    K9 Food
+                  </h3>
+                  <div className="mt-1 flex items-center gap-1.5">
+                    <div className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
+                    <span className="text-[11px] font-bold uppercase tracking-widest text-slate-400">
+                      System Admin
                     </span>
-                  ) : (
-                    <img src={activeLogo || quickSpicyLogo} alt="Company" className="w-24 h-10 object-contain" loading="lazy" />
-                  )}
+                  </div>
                 </div>
               </div>
             )}

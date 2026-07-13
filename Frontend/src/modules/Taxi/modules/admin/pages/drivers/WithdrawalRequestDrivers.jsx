@@ -1,9 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronRight, Eye, FileSearch, Search } from 'lucide-react';
-import { getUnifiedAdminToken } from '../../services/adminSession';
-
-const BASE = () => `${globalThis.__LEGACY_BACKEND_ORIGIN__}/api/v1/taxi/admin/wallet/drivers/withdrawals`;
+import { adminService } from '../../services/adminService';
 
 const formatDateTime = (value) => {
   if (!value) return '-';
@@ -15,6 +13,7 @@ const formatDateTime = (value) => {
 const WithdrawalRequestDrivers = () => {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
+  const [status, setStatus] = useState('pending');
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [page, setPage] = useState(1);
   const [rows, setRows] = useState([]);
@@ -25,45 +24,44 @@ const WithdrawalRequestDrivers = () => {
     nextPage = page,
     nextLimit = itemsPerPage,
     nextSearch = searchTerm,
+    nextStatus = status,
   } = {}) => {
     setLoading(true);
     try {
-      const token = getUnifiedAdminToken();
-      const params = new URLSearchParams({
-        page: String(nextPage),
-        limit: String(nextLimit),
+      const response = await adminService.getDriverWithdrawalSummaries({
+        page: nextPage,
+        limit: nextLimit,
+        search: nextSearch,
+        status: nextStatus,
       });
-      if (String(nextSearch || '').trim()) {
-        params.set('search', String(nextSearch).trim());
-      }
-      const res = await fetch(`${BASE()}?${params.toString()}`, {
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-      });
-      const data = await res.json();
-      if (res.ok && data.success) {
-        setRows(data.data?.results || []);
-        setPaginator(data.data?.paginator || null);
-      }
+      
+      const results = response?.data?.results || response?.results || [];
+      const paginator = response?.data?.paginator || response?.paginator || null;
+      
+      setRows(results);
+      setPaginator(paginator);
+    } catch (error) {
+      console.error('Failed to load withdrawal requests:', error);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchRows({ nextPage: 1, nextLimit: itemsPerPage, nextSearch: searchTerm });
+    fetchRows({ nextPage: 1, nextLimit: itemsPerPage, nextSearch: searchTerm, nextStatus: status });
     setPage(1);
-  }, [itemsPerPage]);
+  }, [itemsPerPage, status]);
 
   useEffect(() => {
     const id = setTimeout(() => {
-      fetchRows({ nextPage: 1, nextLimit: itemsPerPage, nextSearch: searchTerm });
+      fetchRows({ nextPage: 1, nextLimit: itemsPerPage, nextSearch: searchTerm, nextStatus: status });
       setPage(1);
     }, 250);
     return () => clearTimeout(id);
   }, [searchTerm]);
 
   useEffect(() => {
-    fetchRows({ nextPage: page, nextLimit: itemsPerPage, nextSearch: searchTerm });
+    fetchRows({ nextPage: page, nextLimit: itemsPerPage, nextSearch: searchTerm, nextStatus: status });
   }, [page]);
 
   const totalPages = useMemo(() => Math.max(1, Number(paginator?.last_page || 1)), [paginator]);
@@ -105,15 +103,28 @@ const WithdrawalRequestDrivers = () => {
             <span>entries</span>
           </div>
 
-          <div className="relative w-full md:w-72">
-            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-            <input
-              type="text"
-              value={searchTerm}
-              onChange={(event) => setSearchTerm(event.target.value)}
-              placeholder="Search..."
-              className="w-full border border-gray-200 rounded-lg pl-9 pr-3 py-2 text-sm text-gray-800 bg-white focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-colors"
-            />
+          <div className="flex flex-col md:flex-row items-center gap-3 w-full md:w-auto">
+            <select
+              value={status}
+              onChange={(e) => setStatus(e.target.value)}
+              className="w-full md:w-40 border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-800 bg-white focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-colors"
+            >
+              <option value="pending">Pending</option>
+              <option value="completed">Approved</option>
+              <option value="cancelled">Rejected</option>
+              <option value="all">All</option>
+            </select>
+            
+            <div className="relative w-full md:w-72">
+              <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+              <input
+                type="text"
+                value={searchTerm}
+                onChange={(event) => setSearchTerm(event.target.value)}
+                placeholder="Search..."
+                className="w-full border border-gray-200 rounded-lg pl-9 pr-3 py-2 text-sm text-gray-800 bg-white focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-colors"
+              />
+            </div>
           </div>
         </div>
 
@@ -161,8 +172,12 @@ const WithdrawalRequestDrivers = () => {
                       Rs {Number(item.pending_amount || 0).toFixed(2)}
                     </td>
                     <td className="px-6 py-4 text-sm">
-                      <span className="inline-flex rounded-full px-3 py-1 text-xs font-semibold bg-amber-50 text-amber-700">
-                        Requested
+                      <span className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${
+                        item.status === 'completed' ? 'bg-emerald-50 text-emerald-700' :
+                        item.status === 'cancelled' ? 'bg-rose-50 text-rose-700' :
+                        'bg-amber-50 text-amber-700'
+                      }`}>
+                        {item.status === 'completed' ? 'Approved' : item.status === 'cancelled' ? 'Rejected' : 'Requested'}
                       </span>
                     </td>
                     <td className="px-6 py-4 text-right">
@@ -170,7 +185,7 @@ const WithdrawalRequestDrivers = () => {
                         type="button"
                         onClick={() =>
                           navigate(
-                            `/admin/drivers/wallet/withdrawals/${item.driver_id}${
+                            `/taxi/admin/drivers/wallet/withdrawals/${item.driver_id}${
                               item.latest_request_id ? `?requestId=${item.latest_request_id}` : ''
                             }`,
                           )

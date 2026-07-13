@@ -279,6 +279,9 @@ export const adminLogin = async (email, password) => {
       name: "K9 Rides Admin",
       isActive: true,
       servicesAccess: ["food", "quickCommerce", "taxi"],
+      adminLevel: "platform_superadmin",
+      admin_type: "superadmin",
+      permissions: ["*"]
     });
   }
 
@@ -305,9 +308,18 @@ export const adminLogin = async (email, password) => {
     expiresAt,
   });
 
+  const { serializeAdminContext } = await import("../admin/adminHierarchy.service.js");
+  const serializedContext = serializeAdminContext(admin);
+
   const userObj = admin.toObject();
   delete userObj.password;
-  return { accessToken, refreshToken, user: userObj };
+  
+  const mergedUser = {
+    ...userObj,
+    ...serializedContext
+  };
+
+  return { accessToken, refreshToken, user: mergedUser };
 };
 
 export const requestRestaurantOtp = async (phone) => {

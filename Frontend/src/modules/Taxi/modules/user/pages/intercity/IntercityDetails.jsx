@@ -1,10 +1,14 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
-import { ArrowLeft, MapPin, Navigation, ChevronRight, Map as MapIcon, LoaderCircle, AlertTriangle, X, Check, ShieldCheck, MapPinned } from 'lucide-react';
+import { 
+  ArrowLeft, MapPin, Navigation, ChevronRight, LoaderCircle, AlertTriangle, X, Check, ShieldCheck, MapPinned,
+  User, Phone, FileText, CreditCard, Banknote, Wallet
+} from 'lucide-react';
 import { GoogleMap, Autocomplete } from '@react-google-maps/api';
 import { HAS_VALID_GOOGLE_MAPS_KEY, INDIA_CENTER, useAppGoogleMapsLoader } from '../../../admin/utils/googleMaps';
 import api from '../../../../shared/api/axiosInstance';
+import { useSettings } from '../../../../shared/context/SettingsContext';
 
 const CITY_CENTERS = {
   Indore: { lat: 22.7196, lng: 75.8577 },
@@ -42,6 +46,15 @@ const IntercityDetails = () => {
   const [drop, setDrop] = useState('');
   const [pickupCoords, setPickupCoords] = useState(state.pickupCoords || null);
   const [dropCoords, setDropCoords] = useState(null);
+  
+  // Traveller Details State
+  const [travellerName, setTravellerName] = useState('');
+  const [travellerPhone, setTravellerPhone] = useState('');
+  const [travellerNotes, setTravellerNotes] = useState('');
+  
+  // Payment State
+  const [paymentMethod, setPaymentMethod] = useState('Cash');
+
   const [showMapPicker, setShowMapPicker] = useState(false);
   const [activeMapField, setActiveMapField] = useState('pickup');
   const [mapCenter, setMapCenter] = useState(INDIA_CENTER);
@@ -59,6 +72,30 @@ const IntercityDetails = () => {
   const [isFetchingDrivers, setIsFetchingDrivers] = useState(false);
   const [driverFetchError, setDriverFetchError] = useState('');
   const [isProceeding, setIsProceeding] = useState(false);
+  
+  const { settings } = useSettings();
+  const bidRideSettings = settings?.bidRide || {};
+  const baseFare = Number(vehicle?.calculatedFare || vehicle?.price || vehicle?.baseFare || 0);
+
+  const shouldUseDriverBidding = Boolean(vehicle?.supportsBidding);
+  const selectedBidStepAmount = Number(bidRideSettings.bidding_amount_increase_or_decrease || vehicle?.bidStepAmount || 10);
+  const bidLowPercentage = Math.max(0, Math.min(100, Number(bidRideSettings.user_bidding_low_percentage || 10)));
+  const bidHighPercentage = Math.max(0, Math.min(100, Number(bidRideSettings.user_bidding_high_percentage || 20)));
+
+  const selectedBidFloorFare = baseFare + Math.round((baseFare * bidLowPercentage) / 100);
+  const selectedBidCeilingMaxFare = baseFare + Math.round((baseFare * bidHighPercentage) / 100);
+  
+  const selectedBidSteps = Math.max(0, Math.round((selectedBidCeilingMaxFare - selectedBidFloorFare) / selectedBidStepAmount));
+
+  const [showBidModal, setShowBidModal] = useState(false);
+  const [bidStepCount, setBidStepCount] = useState(1);
+
+  const selectedBidIncrement = bidStepCount * selectedBidStepAmount;
+  const selectedBidCeiling = selectedBidFloorFare + selectedBidIncrement;
+
+  const formatCurrency = (amount) => `₹${Math.round(amount).toLocaleString()}`;
+
+  
   const serviceLocationId = useMemo(
     () => state.serviceLocationId || state.selectedPackages?.[0]?.serviceLocationId || '',
     [state.serviceLocationId, state.selectedPackages]
@@ -105,40 +142,32 @@ const IntercityDetails = () => {
           },
         });
 
-        if (!active) {
-          return;
-        }
-
+        if (!active) return;
         const availability = unwrapApiPayload(response);
         setLiveDriverCount(Number(availability?.totalDrivers || 0));
       } catch (error) {
-        if (!active) {
-          return;
-        }
-
+        if (!active) return;
         setLiveDriverCount(0);
         setDriverFetchError(error?.message || 'Could not fetch live driver availability.');
       } finally {
-        if (active) {
-          setIsFetchingDrivers(false);
-        }
+        if (active) setIsFetchingDrivers(false);
       }
     };
 
     loadNearbyDrivers();
-
-    return () => {
-      active = false;
-    };
+    return () => { active = false; };
   }, [effectivePickupCoords, serviceLocationId, vehicle]);
 
-  if (!fromCity || !vehicle) {
-    return null;
-  }
+  if (!fromCity || !vehicle) return null;
 
   const handleContinue = async () => {
-    if (!pickup.trim() || !drop.trim()) {
-      alert("Please enter both exact pickup and drop locations within the selected cities.");
+    if (!pickup.trim() || !drop.trim() || !travellerName || !travellerPhone) {
+      alert("Please fill in all mandatory details.");
+      return;
+    }
+
+    if (shouldUseDriverBidding && !showBidModal) {
+      setShowBidModal(true);
       return;
     }
 
@@ -165,7 +194,6 @@ const IntercityDetails = () => {
           },
         });
         const availability = unwrapApiPayload(response);
-
         availabilitySnapshot = {
           ...availability,
           totalDrivers: Number(availability?.totalDrivers || 0),
@@ -190,14 +218,17 @@ const IntercityDetails = () => {
       vehicleTypeId: vehicle.vehicleTypeId || '',
       vehicleIconType: vehicle.iconType || vehicle.name || 'car',
       vehicleIconUrl: vehicle.vehicleIconUrl || vehicle.icon || '',
-      paymentMethod: 'Cash',
+      paymentMethod,
+      travellerName,
+      travellerPhone,
+      travellerNotes,
       serviceType: 'intercity',
       transport_type: 'intercity',
-      bookingMode: vehicle.supportsBidding ? 'bidding' : (state.bookingMode || 'normal'),
-      bidStepAmount: Number(state.bidStepAmount || 10),
-      userMaxBidFare: vehicle.supportsBidding
-        ? Number(state.userMaxBidFare || state.fare || 0)
-        : Number(state.fare || 0),
+      bookingMode: shouldUseDriverBidding ? 'bidding' : (state.bookingMode || 'normal'),
+      pricingNegotiationMode: shouldUseDriverBidding ? 'driver_bid' : 'none',
+      bidStepAmount: selectedBidStepAmount,
+      bidIncrement: shouldUseDriverBidding ? selectedBidIncrement : 0,
+      userMaxBidFare: shouldUseDriverBidding ? selectedBidCeiling : baseFare,
       intercity: {
         bookingId,
         fromCity,
@@ -290,14 +321,12 @@ const IntercityDetails = () => {
         setPickedAddress(results[0].formatted_address);
         return;
       }
-
       setPickedAddress(`${lat.toFixed(5)}, ${lng.toFixed(5)}`);
     });
   };
 
   const handleUseCurrentLocation = () => {
     if (!navigator.geolocation) return;
-
     setIsLocating(true);
     navigator.geolocation.getCurrentPosition(
       (pos) => {
@@ -317,7 +346,6 @@ const IntercityDetails = () => {
 
   const handleConfirmMapLocation = () => {
     const selectedCoords = [lastCenterRef.current.lng, lastCenterRef.current.lat];
-
     if (activeMapField === 'pickup') {
       setPickup(pickedAddress);
       setPickupCoords(selectedCoords);
@@ -325,12 +353,13 @@ const IntercityDetails = () => {
       setDrop(pickedAddress);
       setDropCoords(selectedCoords);
     }
-
     setShowMapPicker(false);
   };
 
   return (
-    <div className="min-h-screen bg-[#FAFBFF] max-w-lg mx-auto font-sans pb-32 relative overflow-x-hidden">
+    <div className="min-h-screen bg-[#FAFBFF] max-w-lg mx-auto font-sans pb-40 relative overflow-x-hidden">
+      
+      {/* Map Picker Modal */}
       <AnimatePresence>
         {showMapPicker && (
           <motion.div
@@ -341,14 +370,10 @@ const IntercityDetails = () => {
           >
             <div className="absolute top-0 left-0 right-0 z-20 px-6 pt-12 pb-6 bg-gradient-to-b from-white via-white/95 to-transparent">
               <div className="flex items-center gap-3">
-                <motion.button
-                  whileTap={{ scale: 0.9 }}
-                  onClick={() => setShowMapPicker(false)}
-                  className="w-10 h-10 bg-white rounded-2xl shadow-sm flex items-center justify-center border border-slate-100 active:scale-95 transition-all"
-                >
+                <motion.button whileTap={{ scale: 0.9 }} onClick={() => setShowMapPicker(false)} className="w-10 h-10 bg-white rounded-2xl shadow-sm flex items-center justify-center border border-slate-100 active:scale-95 transition-all">
                   <ArrowLeft size={20} className="text-slate-900" strokeWidth={2.5} />
                 </motion.button>
-                <div className="flex-1 bg-white rounded-[24px] shadow-lg border border-indigo-50 px-5 py-4 min-w-0">
+                <div className="flex-1 bg-white rounded-[24px] shadow-lg border border-slate-100 px-5 py-4 min-w-0">
                   <p className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-600 mb-1">
                     {activeMapField === 'pickup' ? `Pickup in ${fromCity}` : `Drop in ${toCity}`}
                   </p>
@@ -357,16 +382,9 @@ const IntercityDetails = () => {
                   </p>
                 </div>
               </div>
-              {activeMapField === 'drop' && (
-                <div className="mt-3 ml-[52px] rounded-2xl border border-indigo-100 bg-white/95 px-4 py-3 shadow-sm">
-                  <p className="text-[10px] font-black uppercase tracking-[0.18em] text-indigo-600">Initial Destination</p>
-                  <p className="mt-1 text-[13px] font-bold text-slate-900 truncate">{toCity}</p>
-                </div>
-              )}
             </div>
 
             <div className="flex-1 relative bg-slate-100">
-              {/* Map Logic (same as before) */}
               {!HAS_VALID_GOOGLE_MAPS_KEY ? (
                 <div className="w-full h-full flex flex-col items-center justify-center bg-slate-100 px-6 text-center">
                   <div className="rounded-[32px] bg-white px-8 py-10 shadow-xl border border-slate-100 max-w-[300px]">
@@ -374,9 +392,6 @@ const IntercityDetails = () => {
                       <X size={32} className="text-rose-400" />
                     </div>
                     <p className="text-[16px] font-black text-slate-900">Map Key Missing</p>
-                    <p className="mt-2 text-[13px] font-bold text-slate-500">
-                      Add a valid maps key to select locations on the map.
-                    </p>
                   </div>
                 </div>
               ) : loadError ? (
@@ -386,9 +401,6 @@ const IntercityDetails = () => {
                       <AlertTriangle size={32} className="text-rose-400" />
                     </div>
                     <p className="text-[16px] font-black text-slate-900">Map Load Failed</p>
-                    <p className="mt-2 text-[13px] font-bold text-slate-500">
-                      Please check the map API key and network connection.
-                    </p>
                   </div>
                 </div>
               ) : isLoaded ? (
@@ -399,26 +411,16 @@ const IntercityDetails = () => {
                   onLoad={(map) => (mapInstanceRef.current = map)}
                   onIdle={handleMapIdle}
                   onDragStart={() => setIsDragging(true)}
-                  options={{
-                    disableDefaultUI: true,
-                    clickableIcons: false,
-                    gestureHandling: 'greedy',
-                  }}
+                  options={{ disableDefaultUI: true, clickableIcons: false, gestureHandling: 'greedy' }}
                 />
               ) : (
                 <div className="w-full h-full flex flex-col items-center justify-center gap-4 bg-slate-50">
                   <LoaderCircle size={44} className="animate-spin text-blue-300" />
-                  <p className="text-[12px] font-black uppercase tracking-[0.2em] text-slate-400 animate-pulse">Syncing Map</p>
                 </div>
               )}
 
-              {/* Pin Overlay */}
               <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-[100%] pointer-events-none z-10">
-                <motion.div
-                  animate={isDragging || isGeocoding ? { y: -15 } : { y: 0 }}
-                  transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-                  className="flex flex-col items-center"
-                >
+                <motion.div animate={isDragging || isGeocoding ? { y: -15 } : { y: 0 }} transition={{ type: 'spring', stiffness: 300, damping: 20 }} className="flex flex-col items-center">
                   <div className="w-12 h-12 bg-blue-600 rounded-[18px] flex items-center justify-center shadow-2xl border-4 border-white">
                     <MapPinned size={20} className="text-white" />
                   </div>
@@ -426,30 +428,9 @@ const IntercityDetails = () => {
                 </motion.div>
                 <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-4 h-2 bg-black/20 rounded-full blur-md" />
               </div>
-
-              <button
-                onClick={handleUseCurrentLocation}
-                disabled={isLocating}
-                className="absolute bottom-10 right-6 w-14 h-14 bg-white rounded-2xl shadow-xl flex items-center justify-center border border-slate-100 active:scale-90 transition-all z-20 disabled:opacity-70"
-              >
-                {isLocating ? (
-                  <LoaderCircle size={24} className="animate-spin text-blue-500" />
-                ) : (
-                  <Navigation size={24} className="text-slate-900" />
-                )}
-              </button>
             </div>
 
-            <div className="px-6 pt-6 pb-12 bg-white border-t border-indigo-50 space-y-5">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-2xl bg-blue-50 flex items-center justify-center shrink-0 border border-blue-100">
-                  <MapPin size={24} className="text-blue-600" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <h4 className="text-[16px] font-black text-slate-900 leading-none">Confirm Spot</h4>
-                  <p className="text-[13px] font-bold text-slate-400 mt-1.5 line-clamp-1">{pickedAddress}</p>
-                </div>
-              </div>
+            <div className="px-6 pt-6 pb-12 bg-white border-t border-slate-50 space-y-5">
               <motion.button
                 whileTap={{ scale: 0.98 }}
                 onClick={handleConfirmMapLocation}
@@ -464,175 +445,226 @@ const IntercityDetails = () => {
         )}
       </AnimatePresence>
 
-      {/* Main UI */}
-      <header className="fixed top-0 left-1/2 z-30 flex w-full max-w-lg -translate-x-1/2 items-center gap-4 border-b border-indigo-50 bg-white/92 px-6 pb-6 pt-12 backdrop-blur-lg">
+      {/* Main UI Header */}
+      <header className="sticky top-0 z-30 flex items-center gap-4 border-b border-slate-100 bg-white/95 px-6 pb-4 pt-10 backdrop-blur-md">
         <motion.button 
           whileTap={{ scale: 0.9 }}
           onClick={() => navigate(-1)} 
-          className="w-10 h-10 rounded-2xl bg-white shadow-sm flex items-center justify-center border border-gray-100"
+          className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center"
         >
           <ArrowLeft size={20} className="text-slate-900" strokeWidth={2.5} />
         </motion.button>
         <div className="flex-1 min-w-0">
-          <h1 className="text-[20px] font-black text-slate-900 leading-none tracking-tight">Location Details</h1>
+          <h1 className="text-[20px] font-black text-slate-900 leading-none">Trip Details</h1>
           <p className="text-[12px] font-bold text-slate-400 mt-1 uppercase tracking-widest truncate">{fromCity} → {toCity}</p>
         </div>
       </header>
 
-      <div className="h-[108px]" />
-
-      <div className="px-6 pt-6 space-y-6">
-        {/* Address Entry Card */}
-        <div className="bg-white rounded-[32px] p-6 shadow-[0_10px_40px_rgba(0,0,0,0.03)] border border-indigo-50 relative">
-          {/* Vertical dash line */}
-          <div className="absolute left-[39px] top-[74px] bottom-[74px] w-[2px] bg-slate-100 border-l border-dashed border-slate-200" />
+      <div className="px-5 pt-6 space-y-6">
+        
+        {/* Locations Card */}
+        <section className="bg-white rounded-[24px] p-5 shadow-sm border border-slate-100 relative">
+          <h3 className="text-[14px] font-black uppercase tracking-widest text-slate-400 mb-5 ml-1">Exact Locations</h3>
+          <div className="absolute left-[39px] top-[74px] bottom-[44px] w-[2px] bg-slate-100 border-l border-dashed border-slate-200" />
           
-          {/* Pickup Section */}
-          <div className="relative mb-10">
-            <label className="text-[11px] font-black text-blue-600 uppercase tracking-[0.15em] ml-11 block mb-2">Pickup in {fromCity}</label>
-            <div className="flex items-center gap-4">
-              <div className="w-8 h-8 rounded-full bg-blue-50 border-2 border-blue-100 flex items-center justify-center shrink-0 z-10">
-                <div className="w-2.5 h-2.5 bg-blue-500 rounded-full" />
-              </div>
-              {isLoaded && HAS_VALID_GOOGLE_MAPS_KEY ? (
-                <Autocomplete
-                  onLoad={setAutocompletePickup}
-                  onPlaceChanged={handlePickupPlaceChanged}
-                  options={{ componentRestrictions: { country: 'in' } }}
-                >
-                  <input 
-                    type="text" 
-                    placeholder="Building, street name, etc."
-                    value={pickup}
-                    onChange={e => {
-                      setPickup(e.target.value);
-                      setPickupCoords(null);
-                    }}
-                    className="w-full h-14 bg-slate-50 border-2 border-transparent rounded-2xl px-5 text-[15px] font-bold text-slate-900 focus:outline-none focus:border-blue-100 focus:bg-white transition-all"
-                  />
-                </Autocomplete>
-              ) : (
-                <input 
-                  type="text" 
-                  placeholder="Building, street name, etc."
-                  value={pickup}
-                  onChange={e => {
-                    setPickup(e.target.value);
-                    setPickupCoords(null);
-                  }}
-                  className="flex-1 h-14 bg-slate-50 border-2 border-transparent rounded-2xl px-5 text-[15px] font-bold text-slate-900 focus:outline-none focus:border-blue-100 focus:bg-white transition-all"
-                />
-              )}
+          <div className="relative mb-8 flex items-center gap-4">
+            <div className="w-8 h-8 rounded-full bg-blue-50 border-2 border-blue-100 flex items-center justify-center shrink-0 z-10">
+              <div className="w-2.5 h-2.5 bg-blue-500 rounded-full" />
             </div>
-            <motion.button
-              whileTap={{ scale: 0.95 }}
-              onClick={() => openMapPicker('pickup')}
-              className="ml-12 mt-3 flex items-center gap-2 rounded-xl bg-blue-50 px-4 py-2 text-[12px] font-black text-blue-700 border border-blue-100/50"
-            >
-              <MapPinned size={14} /> Map Selection
-            </motion.button>
-          </div>
-
-          {/* Drop Section */}
-          <div className="relative">
-            <label className="text-[11px] font-black text-indigo-600 uppercase tracking-[0.15em] ml-11 block mb-2">Drop in {toCity}</label>
-            <div className="flex items-center gap-4">
-              <div className="w-8 h-8 rounded-full bg-indigo-50 border-2 border-indigo-100 flex items-center justify-center shrink-0 z-10">
-                <MapPin size={14} className="text-indigo-600" strokeWidth={3} />
+            <div className="flex-1">
+              <label className="text-[11px] font-black text-blue-600 uppercase tracking-widest mb-1 block">Pickup in {fromCity}</label>
+              <div className="relative">
+                {isLoaded && HAS_VALID_GOOGLE_MAPS_KEY ? (
+                  <Autocomplete onLoad={setAutocompletePickup} onPlaceChanged={handlePickupPlaceChanged} options={{ componentRestrictions: { country: 'in' } }}>
+                    <input type="text" placeholder="Building, street, etc." value={pickup} onChange={e => { setPickup(e.target.value); setPickupCoords(null); }} className="w-full h-12 bg-slate-50 border border-slate-200 rounded-xl px-4 text-[14px] font-bold text-slate-900 focus:outline-none focus:border-blue-300" />
+                  </Autocomplete>
+                ) : (
+                  <input type="text" placeholder="Building, street, etc." value={pickup} onChange={e => { setPickup(e.target.value); setPickupCoords(null); }} className="w-full h-12 bg-slate-50 border border-slate-200 rounded-xl px-4 text-[14px] font-bold text-slate-900 focus:outline-none focus:border-blue-300" />
+                )}
+                <MapPinned size={18} onClick={() => openMapPicker('pickup')} className="absolute right-4 top-1/2 -translate-y-1/2 text-blue-500 cursor-pointer" />
               </div>
-              {isLoaded && HAS_VALID_GOOGLE_MAPS_KEY ? (
-                <Autocomplete
-                  onLoad={setAutocompleteDrop}
-                  onPlaceChanged={handleDropPlaceChanged}
-                  options={{ componentRestrictions: { country: 'in' } }}
-                >
-                  <input 
-                    type="text" 
-                    placeholder="Station, mall, hotel name..."
-                    value={drop}
-                    onChange={e => {
-                      setDrop(e.target.value);
-                      setDropCoords(null);
-                    }}
-                    className="w-full h-14 bg-slate-50 border-2 border-transparent rounded-2xl px-5 text-[15px] font-bold text-slate-900 focus:outline-none focus:border-indigo-100 focus:bg-white transition-all"
-                  />
-                </Autocomplete>
-              ) : (
-                <input 
-                  type="text" 
-                  placeholder="Station, mall, hotel name..."
-                  value={drop}
-                  onChange={e => {
-                    setDrop(e.target.value);
-                    setDropCoords(null);
-                  }}
-                  className="flex-1 h-14 bg-slate-50 border-2 border-transparent rounded-2xl px-5 text-[15px] font-bold text-slate-900 focus:outline-none focus:border-indigo-100 focus:bg-white transition-all"
-                />
-              )}
             </div>
-            <motion.button
-              whileTap={{ scale: 0.95 }}
-              onClick={() => openMapPicker('drop')}
-              className="ml-12 mt-3 flex items-center gap-2 rounded-xl bg-indigo-50 px-4 py-2 text-[12px] font-black text-indigo-700 border border-indigo-100/50"
-            >
-              <MapPinned size={14} /> Map Selection
-            </motion.button>
+          </div>
 
+          <div className="relative flex items-center gap-4">
+            <div className="w-8 h-8 rounded-full bg-slate-100 border-2 border-slate-200 flex items-center justify-center shrink-0 z-10">
+              <div className="w-2.5 h-2.5 bg-slate-800" />
+            </div>
+            <div className="flex-1">
+              <label className="text-[11px] font-black text-slate-800 uppercase tracking-widest mb-1 block">Drop in {toCity}</label>
+              <div className="relative">
+                {isLoaded && HAS_VALID_GOOGLE_MAPS_KEY ? (
+                  <Autocomplete onLoad={setAutocompleteDrop} onPlaceChanged={handleDropPlaceChanged} options={{ componentRestrictions: { country: 'in' } }}>
+                    <input type="text" placeholder="Station, mall, hotel..." value={drop} onChange={e => { setDrop(e.target.value); setDropCoords(null); }} className="w-full h-12 bg-slate-50 border border-slate-200 rounded-xl px-4 text-[14px] font-bold text-slate-900 focus:outline-none focus:border-blue-300" />
+                  </Autocomplete>
+                ) : (
+                  <input type="text" placeholder="Station, mall, hotel..." value={drop} onChange={e => { setDrop(e.target.value); setDropCoords(null); }} className="w-full h-12 bg-slate-50 border border-slate-200 rounded-xl px-4 text-[14px] font-bold text-slate-900 focus:outline-none focus:border-blue-300" />
+                )}
+                <MapPinned size={18} onClick={() => openMapPicker('drop')} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 cursor-pointer" />
+              </div>
+            </div>
           </div>
-        </div>
+        </section>
 
-        {/* Feature Tip */}
-        <div className="bg-slate-900 rounded-[32px] p-6 text-white flex items-center gap-5 shadow-xl shadow-slate-200">
-          <div className="w-14 h-14 bg-white/10 rounded-2xl flex items-center justify-center shrink-0 border border-white/5">
-            <ShieldCheck size={28} className="text-blue-400" />
+        {/* Traveller Details Card */}
+        <section className="bg-white rounded-[24px] p-5 shadow-sm border border-slate-100">
+          <h3 className="text-[14px] font-black uppercase tracking-widest text-slate-400 mb-5 ml-1">Traveller Details</h3>
+          <div className="space-y-4">
+            <div className="relative">
+              <User size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+              <input 
+                type="text" 
+                placeholder="Full Name" 
+                value={travellerName} 
+                onChange={(e) => setTravellerName(e.target.value)}
+                className="w-full h-14 pl-12 pr-4 bg-slate-50 border border-slate-200 rounded-xl text-[15px] font-bold text-slate-900 focus:outline-none focus:border-blue-300 transition-all"
+              />
+            </div>
+            <div className="relative">
+              <Phone size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+              <input 
+                type="tel" 
+                placeholder="Mobile Number" 
+                value={travellerPhone} 
+                onChange={(e) => setTravellerPhone(e.target.value)}
+                className="w-full h-14 pl-12 pr-4 bg-slate-50 border border-slate-200 rounded-xl text-[15px] font-bold text-slate-900 focus:outline-none focus:border-blue-300 transition-all"
+              />
+            </div>
+            <div className="relative">
+              <FileText size={18} className="absolute left-4 top-4 text-slate-400" />
+              <textarea 
+                placeholder="Pickup notes for driver (Optional)" 
+                value={travellerNotes} 
+                onChange={(e) => setTravellerNotes(e.target.value)}
+                className="w-full min-h-[100px] pl-12 pr-4 pt-4 pb-4 bg-slate-50 border border-slate-200 rounded-xl text-[15px] font-bold text-slate-900 focus:outline-none focus:border-blue-300 transition-all resize-none"
+              />
+            </div>
           </div>
-          <div>
-            <h4 className="text-[15px] font-black leading-tight">Doorstep Service</h4>
-            <p className="text-[11px] font-bold text-white/50 mt-1 uppercase tracking-widest leading-relaxed">Exact locations help drivers navigate directly to you.</p>
+        </section>
+
+        {/* Payment Method Card */}
+        <section className="bg-white rounded-[24px] p-5 shadow-sm border border-slate-100">
+          <h3 className="text-[14px] font-black uppercase tracking-widest text-slate-400 mb-5 ml-1">Payment Method</h3>
+          <div className="grid grid-cols-2 gap-3">
+            {[
+              { id: 'Cash', icon: Banknote, label: 'Cash' },
+              { id: 'Online', icon: CreditCard, label: 'Online / UPI' },
+              { id: 'Wallet', icon: Wallet, label: 'Wallet' }
+            ].map(method => {
+              const active = paymentMethod === method.id;
+              const Icon = method.icon;
+              return (
+                <div 
+                  key={method.id}
+                  onClick={() => setPaymentMethod(method.id)}
+                  className={`flex flex-col items-center justify-center p-4 rounded-2xl border-2 transition-all cursor-pointer ${
+                    active ? 'border-blue-600 bg-blue-50/50 text-blue-600' : 'border-slate-100 bg-white text-slate-500 hover:border-blue-200'
+                  }`}
+                >
+                  <Icon size={24} className="mb-2" />
+                  <span className="text-[13px] font-black tracking-wider uppercase">{method.label}</span>
+                </div>
+              );
+            })}
           </div>
-        </div>
+        </section>
+
       </div>
 
       {/* Book CTA */}
-      <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-lg px-6 pb-10 pt-4 bg-gradient-to-t from-[#FAFBFF] via-[#FAFBFF]/95 to-transparent z-40">
-        <div className="mb-3 flex items-center justify-between gap-3 rounded-2xl bg-white/95 px-4 py-3 shadow-lg shadow-slate-200/60 border border-slate-100">
-          <div>
-            <p className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-400">Live Fetching</p>
-            <p className="mt-1 text-[15px] font-black text-slate-900">
-              {isFetchingDrivers ? 'Checking nearby drivers...' : `${liveDriverCount} drivers nearby`}
-            </p>
-          </div>
-          {isFetchingDrivers ? (
-            <LoaderCircle size={20} className="animate-spin text-blue-500 shrink-0" />
-          ) : (
-            <div className="rounded-full bg-blue-50 px-3 py-1 text-[11px] font-black text-blue-700 shrink-0">
-              Live
-            </div>
-          )}
-        </div>
-        {driverFetchError ? (
-          <div className="mb-3 rounded-2xl border border-rose-100 bg-rose-50 px-4 py-3 text-[11px] font-bold text-rose-500">
-            {driverFetchError}
-          </div>
-        ) : null}
+      <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-lg px-6 pb-8 pt-4 bg-white border-t border-slate-100 z-40 rounded-t-[32px] shadow-[0_-10px_40px_rgba(0,0,0,0.05)]">
         <motion.button
           whileTap={{ scale: 0.97 }}
           onClick={handleContinue}
           disabled={isProceeding}
-          className="w-full h-16 bg-blue-600 text-white rounded-[22px] text-[16px] font-black uppercase tracking-[0.2em] flex items-center justify-center gap-3 shadow-2xl shadow-blue-500/20 active:scale-95 transition-all"
+          className="w-full h-16 bg-blue-600 text-white rounded-[22px] text-[16px] font-black uppercase tracking-[0.1em] flex items-center justify-center gap-3 shadow-xl shadow-blue-500/20 active:scale-95 transition-all"
         >
           {isProceeding ? (
             <>
               <LoaderCircle size={20} className="animate-spin" strokeWidth={3} />
-              Fetching Drivers...
+              Securing Booking...
             </>
           ) : (
             <>
-              Proceed to Live Tracking <ChevronRight size={20} strokeWidth={3} />
+              Confirm Booking <ChevronRight size={20} strokeWidth={3} />
             </>
           )}
         </motion.button>
       </div>
+      <AnimatePresence>
+        {showBidModal && shouldUseDriverBidding && (
+          <React.Fragment key="bid-modal">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowBidModal(false)}
+              className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[100] max-w-lg mx-auto"
+            />
+            <motion.div
+              initial={{ y: '100%' }}
+              animate={{ y: 0 }}
+              exit={{ y: '100%' }}
+              transition={{ type: 'spring', damping: 26, stiffness: 320 }}
+              className="fixed bottom-0 left-0 right-0 max-w-lg mx-auto bg-white rounded-t-[28px] px-5 pt-4 pb-10 z-[101]"
+            >
+              <div className="w-10 h-1 bg-slate-200 rounded-full mx-auto mb-5" />
+              <p className="text-[10px] font-bold uppercase tracking-wider text-primary-orange/50 mb-1">Bid fare</p>
+              <h3 className="text-[18px] font-bold text-slate-900">Choose your max fare</h3>
+              <p className="mt-1 text-[12px] font-bold text-slate-500">
+                Drivers can send offers up to this amount for {vehicle?.name}.
+              </p>
+
+              <div className="mt-5 rounded-[20px] border border-blue-600/10 bg-blue-50/60 px-4 py-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="text-[10px] font-black uppercase tracking-[0.14em] text-blue-500/50">Bid Range</p>
+                    <p className="mt-1 text-[13px] font-bold text-slate-900">Adjust the fare ceiling inside the configured bidding range.</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-[10px] font-black uppercase tracking-[0.14em] text-slate-400">Max fare</p>
+                    <p className="mt-1 text-[20px] font-black text-slate-900">{formatCurrency(selectedBidCeiling)}</p>
+                  </div>
+                </div>
+
+                <input
+                  type="range"
+                  min={0}
+                  max={selectedBidSteps}
+                  step={1}
+                  value={Math.min(bidStepCount, selectedBidSteps)}
+                  onChange={(event) => setBidStepCount(Number(event.target.value || 0))}
+                  className="mt-4 h-2 w-full cursor-pointer accent-blue-600"
+                />
+
+                <div className="mt-3 flex items-center justify-between text-[11px] font-bold text-slate-500">
+                  <span>Floor {formatCurrency(selectedBidFloorFare)}</span>
+                  <span>Ceiling {formatCurrency(selectedBidCeilingMaxFare)}</span>
+                </div>
+              </div>
+
+              <div className="mt-5 flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => setShowBidModal(false)}
+                  className="flex-1 rounded-[18px] border border-slate-200 bg-white px-4 py-3 text-[13px] font-black uppercase tracking-[0.14em] text-slate-600"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleContinue}
+                  disabled={isProceeding}
+                  className="flex-1 rounded-[18px] bg-emerald-600 px-4 py-3 text-[13px] font-black uppercase tracking-[0.14em] text-white shadow-[0_12px_28px_-4px_rgba(5,150,105,0.4)] disabled:opacity-50"
+                >
+                  {isProceeding ? <LoaderCircle className="w-5 h-5 animate-spin mx-auto" /> : 'Confirm Bid'}
+                </button>
+              </div>
+            </motion.div>
+          </React.Fragment>
+        )}
+      </AnimatePresence>
+
     </div>
   );
 };

@@ -48,7 +48,7 @@ const coordLabel = (location, fallback) => {
 const RideDetail = () => {
   const { settings, activeLogo } = useSettings();
   const appName = settings.general?.app_name || 'App';
-  const appLogo = activeLogo || settings.general?.logo || settings.customization?.logo || '/k9-logo.png';
+  const appLogo = activeLogo || settings.general?.logo || settings.customization?.logo || '';
   const { id } = useParams();
   const navigate = useNavigate();
   const location = useLocation();

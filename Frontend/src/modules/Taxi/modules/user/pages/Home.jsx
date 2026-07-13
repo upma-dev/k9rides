@@ -1,19 +1,16 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
-import { CalendarClock, ChevronRight, Clock3, MapPin, ShieldCheck, User, X } from 'lucide-react';
+import { CalendarClock, ChevronRight, Clock3, MapPin, ShieldCheck, User, X, ArrowRight } from 'lucide-react';
 import HeaderGreeting from '../components/HeaderGreeting';
+import FeaturesHighlight from '../components/FeaturesHighlight';
 import ServiceGrid from '../components/ServiceGrid';
 import LocationMapSection from '../components/LocationMapSection';
 import ActionsSection from '../components/ActionsSection';
 import PromoBanners from '../components/PromoBanners';
 import ExplorerSection from '../components/ExplorerSection';
 import BottomNavbar from '../components/BottomNavbar';
-import carIcon from '../../../assets/icons/car.png';
-import bikeIcon from '../../../assets/icons/bike.png';
 import indiaGateRealImg from '@/assets/india_gate_real.png';
-import autoIcon from '../../../assets/icons/auto.png';
-import deliveryIcon from '../../../assets/icons/Delivery.png';
 import api from '../../../shared/api/axiosInstance';
 import { useSettings } from '../../../shared/context/SettingsContext';
 import { userService } from '../services/userService';
@@ -43,22 +40,7 @@ const getCurrentRideIcon = (ride) => {
     return customIcon;
   }
 
-  const serviceType = String(ride?.serviceType || ride?.type || '').toLowerCase();
-  const iconType = String(ride?.vehicleIconType || ride?.driver?.vehicleIconType || ride?.driver?.vehicleType || '').toLowerCase();
-
-  if (serviceType === 'parcel') {
-    return deliveryIcon;
-  }
-
-  if (iconType.includes('bike')) {
-    return bikeIcon;
-  }
-
-  if (iconType.includes('auto')) {
-    return autoIcon;
-  }
-
-  return carIcon;
+  return null;
 };
 
 const unwrapApiPayload = (response) => response?.data?.data || response?.data || response;
@@ -91,23 +73,24 @@ const getScheduledCountdownLabel = (value, now = Date.now()) => {
 
   const diffMs = time - now;
   if (diffMs <= 0) {
-    return 'Pickup window is opening now';
+    return 'Pickup window is open';
   }
 
-  const totalMinutes = Math.ceil(diffMs / 60000);
-  const days = Math.floor(totalMinutes / (60 * 24));
-  const hours = Math.floor((totalMinutes % (60 * 24)) / 60);
-  const minutes = totalMinutes % 60;
+  const totalSeconds = Math.floor(diffMs / 1000);
+  const days = Math.floor(totalSeconds / (3600 * 24));
+  const hours = Math.floor((totalSeconds % (3600 * 24)) / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
 
   if (days > 0) {
-    return `Starts in ${days}d ${hours}h`;
+    return `Starts in ${days}d ${hours}h ${minutes}m ${seconds}s`;
   }
 
   if (hours > 0) {
-    return `Starts in ${hours}h ${minutes}m`;
+    return `Starts in ${hours}h ${minutes}m ${seconds}s`;
   }
 
-  return `Starts in ${minutes}m`;
+  return `Starts in ${minutes}m ${seconds}s`;
 };
 
 const normalizeRentalCurrentRideSnapshot = (ride = {}, previousRide = {}) => {
@@ -206,6 +189,16 @@ const Home = () => {
   const [clockNow, setClockNow] = useState(() => Date.now());
   const [endingRide, setEndingRide] = useState(false);
   const [showDeferredSections, setShowDeferredSections] = useState(false);
+  const [bgIndex, setBgIndex] = useState(0);
+  const footerImages = useMemo(() => ['/food/taxi1.jpeg', '/food/taxi2.jpeg'], []);
+  
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setBgIndex((prev) => (prev + 1) % footerImages.length);
+    }, 4000);
+    return () => clearInterval(interval);
+  }, [footerImages]);
+
   const routePrefix = location.pathname.startsWith('/taxi/user') ? '/taxi/user' : '';
   const currentRideRef = useRef(currentRide);
 
@@ -376,6 +369,7 @@ const Home = () => {
           return;
         }
 
+      /*
       try {
         const rentalResponse = await userService.getActiveRentalBooking();
         const rentalRide = rentalResponse?.id ? rentalResponse : (rentalResponse?.data || null);
@@ -411,6 +405,7 @@ const Home = () => {
           return;
         }
       }
+      */
 
         if (cancelled) return;
         persistCurrentRide(null);
@@ -527,7 +522,7 @@ const Home = () => {
 
   const rentalTimerLabel = serviceType === 'rental' ? formatRentalTime(rentalElapsedSeconds) : '';
   const footerIllustrationBg = {
-    backgroundImage: `url(${indiaGateRealImg})`,
+    backgroundImage: `url(${footerImages[bgIndex]})`,
     backgroundRepeat: 'no-repeat',
     backgroundPosition: 'center calc(100% + 65px)',
     backgroundSize: 'cover',
@@ -564,6 +559,13 @@ const Home = () => {
       <div className="relative z-10 space-y-4 pb-6">
         <HeaderGreeting />
 
+        {!isScheduledAcceptedRide && (
+          <>
+            <ServiceGrid />
+            <FeaturesHighlight bgImageUrl={footerImages[bgIndex]} />
+          </>
+        )}
+
         {isScheduledAcceptedRide && (
           <motion.button
             type="button"
@@ -596,7 +598,7 @@ const Home = () => {
               <div className="relative mb-1">
                 <div className="absolute -inset-4 rounded-full bg-emerald-100/30 blur-xl animate-pulse" />
                 <div className="relative flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-950 shadow-2xl shadow-slate-950/40 border border-slate-800">
-                  <img src={currentRideIcon} alt="" className="h-10 w-10 object-contain" />
+                  {currentRideIcon && <img src={currentRideIcon} alt="Vehicle" className="h-10 w-10 object-contain" />}
                 </div>
               </div>
             </div>
@@ -684,13 +686,10 @@ const Home = () => {
             <div className="absolute -left-6 -top-6 h-24 w-24 rounded-full bg-emerald-100/40 blur-3xl pointer-events-none" />
           </motion.div>
         )}
-
-        <ServiceGrid />
         {showDeferredSections ? (
           <>
             <LocationMapSection />
             <ActionsSection />
-            <PromoBanners />
             <ExplorerSection />
           </>
         ) : (
@@ -700,54 +699,73 @@ const Home = () => {
             <div className="h-[160px] animate-pulse rounded-[24px] border border-white/80 bg-white/70 shadow-[0_10px_22px_rgba(15,23,42,0.05)]" />
           </div>
         )}
-        <div
-          className="relative w-full"
-          style={{
-            height: 360,
-          }}
+        <motion.div
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.8 }}
+          className="relative w-full overflow-hidden shadow-[0_-10px_40px_rgba(15,23,42,0.05)]"
+          style={{ height: 380 }}
         >
-          <div className="absolute inset-0 pointer-events-none">
-            <div className="absolute top-0 inset-x-0 h-32 bg-gradient-to-b from-white via-white/40 to-transparent" />
-            <div className="relative z-10 flex h-full items-start justify-center px-6 pt-10 text-left">
-              <div className="flex max-w-[340px] flex-col items-start px-2 py-2 -translate-x-4">
-                <div className="text-[48px] font-black tracking-[-0.04em] text-[#FFB300] drop-shadow-[0_10px_30px_rgba(255,179,0,0.4)] leading-none">
-                  K9 Rides
-                </div>
-                <div className="mt-2 text-[14px] font-sans italic font-black tracking-wide text-slate-800">
-                  Your Trusted Journey Partner
-                </div>
-                <div className="mt-2 text-[11px] font-black uppercase tracking-[0.2em] text-slate-400">
-                  Made for Everyone, Crafted for You.
-                  <img
-                    src="/flag-in.svg"
-                    alt="India"
-                    className="ml-0.5 inline-block h-[2.2em] w-[1.2em] align-[-0.88em]"
-                    draggable={false}
-                  />
-                </div>
-              </div>
-            </div>
+          {/* Shimmer Effect overlay from the old PromoBanner */}
+          <motion.div 
+            animate={{ x: ["-100%", "200%"] }}
+            transition={{ duration: 3, repeat: Infinity, ease: "linear", delay: 1 }}
+            className="absolute inset-0 z-30 w-[50%] bg-gradient-to-r from-transparent via-white/10 to-transparent skew-x-[-20deg] pointer-events-none"
+          />
+
+          <div className="absolute inset-0 pointer-events-none z-10">
+            <div className="absolute top-0 inset-x-0 h-32 bg-gradient-to-b from-[#EEF2F7] via-[#EEF2F7]/80 to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-r from-slate-950/95 via-slate-900/70 to-transparent" />
+            <div className="absolute bottom-0 inset-x-0 h-40 bg-gradient-to-t from-slate-950 to-transparent" />
           </div>
 
           <div
             aria-hidden="true"
-            className="absolute inset-0 pointer-events-none"
+            className="absolute inset-0 pointer-events-none z-0"
             style={{
-              filter: 'grayscale(1) contrast(1.08)',
+              filter: 'brightness(0.9) contrast(1.05)',
               ...footerIllustrationFadeMask,
             }}
           >
-            <div className="absolute inset-0" style={footerIllustrationBg} />
-            <div
-              className="absolute inset-0 opacity-55"
-              style={{
-                ...footerIllustrationBg,
-                filter: 'blur(3px)',
-                ...footerIllustrationEdgeBlurMask,
-              }}
-            />
+            <div className="absolute inset-0 transition-all duration-1000 ease-in-out bg-cover bg-right" style={footerIllustrationBg} />
           </div>
-        </div>
+
+          {/* Promotional Content Overlay - Aligned Top/Center Left */}
+          <div className="absolute top-24 left-0 right-12 px-8 z-20 flex flex-col items-start text-left">
+            <motion.h3 
+              initial={{ x: -20, opacity: 0 }}
+              whileInView={{ x: 0, opacity: 1 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.2 }}
+              className="text-[30px] font-black text-white leading-tight drop-shadow-lg tracking-tight"
+            >
+              Everywhere you <br /> want to be.
+            </motion.h3>
+            <motion.p 
+              initial={{ x: -20, opacity: 0 }}
+              whileInView={{ x: 0, opacity: 1 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.3 }}
+              className="mt-3 text-[14px] font-bold text-slate-300 drop-shadow-md"
+            >
+              Reliable rides. Transparent pricing.
+            </motion.p>
+            <motion.button 
+              initial={{ x: -20, opacity: 0 }}
+              whileInView={{ x: 0, opacity: 1 }}
+              viewport={{ once: true }}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              transition={{ delay: 0.4 }}
+              onClick={() => navigate('/taxi/user/ride/select-location')}
+              className="mt-6 inline-flex items-center gap-2 rounded-full bg-white px-6 py-3.5 text-[14px] font-black text-slate-900 shadow-[0_8px_20px_rgba(0,0,0,0.3)] hover:shadow-[0_12px_25px_rgba(0,0,0,0.4)] transition-all"
+            >
+              Book a Ride
+              <ArrowRight size={18} strokeWidth={3} />
+            </motion.button>
+          </div>
+        </motion.div>
       </div>
 
       <AnimatePresence>

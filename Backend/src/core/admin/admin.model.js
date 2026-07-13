@@ -1,6 +1,7 @@
 import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
 import { config } from '../../config/env.js';
+import { ADMIN_LEVELS, ADMIN_MODULES } from './adminHierarchy.constants.js';
 
 const adminSchema = new mongoose.Schema(
     {
@@ -38,6 +39,50 @@ const adminSchema = new mongoose.Schema(
             type: [String],
             enum: ['food', 'quickCommerce', 'taxi'],
             default: ['food']
+        },
+        // --- Admin Hierarchy Fields ---
+        adminLevel: {
+            type: String,
+            enum: Object.values(ADMIN_LEVELS),
+            default: ADMIN_LEVELS.SUBADMIN
+        },
+        module: {
+            type: String,
+            enum: [...Object.values(ADMIN_MODULES), null],
+            default: null
+        },
+        parentAdminId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'FoodAdmin',
+            default: null,
+            index: true
+        },
+        admin_type: {
+            type: String,
+            enum: ['superadmin', 'subadmin'],
+            default: 'subadmin'
+        },
+        permissions: {
+            type: [String],
+            default: []
+        },
+        food_zone_ids: {
+            type: [
+                {
+                    type: mongoose.Schema.Types.ObjectId,
+                    ref: 'FoodZone'
+                }
+            ],
+            default: []
+        },
+        // taxi compatibility fields
+        service_location_ids: {
+            type: [mongoose.Schema.Types.ObjectId],
+            default: []
+        },
+        zone_ids: {
+            type: [mongoose.Schema.Types.ObjectId],
+            default: []
         }
     },
     {
@@ -47,6 +92,8 @@ const adminSchema = new mongoose.Schema(
 );
 
 adminSchema.index({ servicesAccess: 1 });
+adminSchema.index({ adminLevel: 1, module: 1 });
+adminSchema.index({ parentAdminId: 1, module: 1 });
 
 adminSchema.pre('save', async function (next) {
     if (!this.isModified('password')) {
@@ -62,5 +109,4 @@ adminSchema.methods.comparePassword = function (candidatePassword) {
     return bcrypt.compare(candidatePassword, this.password);
 };
 
-export const FoodAdmin = mongoose.model('FoodAdmin', adminSchema);
-
+export const FoodAdmin = mongoose.models.FoodAdmin || mongoose.model('FoodAdmin', adminSchema);

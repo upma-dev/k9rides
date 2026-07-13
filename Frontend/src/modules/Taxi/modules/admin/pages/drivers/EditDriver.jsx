@@ -17,12 +17,12 @@ import {
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { useTaxiTransportTypes } from '../../../../shared/hooks/useTaxiTransportTypes';
 import { getUnifiedAdminToken } from '../../services/adminSession';
+import api from '../../../../shared/api/axiosInstance';
 
 const serviceCategoryOptions = [
   { value: 'taxi', label: 'Taxi' },
   { value: 'outstation', label: 'Outstation' },
   { value: 'delivery', label: 'Delivery' },
-  { value: 'pooling', label: 'Pooling' },
 ];
 
 const normalizeTransportTypeForSelect = (value, options = []) => {
@@ -78,7 +78,7 @@ const EditDriver = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { id } = useParams();
-  const backRoute = location.state?.from || '/admin/drivers';
+  const backRoute = location.state?.from || '/taxi/admin/drivers';
   const [isLoading, setIsLoading] = useState(false);
   const [isFetching, setIsFetching] = useState(true);
   const [locations, setLocations] = useState([]);
@@ -115,38 +115,53 @@ const EditDriver = () => {
   useEffect(() => {
     const fetchInitialData = async () => {
       setIsFetching(true);
+      
+      // Fetch locations independently
+      let fetchedLocations = [];
       try {
-        const locRes = await fetch(globalThis.__LEGACY_BACKEND_ORIGIN__ + '/api/v1/taxi/admin/service-locations', {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
-        const locData = await locRes.json();
+        const locData = await api.get('/admin/service-locations');
         if (locData.success || locData.data) {
           const results = locData.data?.results || locData.data || locData.results || [];
-          setLocations(Array.isArray(results) ? results : []);
+          fetchedLocations = Array.isArray(results) ? results : [];
+          setLocations(fetchedLocations);
         }
+      } catch (err) {
+        console.error('Locations fetch error:', err);
+      }
 
-        const countRes = await fetch(globalThis.__LEGACY_BACKEND_ORIGIN__ + '/api/v1/taxi/countries', {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
-        const countData = await countRes.json();
+      // Fetch countries independently
+      try {
+        const countData = await api.get('/countries');
         if (countData.success || countData.data) {
           const results = countData.data?.results || countData.data || countData.results || [];
           setCountries(Array.isArray(results) ? results : []);
         }
+      } catch (err) {
+        console.error('Countries fetch error:', err);
+      }
 
-        // Fetching driver details
-        const response = await fetch(`${globalThis.__LEGACY_BACKEND_ORIGIN__}/api/v1/taxi/admin/drivers/${id}`, {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
-        const data = await response.json();
+      // Fetch driver details
+      try {
+        const data = await api.get(`/admin/drivers/${id}`);
         
-        if (response.ok && data.success) {
-          const d = data.data;
+        if (data.success) {
+          const d = data.data || data;
+          
           const onboarding = d.onboarding || {};
           const onboardingPersonal = onboarding.personal || {};
           const onboardingVehicle = onboarding.vehicle || {};
           const savedVehicleTypeId = d.vehicle_type_id || d.vehicleTypeId || onboardingVehicle.vehicleTypeId || '';
           const savedVehicleTypeLabel = d.car_type || d.vehicle_type || d.vehicleType || onboardingVehicle.vehicleType || '';
+
+          const areaId = d.service_location_id?._id || d.service_location_id || d.service_location?._id || d.service_location || onboardingVehicle.locationId || '';
+          let resolvedCountry = d.country?._id || d.country || d.service_location?.country?._id || d.service_location?.country || '';
+          
+          if (!resolvedCountry && areaId && fetchedLocations.length > 0) {
+            const matchedLoc = fetchedLocations.find(l => String(l._id) === String(areaId));
+            if (matchedLoc) {
+              resolvedCountry = matchedLoc.country?._id || matchedLoc.country || '';
+            }
+          }
 
           setVehicleTypeFallbackOption(
             savedVehicleTypeId || savedVehicleTypeLabel
@@ -158,8 +173,8 @@ const EditDriver = () => {
           );
 
           setFormData({
-            area: d.service_location_id?._id || d.service_location_id || d.service_location?._id || d.service_location || onboardingVehicle.locationId || '',
-            country: d.country?._id || d.country || d.service_location?.country?._id || d.service_location?.country || '',
+            area: areaId,
+            country: resolvedCountry,
             name: d.name || d.user_id?.name || onboardingPersonal.fullName || '',
             mobile: d.phone || d.mobile || d.user_id?.mobile || '',
             gender: d.gender ? d.gender.charAt(0).toUpperCase() + d.gender.slice(1) : 'Male',
@@ -182,13 +197,13 @@ const EditDriver = () => {
             vehicleNumber: d.car_number || d.vehicle_number || d.vehicleNumber || onboardingVehicle.number || '',
             companyName: onboardingVehicle.companyName || '',
             companyAddress: onboardingVehicle.companyAddress || '',
-            city: onboardingVehicle.city || '',
+            city: onboardingVehicle.city || d.city || '',
             postalCode: onboardingVehicle.postalCode || '',
             taxNumber: onboardingVehicle.taxNumber || '',
           });
         }
       } catch (err) {
-        console.error('Fetch error:', err);
+        console.error('Driver fetch error:', err);
       } finally {
         setIsFetching(false);
       }
@@ -210,10 +225,10 @@ const EditDriver = () => {
       if (!formData.area || !formData.transportType) return;
       try {
         const typeFilter = formData.transportType.toLowerCase() === 'delivery' ? 'delivery' : 'taxi';
-        const res = await fetch(`${globalThis.__LEGACY_BACKEND_ORIGIN__}/api/v1/taxi/types/${formData.area}?transport_type=${typeFilter}`);
-        const data = await res.json();
-        if (data.success) {
-          setVehicleTypes(Array.isArray(data.data) ? data.data : (data.data?.results || []));
+        const res = await api.get(`/admin/types/vehicle-types/list`, { params: { transport_type: typeFilter } });
+        const data = res.data || res;
+        if (data.success || Array.isArray(data.data) || Array.isArray(data.results)) {
+          setVehicleTypes(Array.isArray(data.data) ? data.data : (data.results || data.data?.results || []));
         }
       } catch (e) {
         console.error("Vehicle types error:", e);
@@ -341,24 +356,17 @@ const EditDriver = () => {
         },
       };
 
-      const response = await fetch(`${globalThis.__LEGACY_BACKEND_ORIGIN__}/api/v1/taxi/admin/drivers/${id}`, {
-        method: 'PATCH',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(payload)
-      });
-
-      const data = await response.json();
-      if (response.ok && data.success) {
+      const response = await api.patch(`/admin/drivers/${id}`, payload);
+      
+      // Axios interceptor already unwraps response.data, so response is the actual backend JSON payload
+      if (response && (response.success || response._id || response.data?._id)) {
         setSuccess(true);
         setTimeout(() => navigate(backRoute), 2000);
       } else {
-        setError(data.message || 'Failed to update driver.');
+        setError(response.message || response.data?.message || 'Failed to update driver.');
       }
     } catch (err) {
-      setError('Network error occurred.');
+      setError(err?.response?.data?.message || err?.message || 'Network error occurred.');
     } finally {
       setIsLoading(false);
     }
@@ -409,12 +417,14 @@ const EditDriver = () => {
           {/* Identity Section */}
           <div className="bg-white rounded-xl border border-gray-200 p-6">
             <div className="flex items-center gap-3 mb-6 pb-4 border-b border-gray-100">
-              <div className="w-9 h-9 rounded-lg bg-indigo-50 flex items-center justify-center text-indigo-600">
-                <User size={18} />
-              </div>
-              <div>
-                <h3 className="text-sm font-semibold text-gray-900">Identity Details</h3>
-                <p className="text-xs text-gray-400">Personal & contact information</p>
+              <div className="flex items-center gap-4">
+                <button onClick={() => navigate(-1)} className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+                  <ArrowLeft size={20} className="text-gray-600" />
+                </button>
+                <div>
+                  <h1 className="text-2xl font-bold text-gray-800">Edit Driver</h1>
+                  <p className="text-sm text-gray-500">Update driver profile and vehicle details</p>
+                </div>
               </div>
             </div>
 
@@ -438,24 +448,7 @@ const EditDriver = () => {
                 </select>
               </div>
 
-               <div className="space-y-3">
-                 <label className="text-gray-400 flex items-center gap-2">
-                   <Globe size={14} className="text-indigo-400" /> Country *
-                 </label>
-                 <select 
-                   name="country"
-                   required
-                   value={formData.country}
-                   onChange={handleChange}
-                   style={{ color: '#000000' }}
-                   className="w-full bg-gray-50 border border-gray-100 rounded-2xl px-6 py-4 text-[14px] font-bold text-gray-950 focus:bg-white focus:border-indigo-200 focus:ring-4 focus:ring-indigo-50/50 outline-none transition-all shadow-inner"
-                 >
-                   <option value="" className="bg-white text-gray-950 font-bold">Select Country</option>
-                   {countries.map(c => (
-                     <option key={c._id} value={c._id} className="bg-white text-gray-950 font-bold">{c.name}</option>
-                   ))}
-                 </select>
-               </div>
+
               <div>
                 <label className={labelClass}>
                   <Globe size={12} className="inline mr-1 text-gray-400" />
@@ -566,8 +559,10 @@ const EditDriver = () => {
                   className={inputClass}
                 >
                   <option value="">Select Transport Type</option>
-                  {transportTypes.map(t => (
-                    <option key={t.id || t._id} value={t.name}>{t.display_name}</option>
+                  {transportTypes
+                    .filter(t => String(t.name || '').toLowerCase() !== 'pooling')
+                    .map(t => (
+                      <option key={t.id || t._id} value={t.name}>{t.display_name}</option>
                   ))}
                 </select>
               </div>
@@ -619,11 +614,10 @@ const EditDriver = () => {
               </div>
 
               <div>
-                <label className={labelClass}>Vehicle Make *</label>
+                <label className={labelClass}>Vehicle Make</label>
                 <input 
                   type="text" 
                   name="vehicleMake"
-                  required
                   placeholder="e.g. Maruti Suzuki"
                   value={formData.vehicleMake}
                   onChange={handleChange}
@@ -632,11 +626,10 @@ const EditDriver = () => {
               </div>
 
               <div>
-                <label className={labelClass}>Vehicle Model *</label>
+                <label className={labelClass}>Vehicle Model</label>
                 <input 
                   type="text" 
                   name="vehicleModel"
-                  required
                   placeholder="e.g. Swift Dzire"
                   value={formData.vehicleModel}
                   onChange={handleChange}
@@ -645,11 +638,10 @@ const EditDriver = () => {
               </div>
 
               <div>
-                <label className={labelClass}>Vehicle Year *</label>
+                <label className={labelClass}>Vehicle Year</label>
                 <input 
                   type="text" 
                   name="vehicleYear"
-                  required
                   maxLength={4}
                   placeholder="e.g. 2024"
                   value={formData.vehicleYear}
@@ -664,11 +656,10 @@ const EditDriver = () => {
               </div>
 
               <div>
-                <label className={labelClass}>Vehicle Color *</label>
+                <label className={labelClass}>Vehicle Color</label>
                 <input 
                   type="text" 
                   name="vehicleColor"
-                  required
                   placeholder="e.g. White"
                   value={formData.vehicleColor}
                   onChange={handleChange}
@@ -677,13 +668,87 @@ const EditDriver = () => {
               </div>
 
               <div>
-                <label className={labelClass}>Vehicle Number *</label>
+                <label className={labelClass}>Vehicle Number</label>
                 <input 
                   type="text" 
                   name="vehicleNumber"
-                  required
                   placeholder="e.g. MH 12 AB 1234"
                   value={formData.vehicleNumber}
+                  onChange={handleChange}
+                  className={inputClass}
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Company Section */}
+          <div className="bg-white rounded-xl border border-gray-200 p-6">
+            <div className="flex items-center gap-3 mb-6 pb-4 border-b border-gray-100">
+              <div className="w-9 h-9 rounded-lg bg-orange-50 flex items-center justify-center text-orange-600">
+                <Globe size={18} />
+              </div>
+              <div>
+                <h3 className="text-sm font-semibold text-gray-900">Company Details (Optional)</h3>
+                <p className="text-xs text-gray-400">Business or fleet information</p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              <div>
+                <label className={labelClass}>Company Name</label>
+                <input 
+                  type="text" 
+                  name="companyName"
+                  placeholder="e.g. K9 Travels"
+                  value={formData.companyName}
+                  onChange={handleChange}
+                  className={inputClass}
+                />
+              </div>
+
+              <div>
+                <label className={labelClass}>Tax Number / GSTIN</label>
+                <input 
+                  type="text" 
+                  name="taxNumber"
+                  placeholder="Tax/GST number"
+                  value={formData.taxNumber}
+                  onChange={handleChange}
+                  className={inputClass}
+                />
+              </div>
+
+              <div className="md:col-span-2">
+                <label className={labelClass}>Company Address</label>
+                <input 
+                  type="text" 
+                  name="companyAddress"
+                  placeholder="Full address"
+                  value={formData.companyAddress}
+                  onChange={handleChange}
+                  className={inputClass}
+                />
+              </div>
+
+              <div>
+                <label className={labelClass}>City</label>
+                <input 
+                  type="text" 
+                  name="city"
+                  placeholder="City"
+                  value={formData.city}
+                  onChange={handleChange}
+                  className={inputClass}
+                />
+              </div>
+
+              <div>
+                <label className={labelClass}>Postal Code</label>
+                <input 
+                  type="text" 
+                  name="postalCode"
+                  placeholder="ZIP / PIN Code"
+                  value={formData.postalCode}
                   onChange={handleChange}
                   className={inputClass}
                 />

@@ -3,7 +3,7 @@ import { motion } from 'framer-motion'
 import { Music, Mic, Navigation, ShieldCheck, Mail, Globe, Zap, Star } from 'lucide-react'
 import { gsap } from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
-import marketingCar from '../assets/marketing-car.jpg'
+
 
 gsap.registerPlugin(ScrollTrigger)
 
@@ -130,7 +130,7 @@ export default function Showcase() {
             </div>
           </div>
 
-          {/* Right Column: Showcase Image */}
+          {/* Right Column: Showcase 3D Grid */}
           <div ref={imageRef} className="relative">
             {/* Animated glow ring */}
             <div
@@ -138,25 +138,46 @@ export default function Showcase() {
               style={{ background: 'linear-gradient(135deg, #1d4ed8, #10b981)', animationDuration: '4s' }}
             />
 
-            <div className="relative rounded-[32px] overflow-hidden border border-slate-700/60 shadow-2xl group h-[320px] sm:h-[460px] flex items-center justify-center bg-slate-900/50">
+            <div className="relative rounded-[32px] border border-slate-700/60 shadow-2xl group h-[320px] sm:h-[460px] flex items-center justify-center bg-slate-900/50 p-4">
               {/* Inner mesh */}
-              <div className="absolute inset-0 bg-gradient-to-t from-[#060B0A]/60 via-transparent to-transparent z-10 pointer-events-none" />
+              <div className="absolute inset-0 bg-gradient-to-t from-[#060B0A]/80 via-[#060B0A]/20 to-transparent z-10 pointer-events-none rounded-[32px]" />
 
-              <img
-                src={marketingCar}
-                alt="K9 Rides Premium Vehicle"
-                className="w-full h-full object-contain z-0 group-hover:scale-[1.04] transition-all duration-[1200ms] pointer-events-none"
-                loading="lazy"
-              />
+              <div className="grid grid-cols-2 gap-4 w-full h-full z-0" style={{ perspective: '1000px' }}>
+                {[
+                  { src: '/food/delivery2.jpg', delay: 0 },
+                  { src: '/food/taxi1.jpeg', delay: 0.15 },
+                  { src: '/food/taxi2.jpeg', delay: 0.3 },
+                  { src: '/food/delivery3.jpeg', delay: 0.45 }
+                ].map((item, idx) => (
+                  <motion.div
+                    key={idx}
+                    initial={{ opacity: 0, rotateX: 20, rotateY: -20, scale: 0.9 }}
+                    whileInView={{ opacity: 1, rotateX: 0, rotateY: 0, scale: 1 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.8, delay: item.delay, type: 'spring', bounce: 0.4 }}
+                    whileHover={{ scale: 1.05, rotateX: 5, rotateY: -5, zIndex: 10, boxShadow: '0 20px 40px rgba(0,0,0,0.4)' }}
+                    className="relative rounded-2xl overflow-hidden border border-white/5 bg-slate-800"
+                    style={{ transformStyle: 'preserve-3d' }}
+                  >
+                    <img
+                      src={item.src}
+                      alt="K9 Service"
+                      className="w-full h-full object-cover transition-transform duration-700 hover:scale-110"
+                      loading="lazy"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 hover:opacity-100 transition-opacity duration-300" />
+                  </motion.div>
+                ))}
+              </div>
 
               {/* Float badges */}
-              <div className="absolute top-5 left-5 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/10 backdrop-blur-md border border-white/10 text-white text-[9px] font-black uppercase tracking-wider shadow-lg z-20">
+              <div className="absolute top-5 left-5 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/10 backdrop-blur-md border border-white/10 text-white text-[9px] font-black uppercase tracking-wider shadow-lg z-20 hover:scale-105 transition-transform cursor-pointer">
                 <ShieldCheck className="w-3.5 h-3.5 text-[#10b981]" />
                 100% Insured
               </div>
 
-              <div className="absolute bottom-5 right-5 inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-[#1d4ed8] to-[#10b981] text-white text-[10px] font-black uppercase tracking-wider shadow-lg z-20">
-                Comfort Fleet
+              <div className="absolute bottom-5 right-5 inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-[#1d4ed8] to-[#10b981] text-white text-[10px] font-black uppercase tracking-wider shadow-lg z-20 hover:scale-105 transition-transform cursor-pointer">
+                Smart Fleet & Delivery
               </div>
             </div>
           </div>

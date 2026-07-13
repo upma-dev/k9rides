@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import api from '../api/axiosInstance';
+import { BACKEND_ORIGIN } from '../api/runtimeConfig';
 
 let activeFaviconObjectUrl = '';
 const DEFAULT_ADMIN_THEME_COLOR = '#405189';
@@ -138,7 +139,16 @@ const buildFaviconHref = (faviconUrl = '') => {
     activeFaviconObjectUrl = '';
   }
 
-  return `${faviconUrl}${faviconUrl.includes('?') ? '&' : '?'}v=${Date.now()}`;
+  let finalUrl = faviconUrl;
+  if (!/^(https?:|data:image\/|blob:)/i.test(faviconUrl)) {
+    if (faviconUrl.startsWith('/')) {
+      finalUrl = `${BACKEND_ORIGIN}${faviconUrl}`;
+    } else {
+      finalUrl = `${BACKEND_ORIGIN}/${faviconUrl}`;
+    }
+  }
+
+  return `${finalUrl}${finalUrl.includes('?') ? '&' : '?'}v=${Date.now()}`;
 };
 
 export const SettingsProvider = ({ children }) => {
@@ -277,7 +287,11 @@ export const SettingsProvider = ({ children }) => {
 
   const getActiveLogo = () => {
     const logos = settings.customization?.logos || {};
-    return logos[activeModule] || settings.general?.logo || settings.customization?.logo;
+    const logoUrl = logos[activeModule] || settings.general?.logo || settings.customization?.logo;
+    if (logoUrl && typeof logoUrl === 'string' && logoUrl.startsWith('/')) {
+      return `${BACKEND_ORIGIN}${logoUrl}`;
+    }
+    return logoUrl;
   };
 
   return (

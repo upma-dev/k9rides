@@ -274,7 +274,7 @@ export default function VideoSection() {
 
                   <video
                     ref={videoRef}
-                    src="/k9_bg_vdo.mp4"
+                    src="/food/delivery1.mp4"
                     preload="metadata"
                     loop muted={isMuted} playsInline
                     onTimeUpdate={handleTimeUpdate}

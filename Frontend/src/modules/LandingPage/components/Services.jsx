@@ -31,12 +31,12 @@ const services = [
     bg: LANDING_THEME.blue.bg, accent: LANDING_THEME.blue.primary, secondary: LANDING_THEME.blue.accent,
     gradient: 'from-[#1d4ed8] to-[#10b981]'
   },
-  {
+  /*{
     icon: Bike, title: 'Hourly Rentals',
     description: 'Rent motorcycles, scooters, or cars with smart keyless check-in and flexible KYC.',
     bg: LANDING_THEME.orange.bg, accent: LANDING_THEME.orange.primary, secondary: LANDING_THEME.orange.accent,
     gradient: 'from-[#ff5100] to-[#e11d48]'
-  },
+  },*/
   {
     icon: Truck, title: 'Cargo & Logistics',
     description: 'Heavy-duty trucks and vans for warehouse moves and large corporate transport demands.',
@@ -168,15 +168,15 @@ export default function Services() {
       <div className="max-w-7xl mx-auto px-6 lg:px-8 relative z-10">
         {/* Header */}
         <div ref={headerRef} className="text-center max-w-2xl mx-auto mb-4 space-y-3">
-          <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400 mb-1">Six Superpowers</p>
+          <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400 mb-1">Five Superpowers</p>
           <h2 className="text-4xl sm:text-5xl font-black tracking-tight text-slate-900">
             One App.{' '}
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#ff5100] via-[#e11d48] via-[#1d4ed8] to-[#10b981]">
-              Six Superpowers.
+              Five Superpowers.
             </span>
           </h2>
           <p className="text-slate-500 text-base leading-relaxed font-medium">
-            Everything you need in one place — rides, food, parcels, airports, rentals, and cargo.
+            Everything you need in one place — rides, food, parcels, airports, and cargo.
           </p>
         </div>
 

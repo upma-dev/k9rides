@@ -8,7 +8,7 @@ import mobilityBanner from '@/assets/images/mobility-banner-cartoony.png';
 const AuthLayout = ({ children, title, subtitle }) => {
   const { settings, activeLogo } = useSettings();
   const appName = settings.general?.app_name || 'App';
-  const appLogo = activeLogo || settings.general?.logo || settings.customization?.logo || '/k9-logo.png';
+  const appLogo = activeLogo || settings.general?.logo || settings.customization?.logo || '';
 
   return (
     <div className="h-screen w-screen bg-[#F8F9FA] flex flex-col lg:flex-row font-display overflow-hidden fixed inset-0">

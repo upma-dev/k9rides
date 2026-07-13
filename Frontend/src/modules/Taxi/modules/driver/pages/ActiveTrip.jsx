@@ -630,6 +630,8 @@ const ActiveTrip = () => {
     const routeRideId = routeState?.rideId || routeState?.request?.rideId || '';
     const routeOtp = routeState?.request?.raw?.otp || routeState?.request?.otp || routeState?.otp || '';
     const [isHydratingTrip, setIsHydratingTrip] = useState(!routeRideId || !routeOtp);
+    const [driverCancellationReceipt, setDriverCancellationReceipt] = useState(null);
+    const [showDriverCancellationReceipt, setShowDriverCancellationReceipt] = useState(false);
     const exitToDriverHome = React.useCallback((statusMessage = '', isCancelled = false) => {
         if (routeRideId) {
             clearStoredTripPhase(routeRideId);
@@ -897,9 +899,19 @@ const ActiveTrip = () => {
                 return;
             }
 
-            clearStoredTripPhase(currentRideId);
-            clearStoredTripUiState(currentRideId);
-            exitToDriverHome(payload.message || 'The user has cancelled this ride.', true);
+            if (payload.cancellationBill || payload.cancellation_charge || payload.cancellationFee) {
+                const bill = payload.cancellationBill || { 
+                    cancellationFee: payload.cancellationFee || payload.cancellation_charge || 0,
+                    waitingCharge: payload.waitingCharge || 0,
+                    totalCancellationFee: payload.totalCancellationFee || payload.cancellation_charge || 0
+                };
+                setDriverCancellationReceipt(bill);
+                setShowDriverCancellationReceipt(true);
+            } else {
+                clearStoredTripPhase(currentRideId);
+                clearStoredTripUiState(currentRideId);
+                exitToDriverHome(payload.message || 'The user has cancelled this ride.', true);
+            }
         };
 
         const handleRideStatusUpdated = (payload = {}) => {
@@ -909,9 +921,19 @@ const ActiveTrip = () => {
 
             const nextStatus = String(payload.liveStatus || payload.status || '').toLowerCase();
             if (nextStatus === 'cancelled' || nextStatus === 'canceled') {
-                clearStoredTripPhase(currentRideId);
-                clearStoredTripUiState(currentRideId);
-                exitToDriverHome('The user has cancelled this ride.', true);
+                if (payload.cancellationBill || payload.cancellation_charge || payload.cancellationFee) {
+                    const bill = payload.cancellationBill || { 
+                        cancellationFee: payload.cancellationFee || payload.cancellation_charge || 0,
+                        waitingCharge: payload.waitingCharge || 0,
+                        totalCancellationFee: payload.totalCancellationFee || payload.cancellation_charge || 0
+                    };
+                    setDriverCancellationReceipt(bill);
+                    setShowDriverCancellationReceipt(true);
+                } else {
+                    clearStoredTripPhase(currentRideId);
+                    clearStoredTripUiState(currentRideId);
+                    exitToDriverHome('The user has cancelled this ride.', true);
+                }
                 return;
             }
 
@@ -944,9 +966,19 @@ const ActiveTrip = () => {
 
             const nextStatus = String(payload.liveStatus || payload.status || '').toLowerCase();
             if (nextStatus === 'cancelled' || nextStatus === 'canceled') {
-                clearStoredTripPhase(currentRideId);
-                clearStoredTripUiState(currentRideId);
-                exitToDriverHome('Ride was cancelled by the user.');
+                if (payload.cancellationBill || payload.cancellation_charge || payload.cancellationFee) {
+                    const bill = payload.cancellationBill || { 
+                        cancellationFee: payload.cancellationFee || payload.cancellation_charge || 0,
+                        waitingCharge: payload.waitingCharge || 0,
+                        totalCancellationFee: payload.totalCancellationFee || payload.cancellation_charge || 0
+                    };
+                    setDriverCancellationReceipt(bill);
+                    setShowDriverCancellationReceipt(true);
+                } else {
+                    clearStoredTripPhase(currentRideId);
+                    clearStoredTripUiState(currentRideId);
+                    exitToDriverHome('Ride was cancelled by the user.');
+                }
                 return;
             }
 

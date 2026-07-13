@@ -32,6 +32,7 @@ import {
   restartRideDispatchWithLatestFare,
   startDispatchFlow,
 } from '../../services/dispatchService.js';
+import { buildDriverMatchFilters } from '../../services/matchingService.js';
 import { SOCKET_EVENTS } from '../../socket/events.js';
 import { getTipSettings } from '../../services/appSettingsService.js';
 import { Ride } from '../models/Ride.js';
@@ -385,7 +386,7 @@ export const getRideById = async (req, res) => {
 
   res.json({
     success: true,
-    data: ride,
+    data: serializeRideRealtime(ride),
   });
 };
 
@@ -532,22 +533,7 @@ export const createRazorpayRideCompletionOrder = async (req, res) => {
       keySecret,
     });
   } catch (error) {
-    const isAuthError =
-      error.statusCode === 401 ||
-      error.statusCode === 403 ||
-      String(error.message || "").toLowerCase().includes("authentication failed") ||
-      String(error.message || "").toLowerCase().includes("api key");
-
-    if (isAuthError) {
-      console.warn(`[Razorpay] Order creation failed with auth error on user side, falling back to mock order:`, error.message);
-      order = {
-        id: `mock_order_${Math.round(paymentAmounts.totalCharge * 100)}_${Date.now().toString(36)}`,
-        amount: Math.round(paymentAmounts.totalCharge * 100),
-        currency: "INR",
-      };
-    } else {
-      throw error;
-    }
+    throw error;
   }
 
   res.status(201).json({
@@ -852,22 +838,7 @@ export const createRazorpayRideTipOrder = async (req, res) => {
       keySecret,
     });
   } catch (error) {
-    const isAuthError =
-      error.statusCode === 401 ||
-      error.statusCode === 403 ||
-      String(error.message || "").toLowerCase().includes("authentication failed") ||
-      String(error.message || "").toLowerCase().includes("api key");
-
-    if (isAuthError) {
-      console.warn(`[Razorpay] Tip Order creation failed with auth error on user side, falling back to mock order:`, error.message);
-      order = {
-        id: `mock_order_${amountPaise}_${Date.now().toString(36)}`,
-        amount: amountPaise,
-        currency: "INR",
-      };
-    } else {
-      throw error;
-    }
+    throw error;
   }
 
   res.status(201).json({
@@ -1125,10 +1096,13 @@ export const listAvailableDrivers = async (req, res) => {
     near.$maxDistance = Math.min(distance, 25000);
   }
 
-  const drivers = await Driver.find({
-    isOnline: true,
-    isOnRide: false,
+  const driverMatchFilters = buildDriverMatchFilters({
     vehicleTypeId,
+    transportType: transport_type,
+  });
+
+  const drivers = await Driver.find({
+    ...driverMatchFilters,
     location: {
       $near: near,
     },
@@ -1266,21 +1240,25 @@ export const validateLocation = async (req, res, next) => {
     }
 
     if (dropCoords) {
-      const matchedDropZone = await Zone.findOne({
-        active: { $ne: false },
-        status: { $ne: 'inactive' },
-        geometry: {
-          $geoIntersects: {
-            $geometry: {
-              type: 'Point',
-              coordinates: dropCoords,
+      const isOutstation = req.body.rideType === 'outstation' || req.body.transport_type === 'intercity';
+      
+      if (!isOutstation) {
+        const matchedDropZone = await Zone.findOne({
+          active: { $ne: false },
+          status: { $ne: 'inactive' },
+          geometry: {
+            $geoIntersects: {
+              $geometry: {
+                type: 'Point',
+                coordinates: dropCoords,
+              },
             },
           },
-        },
-      }).lean();
+        }).lean();
 
-      if (!matchedDropZone) {
-        throw new ApiError(400, 'Service is not available in the selected drop location.');
+        if (!matchedDropZone) {
+          throw new ApiError(400, 'Service is not available in the selected drop location.');
+        }
       }
     }
 

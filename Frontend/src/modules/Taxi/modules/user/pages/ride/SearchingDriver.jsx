@@ -36,21 +36,10 @@ const MAP_OPTIONS = {
 };
 
 const unwrap = (response) => response?.data?.data || response?.data || response;
-import LuxuryIcon from '@/assets/icons/Luxury.png';
-import PremiumIcon from '@/assets/icons/Premium.png';
-import SuvIcon from '@/assets/icons/SUV.png';
-import BikeIcon from '@/assets/icons/bike.png';
-import CarIcon from '@/assets/icons/car.png';
-import AutoIcon from '@/assets/icons/auto.png';
+// Vehicle icons removed in favor of admin settings
 
 const getVehicleIcon = (type = 'car') => {
-  const val = String(type).toLowerCase();
-  if (val.includes('bike')) return BikeIcon;
-  if (val.includes('auto')) return AutoIcon;
-  if (val.includes('lux')) return LuxuryIcon;
-  if (val.includes('premium')) return PremiumIcon;
-  if (val.includes('suv')) return SuvIcon;
-  return CarIcon;
+  return null;
 };
 
 const getOverlayCenterOffset = (width, height) => ({
@@ -99,33 +88,35 @@ const BlinkingVehicleMarker = ({ marker, iconUrl }) => (
       {[0, 1].map((ring) => (
         <motion.span
           key={ring}
-          className="absolute h-10 w-10 rounded-full border border-emerald-500/45 bg-emerald-400/10"
-          animate={{ scale: [0.65, 1.7], opacity: [0.55, 0] }}
+          className="absolute h-10 w-10 rounded-full border border-blue-500/40 bg-blue-400/10"
+          animate={{ scale: [0.65, 1.8], opacity: [0.6, 0] }}
           transition={{
             repeat: Infinity,
-            duration: 1.8,
-            delay: marker.delay + ring * 0.55,
+            duration: 2,
+            delay: marker.delay + ring * 0.6,
             ease: 'easeOut',
           }}
         />
       ))}
-      <motion.img
-        src={iconUrl || CarIcon}
-        alt="Available vehicle"
-        draggable={false}
-        className="relative h-9 w-9 object-contain drop-shadow-[0_6px_8px_rgba(15,23,42,0.34)]"
-        style={{ rotate: `${marker.heading}deg` }}
-        animate={{
-          scale: [1, 1.16, 1],
-          opacity: [0.78, 1, 0.78],
-        }}
-        transition={{
-          repeat: Infinity,
-          duration: 1.35,
-          delay: marker.delay,
-          ease: 'easeInOut',
-        }}
-      />
+      {iconUrl && (
+        <motion.img
+          src={iconUrl}
+          alt="Available vehicle"
+          draggable={false}
+          className="relative h-9 w-9 object-contain drop-shadow-[0_6px_8px_rgba(15,23,42,0.34)]"
+          style={{ rotate: `${marker.heading}deg` }}
+          animate={{
+            scale: [1, 1.16, 1],
+            opacity: [0.78, 1, 0.78],
+          }}
+          transition={{
+            repeat: Infinity,
+            duration: 1.35,
+            delay: marker.delay,
+            ease: 'easeInOut',
+          }}
+        />
+      )}
     </div>
   </OverlayView>
 );
@@ -726,17 +717,28 @@ const SearchingDriver = () => {
         }
       } catch (error) {
         console.error('[searching-driver] Ride creation error:', error);
+        
         if (!disposed) {
+          if (error?.response?.status === 401) {
+             setSearchStatus('Session expired. Redirecting to login...');
+             setTimeout(() => {
+               if (!disposed) navigate('/taxi/user/login', { replace: true });
+             }, 2000);
+             return;
+          }
+
+          const actualErrorMsg = error?.response?.data?.message || error?.message || 'Could not create ride request. Redirecting...';
+          
           if (isScheduledRide && !isScheduledBiddingRide) {
             setScheduledStatus('error');
-            setScheduledError(error?.message || 'Could not schedule this ride.');
-            setSearchStatus(error?.message || 'Could not schedule this ride.');
+            setScheduledError(actualErrorMsg);
+            setSearchStatus(actualErrorMsg);
             return;
           }
-          setSearchStatus(error?.message || 'Could not create ride request. Redirecting...');
+          setSearchStatus(`API Error: ${actualErrorMsg}`);
           setTimeout(() => {
             if (!disposed) navigate(userHomeRoute, { replace: true });
-          }, 3000);
+          }, 3000); 
         }
       }
     })();
@@ -945,12 +947,13 @@ const SearchingDriver = () => {
                       animate={{ opacity: 1 }}
                       className="relative flex items-center justify-center pointer-events-none"
                     >
+                      {/* Premium Blue Pulse Rings */}
                       {[1, 2, 3, 4].map((i) => (
                         <motion.div
                           key={i}
                           animate={{
                             scale: [0.5, 4.5],
-                            opacity: [0.5, 0]
+                            opacity: [0.6, 0]
                           }}
                           transition={{
                             repeat: Infinity,
@@ -958,18 +961,26 @@ const SearchingDriver = () => {
                             delay: i * 0.75,
                             ease: "easeOut"
                           }}
-                          className="absolute w-20 h-20 rounded-full border-2 border-primary-orange/80/40 bg-primary-orange/80/5 shadow-[0_0_20px_rgba(249,115,22,0.2)]"
+                          className="absolute w-20 h-20 rounded-full border-[1.5px] border-blue-500/50 bg-blue-500/5 shadow-[0_0_20px_rgba(59,130,246,0.15)]"
                         />
                       ))}
 
+                      {/* Sweeping Radar Effect */}
                       <motion.div
                         animate={{ rotate: 360 }}
                         transition={{ repeat: Infinity, duration: 4, ease: "linear" }}
-                        className="absolute w-[320px] h-[320px] rounded-full overflow-hidden"
+                        className="absolute w-[360px] h-[360px] rounded-full overflow-hidden"
                         style={{
-                          background: 'conic-gradient(from 0deg, rgba(249, 115, 22, 0.5) 0deg, transparent 60deg, transparent 360deg)'
+                          background: 'conic-gradient(from 0deg, rgba(59, 130, 246, 0.4) 0deg, transparent 60deg, transparent 360deg)'
                         }}
-                      />
+                      >
+                        <div className="absolute top-0 left-1/2 w-[1px] h-1/2 bg-gradient-to-b from-blue-400 to-transparent shadow-[0_0_10px_rgba(59,130,246,0.8)]" />
+                      </motion.div>
+                      
+                      {/* Center Node */}
+                      <div className="absolute w-6 h-6 bg-blue-600 rounded-full border-2 border-white shadow-lg flex items-center justify-center z-10">
+                        <div className="w-2 h-2 bg-white rounded-full animate-pulse" />
+                      </div>
                     </motion.div>
                   </div>
                 </OverlayView>
@@ -1216,11 +1227,13 @@ const SearchingDriver = () => {
                     {/* Premium Overlaid Avatars */}
                     <div className="relative h-20 w-24 shrink-0">
                       <div className="absolute right-0 top-0 h-20 w-20 overflow-hidden rounded-[24px] bg-[#1d2333] border-4 border-white shadow-xl flex items-center justify-center">
-                        <img
-                          src={availableVehicleIcon || CarIcon}
-                          className="h-12 w-12 object-contain brightness-0 invert opacity-90"
-                          alt="Vehicle"
-                        />
+                        {availableVehicleIcon && (
+                          <img
+                            src={availableVehicleIcon}
+                            className="h-12 w-12 object-contain brightness-0 invert opacity-90"
+                            alt="Vehicle"
+                          />
+                        )}
                       </div>
                       <div className="absolute -left-2 bottom-0 h-16 w-16 overflow-hidden rounded-full border-[4px] border-white shadow-2xl bg-slate-200">
                         <img

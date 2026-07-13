@@ -5,10 +5,6 @@ import { Banknote, CheckCircle2, ChevronRight, CreditCard, MessageSquare, Receip
 import api from '../../../../shared/api/axiosInstance';
 import { userAuthService } from '../../services/authService';
 import { clearCurrentRide, getCurrentRide } from '../../services/currentRideService';
-import carIcon from '../../../../assets/icons/car.png';
-import bikeIcon from '../../../../assets/icons/bike.png';
-import autoIcon from '../../../../assets/icons/auto.png';
-import deliveryIcon from '../../../../assets/icons/Delivery.png';
 import { useSettings } from '../../../../shared/context/SettingsContext';
 
 const TIP_OPTIONS = [0, 20, 50, 100];
@@ -47,13 +43,7 @@ const getVehicleIcon = (serviceType = 'ride', driver = {}) => {
   const customIcon = String(driver.vehicleIconUrl || driver.map_icon || driver.icon || '').trim();
   if (customIcon) return customIcon;
 
-  const normalizedService = String(serviceType || '').toLowerCase();
-  const iconType = String(driver.vehicleIconType || driver.vehicleType || '').toLowerCase();
-
-  if (normalizedService === 'parcel') return deliveryIcon;
-  if (iconType.includes('bike')) return bikeIcon;
-  if (iconType.includes('auto')) return autoIcon;
-  return carIcon;
+  return null;
 };
 
 const loadRazorpayScript = () =>
@@ -490,22 +480,6 @@ const RideComplete = () => {
             },
           };
 
-          if (order.orderId?.startsWith('mock_order_') || order.id?.startsWith('mock_order_')) {
-            console.warn('⚠️ Bypassing Razorpay checkout due to mock order ID (development fallback)');
-            setTimeout(async () => {
-              try {
-                await options.handler({
-                  razorpay_payment_id: `mock_pay_${Date.now()}`,
-                  razorpay_order_id: order.orderId || order.id,
-                  razorpay_signature: 'mock_signature_bypass'
-                });
-              } catch (err) {
-                // handler already rejects
-              }
-            }, 1000);
-            return;
-          }
-
           const rzp = new window.Razorpay(options);
 
           rzp.on('payment.failed', (event) => {
@@ -679,12 +653,14 @@ const RideComplete = () => {
                 </div>
               </div>
               <div className="h-14 w-16 shrink-0 overflow-hidden rounded-[12px] border border-slate-100 bg-white">
-                <img
-                  src={vehicleVisual}
-                  alt={vehicleLabel}
-                  className={`h-full w-full ${hasVehiclePhoto ? 'object-contain bg-white' : 'object-cover'}`}
-                  onError={() => setVehicleImageBroken(true)}
-                />
+                {vehicleVisual && (
+                  <img
+                    src={vehicleVisual}
+                    alt={vehicleLabel}
+                    className={`h-full w-full ${hasVehiclePhoto ? 'object-contain bg-white' : 'object-cover'}`}
+                    onError={() => setVehicleImageBroken(true)}
+                  />
+                )}
               </div>
             </div>
 

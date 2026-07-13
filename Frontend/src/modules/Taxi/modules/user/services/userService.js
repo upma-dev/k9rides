@@ -38,8 +38,9 @@ export const userService = {
     return response;
   },
   getActiveRentalBooking: async () => {
-    const response = await api.get('/users/rental-bookings/active');
-    return response;
+    // const response = await api.get('/users/rental-bookings/active');
+    // return response;
+    return { data: { data: null } };
   },
   updateRentalLocation: async (bookingId, payload) => {
     const response = await api.post(`/users/rental-bookings/${bookingId}/location`, payload);

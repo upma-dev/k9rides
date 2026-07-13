@@ -235,6 +235,31 @@ const DriverNotifications = () => {
     };
   }, [activeTab, scheduledRides.length]);
 
+  useEffect(() => {
+    if (activeTab !== 'alerts' || alertItems.length === 0) return;
+
+    // Identify tip or payment notifications
+    const autoRemoveNotifications = alertItems.filter((n) => {
+      const title = (n.title || '').toLowerCase();
+      const body = (n.body || '').toLowerCase();
+      return title.includes('tip') || body.includes('tip') || title.includes('payment');
+    });
+
+    if (autoRemoveNotifications.length > 0) {
+      const timer = setTimeout(() => {
+        // Auto hide them locally
+        hideAllDriverNotifications(autoRemoveNotifications.map((n) => n.id || n._id));
+        
+        // Remove them from UI
+        setAlertItems((prev) => 
+          prev.filter((n) => !autoRemoveNotifications.find((t) => String(t.id || t._id) === String(n.id || n._id)))
+        );
+      }, 6000); // 6 seconds before they auto-dismiss
+
+      return () => clearTimeout(timer);
+    }
+  }, [activeTab, alertItems]);
+
   const totalCount = useMemo(
     () => (activeTab === 'schedule' ? scheduledRides.length : alertItems.length),
     [activeTab, alertItems.length, scheduledRides.length],

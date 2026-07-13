@@ -164,6 +164,20 @@ export const notificationAPI = {
 
 /** Admin API - new backend only (GET /auth/me, PATCH /auth/admin/profile, POST /auth/admin/change-password) */
 export const adminAPI = {
+  getFoodAssignableZones: () =>
+    apiClient.get("/food/admin/admin-management/assignable-zones", { contextModule: "admin" }),
+  getFoodPermissions: () =>
+    apiClient.get("/food/admin/admin-management/permissions", { contextModule: "admin" }),
+  getFoodAdmins: (params) =>
+    apiClient.get("/food/admin/admin-management/admins", { params, contextModule: "admin" }),
+  getFoodAdminById: (id) =>
+    apiClient.get(`/food/admin/admin-management/admins/${id}`, { contextModule: "admin" }),
+  createFoodAdminAccount: (data) =>
+    apiClient.post("/food/admin/admin-management/admins", data, { contextModule: "admin" }),
+  updateFoodAdminAccount: (id, data) =>
+    apiClient.patch(`/food/admin/admin-management/admins/${id}`, data, { contextModule: "admin" }),
+  deleteFoodAdminAccount: (id) =>
+    apiClient.delete(`/food/admin/admin-management/admins/${id}`, { contextModule: "admin" }),
   getSidebarBadges: () =>
     apiClient.get("/food/admin/sidebar-badges", { contextModule: "admin" }),
   login: (email, password) => authService.adminLogin(email, password),

@@ -9,17 +9,7 @@ import { userService } from '../../services/userService';
 import { userAuthService } from '../../services/authService';
 import { useSettings } from '../../../../shared/context/SettingsContext';
 import { useAuthStore } from '../../../../../../core/auth/auth.store';
-import BikeIcon from '../../../../assets/icons/bike.png';
-import AutoIcon from '../../../../assets/icons/auto.png';
-import CarIcon from '../../../../assets/icons/car.png';
-import PremiumIcon from '../../../../assets/icons/Premium.png';
-import LuxuryIcon from '../../../../assets/icons/Luxury.png';
-import SuvIcon from '../../../../assets/icons/SUV.png';
-import TruckIcon from '../../../../assets/icons/truck.png';
-import LcvIcon from '../../../../assets/icons/LCV.png';
-import McvIcon from '../../../../assets/icons/mcv.png';
-import HcvIcon from '../../../../assets/icons/hcv.png';
-import EhcvIcon from '../../../../assets/icons/ehcv.png';
+// Static icons removed, depending entirely on admin
 
 const MAP_CONTAINER_STYLE = { width: '100%', height: '100%' };
 const SELECT_VEHICLE_MAP_OPTIONS = {
@@ -131,13 +121,15 @@ const AnimatedVehicleMarker = React.memo(({ driver, iconUrl, isMapInteracting = 
           animate={{ rotate: normalizeHeading(driver?.heading) }}
           transition={{ rotate: { duration: 0.8, ease: [0.22, 1, 0.36, 1] } }}
         >
-          <img
-            src={iconUrl || CarIcon}
-            alt={driver?.name || 'Available driver'}
-            draggable={false}
-            className="object-contain drop-shadow-[0_6px_8px_rgba(15,23,42,0.34)] will-change-transform"
-            style={{ width: markerDimensions.icon, height: markerDimensions.icon }}
-          />
+          {iconUrl && (
+            <img
+              src={iconUrl}
+              alt={driver?.name || 'Available driver'}
+              draggable={false}
+              className="object-contain drop-shadow-[0_6px_8px_rgba(15,23,42,0.34)] will-change-transform"
+              style={{ width: markerDimensions.icon, height: markerDimensions.icon }}
+            />
+          )}
         </motion.div>
       </div>
     </OverlayView>
@@ -466,20 +458,7 @@ const getVehiclePreviewImage = (type) => {
     return previewImage;
   }
 
-  const value = getIconValue(type);
-
-  if (value.includes('bike')) return BikeIcon;
-  if (value.includes('auto')) return AutoIcon;
-  if (value.includes('ehc')) return EhcvIcon;
-  if (value.includes('hcv')) return HcvIcon;
-  if (value.includes('lcv')) return LcvIcon;
-  if (value.includes('mcv')) return McvIcon;
-  if (value.includes('truck')) return TruckIcon;
-  if (value.includes('lux')) return LuxuryIcon;
-  if (value.includes('premium')) return PremiumIcon;
-  if (value.includes('suv')) return SuvIcon;
-
-  return CarIcon;
+  return null;
 };
 
 const getCapacity = (type) => {
@@ -589,15 +568,24 @@ const sortPricingRules = (rules = []) => (
   })
 );
 
-const isActiveRidePricingRule = (rule) => {
+const isActiveRidePricingRule = (rule, transportType) => {
   const isActive = Number(rule?.active ?? 1) === 1 && String(rule?.status || 'active').toLowerCase() !== 'inactive';
   const scope = String(rule?.pricing_scope || 'ride').trim().toLowerCase();
+  
+  if (String(transportType).toLowerCase() === 'intercity') {
+    return isActive && scope === 'ride' && Boolean(rule?.enable_outstation_ride);
+  }
+  
   return isActive && scope === 'ride';
 };
 
 const matchesTransportType = (rule, transportType) => {
   const normalizedRuleTransport = String(rule?.transport_type || 'taxi').trim().toLowerCase();
   const normalizedTransportType = String(transportType || 'taxi').trim().toLowerCase() || 'taxi';
+
+  if (normalizedTransportType === 'intercity' && Boolean(rule?.enable_outstation_ride)) {
+    return true;
+  }
 
   return normalizedRuleTransport === normalizedTransportType
     || normalizedRuleTransport === 'both';
@@ -660,7 +648,7 @@ const findBestPricingRule = ({ rules, vehicleTypeId, serviceLocationId, zoneId, 
 
   const candidates = sortPricingRules(rules.filter((rule) => {
     const matchesVehicle = normalizeId(rule?.vehicle_type?._id || rule?.vehicle_type || rule?.type_id) === normalizedVehicleTypeId;
-    return matchesVehicle && isActiveRidePricingRule(rule) && matchesTransportType(rule, normalizedTransportType);
+    return matchesVehicle && isActiveRidePricingRule(rule, normalizedTransportType) && matchesTransportType(rule, normalizedTransportType);
   }));
 
   if (!candidates.length) {
@@ -725,16 +713,16 @@ const calculateEstimatedFare = ({ vehicle, pricingRule, distanceMeters, duration
 
   const isIntercity = String(transportType).toLowerCase() === 'intercity';
   const distanceKm = Math.max(0, Number(distanceMeters || 0) / 1000);
-  const basePrice = isIntercity && pricingRule.outstation_base_price !== undefined && pricingRule.outstation_base_price !== null
+  const basePrice = isIntercity
     ? toFiniteNumber(pricingRule.outstation_base_price, 0)
     : toFiniteNumber(pricingRule.base_price, 0);
-  const baseDistance = isIntercity && pricingRule.outstation_base_distance !== undefined && pricingRule.outstation_base_distance !== null
+  const baseDistance = isIntercity
     ? Math.max(0, toFiniteNumber(pricingRule.outstation_base_distance, 0))
     : Math.max(0, toFiniteNumber(pricingRule.base_distance, 0));
-  const pricePerDistance = isIntercity && pricingRule.outstation_price_per_distance !== undefined && pricingRule.outstation_price_per_distance !== null
+  const pricePerDistance = isIntercity
     ? toFiniteNumber(pricingRule.outstation_price_per_distance, 0)
     : toFiniteNumber(pricingRule.price_per_distance, 0);
-  const timePrice = isIntercity && pricingRule.outstation_time_price !== undefined && pricingRule.outstation_time_price !== null
+  const timePrice = isIntercity
     ? toFiniteNumber(pricingRule.outstation_time_price, 0)
     : toFiniteNumber(pricingRule.time_price, 0);
   const serviceTax = toFiniteNumber(pricingRule.service_tax, 0);
@@ -902,13 +890,12 @@ const formatAvailabilityLine = (availability) => {
 };
 
 const formatDispatchLabel = (vehicle) => {
-  if (vehicle?.supportsBidding) {
-    return 'Bid or instant booking';
-  }
-
   const dispatchType = String(vehicle?.dispatchType || '').toLowerCase();
   if (dispatchType === 'bidding') {
     return 'Bid booking';
+  }
+  if (dispatchType === 'both') {
+    return 'Bid or instant booking';
   }
 
   return 'Instant booking';
@@ -931,12 +918,12 @@ const getAvailabilityBadge = (availability) => {
 };
 
 const normalizeVehicleType = (type, index) => {
-  const id = String(type?._id || type?.id || type?.name || index);
+  const id = String(type?.ui_id || type?._id || type?.id || type?.name || index);
   const dispatchType = String(type?.dispatch_type || 'normal').trim().toLowerCase();
 
   return {
     id,
-    vehicleTypeId: type?._id || type?.id || '',
+    vehicleTypeId: type?.original_id || type?._id || type?.id || '',
     transportType: String(type?.transport_type || 'taxi').trim().toLowerCase() || 'taxi',
     iconType: type?.icon_types || 'car',
     icon: getVehiclePreviewImage(type),
@@ -945,7 +932,7 @@ const normalizeVehicleType = (type, index) => {
     capacity: getCapacity(type),
     badge: null,
     badgeColor: 'bg-primary-orange/5 text-primary-orange/50 border-primary-orange/10',
-    sublabel: type?.short_description || type?.description || 'Available ride',
+    sublabel: dispatchType === 'bidding' ? 'Bid booking' : 'Instant booking',
     price: getFallbackVehicleEstimate(type),
     dispatchType,
     supportsBidding: dispatchType === 'bidding' || dispatchType === 'both',
@@ -998,6 +985,7 @@ const SelectVehicle = () => {
   const [vehicles, setVehicles] = useState([]);
   const [availabilityByVehicleId, setAvailabilityByVehicleId] = useState({});
   const [selected, setSelected] = useState('');
+  const [activeTab, setActiveTab] = useState('normal');
   const [paymentMethod, setPaymentMethod] = useState('Cash');
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [showCouponModal, setShowCouponModal] = useState(false);
@@ -1039,6 +1027,7 @@ const SelectVehicle = () => {
   });
   const [isResolvingTripMetrics, setIsResolvingTripMetrics] = useState(true);
   const [showScrollArrow, setShowScrollArrow] = useState(false);
+  const [showScheduleModal, setShowScheduleModal] = useState(false);
   const scrollRef = React.useRef(null);
   const availabilityHistoryRef = useRef({});
   const scheduledAtInputRef = useRef(null);
@@ -1106,10 +1095,23 @@ const SelectVehicle = () => {
         const nextVehicles = getVehicleTypes(response)
           .filter((type) => {
             const isActive = type.active !== false && Number(type.status ?? 1) !== 0;
-            const transportType = String(type.transport_type || 'taxi').toLowerCase();
-            return isActive && (transportType === 'taxi' || transportType === 'both');
+            const typeTransport = String(type.transport_type || 'taxi').toLowerCase();
+            const requestedTransport = resolveRideTransportType(routeState.transportType, routeState.transport_type);
+            const isMatch = typeTransport === requestedTransport || typeTransport === 'both' || 
+                           (requestedTransport === 'intercity' && typeTransport === 'outstation') || 
+                           (requestedTransport === 'outstation' && typeTransport === 'intercity');
+            return isActive && isMatch;
           })
-          .map(normalizeVehicleType);
+          .flatMap((type) => {
+            const dispatchType = String(type?.dispatch_type || 'normal').trim().toLowerCase();
+            if (dispatchType === 'both') {
+              return [
+                normalizeVehicleType({ ...type, dispatch_type: 'normal', original_id: type._id, ui_id: `${type._id}_normal` }),
+                normalizeVehicleType({ ...type, dispatch_type: 'bidding', original_id: type._id, ui_id: `${type._id}_bidding` })
+              ];
+            }
+            return [normalizeVehicleType(type)];
+          });
 
         setVehicles(nextVehicles);
         setSelected((current) => current || nextVehicles[0]?.id || '');
@@ -1272,7 +1274,7 @@ const SelectVehicle = () => {
   const pricedVehicles = useMemo(
     () =>
       vehicles.map((vehicle) => {
-        const resolvedVehicleTransportType = vehicle.transportType || routeState.transport_type || routeState.transportType || 'taxi';
+        const resolvedVehicleTransportType = resolveRideTransportType(routeState.transport_type, routeState.transportType, vehicle?.transportType);
         const pricingRule = findBestPricingRule({
           rules: pricingRules,
           vehicleTypeId: vehicle.vehicleTypeId,
@@ -1641,7 +1643,7 @@ const SelectVehicle = () => {
                 lng: pickupCoords[0],
                 lat: pickupCoords[1],
                 service_location_id: effectiveServiceLocationId,
-                transport_type: vehicle.transportType || routeState.transport_type || routeState.transportType || 'taxi',
+                transport_type: resolveRideTransportType(routeState.transport_type, routeState.transportType, vehicle?.transportType),
               },
             });
 
@@ -1807,11 +1809,6 @@ const SelectVehicle = () => {
 
     setScheduleError('');
 
-    if (selectedVehicle.supportsBidding && shouldUseDriverBidding) {
-      setShowBidModal(true);
-      return;
-    }
-
     proceedToBooking();
   };
 
@@ -1869,7 +1866,7 @@ const SelectVehicle = () => {
             </div>
             <button
               type="button"
-              onClick={() => openPicker(scheduledAtInputRef)}
+              onClick={() => setShowScheduleModal(true)}
               className={`flex w-[42px] shrink-0 flex-col items-center justify-center rounded-[12px] border px-1 py-2 text-[10px] font-medium ${rideMode === 'schedule'
                   ? 'border-slate-900 bg-slate-900 text-white'
                   : 'border-slate-200 bg-white text-slate-600'
@@ -1881,11 +1878,36 @@ const SelectVehicle = () => {
           </div>
         </div>
 
+        <div className="mx-3 mt-1 mb-2 flex rounded-[12px] bg-slate-100 p-1">
+          <button
+            type="button"
+            onClick={() => {
+              setActiveTab('normal');
+              const firstNormal = displayedVehicles.find(v => v.dispatchType === 'normal' || v.dispatchType === 'both');
+              if (firstNormal) setSelected(firstNormal.id);
+            }}
+            className={`flex-1 rounded-[10px] py-1.5 text-[12px] font-bold transition-all ${activeTab === 'normal' ? 'bg-white text-slate-900 shadow-[0_2px_8px_rgba(0,0,0,0.04)]' : 'text-slate-500 hover:text-slate-700'}`}
+          >
+            Instant Booking
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setActiveTab('bidding');
+              const firstBidding = displayedVehicles.find(v => v.dispatchType === 'bidding' || v.dispatchType === 'both');
+              if (firstBidding) setSelected(firstBidding.id);
+            }}
+            className={`flex-1 rounded-[10px] py-1.5 text-[12px] font-bold transition-all ${activeTab === 'bidding' ? 'bg-white text-slate-900 shadow-[0_2px_8px_rgba(0,0,0,0.04)]' : 'text-slate-500 hover:text-slate-700'}`}
+          >
+            Bid Booking
+          </button>
+        </div>
+
         <div className="relative flex-1 overflow-hidden">
           <div
             ref={scrollRef}
             onScroll={handleScroll}
-            className="flex-1 overflow-y-auto no-scrollbar px-3 pt-3 pb-2 space-y-2.5"
+            className="flex-1 overflow-y-auto no-scrollbar px-3 pt-1 pb-2 space-y-2.5"
           >
             {isLoadingVehicles && (
               <div className="min-h-[180px] flex flex-col items-center justify-center gap-3 text-slate-400">
@@ -1901,14 +1923,16 @@ const SelectVehicle = () => {
               </div>
             )}
 
-            {!isLoadingVehicles && !vehicleLoadError && displayedVehicles.length === 0 && (
+            {!isLoadingVehicles && !vehicleLoadError && displayedVehicles.filter(v => v.dispatchType === activeTab || v.dispatchType === 'both').length === 0 && (
               <div className="rounded-[18px] border border-slate-100 bg-white px-4 py-5 text-center">
                 <p className="text-[13px] font-bold text-slate-900">No vehicles available</p>
                 <p className="mt-1 text-[11px] font-bold text-slate-400">Try changing your location or method.</p>
               </div>
             )}
 
-            {!isLoadingVehicles && !vehicleLoadError && displayedVehicles.map((v, i) => {
+            {!isLoadingVehicles && !vehicleLoadError && displayedVehicles
+              .filter(v => v.dispatchType === activeTab || v.dispatchType === 'both')
+              .map((v, i, arr) => {
               const isSelected = selected === v.id;
               const availability = availabilityByVehicleId[v.id] || DEFAULT_AVAILABILITY;
               const isUnavailable = !availability.totalDrivers;
@@ -1921,19 +1945,19 @@ const SelectVehicle = () => {
                 ? 'N/A'
                 : isFarePending
                   ? '...'
-                  : formatVehicleFare(v);
+                  : formatCurrency(v.price);
 
               return (
-                <motion.div
-                  key={v.id}
-                  initial={{ opacity: 0, y: 12 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.4, delay: i * 0.04, ease: [0.23, 1, 0.32, 1] }}
-                  className={`overflow-hidden rounded-[18px] border transition-all ${isSelected
-                      ? 'border-slate-200 bg-[#fbfaf8] shadow-[0_6px_16px_rgba(15,23,42,0.08)]'
-                      : 'border-transparent bg-white'
-                    }`}
-                >
+                <React.Fragment key={v.id}>
+                  <motion.div
+                    initial={{ opacity: 0, y: 12 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.4, delay: i * 0.04, ease: [0.23, 1, 0.32, 1] }}
+                    className={`overflow-hidden rounded-[18px] border transition-all ${isSelected
+                        ? 'border-slate-200 bg-[#fbfaf8] shadow-[0_6px_16px_rgba(15,23,42,0.08)]'
+                        : 'border-transparent bg-white'
+                      }`}
+                  >
                   <div
                     role={canSelectVehicle ? 'button' : undefined}
                     tabIndex={canSelectVehicle ? 0 : undefined}
@@ -1957,7 +1981,7 @@ const SelectVehicle = () => {
                   >
                     <div className="flex w-[52px] shrink-0 flex-col items-center">
                       <div className="flex h-9 w-full items-center justify-center">
-                        <img src={v.icon} alt={v.name} className="h-8 w-12 object-contain" draggable={false} />
+                        {v.icon && <img src={v.icon} alt={v.name} className="h-8 w-12 object-contain" draggable={false} />}
                       </div>
                       <span className="mt-1 text-[10px] font-medium text-slate-500">{compactEta} min</span>
                     </div>
@@ -1974,7 +1998,29 @@ const SelectVehicle = () => {
                         </div>
                         <div className="shrink-0 text-right">
                           <div className={`flex flex-col items-end ${isUnavailable && rideMode !== 'schedule' ? 'text-slate-300' : 'text-slate-900'}`}>
-                            {isSelected && appliedPromo ? (
+                            {isSelected && activeTab === 'bidding' ? (
+                              <div className="flex items-center gap-2">
+                                <button
+                                  type="button"
+                                  onClick={(e) => { e.stopPropagation(); setBidStepCount(Math.max(0, bidStepCount - 1)); }}
+                                  className={`flex h-7 w-7 items-center justify-center rounded-full border border-emerald-600 text-emerald-600 ${bidStepCount <= 0 ? 'opacity-30' : 'active:bg-emerald-50'}`}
+                                  disabled={bidStepCount <= 0}
+                                >
+                                  -
+                                </button>
+                                <span className="block text-[20px] font-semibold leading-none">
+                                  {formatCurrency(selectedBidCeiling)}
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={(e) => { e.stopPropagation(); setBidStepCount(Math.min(selectedBidSteps, bidStepCount + 1)); }}
+                                  className={`flex h-7 w-7 items-center justify-center rounded-full border border-emerald-600 text-emerald-600 ${bidStepCount >= selectedBidSteps ? 'opacity-30' : 'active:bg-emerald-50'}`}
+                                  disabled={bidStepCount >= selectedBidSteps}
+                                >
+                                  +
+                                </button>
+                              </div>
+                            ) : isSelected && appliedPromo ? (
                               <>
                                 <span className="text-[12px] text-slate-400 line-through leading-none mb-1">{fareLabel}</span>
                                 <span className="block text-[20px] font-semibold leading-none text-emerald-600">
@@ -2025,10 +2071,11 @@ const SelectVehicle = () => {
                     </div>
                   </div>
 
-                  {!isSelected && i < displayedVehicles.length - 1 && (
+                  {!isSelected && i < arr.length - 1 && arr[i + 1].dispatchType === v.dispatchType && (
                     <div className="ml-[68px] border-b border-slate-100" />
                   )}
-                </motion.div>
+                  </motion.div>
+                </React.Fragment>
               );
             })}
           </div>
@@ -2070,10 +2117,11 @@ const SelectVehicle = () => {
             </button>
             <button
               type="button"
-              className="flex items-center justify-center gap-2 px-3 py-2.5 text-[12px] font-medium text-slate-700"
+              onClick={() => setShowScheduleModal(true)}
+              className={`flex items-center justify-center gap-2 px-3 py-2.5 text-[12px] font-medium ${rideMode === 'schedule' ? 'text-emerald-700' : 'text-slate-700'}`}
             >
-              <span className="inline-flex h-4 w-4 items-center justify-center rounded-full bg-slate-100 text-[10px] text-slate-600">•</span>
-              <span>Myself</span>
+              <span className={`inline-flex h-4 w-4 items-center justify-center rounded-full text-[10px] ${rideMode === 'schedule' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-600'}`}>•</span>
+              <span>{rideMode === 'schedule' ? 'Scheduled' : 'Schedule ride'}</span>
             </button>
           </div>
 
@@ -2295,6 +2343,78 @@ const SelectVehicle = () => {
         )}
 
         <AnimatePresence>
+          {showScheduleModal && (
+            <React.Fragment key="schedule-modal">
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => setShowScheduleModal(false)}
+                className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[100] max-w-lg mx-auto"
+              />
+              <motion.div
+                initial={{ y: '100%' }}
+                animate={{ y: 0 }}
+                exit={{ y: '100%' }}
+                transition={{ type: 'spring', damping: 26, stiffness: 320 }}
+                className="fixed bottom-0 left-0 right-0 max-w-lg mx-auto bg-white rounded-t-[28px] px-5 pt-4 pb-10 z-[101]"
+              >
+                <div className="w-10 h-1 bg-slate-200 rounded-full mx-auto mb-5" />
+                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Schedule Ride</p>
+                <h3 className="text-[20px] font-bold text-slate-900 mb-6">When do you want to leave?</h3>
+                
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-[12px] font-semibold text-slate-500 mb-1.5">Select Date & Time</label>
+                    <input
+                      type="datetime-local"
+                      value={scheduledAt}
+                      min={minScheduledAt}
+                      max={maxScheduledAt}
+                      onChange={(event) => {
+                        setScheduledAt(event.target.value);
+                        setScheduleError('');
+                      }}
+                      className="w-full rounded-[16px] border border-slate-200 bg-slate-50 px-4 py-3.5 text-[15px] font-bold text-slate-900 outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/20"
+                    />
+                  </div>
+
+                  {scheduleError && (
+                    <p className="text-[12px] font-bold text-rose-500 mt-2">{scheduleError}</p>
+                  )}
+
+                  <div className="flex gap-3 pt-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setScheduledAt('');
+                        setRideMode('now');
+                        setShowScheduleModal(false);
+                      }}
+                      className="flex-1 rounded-[16px] bg-slate-100 px-4 py-3.5 text-[14px] font-bold text-slate-700 active:bg-slate-200"
+                    >
+                      Clear
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (scheduledAt) {
+                          setRideMode('schedule');
+                          setShowScheduleModal(false);
+                        } else {
+                          setScheduleError('Please select a valid date and time.');
+                        }
+                      }}
+                      className="flex-1 rounded-[16px] bg-emerald-600 px-4 py-3.5 text-[14px] font-bold text-white shadow-lg shadow-emerald-600/30 active:bg-emerald-700"
+                    >
+                      Confirm Schedule
+                    </button>
+                  </div>
+                </div>
+              </motion.div>
+            </React.Fragment>
+          )}
+
           {showCouponModal && (
             <React.Fragment key="coupon-modal">
               <motion.div

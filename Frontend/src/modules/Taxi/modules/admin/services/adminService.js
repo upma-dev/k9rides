@@ -204,6 +204,11 @@ export const adminService = {
   getWithdrawalRequests: () => api.get('/admin/wallet/withdrawals'),
   getWithdrawals: () => api.get('/admin/wallet/withdrawals'),
   updateWithdrawalStatus: (id, status) => api.patch(`/admin/wallet/withdrawals/${id}`, { status }),
+  getDriverWithdrawalSummaries: (params = {}) => api.get('/admin/wallet/drivers/withdrawals', { params }),
+  getDriverWithdrawals: (driverId, params = {}) => api.get(`/admin/wallet/drivers/${driverId}/withdrawals`, { params }),
+  getDriverWithdrawalContextByRequestId: (requestId, params = {}) => api.get(`/admin/wallet/drivers/withdrawals/request/${requestId}`, { params }),
+  approveDriverWithdrawalRequest: (requestId) => api.patch(`/admin/wallet/drivers/withdrawals/${requestId}/approve`),
+  rejectDriverWithdrawalRequest: (requestId) => api.patch(`/admin/wallet/drivers/withdrawals/${requestId}/reject`),
 
   /**
    * Notifications & Banners

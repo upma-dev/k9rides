@@ -216,4 +216,18 @@ router.put('/pages-social-media/:key', upsertAdminPageController);
 router.get('/sidebar-badges', adminController.getSidebarBadges);
 router.get('/notifications/fssai-expired', adminController.getExpiredFssaiNotifications);
 
+// ----- Food Admin Hierarchy / Subadmins Management -----
+import { attachFoodAdminContext, requireFoodResourceAccess } from '../middlewares/foodAdmin.middleware.js';
+import * as subadminController from '../controllers/foodAdminManagement.controller.js';
+
+router.use(attachFoodAdminContext);
+
+router.get('/admin-management/permissions', requireFoodResourceAccess('subadmins', 'subadmins'), subadminController.listFoodAdminPermissions);
+router.get('/admin-management/assignable-zones', requireFoodResourceAccess('subadmins', 'subadmins'), subadminController.listAssignableFoodZones);
+router.get('/admin-management/admins', requireFoodResourceAccess('subadmins', 'subadmins'), subadminController.listFoodAdmins);
+router.get('/admin-management/admins/:id', requireFoodResourceAccess('subadmins', 'subadmins'), subadminController.getFoodAdminById);
+router.post('/admin-management/admins', requireFoodResourceAccess('subadmins', 'subadmins'), subadminController.createFoodAdminAccount);
+router.patch('/admin-management/admins/:id', requireFoodResourceAccess('subadmins', 'subadmins'), subadminController.updateFoodAdminAccount);
+router.delete('/admin-management/admins/:id', requireFoodResourceAccess('subadmins', 'subadmins'), subadminController.deleteFoodAdminAccount);
+
 export default router;

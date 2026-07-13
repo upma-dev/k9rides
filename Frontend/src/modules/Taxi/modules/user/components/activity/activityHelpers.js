@@ -1,10 +1,4 @@
-import carIcon from '../../../../assets/icons/car.png';
-import bikeIcon from '../../../../assets/icons/bike.png';
-import autoIcon from '../../../../assets/icons/auto.png';
-import LuxuryIcon from '../../../../assets/icons/Luxury.png';
-import PremiumIcon from '../../../../assets/icons/Premium.png';
-import SuvIcon from '../../../../assets/icons/SUV.png';
-import busIcon from '../../../../assets/3d images/AutoCab/bus.png';
+// No static icons
 
 export const PAGE_SIZE = 4;
 export const TABS = ['All', 'Rides', 'Parcels', 'Rental', 'Bus', 'Pooling', 'Outstation', 'Scheduled', 'Support'];
@@ -35,14 +29,7 @@ export const isLikelyVehiclePhoto = (value) => {
 };
 
 export const getVehicleTypeAsset = (iconType = '') => {
-  const value = String(iconType || '').toLowerCase();
-
-  if (value.includes('bike')) return bikeIcon;
-  if (value.includes('auto')) return autoIcon;
-  if (value.includes('lux')) return LuxuryIcon;
-  if (value.includes('premium')) return PremiumIcon;
-  if (value.includes('suv')) return SuvIcon;
-  return carIcon;
+  return null;
 };
 
 export const getStatusTone = (status = '') => {
@@ -118,15 +105,15 @@ export const coordLabel = (location, fallback) => {
 
 export const getVehicleVisual = (ride, type) => {
   if (type === 'parcel') {
-    return '/5_Parcel.png';
+    return null;
   }
 
   if (type === 'bus') {
-    return busIcon;
+    return null;
   }
 
   if (type === 'pooling') {
-    return carIcon;
+    return null;
   }
 
   return getVehicleTypeAsset(
