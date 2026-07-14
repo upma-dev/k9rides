@@ -8,7 +8,7 @@ export default function Navbar({ settings }) {
   const [isScrolled, setIsScrolled] = useState(false)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const { activeLogo } = useSettings()
-
+  const appLogo = activeLogo || settings?.general?.logo || settings?.customization?.logo || '';
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 40)
     window.addEventListener('scroll', handleScroll)
@@ -45,17 +45,12 @@ export default function Navbar({ settings }) {
           <div className="flex items-center justify-between h-20">
             {/* Logo */}
             <a href="#" className="flex items-center gap-3 group">
-              {settings?.logo_url ? (
-                <img src={settings.logo_url} alt="K9 Rides" className="h-10 w-auto object-contain" />
+              {appLogo ? (
+                <img src={appLogo} alt="K9 Rides" className="h-10 w-auto object-contain" />
               ) : (
-                <>
-                  <div className="h-10 w-10 rounded-full overflow-hidden border-2 border-[#ff6d00]/40 group-hover:border-[#2563eb] transition-colors duration-300">
-                    <img src={activeLogo || k9Logo} alt="K9 Rides" className="w-full h-full object-cover scale-[1.2]" />
-                  </div>
-                  <span className="font-black text-xl tracking-tight text-slate-900">
-                    K9 <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#ff5100] via-[#e11d48] via-[#1d4ed8] to-[#10b981]">Rides</span>
-                  </span>
-                </>
+                <span className="font-black text-xl tracking-tight text-slate-900">
+                  K9 Rides
+                </span>
               )}
             </a>
 

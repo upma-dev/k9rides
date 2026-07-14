@@ -1454,8 +1454,6 @@ const AdminLayout = () => {
           </div>
 
           <div className="flex items-center gap-3">
-            <ModeSwitcher mode={mode} setMode={setMode} />
-
             <div className="mr-1 flex items-center gap-1 border-r border-gray-100 pr-4 leading-none">
               <button
                 type="button"

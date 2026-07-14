@@ -48,7 +48,7 @@ const Wallet = lazy(() => import('./modules/user/pages/Wallet'));
 // Coming Soon placeholder (for /tours and any unbuilt routes)
 const ComingSoon = lazy(() => import('./modules/shared/pages/ComingSoon'));
 const LegalPage = lazy(() => import('./modules/shared/pages/LegalPage'));
-const LandingPage = lazy(() => import('./modules/shared/pages/LandingPage'));
+// Public Pages
 const AboutPage = lazy(() => import('./modules/shared/pages/AboutPage'));
 const CareersPage = lazy(() => import('./modules/shared/pages/CareersPage'));
 const NewsroomPage = lazy(() => import('./modules/shared/pages/NewsroomPage'));
@@ -679,7 +679,7 @@ function TaxiApp() {
           <Toaster position="top-right" />
           <Routes>
             {/* Static / Public routes */}
-            <Route index element={<LandingPage />} />
+            <Route index element={<Navigate to="/" replace />} />
             <Route path="about" element={<AboutPage />} />
             <Route path="careers" element={<CareersPage />} />
             <Route path="newsroom" element={<NewsroomPage />} />

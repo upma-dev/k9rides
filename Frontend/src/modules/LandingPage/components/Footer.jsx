@@ -122,15 +122,9 @@ export default function Footer({ settings }) {
               {appLogo ? (
                 <img src={appLogo} alt="K9 Rides" className="h-11 w-auto object-contain bg-white/10 p-1 rounded-lg" loading="lazy" />
               ) : (
-                <>
-                  <div className="h-11 w-11 rounded-xl overflow-hidden shadow-sm bg-white p-0.5 border border-slate-800 group-hover:border-slate-600 transition-colors">
-                    <img src={activeLogo || k9Logo} alt="K9 Rides" className="w-full h-full object-cover rounded-lg" loading="lazy" />
-                  </div>
-                  <div>
-                    <span className="font-black text-xl tracking-tight text-white block leading-none">K9 Rides</span>
-                    <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mt-0.5 block">Super-App Platform</span>
-                  </div>
-                </>
+                <div className="flex flex-col text-left">
+                  <span className="font-black text-xl tracking-tight text-white block leading-none">K9 Rides</span>
+                </div>
               )}
             </a>
 
