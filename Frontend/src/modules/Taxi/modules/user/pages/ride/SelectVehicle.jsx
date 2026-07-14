@@ -985,7 +985,7 @@ const SelectVehicle = () => {
   const [vehicles, setVehicles] = useState([]);
   const [availabilityByVehicleId, setAvailabilityByVehicleId] = useState({});
   const [selected, setSelected] = useState('');
-  const [activeTab, setActiveTab] = useState('normal');
+  const [activeTab, setActiveTab] = useState(() => routeState.rideType === 'bid' ? 'bidding' : 'normal');
   const [paymentMethod, setPaymentMethod] = useState('Cash');
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [showCouponModal, setShowCouponModal] = useState(false);
