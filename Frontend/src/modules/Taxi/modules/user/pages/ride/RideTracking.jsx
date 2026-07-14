@@ -12,6 +12,8 @@ import { useAuthStore } from '../../../../../../core/auth/auth.store';
 import { useSettings } from '../../../../shared/context/SettingsContext';
 import { BACKEND_ORIGIN } from '../../../../shared/api/runtimeConfig';
 import toast from 'react-hot-toast';
+import FloatingSOS from '../safety/FloatingSOS';
+import SafetyToolkit from '../safety/SafetyToolkit';
 
 const MAP_CONTAINER_STYLE = { width: '100%', height: '100%' };
 const DEFAULT_CENTER = { lat: 22.7196, lng: 75.8577 };
@@ -322,6 +324,7 @@ const RideTracking = () => {
   const [routePath, setRoutePath] = useState([]);
   const [routeError, setRouteError] = useState('');
   const [map, setMap] = useState(null);
+  const [safetyToolkitOpen, setSafetyToolkitOpen] = useState(false);
   const [driverImageFallback, setDriverImageFallback] = useState('');
   const [driverImageBroken, setDriverImageBroken] = useState(false);
   const [vehicleImageFallback, setVehicleImageFallback] = useState('');
@@ -1452,6 +1455,15 @@ const RideTracking = () => {
         animate={{ y: drawerOpen ? 0 : "100%" }}
         className="absolute bottom-0 left-0 right-0 bg-white shadow-[0_-12px_44px_rgba(15,23,42,0.12)] z-20 rounded-t-[28px] border-t border-slate-100/50"
       >
+        {/* Floating SOS on card edge */}
+        {['started', 'ongoing', 'arrived'].includes(tripStatus) && (
+          <FloatingSOS 
+            rideId={rideId} 
+            driverId={driver?._id || driver?.id} 
+            location={driverPosition} 
+            rideStatus={tripStatus} 
+          />
+        )}
         <div className="relative flex justify-center items-center mt-2.5 mb-3.5">
           <div className="w-12 h-1.5 bg-slate-200/60 rounded-full cursor-pointer hover:bg-slate-300 transition-colors" onClick={() => setDrawerOpen(!drawerOpen)} />
           <button 
@@ -1641,7 +1653,7 @@ const RideTracking = () => {
             {[
               { id: 'call', icon: Phone, label: 'CALL', action: handleCallDriver },
               { id: 'chat', icon: MessageCircle, label: 'CHAT', action: openRideChat },
-              { id: 'share', icon: Share2, label: 'SHARE', action: handleShare },
+              { id: 'safety', icon: Shield, label: 'SAFETY', action: () => setSafetyToolkitOpen(true) },
               { id: 'help', icon: AlertTriangle, label: 'HELP', action: () => navigate(routeSupport) }
             ].map((btn) => (
               <motion.button
@@ -1983,6 +1995,13 @@ const RideTracking = () => {
           </>
         )}
       </AnimatePresence>
+
+      <SafetyToolkit 
+        isOpen={safetyToolkitOpen} 
+        onClose={() => setSafetyToolkitOpen(false)} 
+        rideId={rideId} 
+        driver={driver} 
+      />
     </div>
   );
 };

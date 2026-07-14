@@ -49,7 +49,7 @@ const menuSections = [
     title: 'Preferences',
     items: [
       { icon: Bell, title: 'Notifications', sub: 'Offers & alerts', path: '/taxi/user/profile/notifications', bg: 'bg-purple-50', color: 'text-purple-600' },
-      { icon: Shield, title: 'Security & SOS', sub: 'Trust & safety settings', path: '/safety/sos', bg: 'bg-sky-50', color: 'text-sky-600' },
+      { icon: Shield, title: 'Women Safety Center', sub: 'SOS, Contacts, & Support', path: '/taxi/user/safety', bg: 'bg-emerald-50', color: 'text-emerald-600' },
       { icon: HelpCircle, title: 'Help & Support', sub: 'Help center & tickets', path: '/taxi/user/support/tickets', bg: 'bg-slate-50', color: 'text-slate-600' },
     ]
   },

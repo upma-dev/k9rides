@@ -73,6 +73,12 @@ const SupportTickets = lazy(() => import('./modules/user/pages/support/SupportTi
 const SupportTicketDetail = lazy(() => import('./modules/user/pages/support/SupportTicketDetail'));
 const DeleteAccount = lazy(() => import('./modules/user/pages/profile/DeleteAccount'));
 
+const UserSafetyCenter = lazy(() => import('./modules/user/pages/safety/SafetyCenter'));
+const UserTrustedContacts = lazy(() => import('./modules/user/pages/safety/TrustedContacts'));
+const UserReportDriver = lazy(() => import('./modules/user/pages/safety/ReportDriver'));
+const UserTripSharing = lazy(() => import('./modules/user/pages/safety/TripSharing'));
+const UserSafetyTips = lazy(() => import('./modules/user/pages/safety/SafetyTips'));
+
 // Phase 4 — Cab/Intercity/Bus flows
 const CabHome = lazy(() => import('./modules/user/pages/cab/CabHome'));
 const SharedTaxi = lazy(() => import('./modules/user/pages/cab/SharedTaxi'));
@@ -277,6 +283,7 @@ const AdminGodsEye = lazy(() => import('./modules/admin/pages/geo/GodsEye'));
 const AdminFinance = lazy(() => import('./modules/admin/pages/finance/Finance'));
 const AdminFareConfig = lazy(() => import('./modules/admin/pages/finance/FareConfiguration'));
 const AdminSafetyCenter = lazy(() => import('./modules/admin/pages/safety/SafetyCenter'));
+const AdminSafetySettings = lazy(() => import('./modules/admin/pages/safety/SafetySettings'));
 const AdminCMSBuilder = lazy(() => import('./modules/admin/pages/cms/CMSBuilder'));
 const AdminHeaderFooter = lazy(() => import('./modules/admin/pages/cms/HeaderFooter'));
 const AdminLandingSettings = lazy(() => import('./modules/admin/pages/cms/LandingPageSettings'));
@@ -825,6 +832,11 @@ function TaxiApp() {
                 path="user/ride/detail/:id"
                 element={<RideDetail />}
               />
+              <Route path="user/safety" element={<UserSafetyCenter />} />
+              <Route path="user/safety/contacts" element={<UserTrustedContacts />} />
+              <Route path="user/safety/report-driver" element={<UserReportDriver />} />
+              <Route path="user/safety/trip-sharing" element={<UserTripSharing />} />
+              <Route path="user/safety/tips" element={<UserSafetyTips />} />
 
               <Route path="user/parcel/type" element={<ParcelType />} />
               <Route
@@ -1517,7 +1529,10 @@ function TaxiApp() {
                   element={<AdminGoodsTypes mode="edit" />}
                 />
               </Route>
-              <Route path="safety" element={<AdminSafetyCenter />} />
+              {/* Safety */}
+              <Route path="safety/sos" element={<AdminSafetyCenter />} />
+              <Route path="safety/settings" element={<AdminSafetySettings />} />
+
               <Route path="cms" element={<AdminCMSBuilder />} />
               <Route path="settings/cms/home" element={<AdminLandingSettings defaultTab="general" />} />
               <Route path="settings/cms/about" element={<AdminLandingSettings defaultTab="pages" defaultPage="about_us" />} />

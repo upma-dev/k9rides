@@ -880,6 +880,14 @@ const AdminLayout = () => {
           },
           {
             icon: ShieldCheck,
+            label: 'Safety Center',
+            subItems: [
+              { label: 'Live SOS Dashboard', path: '/taxi/admin/safety/sos', permission: 'settings.view' },
+              { label: 'Safety Settings', path: '/taxi/admin/safety/settings', permission: 'settings.view' },
+            ],
+          },
+          {
+            icon: ShieldCheck,
             label: 'Support Management',
             subItems: [
               { label: 'Ticket Title', path: '/taxi/admin/support/ticket-title', permission: 'support.view' },
