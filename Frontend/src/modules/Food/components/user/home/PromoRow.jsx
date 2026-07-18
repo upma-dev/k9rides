@@ -34,58 +34,49 @@ export default function PromoRow({ handleVegModeChange, navigate, isVegMode, tog
   ];
 
   return (
-    <div className="grid grid-cols-4 gap-3 px-4 py-6 bg-transparent justify-items-center w-full max-w-[500px] mx-auto">
-      {promoCardsData.map((promo, idx) => (
-        <motion.div
-          key={idx}
-          ref={promo.id === 'gourmet' ? toggleRef : null}
-          initial={{ opacity: 0, y: 15 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{
-            type: "spring",
-            stiffness: 260,
-            damping: 20,
-            delay: idx * 0.05
-          }}
-          whileHover={{
-            y: -6,
-            scale: 1.05,
-            boxShadow: "0px 12px 30px rgba(255, 61, 119, 0.12)"
-          }}
-          whileTap={{ scale: 0.94 }}
-          className="relative flex flex-col items-center justify-between p-3.5 bg-white dark:bg-[#1a1a1a] rounded-[20px] border border-rose-500/5 hover:border-rose-500/20 cursor-pointer w-full text-center aspect-[0.82/1] transition-colors duration-300 group overflow-hidden"
-          onClick={() => {
-            if (promo.id === 'gourmet') navigate('/food/user/gourmet');
-            else if (promo.id === 'offers') navigate('/food/user/offers');
-            else if (promo.id === 'under-250') navigate('/food/user/under-250');
-            else if (promo.id === 'collections') navigate('/food/user/profile/favorites');
-          }}
-        >
-          {/* Top Gradient Stripe on Hover */}
-          <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-[#FF6B3D] to-[#FF3E7F] opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-t-[20px]" />
+    <div className="relative w-full max-w-md mx-auto px-4 py-8 mb-2">
+      {/* Subtle background glow for the whole section */}
+      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-rose-50/30 to-transparent pointer-events-none" />
+      
+      <div className="relative z-10 grid grid-cols-4 gap-3 justify-items-center">
+        {promoCardsData.map((promo, idx) => (
+          <motion.div
+            key={idx}
+            ref={promo.id === 'gourmet' ? toggleRef : null}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: idx * 0.08, duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+            whileHover={{ y: -6 }}
+            whileTap={{ scale: 0.92 }}
+            className="flex flex-col items-center group cursor-pointer w-full"
+            onClick={() => {
+              if (promo.id === 'gourmet') navigate('/food/user/gourmet');
+              else if (promo.id === 'offers') navigate('/food/user/offers');
+              else if (promo.id === 'under-250') navigate('/food/user/under-250');
+              else if (promo.id === 'collections') navigate('/food/user/profile/favorites');
+            }}
+          >
+            {/* Premium App-Icon Style Image Container */}
+            <div className="relative w-[72px] h-[72px] sm:w-[84px] sm:h-[84px] flex items-center justify-center rounded-[18px] bg-white shadow-[0_8px_20px_rgba(0,0,0,0.06)] border border-gray-100/50 overflow-hidden mb-2.5 transition-all duration-300 group-hover:shadow-[0_12px_25px_rgba(225,29,72,0.2)] group-hover:border-rose-100">
+              <img
+                src={promo.icon}
+                alt={promo.value}
+                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+              />
+            </div>
 
-          {/* Floating Icon Container with Soft Glow */}
-          <div className="relative w-12 h-12 flex items-center justify-center rounded-full bg-gradient-to-tr from-[#FF6B3D]/8 to-[#FF3E7F]/8 dark:from-[#FF6B3D]/15 dark:to-[#FF3E7F]/15 group-hover:scale-110 transition-transform duration-300">
-            {/* Pulsing glow under icon */}
-            <div className="absolute inset-0 rounded-full bg-gradient-to-tr from-[#FF6B3D] to-[#FF3E7F] opacity-0 group-hover:opacity-15 blur-sm transition-opacity duration-300" />
-            <img
-              src={promo.icon}
-              alt={promo.value}
-              className="w-8 h-8 object-contain relative z-20 drop-shadow-[0_2px_8px_rgba(255,90,90,0.1)]"
-            />
-          </div>
-
-          {/* Premium Typography & Badges */}
-          <div className="flex flex-col items-center text-center w-full mt-2">
-            <span className="text-[12px] font-black text-slate-800 dark:text-white tracking-tight leading-none mb-1.5">
-              {promo.value}
-            </span>
-            <span className="text-[8px] font-black uppercase px-2 py-0.5 rounded-full bg-gradient-to-r from-[#FF6B3D]/8 to-[#FF3E7F]/8 text-[#FF3E7F] dark:text-rose-450 tracking-wider">
-              {promo.title}
-            </span>
-          </div>
-        </motion.div>
-      ))}
+            {/* Refined Typography */}
+            <div className="flex flex-col items-center text-center w-full">
+              <span className="text-[13px] sm:text-[14px] font-black text-[#0f172a] dark:text-gray-100 tracking-tight leading-tight mb-0.5 group-hover:text-[#d82c23] transition-colors">
+                {promo.value}
+              </span>
+              <span className="text-[10px] sm:text-[11px] font-bold text-[#e11d48] dark:text-rose-400 capitalize whitespace-nowrap tracking-wide">
+                {promo.title}
+              </span>
+            </div>
+          </motion.div>
+        ))}
+      </div>
     </div>
   );
 }
