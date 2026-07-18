@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MapPin, ChevronDown, Search, Mic, Bell, CheckCircle2, Tag, Gift, AlertCircle, Clock, BellOff, X, ChevronRight, ShoppingBag, Sparkles, Utensils, Car } from 'lucide-react';
+import { MapPin, ChevronDown, Search, Mic, Bell, CheckCircle2, Tag, Gift, AlertCircle, Clock, BellOff, X, ChevronRight, ShoppingBag, Sparkles, Utensils, Car, Menu, User } from 'lucide-react';
 import {
   Popover,
   PopoverContent,
@@ -14,6 +14,12 @@ import foodIcon from "@food/assets/category-icons/food.png.png";
 import taxiIcon from "@food/assets/category-icons/taxi.png.png";
 import quickIcon from "@food/assets/category-icons/quick.png";
 import hotelIcon from "@food/assets/category-icons/hotel.png";
+import burgerAvatar from "@food/assets/burger_avatar.png";
+import dalTadka from "@food/assets/menu-items/dal_tadka_1771226053751.png";
+import vegSpringRoll from "@food/assets/menu-items/veg_spring_roll_1771226110508.png";
+import vegChowmein from "@food/assets/menu-items/veg_chowmein_noodles_1771226095511.png";
+import rotiFlatbread from "@food/assets/menu-items/roti_flatbread_1771226034716.png";
+import steamedRice from "@food/assets/menu-items/steamed_rice_1771226079364.png";
 import useNotificationInbox from "@food/hooks/useNotificationInbox";
 
 const ICON_MAP = {
@@ -22,6 +28,16 @@ const ICON_MAP = {
   Gift,
   AlertCircle
 };
+
+const DIAL_ITEMS = [
+  { id: 1, name: "Dal Tadka", image: dalTadka },
+  { id: 2, name: "Spring Roll", image: vegSpringRoll },
+  { id: 3, name: "Chowmein", image: vegChowmein },
+  { id: 4, name: "Roti", image: rotiFlatbread },
+  { id: 5, name: "Steamed Rice", image: steamedRice },
+  { id: 6, name: "Cheese Burger", image: burgerAvatar },
+  { id: 7, name: "Special Meal", image: foodIcon },
+];
 
 
 
@@ -48,6 +64,34 @@ export default function HomeHeader({
     activeHex: isTaxi ? '#2563eb' : '#d82c23',
     inactiveHex: isTaxi ? '#09101d' : '#6e0d09',
     containerHex: isTaxi ? '#0b1528' : '#9c1c16',
+  };
+
+  const [dialIndex, setDialIndex] = useState(0);
+
+  useEffect(() => {
+    if (isTaxi) return;
+    const interval = setInterval(() => {
+      setDialIndex((prev) => (prev + 1) % DIAL_ITEMS.length);
+    }, 3500); // Orbit every 3.5 seconds
+    return () => clearInterval(interval);
+  }, [isTaxi]);
+
+  const handleDialPanEnd = (event, info) => {
+    if (info.offset.y < -30) {
+      setDialIndex((prev) => (prev + 1) % DIAL_ITEMS.length);
+    } else if (info.offset.y > 30) {
+      setDialIndex((prev) => (prev - 1 + DIAL_ITEMS.length) % DIAL_ITEMS.length);
+    }
+  };
+
+  const handleDialWheel = (event) => {
+    if (Math.abs(event.deltaY) > 10) {
+      if (event.deltaY > 0) {
+        setDialIndex((prev) => (prev + 1) % DIAL_ITEMS.length);
+      } else {
+        setDialIndex((prev) => (prev - 1 + DIAL_ITEMS.length) % DIAL_ITEMS.length);
+      }
+    }
   };
 
   const [notifications, setNotifications] = useState(() => {
@@ -125,15 +169,6 @@ export default function HomeHeader({
     });
   };
 
-  const [currentSlide, setCurrentSlide] = useState(0);
-
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentSlide((prev) => (prev + 1) % 3);
-    }, 4000);
-    return () => clearInterval(timer);
-  }, []);
-
   const [isScrolled, setIsScrolled] = useState(false);
 
   useEffect(() => {
@@ -144,126 +179,60 @@ export default function HomeHeader({
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  const slideBanners = [
-    {
-      id: 0,
-      bg: "bg-gradient-to-r from-[#ff5100]/40 to-[#e11d48]/40",
-      content: (
-        <div className="flex justify-between items-center h-full px-4 w-full">
-          <div className="flex flex-col items-start justify-center w-[60%]">
-            <div className="text-[12px] font-bold text-white/80 tracking-widest uppercase mb-0.5">FLAT</div>
-            <div className="text-[28px] leading-[1] font-black text-white tracking-tight mb-0.5 drop-shadow-md">50% OFF</div>
-            <div className="text-[11px] font-medium text-white/90">with FREE delivery</div>
-          </div>
-          <div className="w-[40%] flex justify-end">
-            <img src={foodIcon} alt="offer" className="w-[85px] h-[85px] object-contain drop-shadow-2xl scale-110" />
-          </div>
-        </div>
-      )
-    },
-    {
-      id: 1,
-      bg: "bg-gradient-to-r from-[#e11d48]/40 to-[#b30707]/40",
-      content: (
-        <div className="flex justify-between items-center h-full px-4 w-full">
-          <div className="flex flex-col items-start w-[65%]">
-            <div className="text-[24px] leading-[1.1] font-black text-white tracking-tight mb-0.5">Flat ₹150 OFF</div>
-            <div className="text-[11px] font-bold text-gray-200 opacity-90">on Premium Dining restaurants</div>
-          </div>
-          <div className="w-[35%] flex justify-end">
-            <Sparkles className="w-[60px] h-[60px] text-white/30 fill-white/20 drop-shadow-2xl" strokeWidth={1} />
-          </div>
-        </div>
-      )
-    },
-    {
-      id: 2,
-      bg: "bg-gradient-to-r from-[#ff5100]/40 to-[#b30707]/40",
-      content: (
-        <div className="flex justify-between items-center h-full px-4 w-full">
-          <div className="flex flex-col items-start w-[65%]">
-            <div className="text-[24px] leading-[1.1] font-black text-white tracking-tight mb-0.5">Free Delivery</div>
-            <div className="text-[11px] font-bold text-gray-200 opacity-90">on all fast food orders above ₹199</div>
-          </div>
-          <div className="w-[35%] flex justify-end">
-            <Gift className="w-[60px] h-[60px] text-white/30 fill-white/20 drop-shadow-2xl" strokeWidth={1} />
-          </div>
-        </div>
-      )
-    }
-  ];
 
   return (
-    <>
-      <div className="relative w-full overflow-hidden">
-        {/* Dynamic Slide Background Layer */}
-      <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
-        <div
-          className="flex h-full w-full transition-all duration-1000 ease-in-out"
-          style={{ transform: `translateX(-${currentSlide * 100}%)` }}
+    <div className="contents">
+      <div className="contents" style={{ fontFamily: "'Sora', sans-serif" }}>
+        
+        {/* 1. Top Navigation Bar */}
+        <motion.div 
+          className="flex items-center justify-between px-5 pt-6 pb-5 bg-gradient-to-r from-[#d82c23] to-[#ff6d00] rounded-b-[24px] shadow-[0_10px_20px_rgba(216,44,35,0.15)] relative z-50 w-full max-w-2xl mx-auto"
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
         >
-          {slideBanners.map((banner) => (
-            <div 
-              key={banner.id} 
-              className={`w-full h-full shrink-0 bg-gradient-to-r ${
-                banner.id === 0 
-                  ? 'from-[#ff5100] to-[#e11d48]' 
-                  : banner.id === 1 
-                    ? 'from-[#e11d48] to-[#b30707]' 
-                    : 'from-[#ff5100] to-[#b30707]'
+          {/* Left: Location Icon */}
+          <div 
+            className="bg-white p-2.5 rounded-[14px] border border-gray-100 shadow-[0_4px_12px_rgba(0,0,0,0.04)] cursor-pointer hover:bg-gray-50 active:scale-95 transition-all flex items-center justify-center"
+            onClick={handleLocationClick}
+          >
+            <MapPin className={`h-5 w-5 ${isTaxi ? 'text-blue-600' : 'text-[#d82c23]'}`} />
+          </div>
+
+          {/* Center: Service Tabs (acting as logo) */}
+          <div className="flex bg-gray-100/80 p-1 rounded-2xl shadow-inner">
+            <button
+              onClick={() => navigate('/food/user')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl transition-all duration-300 ${
+                routeLocation.pathname.includes('/food')
+                  ? 'bg-white shadow-sm text-[#d82c23]'
+                  : 'text-gray-500 hover:text-gray-700'
               }`}
-            />
-          ))}
-        </div>
-      </div>
+            >
+              <img src={foodIcon} alt="Food" className="w-4 h-4 object-contain" />
+              <span className="font-extrabold text-[11px] tracking-wide">Food</span>
+            </button>
+            <button
+              onClick={() => navigate('/taxi/user')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl transition-all duration-300 ${
+                routeLocation.pathname.includes('/taxi')
+                  ? 'bg-white shadow-sm text-[#2563eb]'
+                  : 'text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              <img src={taxiIcon} alt="Rides" className="w-5 h-5 object-contain -ml-0.5" />
+              <span className="font-extrabold text-[11px] tracking-wide">Rides</span>
+            </button>
+          </div>
 
-      {/* 1. Location / Bell / Veg bar + Option Tabs */}
-      <div 
-        className="relative w-full px-4 pt-5 pb-0 flex flex-col gap-4 z-30 bg-transparent"
-        style={{
-          fontFamily: "'Sora', sans-serif"
-        }}
-      >
-        <div className="flex items-center justify-between gap-3">
-          {(() => {
-            const addressToShow = savedAddressText || (location?.area && location?.city
-              ? `${location.area}, ${location.city}`
-              : location?.area || location?.city || "");
-
-            return (
-              <div
-                className="flex items-center gap-2.5 cursor-pointer group min-w-0 flex-1 select-none"
-                onClick={handleLocationClick}
-              >
-                <div className="bg-white/15 p-2 rounded-xl backdrop-blur-md border border-white/25 hover:scale-105 active:scale-95 transition-all shadow-md flex-shrink-0 flex items-center justify-center">
-                  <MapPin className="h-5 w-5 text-white animate-bounce" style={{ animationDuration: '3s' }} />
-                </div>
-                <div className="flex flex-col min-w-0">
-                  <div className="flex items-center gap-1">
-                    <span className="text-[10px] font-extrabold text-white/80 uppercase tracking-widest drop-shadow-sm">Deliver to</span>
-                    <ChevronDown className="h-3 w-3 text-white/80 transition-transform duration-300 group-hover:rotate-180" />
-                  </div>
-                  {addressToShow ? (
-                    <span className="text-sm font-extrabold text-white truncate drop-shadow-md max-w-full">
-                      {addressToShow}
-                    </span>
-                  ) : (
-                    <span className="text-xs font-black text-yellow-305 hover:text-yellow-400 underline decoration-dotted transition-colors flex items-center gap-1 drop-shadow-md">
-                      Add delivery location
-                    </span>
-                  )}
-                </div>
-              </div>
-            );
-          })()}
-
-          <div className="flex items-center gap-2 flex-shrink-0 relative z-20">
+          {/* Right: Notifications & Profile/Veg */}
+          <div className="flex items-center gap-3">
             <Popover>
               <PopoverTrigger asChild>
-                <div className="h-10 w-10 relative flex items-center justify-center rounded-full bg-white/15 backdrop-blur-md border border-white/25 shadow-sm cursor-pointer active:scale-95 transition-all hover:bg-white/25 flex-shrink-0">
-                  <Bell className="h-[22px] w-[22px] text-white drop-shadow-sm" />
+                <div className="relative bg-white p-2.5 rounded-[14px] border border-gray-100 shadow-[0_4px_12px_rgba(0,0,0,0.04)] cursor-pointer hover:bg-gray-50 active:scale-95 transition-all">
+                  <Bell className="h-5 w-5 text-gray-700" />
                   {unreadCount > 0 && (
-                    <span className="absolute top-2 right-2 w-2.5 h-2.5 bg-yellow-400 rounded-full border-2 border-white animate-pulse" />
+                    <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full border-2 border-white animate-pulse" />
                   )}
                 </div>
               </PopoverTrigger>
@@ -335,177 +304,194 @@ export default function HomeHeader({
               </PopoverContent>
             </Popover>
 
-            {/* Veg Mode Toggle */}
-            <div
-              className="flex items-center gap-1.5 h-10 bg-white/15 backdrop-blur-md rounded-full px-2.5 border border-white/25 shadow-sm cursor-pointer hover:bg-white/25 active:scale-95 transition-all flex-shrink-0"
-              onClick={() => handleVegModeChange && handleVegModeChange(!isVegMode)}
-              ref={vegModeToggleRef}
-            >
-              <div className={`flex items-center justify-center p-[2px] rounded-sm border ${isVegMode ? 'border-green-600' : 'border-gray-500'} bg-white flex-shrink-0`}>
-                <div className={`w-[6px] h-[6px] rounded-full ${isVegMode ? 'bg-green-600' : 'bg-gray-500'}`} />
-              </div>
-              <span className={`text-[9px] font-black uppercase tracking-tight text-white drop-shadow-sm hidden xs:inline`}>
-                Veg
-              </span>
-              <div className={`w-6 h-3.5 rounded-full relative transition-colors ml-0.5 flex-shrink-0 ${isVegMode ? 'bg-green-500' : 'bg-gray-450/80'}`}>
-                <div className={`absolute top-[1.5px] w-2.5 h-2.5 rounded-full bg-white transition-transform ${isVegMode ? 'translate-x-[11px]' : 'translate-x-[1.5px]'}`} />
-              </div>
+            {/* User Profile */}
+            <div className="relative group">
+              <Link to="/food/user/profile">
+                <div className="bg-gradient-to-br from-[#fde68a] to-[#f59e0b] p-[2px] rounded-full border border-gray-100 shadow-[0_4px_12px_rgba(0,0,0,0.05)] cursor-pointer active:scale-95 transition-transform hover:shadow-md">
+                  <Avatar className="h-9 w-9 bg-white border-2 border-white">
+                    <AvatarFallback className="bg-transparent text-amber-700 font-bold"><User size={20} /></AvatarFallback>
+                  </Avatar>
+                </div>
+              </Link>
             </div>
-          </div>
-        </div>
-
-        {/* Option Tabs (Food & Taxi) - animated entrance */}
-        <motion.div
-          className="relative w-full z-20 overflow-visible"
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: 0.15, ease: 'easeOut' }}
-        >
-          <div 
-            className="custom-tab-container overflow-visible"
-            style={{
-              '--tab-container-bg': 'transparent',
-              '--active-tab-bg': theme.activeHex,
-              '--inactive-tab-bg': 'rgba(0, 0, 0, 0.2)',
-              backgroundColor: 'transparent'
-            }}
-          >
-            {/* Food Button */}
-            <button
-              onClick={() => navigate('/food/user')}
-              className={`custom-tab overflow-visible ${
-                routeLocation.pathname.includes('/food')
-                  ? 'custom-tab-active'
-                  : 'custom-tab-inactive'
-              }`}
-            >
-              <img src={foodIcon} alt="K9Food" className="custom-tab-icon" />
-              <span>K9Food</span>
-            </button>
-
-            {/* Taxi Button */}
-            <button
-              onClick={() => navigate('/taxi/user')}
-              className={`custom-tab overflow-visible ${
-                routeLocation.pathname.includes('/taxi')
-                  ? 'custom-tab-active'
-                  : 'custom-tab-inactive'
-              }`}
-            >
-              <img src={taxiIcon} alt="K9Rides" className="custom-tab-icon custom-tab-icon-taxi" />
-              <span>K9Rides</span>
-            </button>
           </div>
         </motion.div>
-      </div>
-    </div>
 
-      {/* 2. TRUE VIEWPORT-STICKY SEARCH BAR (Turns white on scroll) */}
-      <div
-        className={`sticky top-0 z-[70] transition-all duration-300 pt-2 pb-3 px-4 ${
-          isScrolled 
-            ? 'shadow-[0_4px_20px_rgba(0,0,0,0.06)] border-b border-gray-100/80' 
-            : 'border-b border-transparent'
-        }`}
-        style={{ 
-          fontFamily: "'Sora', sans-serif",
-          background: isScrolled
-            ? 'rgba(255, 255, 255, 0.98)'
-            : isTaxi
-              ? theme.activeHex
-              : `linear-gradient(to right, ${currentSlide === 0 ? '#ff5100, #e11d48' : currentSlide === 1 ? '#e11d48, #b30707' : '#ff5100, #b30707'})`
-        }}
-      >
+        {/* 3. Sticky Smart Search Bar & Veg Toggle */}
         <div
-          className={`relative rounded-2xl flex items-center px-4 py-2.5 border border-transparent cursor-pointer active:scale-[0.99] transition-all duration-300 group ${
+          className={`sticky top-[0px] z-[70] w-full max-w-2xl mx-auto transition-all duration-500 px-5 pb-4 pt-3 flex items-center gap-3 ${
             isScrolled 
-              ? 'bg-gray-100/80 hover:bg-gray-100 shadow-none' 
-              : 'bg-white shadow-[0_4px_15px_rgba(0,0,0,0.06)] hover:shadow-[0_8px_20px_rgba(0,0,0,0.12)]'
+              ? 'bg-white/95 backdrop-blur-xl shadow-[0_4px_20px_rgba(0,0,0,0.03)] border-b border-gray-100' 
+              : 'border-transparent'
           }`}
-          onClick={handleSearchFocus}
-          role="button"
-          tabIndex={0}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" || e.key === " ") {
-              e.preventDefault();
-              handleSearchFocus();
-            }
-          }}
         >
-          <Search className="h-5 w-5 text-gray-400 mr-3 group-hover:text-[#ff6d00] group-hover:scale-110 transition-all duration-300" strokeWidth={2.2} />
-          <div className="flex-1 overflow-hidden relative h-5">
-            <AnimatePresence mode="wait">
-              <motion.span
-                key={placeholderIndex}
-                initial={{ y: 15, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                exit={{ y: -15, opacity: 0 }}
-                transition={{ duration: 0.25, ease: 'easeOut' }}
-                className="absolute inset-0 text-sm font-semibold text-gray-500 truncate"
-              >
-                {placeholders?.[placeholderIndex] || 'Search for dishes, restaurants, cuisines...'}
-              </motion.span>
-            </AnimatePresence>
-          </div>
-          <div className="bg-[#ff6d00]/5 p-2 rounded-full border border-[#ff6d00]/10 ml-2 group-hover:bg-[#ff6d00]/10 transition-all flex items-center justify-center hover:scale-105 active:scale-95 duration-200">
-            <Mic className="h-4 w-4 text-[#ff6d00]" strokeWidth={2.5} />
-          </div>
-        </div>
-      </div>
-
-      {/* Bottom Container: Banners */}
-      <div className="relative w-full overflow-hidden shadow-[0_12px_40px_rgba(238,63,36,0.18)]">
-        {/* Dynamic Slide Background Layer (Bottom) */}
-        <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
-          <div
-            className="flex h-full w-full transition-all duration-1000 ease-in-out"
-            style={{ transform: `translateX(-${currentSlide * 100}%)` }}
+          <motion.div
+            className={`flex-1 relative p-[1.5px] rounded-full cursor-pointer group transition-all duration-300 shadow-[0_2px_16px_rgba(0,0,0,0.04)] hover:shadow-[0_8px_24px_rgba(216,44,35,0.15)] bg-gradient-to-r from-[#d82c23] to-[#ff6d00]`}
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.5, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
+            onClick={handleSearchFocus}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                handleSearchFocus();
+              }
+            }}
           >
-            {slideBanners.map((banner) => (
-              <div 
-                key={banner.id} 
-                className={`w-full h-full shrink-0 bg-gradient-to-r ${
-                  banner.id === 0 
-                    ? 'from-[#ff5100] to-[#e11d48]' 
-                    : banner.id === 1 
-                      ? 'from-[#e11d48] to-[#b30707]' 
-                      : 'from-[#ff5100] to-[#b30707]'
-                }`}
-              />
-            ))}
+            <div className="flex items-center w-full h-full bg-white rounded-full p-1.5 pl-4 pr-2">
+              <Search className={`h-[20px] w-[20px] mr-3 transition-colors duration-300 text-[#8c94a1] group-hover:text-[#ff6d00]`} strokeWidth={2.5} />
+              
+              <div className="flex-1 overflow-hidden relative h-6 flex items-center mt-0.5">
+                <AnimatePresence mode="wait">
+                  <motion.span
+                    key={placeholderIndex}
+                    initial={{ y: 20, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    exit={{ y: -20, opacity: 0 }}
+                    transition={{ duration: 0.3, ease: 'easeOut' }}
+                    className="absolute inset-0 flex items-center text-[15px] font-semibold text-[#8c94a1] truncate tracking-wide group-hover:text-gray-700 transition-colors"
+                  >
+                    {placeholders?.[placeholderIndex] || 'Search "desserts"'}
+                  </motion.span>
+                </AnimatePresence>
+              </div>
+              
+              <div className="w-[1px] h-6 bg-gray-100 mx-3"></div>
+              
+              <div className="p-2.5 rounded-full bg-[#f8f9fa] text-[#6b7280] group-hover:bg-gradient-to-br group-hover:from-orange-50 group-hover:to-red-50 group-hover:text-[#d82c23] transition-all flex items-center justify-center">
+                <Mic className="h-[18px] w-[18px]" strokeWidth={2.5} />
+              </div>
+            </div>
+          </motion.div>
+
+          {/* Veg Mode Toggle (Moved next to search) */}
+          <div 
+            className="flex-shrink-0 bg-white h-[52px] w-[52px] rounded-[18px] shadow-[0_4px_12px_rgba(0,0,0,0.06)] border border-gray-100 cursor-pointer active:scale-95 transition-all hover:shadow-[0_8px_20px_rgba(0,0,0,0.1)] flex flex-col items-center justify-center gap-1"
+            onClick={() => handleVegModeChange && handleVegModeChange(!isVegMode)}
+            ref={vegModeToggleRef}
+            title={isVegMode ? "Switch to All Food" : "Switch to Pure Veg"}
+          >
+            <div className={`w-5 h-5 rounded-[4px] border-[2px] flex items-center justify-center transition-colors ${isVegMode ? 'border-green-600 bg-green-50' : 'border-gray-400 bg-gray-50'}`}>
+               <div className={`w-2.5 h-2.5 rounded-full transition-colors ${isVegMode ? 'bg-green-600' : 'bg-gray-400'}`} />
+            </div>
+            <span className={`text-[9px] font-extrabold uppercase tracking-wider ${isVegMode ? 'text-green-700' : 'text-gray-500'}`}>Veg</span>
           </div>
         </div>
 
-        {/* 3. Banners Content (Rendering directly on the animated gradient background) */}
-      <div
-        className="relative w-full overflow-hidden h-[130px] pb-4 pt-2 flex flex-col z-30 bg-transparent"
-        style={{ fontFamily: "'Sora', sans-serif" }}
-      >
-        <div
-          className="flex h-full transition-transform duration-700 ease-in-out"
-          style={{ transform: `translateX(-${currentSlide * 100}%)` }}
+        {/* 2. Hero Greeting Banner (The large colorful card matching screenshot) */}
+        <motion.div 
+          className="px-5 pt-3 pb-2 w-full max-w-2xl mx-auto z-20 relative"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.1, ease: 'easeOut' }}
         >
-          {slideBanners.map((banner) => (
-            <div
-              key={banner.id}
-              className="w-full h-full shrink-0 flex items-center justify-between px-6"
-            >
-              {banner.content}
-            </div>
-          ))}
-        </div>
+          <div className={`relative w-full rounded-[28px] overflow-hidden shadow-[0_20px_40px_rgba(216,44,35,0.15)] bg-gradient-to-br ${isTaxi ? 'from-[#2563eb] via-[#1d4ed8] to-[#1e3a8a]' : 'from-[#d82c23] via-[#b3241d] to-[#7f1a14]'} p-6 flex items-center min-h-[190px]`}>
+            {/* Background embellishments */}
+            <div className="absolute inset-0 opacity-[0.15] mix-blend-overlay bg-[url('https://www.transparenttextures.com/patterns/stardust.png')]"></div>
+            <div className="absolute -top-10 -right-10 w-40 h-40 bg-white/10 rounded-full blur-2xl"></div>
+            <div className="absolute bottom-0 left-10 w-32 h-32 bg-black/10 rounded-full blur-xl"></div>
+            
+            <div className="flex justify-between items-center w-full relative z-10 h-full">
+              {/* Left Column (Greeting & Action Card) */}
+              <div className="flex flex-col items-start w-[65%] justify-center h-full pt-1">
+                <span className="text-[#fde68a] text-[13px] font-bold tracking-wide mb-0.5 drop-shadow-sm">
+                  Welcome back,
+                </span>
+                <h1 className="text-[34px] font-black text-white tracking-tight leading-none mb-1.5 drop-shadow-md">
+                  {isTaxi ? 'Rider!' : 'Foodie!'}
+                </h1>
+                <p className="text-white/90 text-[12px] font-medium leading-snug mb-3.5 max-w-[90%]">
+                  {isTaxi ? "Let's find you a quick and safe ride today." : "Let's find something delicious for you today."}
+                </p>
+                
+                {/* Horizontal rule (like screenshot) */}
+                <div className="w-8 h-1 bg-[#fde68a] rounded-full mb-4 shadow-sm"></div>
 
-        {/* Carousel Pager Dots */}
-        <div className="relative mt-2 flex justify-center gap-1.5 z-20">
-          {slideBanners.map((_, i) => (
-            <span
-              key={i}
-              className={`h-1 rounded-full transition-all duration-300 ${i === currentSlide ? 'bg-white w-4' : 'bg-white/40 w-1.5'}`}
-            />
-          ))}
-        </div>
+                {/* Removed Location Action Card (Moved to top nav) */}
+              </div>
+
+              {/* Right Column (The Dial Design) */}
+              <div className="absolute right-0 top-0 bottom-0 w-[200px] pointer-events-none z-20">
+                {isTaxi ? (
+                  <div className="absolute -right-4 top-1/2 -translate-y-1/2 w-[150px] h-[150px]">
+                    <motion.img 
+                      src={taxiIcon} 
+                      alt="Hero Graphic" 
+                      className="w-full h-full object-contain scale-[1.2] drop-shadow-[0_20px_30px_rgba(0,0,0,0.5)]"
+                      animate={{ y: [0, -10, 0], rotate: [0, 2, -2, 0] }}
+                      transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+                    />
+                  </div>
+                ) : (
+                  <div className="absolute top-1/2 -translate-y-1/2 -right-[120px] w-[260px] h-[260px] pointer-events-auto">
+                    {/* White Semi-Circle Background */}
+                    <div className="absolute inset-0 bg-white rounded-full shadow-[-10px_0_30px_rgba(0,0,0,0.1)] border border-gray-100"></div>
+                    
+                    {/* Red Inner Circle */}
+                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[130px] h-[130px] bg-gradient-to-br from-[#d82c23] to-[#9f1239] rounded-full shadow-inner flex flex-col items-start justify-center border-[6px] border-white ml-2 pointer-events-none pl-5">
+                      <span className="text-white/90 font-bold text-[9px] uppercase tracking-wider mb-0.5">Cravings??</span>
+                      <span className="text-white font-black text-[12px] leading-[1.1] drop-shadow-md tracking-tight">
+                        Grab your<br/>fav food
+                      </span>
+                    </div>
+
+                    {/* Rotating Track */}
+                    <motion.div 
+                      className="absolute inset-0 cursor-grab active:cursor-grabbing z-10"
+                      animate={{ rotate: -(dialIndex * (360 / DIAL_ITEMS.length)) }}
+                      transition={{ type: "spring", stiffness: 200, damping: 25 }}
+                      drag="y"
+                      dragConstraints={{ top: 0, bottom: 0 }}
+                      onPanEnd={handleDialPanEnd}
+                      onWheel={handleDialWheel}
+                    >
+                      {DIAL_ITEMS.map((item, i) => {
+                        const angle = i * (360 / DIAL_ITEMS.length);
+                        const isActive = i === dialIndex;
+                        return (
+                          <motion.div 
+                            key={item.id}
+                            className="absolute top-1/2 left-1/2"
+                            style={{ rotate: angle }}
+                          >
+                            <motion.div 
+                              className={`absolute rounded-full shadow-lg bg-white overflow-hidden border-2 border-white cursor-pointer`}
+                              style={{ x: -125, y: "-50%", left: "-50%" }}
+                              animate={{
+                                width: isActive ? 85 : 65,
+                                height: isActive ? 85 : 65,
+                                zIndex: isActive ? 10 : 0,
+                                borderWidth: isActive ? 3 : 2
+                              }}
+                              onMouseEnter={() => setDialIndex(i)}
+                              onClick={() => setDialIndex(i)}
+                            >
+                               <motion.div 
+                                  className="w-full h-full pointer-events-none"
+                                  animate={{ rotate: -(angle - (dialIndex * (360 / DIAL_ITEMS.length))) }}
+                                  transition={{ type: "spring", stiffness: 200, damping: 25 }}
+                               >
+                                  <img src={item.image} className="w-full h-full object-cover scale-110" alt={item.name} />
+                               </motion.div>
+                            </motion.div>
+                          </motion.div>
+                        );
+                      })}
+                    </motion.div>
+
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </motion.div>
+
+        {/* Search bar was moved from here */}
+
+
       </div>
     </div>
-    </>
   );
 }

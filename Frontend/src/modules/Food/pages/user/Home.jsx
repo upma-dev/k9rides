@@ -99,6 +99,7 @@ import HomeHeader from "@food/components/user/home/HomeHeader";
 import QuickSection from "@food/components/user/home/QuickSection";
 import PromoRow from "@food/components/user/home/PromoRow";
 import PromotionBannerCarousel from "@food/components/user/home/PromotionBannerCarousel";
+import StaticPromoBanners from "@food/components/user/home/StaticPromoBanners";
 
 
 // Explore More Icons
@@ -2895,6 +2896,8 @@ export default function Home() {
             toggleRef={vegModeToggleRef}
           />
 
+          <StaticPromoBanners banners={heroBannersData} />
+
           <PromotionBannerCarousel zoneId={zoneId} />
 
         {/* NEW UI START */}
@@ -3200,8 +3203,6 @@ export default function Home() {
           )}
           {/* NEW UI END */}
 
-
-          {HeroBannerSection}
 
           {recommendedForYouRestaurants.length > 0 && (
             <motion.section
