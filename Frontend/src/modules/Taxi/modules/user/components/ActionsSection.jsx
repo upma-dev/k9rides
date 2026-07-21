@@ -1,52 +1,39 @@
 import React from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { ArrowRight } from 'lucide-react';
 import { motion } from 'framer-motion';
 
-const ActionCard = ({ title, description, image, surfaceClass, titleClass, buttonClass, buttonText, path, delay = 0 }) => {
+const ActionCard = ({ title, description, image, bgColor, path, delay = 0 }) => {
   const navigate = useNavigate();
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
+      initial={{ opacity: 0, y: 10 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-20px" }}
-      transition={{ duration: 0.5, delay, type: "spring", stiffness: 300, damping: 24 }}
-      whileHover={{ y: -6, scale: 1.02 }}
+      transition={{ duration: 0.4, delay }}
       whileTap={{ scale: 0.96 }}
       onClick={(e) => {
         e.stopPropagation();
         navigate(path);
       }}
-      className={`group relative flex min-h-[176px] flex-1 flex-col overflow-hidden rounded-3xl border border-white/60 p-5 shadow-[0_12px_24px_rgba(2,6,23,0.06)] transition-all duration-300 hover:shadow-[0_20px_40px_rgba(2,6,23,0.12)] cursor-pointer ${surfaceClass}`}
+      className={`relative flex items-center justify-between overflow-hidden rounded-[16px] p-4 cursor-pointer w-full h-[110px] ${bgColor}`}
     >
-      <div className="absolute inset-0 bg-[radial-gradient(120px_90px_at_12%_20%,rgba(255,255,255,0.95),transparent_75%)]" aria-hidden="true" />
-
-      <div className="relative z-10 flex flex-1 flex-col pointer-events-none">
-        <div className="max-w-[150px]">
-          <h3 className={`text-[20px] font-black leading-none tracking-tight ${titleClass}`}>{title}</h3>
-          <p className="mt-2 text-[12.5px] font-bold leading-snug text-slate-500/90">{description}</p>
-        </div>
-
-        <div className="mt-auto pt-4">
-          <div
-            className={`relative inline-flex items-center rounded-full px-4 py-2.5 text-[12px] font-black whitespace-nowrap text-white shadow-lg overflow-hidden transition-all group-hover:scale-105 ${buttonClass}`}
-          >
-            <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
-            <span className="relative z-10 inline-flex items-center gap-2">
-              {buttonText}
-              <ArrowRight size={14} strokeWidth={3} className="transition-transform group-hover:translate-x-1" />
-            </span>
-          </div>
+      <div className="relative z-10 flex flex-col h-full justify-center w-[60%]">
+        <h3 className="text-[18px] font-black leading-tight text-white">{title}</h3>
+        <p className="mt-1 text-[12px] font-medium leading-snug text-white/80">{description}</p>
+        <div className="mt-2 inline-flex items-center justify-center w-8 h-8 rounded-full bg-white/20">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M5 12h14M12 5l7 7-7 7"/>
+          </svg>
         </div>
       </div>
 
-      <div className="pointer-events-none absolute -bottom-2 -right-4 w-[110px] opacity-95 transition-transform duration-500 group-hover:scale-110 group-hover:-rotate-3 group-hover:-translate-y-2 group-hover:-translate-x-2">
+      <div className="absolute right-0 bottom-0 h-full w-[45%] flex items-end justify-end overflow-hidden">
         <img
           src={image}
           alt=""
-          aria-hidden="true"
-          className="w-full h-auto object-contain drop-shadow-[0_22px_38px_rgba(2,6,23,0.25)]"
+          style={{ color: 'transparent' }}
+          className="w-full h-auto object-contain object-right-bottom transform scale-110 origin-bottom-right"
         />
       </div>
     </motion.div>
@@ -59,38 +46,32 @@ const ActionsSection = () => {
   const resolvePath = (path) => `${routePrefix}${path}`;
 
   return (
-    <div className="px-5 mt-4">
+    <div className="px-5 mt-6 mb-6">
       <motion.div 
         initial={{ opacity: 0, x: -10 }} 
         whileInView={{ opacity: 1, x: 0 }} 
         viewport={{ once: true }}
         transition={{ duration: 0.4 }}
-        className="mb-4 ml-1"
+        className="mb-3"
       >
-        <h2 className="text-[20px] font-black text-slate-900 tracking-tight">What do you need today?</h2>
+        <h2 className="text-[18px] font-black text-white tracking-tight">What do you need today?</h2>
       </motion.div>
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="flex flex-col gap-3">
         <ActionCard
           title="Ride"
-          description="Bike, auto, and cab rides."
+          description="Bike, auto, and cab rides"
           image="/1_Bike.png"
-          surfaceClass="bg-gradient-to-br from-orange-50/90 via-white/80 to-amber-100/60"
-          titleClass="text-slate-900"
-          buttonClass="bg-gradient-to-r from-emerald-500 to-emerald-600 shadow-emerald-500/30"
-          buttonText="Book Now"
+          bgColor="bg-[#1e293b]"
           path={resolvePath('/ride/select-location')}
           delay={0.1}
         />
 
         <ActionCard
           title="Delivery"
-          description="Send parcels across the city."
+          description="Send parcels across the city"
           image="/5_Parcel.png"
-          surfaceClass="bg-gradient-to-br from-indigo-50/90 via-white/80 to-blue-100/60"
-          titleClass="text-slate-900"
-          buttonClass="bg-gradient-to-r from-indigo-500 to-indigo-600 shadow-indigo-500/30"
-          buttonText="Send Now"
+          bgColor="bg-[#334155]"
           path={resolvePath('/parcel/type')}
           delay={0.2}
         />

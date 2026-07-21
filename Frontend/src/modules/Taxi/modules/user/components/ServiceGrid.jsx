@@ -7,7 +7,6 @@ const getServiceAction = (serviceType, navigate) => {
   switch (serviceType?.toLowerCase()) {
     case 'normal': return () => navigate('/taxi/user/ride/select-location');
     case 'outstation': return () => navigate('/taxi/user/ride/select-location?rideType=outstation');
-    // case 'rental': return () => navigate('/taxi/user/rental/select'); // rental commented out as per previous request
     case 'bid': return () => navigate('/taxi/user/ride/select-location?rideType=bid');
     case 'pooling': return () => navigate('/taxi/user/pooling');
     default: return () => navigate('/taxi/user/ride/select-location');
@@ -44,8 +43,11 @@ const ServiceGrid = () => {
   }, [navigate, appModules]);
 
   return (
-    <div className="px-5 mb-6">
-      <div className="grid grid-cols-3 gap-3">
+    <div className="w-full mt-2 mb-4 relative z-10">
+      <div 
+        className="flex gap-4 overflow-x-auto snap-x snap-mandatory hide-scrollbar px-5 pb-2 flex-nowrap"
+        style={{ scrollBehavior: 'smooth' }}
+      >
         {services.map((service, index) => {
           return (
             <motion.div
@@ -53,21 +55,28 @@ const ServiceGrid = () => {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.1 }}
+              whileTap={{ scale: 0.95 }}
               onClick={service.action}
-              className="flex flex-col items-center justify-center gap-2 p-3 rounded-2xl bg-white shadow-[0_8px_20px_rgba(15,23,42,0.06)] border border-slate-100 cursor-pointer hover:shadow-lg transition-all"
+              className="snap-start flex-shrink-0 flex flex-col items-center justify-start gap-2 cursor-pointer w-[72px]"
             >
-              <div className="w-14 h-14 rounded-full flex items-center justify-center bg-gray-50 border border-gray-100 overflow-hidden p-2 text-slate-400">
+              <div className="w-[64px] h-[64px] rounded-full bg-[#1e293b] flex items-center justify-center p-3">
                 {service.adminIcon ? (
                   <img src={service.adminIcon} alt={service.title} className="w-full h-full object-contain" />
                 ) : (
-                  <span className="text-[10px] font-bold">NO IMG</span>
+                  <span className="text-[9px] font-bold text-slate-400">NO IMG</span>
                 )}
               </div>
-              <span className="text-[11px] font-black tracking-tight text-slate-700">{service.title}</span>
+              <span className="text-[12px] font-bold text-white text-center leading-tight whitespace-nowrap overflow-hidden text-ellipsis w-full">
+                {service.title}
+              </span>
             </motion.div>
           );
         })}
       </div>
+      <style>{`
+        .hide-scrollbar::-webkit-scrollbar { display: none !important; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none !important; }
+      `}</style>
     </div>
   );
 };

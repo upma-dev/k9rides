@@ -958,22 +958,22 @@ export default function Under250() {
 
     <div className={`relative min-h-screen bg-white dark:bg-[#0a0a0a] ${shouldShowGrayscale ? 'grayscale opacity-75' : ''}`}>
       {/* Premium Glassmorphic Header Wrapper (Replica of Dining) */}
-      <div className="sticky top-0 z-50 w-full bg-white/90 dark:bg-[#0a0a0a]/90 backdrop-blur-xl shadow-sm border-b border-gray-100 dark:border-gray-900 md:hidden">
+      <div className="sticky top-0 z-50 w-full bg-gradient-to-r from-[#d82c23] to-[#ff6d00] rounded-b-[24px] shadow-[0_10px_20px_rgba(216,44,35,0.15)] md:hidden pb-1">
         {/* Top Row: Location & Profile */}
-        <div className="px-4 pt-3 pb-2 flex items-center justify-between">
+        <div className="px-5 pt-6 pb-5 flex items-center justify-between max-w-2xl mx-auto">
           <div 
             className="flex items-center gap-2 cursor-pointer group max-w-[70%]"
             onClick={openLocationSelector}
           >
-            <div className="bg-[#711313]/10 p-2 rounded-full border border-[#711313]/20">
+            <div className="bg-white p-2.5 rounded-[14px] border border-gray-100 shadow-[0_4px_12px_rgba(0,0,0,0.04)]">
               <MapPin className="h-[18px] w-[18px] text-[#711313]" />
             </div>
             <div className="flex flex-col min-w-0">
               <div className="flex items-center gap-1 group-hover:translate-x-0.5 transition-transform">
-                <span className="text-[10px] font-bold text-gray-500 tracking-wider uppercase">Location</span>
-                <ChevronDown className="h-3 w-3 text-[#711313]" />
+                <span className="text-[10px] font-bold text-white/90 tracking-wider uppercase">Location</span>
+                <ChevronDown className="h-3 w-3 text-white" />
               </div>
-              <span className="text-sm font-bold text-gray-900 dark:text-white truncate">
+              <span className="text-sm font-bold text-white truncate">
                 {displayLocation}
               </span>
             </div>
@@ -982,12 +982,12 @@ export default function Under250() {
           <div className="flex items-center gap-x-2 sm:gap-x-3">
             {/* Wallet Action */}
             <Link to="/user/wallet" className="flex items-center justify-center h-8 w-8 sm:h-[38px] sm:w-[38px] rounded-full bg-gray-100/80 dark:bg-gray-800 border border-gray-200/60 dark:border-gray-700 shadow-sm transition hover:bg-gray-200 active:scale-95">
-              <Wallet className="h-[15px] w-[15px] sm:h-[18px] sm:w-[18px] text-gray-800 dark:text-gray-200" strokeWidth={2} />
+              <Wallet className="h-[15px] w-[15px] sm:h-[18px] sm:w-[18px] text-[#d82c23]" strokeWidth={2} />
             </Link>
 
             {/* Cart Action */}
             <Link to="/user/cart" className="flex items-center justify-center h-8 w-8 sm:h-[38px] sm:w-[38px] relative rounded-full bg-gray-100/80 dark:bg-gray-800 border border-gray-200/60 dark:border-gray-700 shadow-sm transition hover:bg-gray-200 active:scale-95">
-              <ShoppingCart className="h-[15px] w-[15px] sm:h-[18px] sm:w-[18px] text-gray-800 dark:text-gray-200" strokeWidth={2} />
+              <ShoppingCart className="h-[15px] w-[15px] sm:h-[18px] sm:w-[18px] text-[#d82c23]" strokeWidth={2} />
               {cartCount > 0 && (
                 <span className="absolute -top-1 -right-1 w-[16px] h-[16px] sm:w-[18px] sm:h-[18px] bg-[#711313] rounded-full flex items-center justify-center ring-2 ring-white dark:ring-[#0a0a0a]">
                   <span className="text-[9px] font-bold text-white">{cartCount > 99 ? "99+" : cartCount}</span>
@@ -1002,7 +1002,7 @@ export default function Under250() {
       <div
         ref={bannerShellRef}
         data-banner-shell="true"
-        className="relative w-full overflow-hidden h-[clamp(240px,40vw,520px)] bg-white"
+        className="relative w-full overflow-hidden h-[180px] sm:h-[220px] md:h-[260px] lg:h-[300px] mt-4 px-4 sm:px-6 md:px-8 lg:px-10 xl:px-12 max-w-7xl mx-auto rounded-[24px] sm:rounded-[32px] shadow-sm"
       >
         <div
           className="absolute inset-0 z-0 overflow-hidden"
@@ -1061,26 +1061,36 @@ export default function Under250() {
               overflowY: "hidden",
             }}
           >
-            {/* All Button */}
-            <div className="flex-shrink-0 cursor-pointer" onClick={() => setActiveCategory(null)}>
+                        {/* All Button - Interactive & Attractive */}
+            <div className="flex-shrink-0 cursor-pointer group" onClick={() => setActiveCategory(null)}>
               <motion.div
                 className="flex flex-col items-center gap-2 w-[62px] sm:w-24 md:w-28"
-                whileHover={{ scale: 1.1, y: -4 }}
+                whileHover={{ scale: 1.05, y: -2 }}
                 whileTap={{ scale: 0.95 }}
-                transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                transition={{ type: "spring", stiffness: 400, damping: 17 }}
               >
-                <div className={`w-14 h-14 sm:w-20 sm:h-20 md:w-24 md:h-24 rounded-full overflow-hidden shadow-md transition-all ${!activeCategory ? 'ring-2 ring-[#711313] ring-offset-2' : ''}`}>
-                  <OptimizedImage
-                    src={offerImage}
-                    alt="All"
-                    className="w-full h-full bg-white rounded-full"
-                    objectFit="cover"
-                    sizes="(max-width: 640px) 62px, (max-width: 768px) 96px, 112px"
-                    placeholder="blur"
-                  />
+                <div className={`relative flex items-center justify-center w-14 h-14 sm:w-20 sm:h-20 md:w-24 md:h-24 rounded-[20px] sm:rounded-[28px] md:rounded-[32px] overflow-hidden shadow-lg transition-all duration-300 ${!activeCategory ? 'ring-4 ring-[#ff6d00]/30 shadow-[#ff6d00]/20' : 'hover:shadow-xl hover:shadow-[#ff6d00]/10'}`}>
+                  {/* Vibrant animated gradient background */}
+                  <div className="absolute inset-0 bg-gradient-to-br from-[#d82c23] via-[#ff6d00] to-[#ff9d4a] opacity-90 group-hover:opacity-100 transition-opacity duration-300"></div>
+                  
+                  {/* Subtle rotating glow effect */}
+                  <div className="absolute w-[150%] h-[150%] bg-[conic-gradient(from_0deg,transparent_0_340deg,white_360deg)] opacity-20 animate-[spin_3s_linear_infinite]"></div>
+                  
+                  {/* Inner glass overlay */}
+                  <div className="absolute inset-[2px] bg-gradient-to-br from-white/20 to-transparent rounded-[18px] sm:rounded-[26px] md:rounded-[30px] backdrop-blur-[2px]"></div>
+
+                  {/* Icon */}
+                  <div className="relative z-10 flex flex-col items-center justify-center transform group-hover:scale-110 transition-transform duration-500 ease-out">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5 sm:w-7 sm:h-7 md:w-8 md:h-8 mb-0.5 filter drop-shadow-sm">
+                      <rect x="3" y="3" width="7" height="7" rx="1.5"></rect>
+                      <rect x="14" y="3" width="7" height="7" rx="1.5"></rect>
+                      <rect x="14" y="14" width="7" height="7" rx="1.5"></rect>
+                      <rect x="3" y="14" width="7" height="7" rx="1.5"></rect>
+                    </svg>
+                  </div>
                 </div>
-                <span className={`text-xs sm:text-sm md:text-base font-semibold text-gray-800 dark:text-gray-200 text-center pb-1 ${!activeCategory ? 'text-[#711313]' : ''}`}>
-                  All
+                <span className={`text-[11px] sm:text-sm md:text-base font-bold text-center pb-1 transition-colors duration-300 ${!activeCategory ? 'text-[#d82c23] dark:text-[#ff9d4a]' : 'text-gray-600 dark:text-gray-300 group-hover:text-gray-900 dark:group-hover:text-white'}`}>
+                  Explore All
                 </span>
               </motion.div>
             </div>

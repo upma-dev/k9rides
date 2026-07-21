@@ -126,7 +126,7 @@ const LocationMapSection = () => {
       <div className="flex items-center justify-between gap-3">
         <div className="min-w-0 flex-1">
           <p className="text-[10px] font-black uppercase tracking-[0.26em] text-slate-400">Map</p>
-          <h3 className="mt-0.5 flex items-baseline gap-1 text-[16px] font-black tracking-tight text-slate-900">
+          <h3 className="mt-0.5 flex items-baseline gap-1 text-[16px] font-black tracking-tight text-white">
             <span className="truncate">Pin your location</span>
             <span className="inline-flex" aria-hidden="true">
               {[0, 1, 2].map((dot) => (
@@ -146,7 +146,7 @@ const LocationMapSection = () => {
               ))}
             </span>
           </h3>
-          <p className="mt-0.5 truncate text-[11px] font-bold text-slate-500">{helperText}</p>
+          <p className="mt-0.5 truncate text-[11px] font-bold text-slate-400">{helperText}</p>
         </div>
 
         <motion.button
@@ -159,7 +159,7 @@ const LocationMapSection = () => {
             <Navigation 
               size={14} 
               strokeWidth={2.8} 
-              className={`transition-colors ${status === 'loading' ? 'animate-pulse text-emerald-600' : 'text-slate-500'}`} 
+              className={`transition-colors ${status === 'loading' ? 'animate-pulse text-emerald-600' : 'text-slate-400'}`} 
             />
             {coords && (
               <motion.span
@@ -191,8 +191,8 @@ const LocationMapSection = () => {
             {!HAS_VALID_GOOGLE_MAPS_KEY && (
               <div className="flex h-full w-full items-center justify-center px-5 text-center">
                 <div>
-                  <p className="text-[12px] font-black text-slate-900">Google Maps key missing</p>
-                  <p className="mt-1 text-[11px] font-bold text-slate-500">Add `VITE_GOOGLE_MAPS_API_KEY` in `frontend/.env`.</p>
+                  <p className="text-[12px] font-black text-white">Google Maps key missing</p>
+                  <p className="mt-1 text-[11px] font-bold text-slate-400">Add `VITE_GOOGLE_MAPS_API_KEY` in `frontend/.env`.</p>
                 </div>
               </div>
             )}
@@ -200,8 +200,8 @@ const LocationMapSection = () => {
             {HAS_VALID_GOOGLE_MAPS_KEY && loadError && (
               <div className="flex h-full w-full items-center justify-center px-5 text-center">
                 <div>
-                  <p className="text-[12px] font-black text-slate-900">Map failed to load</p>
-                  <p className="mt-1 text-[11px] font-bold text-slate-500">Check your Google Maps browser key restrictions.</p>
+                  <p className="text-[12px] font-black text-white">Map failed to load</p>
+                  <p className="mt-1 text-[11px] font-bold text-slate-400">Check your Google Maps browser key restrictions.</p>
                 </div>
               </div>
             )}
@@ -209,8 +209,8 @@ const LocationMapSection = () => {
             {HAS_VALID_GOOGLE_MAPS_KEY && !loadError && !isLoaded && (
               <div className="flex h-full w-full items-center justify-center">
                 <div className="flex items-center gap-2 rounded-[16px] bg-white/90 px-4 py-3 shadow-sm">
-                  <LoaderCircle size={18} className="animate-spin text-slate-500" />
-                  <span className="text-[12px] font-black text-slate-700">Loading map</span>
+                  <LoaderCircle size={18} className="animate-spin text-slate-400" />
+                  <span className="text-[12px] font-black text-slate-300">Loading map</span>
                 </div>
               </div>
             )}
@@ -337,7 +337,7 @@ const LocationMapSection = () => {
               <button
                 type="button"
                 onClick={requestLocation}
-                className="absolute bottom-2 left-2 z-20 rounded-full border border-white/80 bg-white/90 px-3 py-2 text-[11px] font-black text-slate-700 shadow-sm active:scale-[0.99]"
+                className="absolute bottom-2 left-2 z-20 rounded-full border border-white/80 bg-white/90 px-3 py-2 text-[11px] font-black text-slate-300 shadow-sm active:scale-[0.99]"
               >
                 Use my location
               </button>

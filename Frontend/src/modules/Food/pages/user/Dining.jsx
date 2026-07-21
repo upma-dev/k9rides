@@ -187,10 +187,9 @@ export default function Dining() {
     const fetchDiningData = async () => {
       try {
         setLoading(true)
-        const [bannerResponse, cats, rests] = await Promise.all([
+        const [bannerResponse, rests] = await Promise.all([
           diningAPI.getHeroBanners().catch(() => ({ data: { success: false, data: { banners: [] } } })),
-          diningAPI.getCategories(),
-          diningAPI.getRestaurants(location?.city ? { city: location.city } : {}),
+          diningAPI.getRestaurants(location?.city ? { city: location.city } : {}).catch(() => ({ data: { success: false, data: [] } }))
         ])
 
         const heroBanners = Array.isArray(bannerResponse?.data?.data?.banners)
@@ -210,7 +209,7 @@ export default function Dining() {
           : []
 
         setDiningHeroBanners(heroBanners)
-        setCategories(cats?.data?.success ? (cats.data.data || []) : [])
+        setCategories([])
         setRestaurantList(rests?.data?.success ? (rests.data.data || []) : [])
       } catch (error) {
         debugError("Failed to fetch dining data", error)
@@ -582,7 +581,7 @@ export default function Dining() {
           initial={{ opacity: 0, y: 24, scale: 0.98 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
           transition={{ duration: 0.6, ease: "easeOut" }}
-          className="relative w-full h-[30vh] sm:h-[35vh] lg:h-[40vh] rounded-2xl overflow-hidden shadow-lg"
+          className="relative w-full h-[180px] sm:h-[240px] lg:h-[300px] mt-4 rounded-2xl overflow-hidden shadow-lg"
         >
           {diningHeroBanners.length > 0 ? (
             <div
@@ -671,66 +670,7 @@ export default function Dining() {
 
       {/* Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 lg:px-10 xl:px-12 pt-6 sm:pt-8 md:pt-10 lg:pt-12 pb-6 md:pb-8 lg:pb-10">
-        {/* Categories Section */}
-        <div className="mb-6">
-          <div className="mb-4 sm:mb-5">
-            <div className="flex items-center gap-3 sm:gap-4">
-              <div className="h-px flex-1 bg-[#ece5dc]" />
-              <h3 className="font-['Poppins',_'Nunito_Sans',sans-serif] text-[10px] sm:text-[11px] font-medium uppercase tracking-[0.38em] text-[#8f8478] text-center whitespace-nowrap">
-                What are you looking for?
-              </h3>
-              <div className="h-px flex-1 bg-[#ece5dc]" />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-3 gap-2.5 sm:gap-3 md:gap-4">
-            {loading
-              ? loadingCategoryCards.map((key, index) => (
-                <DiningCategorySkeleton key={key} index={index} />
-              ))
-              : filteredCategories.map((category, index) => (
-              <Link
-                key={category._id || category.id}
-                to={`/user/dining/${category.slug}`}
-              >
-                <motion.div
-                  className="relative h-[138px] sm:h-[154px] md:h-[166px] overflow-hidden rounded-[18px] border border-[#fecdd3] bg-white shadow-[0_1px_2px_rgba(35,24,12,0.05)] cursor-pointer group"
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true, margin: "-50px" }}
-                  transition={{ duration: 0.4, delay: index * 0.05 }}
-                  whileHover={{ y: -2, boxShadow: "0 10px 24px -18px rgba(63, 38, 18, 0.24)" }}
-                >
-                  <div className="absolute inset-x-0 top-0 z-10 px-3 pt-3 sm:px-4 sm:pt-4">
-                    <p className="font-['Poppins',_'Nunito_Sans',sans-serif] max-w-[74%] text-[13px] sm:text-[15px] md:text-[16px] font-semibold leading-[1.02] tracking-[-0.02em] text-[#2d2722]">
-                      {category.name}
-                    </p>
-                  </div>
-
-                  <div className="absolute inset-x-0 bottom-0 h-[64%] overflow-hidden rounded-b-[18px]">
-                    {category.imageUrl ? (
-                      <OptimizedImage
-                        src={category.imageUrl}
-                        alt={category.name}
-                        className="w-full h-full transition-transform duration-500 group-hover:scale-[1.03]"
-                        objectFit="cover"
-                        sizes="(max-width: 640px) 31vw, (max-width: 768px) 180px, 220px"
-                        placeholder="blur"
-                        priority={index < 6}
-                      />
-                    ) : (
-                      <div className={`relative h-full w-full bg-[radial-gradient(circle_at_20%_20%,rgba(235,89,14,0.22),transparent_35%),linear-gradient(180deg,#fff7ee_0%,#fff1f2_100%)] ${shimmerClassName}`}>
-                        <div className="absolute inset-x-0 bottom-0 h-[70%] rounded-t-[60%] bg-white/55" />
-                      </div>
-                    )}
-                  </div>
-                </motion.div>
-              </Link>
-              ))}
-          </div>
-        </div>
-
-        {/* Popular Restaurants Around You Section */}
+{/* Popular Restaurants Around You Section */}
         <div className="mb-6 mt-8 sm:mt-12">
           <div className="mb-6">
             <div className="flex items-center justify-between mb-4 px-1">
@@ -743,67 +683,6 @@ export default function Dining() {
             </div>
           </div>
 
-          {loading ? (
-            <section className="mb-4 py-1">
-              <div className="flex items-center gap-2 overflow-hidden pb-1">
-                {Array.from({ length: 6 }, (_, index) => (
-                  <div
-                    key={`filter-skeleton-${index}`}
-                    className={`relative h-8 rounded-md border border-[#efe3d7] bg-[#fff7f1] ${shimmerClassName}`}
-                    style={{ width: index === 0 ? 90 : index % 2 === 0 ? 122 : 108 }}
-                  />
-                ))}
-              </div>
-            </section>
-          ) : (
-            <section className="py-1 mb-4">
-              <div
-                className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto scrollbar-hide pb-1"
-                style={{
-                  scrollbarWidth: "none",
-                  msOverflowStyle: "none",
-                }}
-              >
-                {/* Filter Button - Opens Modal */}
-                <Button
-                  variant="outline"
-                  onClick={() => setIsFilterOpen(true)}
-                  className="h-7 sm:h-8 px-2 sm:px-3 rounded-md flex items-center gap-1.5 whitespace-nowrap flex-shrink-0 font-medium transition-all bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300"
-                >
-                  <SlidersHorizontal className="h-3 w-3 sm:h-4 sm:w-4" />
-                  <span className="text-xs sm:text-sm font-bold text-black dark:text-white">Filters</span>
-                </Button>
-
-                {/* Filter Buttons */}
-                {[
-                  { id: 'delivery-under-30', label: 'Under 30 mins' },
-                  { id: 'delivery-under-45', label: 'Under 45 mins' },
-                  { id: 'distance-under-1km', label: 'Under 1km', icon: MapPin },
-                  { id: 'distance-under-2km', label: 'Under 2km', icon: MapPin },
-                  { id: 'rating-35-plus', label: '3.5+ Rating' },
-                  { id: 'rating-4-plus', label: '4.0+ Rating' },
-                  { id: 'rating-45-plus', label: '4.5+ Rating' },
-                ].map((filter) => {
-                  const Icon = filter.icon
-                  const isActive = activeFilters.has(filter.id)
-                  return (
-                    <Button
-                      key={filter.id}
-                      variant="outline"
-                      onClick={() => toggleFilter(filter.id)}
-                      className={`h-7 sm:h-8 px-2 sm:px-3 rounded-md flex items-center gap-1.5 whitespace-nowrap flex-shrink-0 transition-all font-medium ${isActive
-                        ? 'bg-[#d82c23] text-white border border-[#d82c23] hover:bg-[#b91c1c]'
-                        : 'bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-300'
-                        }`}
-                    >
-                      {Icon && <Icon className={`h-3 w-3 sm:h-4 sm:w-4 ${isActive ? 'text-white fill-white' : 'text-current'}`} />}
-                      <span className={`text-xs sm:text-sm font-bold ${isActive ? 'text-white' : 'text-black dark:text-white'}`}>{filter.label}</span>
-                    </Button>
-                  )
-                })}
-              </div>
-            </section>
-          )}
 
           {/* Restaurant Cards */}
           {loading ? (

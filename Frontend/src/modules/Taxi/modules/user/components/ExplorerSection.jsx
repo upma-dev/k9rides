@@ -1,6 +1,5 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowRight, MapPin } from 'lucide-react';
 import { motion } from 'framer-motion';
 import indiaGateImg from '@/assets/india_gate_real.png';
 import jaipurImg from '@/assets/jaipur.avif';
@@ -42,76 +41,68 @@ const ExplorerSection = () => {
   };
 
   return (
-    <div className="px-0 pb-10 flex flex-col gap-10 mt-2">
-      <div className="px-5">
-        <motion.div 
-          initial={{ opacity: 0, x: -10 }} 
-          whileInView={{ opacity: 1, x: 0 }} 
-          viewport={{ once: true }}
-          transition={{ duration: 0.4 }}
-          className="mb-4 ml-1"
-        >
-          <h2 className="text-[20px] font-black text-slate-900 tracking-tight">Explore India</h2>
-          <p className="mt-1 text-[12px] font-bold text-slate-500">
-            Top tourist destinations across the country.
-          </p>
-        </motion.div>
+    <div className="w-full mb-8 mt-6">
+      <div className="px-5 mb-3">
+        <h2 className="text-[18px] font-black text-white tracking-tight leading-tight">
+          Explore India
+        </h2>
+        <p className="mt-1 text-[12px] font-medium text-slate-400">
+          Top tourist destinations across the country
+        </p>
       </div>
 
       <div 
-        className="flex gap-4 overflow-x-auto snap-x snap-mandatory hide-scrollbar px-5 pb-6 flex-nowrap"
+        className="flex gap-4 overflow-x-auto snap-x snap-mandatory hide-scrollbar px-5 pb-8 flex-nowrap"
         style={{ scrollBehavior: 'smooth' }}
       >
         {indiaCities.map((city, idx) => (
           <motion.div
             key={idx}
-            initial={{ opacity: 0, scale: 0.95 }}
-            whileInView={{ opacity: 1, scale: 1 }}
+            initial={{ opacity: 0, x: 20 }}
+            whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true, margin: "-20px" }}
-            transition={{ duration: 0.5, delay: idx * 0.1 }}
+            transition={{ duration: 0.4, delay: idx * 0.1 }}
             className="snap-start flex-shrink-0 w-[240px]"
           >
             <button
               type="button"
               onClick={() => handleExploreDestination(city)}
-              className="w-full group text-left transition-all active:scale-[0.97] cursor-pointer outline-none block"
+              className="w-full group text-left transition-all active:scale-[0.98] cursor-pointer outline-none block"
             >
-              <div className="rounded-3xl bg-white border border-slate-100 shadow-[0_12px_30px_rgba(15,23,42,0.08)] overflow-hidden h-[300px] transition-all relative">
-                {/* Image Background */}
-                <img
-                  src={city.image}
-                  alt={city.title}
-                  loading="lazy"
-                  onError={(e) => {
-                    e.target.onerror = null;
-                    e.target.src = 'https://images.unsplash.com/photo-1524492412937-b28074a5d7da?auto=format&fit=crop&w=400&q=80';
-                  }}
-                  className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-110"
-                />
-                
-                {/* Dark Gradient Overlay */}
-                <div className="absolute inset-0 bg-gradient-to-b from-transparent via-slate-900/40 to-slate-900/90" />
-                
-                {/* Floating Top Badge */}
-                <div className="absolute top-4 left-4 bg-white/20 backdrop-blur-md px-3 py-1.5 rounded-full shadow-sm border border-white/30 z-10 flex items-center gap-1.5">
-                  <MapPin size={12} className="text-white" />
-                  <p className="text-[10px] font-black text-white tracking-widest uppercase">{city.code}</p>
+              <div className="rounded-[16px] bg-[#1e293b] overflow-hidden h-[260px] flex flex-col">
+                {/* Image Top Half */}
+                <div className="h-[160px] w-full overflow-hidden relative">
+                  <img
+                    src={city.image}
+                    alt={city.title}
+                    loading="lazy"
+                    onError={(e) => {
+                      e.target.onerror = null;
+                      e.target.src = 'https://images.unsplash.com/photo-1524492412937-b28074a5d7da?auto=format&fit=crop&w=400&q=80';
+                    }}
+                    className="absolute inset-0 w-full h-full object-cover"
+                  />
+                  <div className="absolute top-3 left-3 bg-white px-2 py-1 rounded text-[10px] font-black text-slate-900 tracking-wider uppercase">
+                    {city.code}
+                  </div>
                 </div>
-
-                {/* Bottom Content */}
-                <div className="absolute bottom-0 inset-x-0 p-5 z-20 flex flex-col justify-end h-full">
-                  <h4 className="text-[20px] font-black text-white leading-tight tracking-tight drop-shadow-md">
-                    {city.title}
-                  </h4>
-                  <p className="text-[13px] text-slate-200 font-medium mt-1 mb-4 opacity-90">
-                    {city.label}
-                  </p>
+                
+                {/* Content Bottom Half */}
+                <div className="p-4 flex flex-col justify-between flex-1">
+                  <div>
+                    <h4 className="text-[18px] font-black text-white leading-tight">
+                      {city.title}
+                    </h4>
+                    <p className="text-[12px] text-slate-400 font-medium mt-1">
+                      {city.label}
+                    </p>
+                  </div>
                   
-                  {/* Sliding Arrow Button */}
-                  <div className="w-full flex justify-end overflow-hidden">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white/20 backdrop-blur-md border border-white/30 text-white transition-all duration-300 group-hover:bg-white group-hover:text-slate-900">
-                      <ArrowRight size={18} strokeWidth={3} className="transition-transform duration-300 group-hover:translate-x-0.5" />
-                    </div>
+                  <div className="flex items-center gap-2 mt-2">
+                    <span className="text-[12px] font-bold text-blue-400">Book outstation</span>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="text-blue-400">
+                      <path d="M5 12h14M12 5l7 7-7 7"/>
+                    </svg>
                   </div>
                 </div>
               </div>
@@ -119,6 +110,11 @@ const ExplorerSection = () => {
           </motion.div>
         ))}
       </div>
+      
+      <style>{`
+        .hide-scrollbar::-webkit-scrollbar { display: none !important; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none !important; }
+      `}</style>
     </div>
   );
 };

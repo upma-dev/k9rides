@@ -1,13 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { useLocation, useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { MapPin, Search, Wallet, Utensils, Car } from 'lucide-react';
+import { MapPin, Search, Wallet, Utensils, Car, Bell } from 'lucide-react';
 import { DEFAULT_LOCATION_LABEL, getSavedLocationLabel, LOCATION_UPDATED_EVENT } from '../services/locationStore';
 import foodIcon from '@food/assets/category-icons/food.png.png';
 import taxiIcon from '@food/assets/category-icons/taxi.png.png';
-
 import { useSettings } from '../../../shared/context/SettingsContext';
-
 
 const HeaderGreeting = () => {
   const navigate = useNavigate();
@@ -21,8 +19,8 @@ const HeaderGreeting = () => {
   const walletPath = `${routePrefix}/wallet`;
   const isTaxi = location.pathname.includes('/taxi');
   const theme = {
-    activeBg: isTaxi ? 'bg-[#059669]' : 'bg-[#d82c23]',
-    activeHex: isTaxi ? '#059669' : '#d82c23',
+    activeBg: isTaxi ? 'bg-[#2563eb]' : 'bg-[#d82c23]',
+    activeHex: isTaxi ? '#2563eb' : '#d82c23',
     inactiveHex: isTaxi ? '#0c1428' : '#6e0d09',
     containerHex: isTaxi ? '#111d3a' : '#9c1c16',
   };
@@ -56,129 +54,79 @@ const HeaderGreeting = () => {
         className="w-full pb-0 shadow-none overflow-visible"
         style={{ backgroundColor: theme.containerHex }}
       >
-      {/* Top Location / Header Greeting Row */}
-      <div className="px-5 pt-6 flex items-center justify-between gap-3">
-        <div className="flex min-w-0 items-center gap-3">
-          <motion.div
-            initial={{ opacity: 0, y: -8, scale: 0.94 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            transition={{ duration: 0.45, ease: 'easeOut' }}
-            className="relative inline-flex items-center rounded-full px-1 py-0.5"
-          >
-            <motion.div
-              aria-hidden="true"
-              className="absolute inset-x-3 inset-y-1.5 rounded-full bg-emerald-500/5 blur-md"
-              animate={{ opacity: [0.2, 0.5, 0.2], scale: [0.92, 1.06, 0.92] }}
-              transition={{ duration: 3.2, repeat: Infinity, ease: 'easeInOut' }}
-            />
-            {appLogo ? (
-              <motion.img
-                key={appLogo}
-                src={appLogo}
-                alt={appName}
-                className="relative z-10 h-12 object-contain drop-shadow-sm"
-                style={{
-                  filter: 'url(#remove-white)'
-                }}
-                animate={{ y: [0, -2, 0], scale: [1, 1.02, 1] }}
-                transition={{ duration: 3.2, repeat: Infinity, ease: 'easeInOut' }}
-              />
-            ) : (
-              <div className="relative z-10 flex h-12 min-w-[48px] items-center justify-center rounded-full bg-white/10 px-3 text-[12px] font-black uppercase tracking-[0.18em] text-white">
-                {appName.slice(0, 2)}
-              </div>
-            )}
-          </motion.div>
-
-          <motion.button
-            type="button"
-            initial={{ opacity: 0, y: -6 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.45, delay: 0.03, ease: 'easeOut' }}
-            whileTap={{ scale: 0.99 }}
+        {/* 1. Top Navigation Bar (Food App Style) */}
+        <motion.div 
+          className="flex items-center justify-between px-5 pt-6 pb-5 bg-gradient-to-r from-[#2563eb] to-[#3b82f6] rounded-b-[24px] shadow-[0_10px_20px_rgba(37,99,235,0.15)] relative z-50 w-full"
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+        >
+          {/* Left: Location Icon */}
+          <div 
+            className="bg-white p-2.5 rounded-[14px] border border-gray-100 shadow-[0_4px_12px_rgba(0,0,0,0.04)] cursor-pointer hover:bg-gray-50 active:scale-95 transition-all flex items-center justify-center"
             onClick={() => navigate(selectLocationPath)}
-            className="group flex min-w-0 flex-1 items-center gap-2 rounded-lg bg-transparent px-0 py-0 text-left transition-opacity active:opacity-80"
           >
-            <MapPin size={16} className="text-white/60 transition-colors group-hover:text-white" strokeWidth={2.5} />
+            <MapPin className="h-5 w-5 text-blue-600" />
+          </div>
 
-            <div className="min-w-0 flex-1">
-              <p className="text-[9px] font-black uppercase tracking-[0.22em] text-white/50">Location</p>
-              <p className="truncate text-[11px] font-black tracking-tight text-white">{locationLabel}</p>
+          {/* Center: Service Tabs (acting as logo) */}
+          <div className="flex bg-white/20 backdrop-blur-md p-1 rounded-2xl shadow-inner border border-white/30">
+            <button
+              onClick={() => navigate('/food/user')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl transition-all duration-300 text-white/80 hover:text-white hover:bg-white/10`}
+            >
+              <img src={foodIcon} alt="Food" className="w-4 h-4 object-contain brightness-0 invert opacity-80" />
+              <span className="font-extrabold text-[11px] tracking-wide">Food</span>
+            </button>
+            <button
+              onClick={() => navigate('/taxi/user')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl transition-all duration-300 bg-white shadow-sm text-blue-600`}
+            >
+              <img src={taxiIcon} alt="Rides" className="w-5 h-5 object-contain -ml-0.5" />
+              <span className="font-extrabold text-[11px] tracking-wide">Rides</span>
+            </button>
+          </div>
+
+          {/* Right: Wallet */}
+          <div className="flex items-center gap-3">
+            <div 
+              className="relative bg-white p-2.5 rounded-[14px] border border-gray-100 shadow-[0_4px_12px_rgba(0,0,0,0.04)] cursor-pointer hover:bg-gray-50 active:scale-95 transition-all"
+              onClick={() => navigate(walletPath)}
+            >
+              <Wallet className="h-5 w-5 text-gray-700" />
+              <span className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-white animate-pulse" />
             </div>
-          </motion.button>
-        </div>
-
-        <button
-          onClick={() => navigate(walletPath)}
-          className="relative flex h-11 w-11 items-center justify-center rounded-full border border-white/20 bg-white/10 backdrop-blur-md shadow-sm shrink-0 active:scale-95 transition-all hover:bg-white/20 hover:border-white/30"
-        >
-          <Wallet size={18} className="text-white" strokeWidth={2.5} />
-          <span className="absolute top-[10px] right-[10px] h-2 w-2 rounded-full bg-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.8)]" />
-        </button>
+          </div>
+        </motion.div>
       </div>
-
-      {/* Mobile Option Buttons (Food & Taxi) */}
-      <div className="px-5 mt-4 md:hidden flex flex-col pointer-events-auto overflow-visible">
-        <div
-          className="custom-tab-container overflow-visible"
-          style={{
-            '--tab-container-bg': theme.containerHex,
-            '--active-tab-bg': theme.activeHex,
-            '--inactive-tab-bg': theme.inactiveHex,
-            backgroundColor: theme.containerHex
-          }}
-        >
-          {/* Food Button */}
-          <button
-            onClick={() => navigate('/food/user')}
-            className={`custom-tab overflow-visible ${
-              location.pathname.includes('/food')
-                ? 'custom-tab-active'
-                : 'custom-tab-inactive'
-            }`}
-          >
-            <img src={foodIcon} alt="K9Food" className="custom-tab-icon" />
-            <span>K9Food</span>
-          </button>
-
-          {/* Taxi Button */}
-          <button
-            onClick={() => navigate('/taxi/user')}
-            className={`custom-tab overflow-visible ${
-              location.pathname.includes('/taxi')
-                ? 'custom-tab-active'
-                : 'custom-tab-inactive'
-            }`}
-          >
-            <img src={taxiIcon} alt="K9Rides" className="custom-tab-icon custom-tab-icon-taxi" />
-            <span>K9Rides</span>
-          </button>
-        </div>
-      </div>
-    </div>
 
       {/* Search Bar (Sticky Viewport) */}
       <div 
         className={`sticky top-0 z-[70] transition-all duration-300 -mt-4 pt-4 pb-4 px-5 ${
           isScrolled 
-            ? 'shadow-[0_4px_20px_rgba(0,0,0,0.15)] border-b border-transparent' 
-            : 'border-b border-transparent'
+            ? 'shadow-[0_4px_20px_rgba(0,0,0,0.15)] border-b border-transparent bg-[#111d3a]' 
+            : 'border-b border-transparent bg-[#111d3a]'
         }`}
-        style={{
-          background: theme.containerHex
-        }}
       >
+        {/* Address text below navbar, mimicking food app */}
+        <div className="flex flex-col mb-4">
+          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/60 mb-0.5">Pickup Location</p>
+          <div className="flex items-center gap-1">
+            <h2 className="text-white text-base font-bold truncate max-w-[85%]">{locationLabel}</h2>
+          </div>
+        </div>
+
         <motion.button
           type="button"
           whileTap={{ scale: 0.99 }}
           onClick={() => navigate(selectLocationPath)}
-          className="flex w-full items-center gap-2 rounded-[18px] border border-transparent bg-white px-3.5 py-3.5 text-left shadow-sm transition-all duration-300 hover:bg-gray-50"
+          className="flex w-full items-center gap-2 rounded-[18px] border border-transparent bg-white px-3.5 py-3.5 text-left shadow-[0_8px_24px_rgba(0,0,0,0.12)] transition-all duration-300 hover:bg-gray-50"
         >
-          <Search size={16} className="text-slate-400" strokeWidth={2.5} />
-          <span className="min-w-0 flex-1 truncate text-[12px] font-bold text-slate-400">
+          <Search size={16} className="text-blue-600" strokeWidth={2.5} />
+          <span className="min-w-0 flex-1 truncate text-[13px] font-bold text-gray-500">
             Search destination
           </span>
-          <span className="text-[10px] font-black uppercase tracking-[0.16em] text-[#00E676]">Go</span>
+          <span className="text-[10px] font-black uppercase tracking-[0.16em] bg-blue-50 text-blue-600 px-3 py-1 rounded-full">Go</span>
         </motion.button>
       </div>
     </>

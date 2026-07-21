@@ -748,9 +748,13 @@ const SelectLocation = () => {
         }
       }}
     >
-      <div className="absolute -top-20 right-[-40px] h-48 w-48 rounded-full bg-primary-orange/10/55 blur-3xl pointer-events-none" />
-      <div className="absolute top-56 left-[-60px] h-56 w-56 rounded-full bg-emerald-100/50 blur-3xl pointer-events-none" />
-      <div className="absolute bottom-16 right-[-40px] h-44 w-44 rounded-full bg-blue-100/50 blur-3xl pointer-events-none" />
+      <style>{`
+        @keyframes blob { 0%, 100% { transform: translate(0, 0) scale(1); } 50% { transform: translate(50px, -30px) scale(1.2); } }
+        @keyframes blob-reverse { 0%, 100% { transform: translate(0, 0) scale(1); } 50% { transform: translate(-40px, 40px) scale(1.3); } }
+      `}</style>
+      <div className="absolute -top-20 right-[-40px] h-48 w-48 rounded-full bg-indigo-400/20 blur-[80px] pointer-events-none animate-[blob_8s_ease-in-out_infinite]" />
+      <div className="absolute top-56 left-[-60px] h-56 w-56 rounded-full bg-cyan-400/20 blur-[80px] pointer-events-none animate-[blob-reverse_10s_ease-in-out_infinite]" />
+      <div className="absolute bottom-16 right-[-40px] h-44 w-44 rounded-full bg-blue-400/20 blur-[80px] pointer-events-none animate-[blob_12s_ease-in-out_infinite]" />
       <AnimatePresence>
         {showMapPicker && (
           <motion.div
@@ -766,11 +770,11 @@ const SelectLocation = () => {
                     onClick={() => setShowMapPicker(false)}
                     className="w-10 h-10 bg-white rounded-full shadow-lg flex items-center justify-center border border-slate-100 active:scale-95 transition-all"
                   >
-                    <ArrowLeft size={20} className="text-[#0F766E]" strokeWidth={2.5} />
+                    <ArrowLeft size={20} className="text-[#111d3a]" strokeWidth={2.5} />
                   </button>
                   <div className="flex-1 bg-white rounded-2xl shadow-lg border border-slate-100 px-4 py-3">
                     <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-0.5">Select Point</p>
-                    <p className="text-[14px] font-semibold text-[#0F766E] truncate leading-tight">
+                    <p className="text-[14px] font-semibold text-[#111d3a] truncate leading-tight">
                       {isGeocoding ? 'Locating...' : pickedAddress}
                     </p>
                   </div>
@@ -785,7 +789,7 @@ const SelectLocation = () => {
                     <div className="w-16 h-16 bg-rose-50 rounded-full flex items-center justify-center mx-auto mb-4">
                       <X size={32} className="text-rose-400" />
                     </div>
-                    <p className="text-[16px] font-bold text-[#0F766E]">Config Error</p>
+                    <p className="text-[16px] font-bold text-[#111d3a]">Config Error</p>
                     <p className="mt-2 text-[13px] font-medium text-slate-500">
                       Google Maps API Key is missing.
                     </p>
@@ -797,7 +801,7 @@ const SelectLocation = () => {
                     <div className="w-16 h-16 bg-rose-50 rounded-full flex items-center justify-center mx-auto mb-4">
                       <AlertTriangle size={32} className="text-rose-400" />
                     </div>
-                    <p className="text-[16px] font-bold text-[#0F766E]">Load Failed</p>
+                    <p className="text-[16px] font-bold text-[#111d3a]">Load Failed</p>
                     <p className="mt-2 text-[13px] font-medium text-slate-500">
                       Map could not be loaded. Please check your browser console or network.
                     </p>
@@ -837,13 +841,13 @@ const SelectLocation = () => {
                     transition={{ type: 'spring', stiffness: 300, damping: 20 }}
                     className="flex flex-col items-center"
                   >
-                    <div className="w-10 h-10 bg-[#0F766E] rounded-2xl flex items-center justify-center shadow-2xl rotate-45 border-2 border-white">
+                    <div className="w-10 h-10 bg-[#2563eb] rounded-2xl flex items-center justify-center shadow-2xl rotate-45 border-2 border-white">
                       <div className="-rotate-45">
                         <MapIcon size={18} className="text-white fill-white/20" />
                       </div>
                     </div>
                     {/* Stick */}
-                    <div className="w-1 h-5 bg-[#0F766E] -mt-2 shadow-2xl" />
+                    <div className="w-1 h-5 bg-[#2563eb] -mt-2 shadow-2xl" />
                   </motion.div>
                   {/* Shadow Dot */}
                   <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-1 bg-black/30 rounded-full blur-sm" />
@@ -859,7 +863,7 @@ const SelectLocation = () => {
                 {isLocating ? (
                   <LoaderCircle size={20} className="animate-spin text-slate-400" />
                 ) : (
-                  <Navigation size={20} className="text-[#0F766E] fill-slate-900/10" />
+                  <Navigation size={20} className="text-[#111d3a] fill-slate-900/10" />
                 )}
               </button>
             </div>
@@ -871,14 +875,14 @@ const SelectLocation = () => {
                     <MapPin size={20} className="text-slate-400" />
                  </div>
                  <div className="min-w-0 flex-1">
-                    <h4 className="text-[15px] font-bold text-[#0F766E] leading-none">Confirm Spot</h4>
+                    <h4 className="text-[15px] font-bold text-[#111d3a] leading-none">Confirm Spot</h4>
                     <p className="text-[12px] font-medium text-slate-400 mt-1 line-clamp-1">{pickedAddress}</p>
                  </div>
               </div>
               <button
                 onClick={handleConfirmMapLocation}
                 disabled={isGeocoding}
-                className="w-full bg-[#0F766E] py-4 rounded-3xl text-white font-bold text-[15px] shadow-xl shadow-slate-200 flex items-center justify-center gap-2 active:scale-[0.98] transition-all disabled:opacity-50"
+                className="w-full bg-[#2563eb] py-4 rounded-3xl text-white font-bold text-[15px] shadow-xl shadow-slate-200 flex items-center justify-center gap-2 active:scale-[0.98] transition-all disabled:opacity-50"
               >
                 <Check size={18} strokeWidth={3} />
                 Confirm Location
@@ -894,11 +898,11 @@ const SelectLocation = () => {
         <header className="relative z-30">
           <div className="px-5 py-4 flex items-center gap-3">
             <button onClick={() => navigate(-1)} className="p-2 -ml-2 active:scale-95 transition-all rounded-full">
-              <ArrowLeft size={22} className="text-[#0F766E]" strokeWidth={3} />
+              <ArrowLeft size={22} className="text-[#111d3a]" strokeWidth={3} />
             </button>
             <div className="min-w-0">
               <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Ride</p>
-              <h1 className="mt-0.5 text-[20px] font-bold text-[#0F766E] tracking-tight leading-none truncate">Where to?</h1>
+              <h1 className="mt-0.5 text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-[#111d3a] to-[#2563eb] tracking-tight leading-none truncate">Where to?</h1>
             </div>
           </div>
         </header>
@@ -907,7 +911,7 @@ const SelectLocation = () => {
       <div className="relative z-10 px-5 pt-4">
         <div 
           id="location-input-card" 
-          className="bg-white/80 backdrop-blur-md rounded-[22px] p-4 shadow-[0_18px_44px_rgba(15,23,42,0.08)] border border-white/80"
+          className="bg-white/90 backdrop-blur-xl rounded-[28px] p-4 shadow-[0_18px_44px_rgba(15,23,42,0.12)] border border-white/90 transition-all hover:shadow-[0_24px_54px_rgba(15,23,42,0.16)]"
           onMouseLeave={() => {
             if (document.activeElement && document.activeElement.tagName === 'INPUT') {
               document.activeElement.blur();
@@ -919,12 +923,12 @@ const SelectLocation = () => {
             {/* Pickup Row */}
             <div className="flex items-center gap-3">
               <div className="flex flex-col items-center gap-0.5 shrink-0">
-                <div className="w-5 h-5 rounded-full border-2 border-emerald-700 bg-white/70 flex items-center justify-center">
-                  <div className="w-1.5 h-1.5 rounded-full bg-emerald-700" />
+                <div className="w-5 h-5 rounded-full border-2 border-blue-700 bg-white/70 flex items-center justify-center">
+                  <div className="w-1.5 h-1.5 rounded-full bg-blue-700" />
                 </div>
               </div>
               <div
-                className={`flex-1 flex items-center bg-white/70 border border-white/80 rounded-xl px-3 py-2.5 transition-all ${activeInput === 'pickup' ? 'ring-2 ring-emerald-200' : ''}`}
+                className={`flex-1 flex items-center bg-white/70 border border-white/80 rounded-xl px-3 py-2.5 transition-all ${activeInput === 'pickup' ? 'ring-2 ring-blue-200' : ''}`}
                 onClick={() => setActiveInput('pickup')}
               >
                 <input
@@ -933,7 +937,7 @@ const SelectLocation = () => {
                   onChange={(e) => setPickup(sanitizeLocationInput(e.target.value))}
                   onFocus={() => setActiveInput('pickup')}
                   placeholder="Your pickup location"
-                  className="w-full bg-transparent border-none text-[15px] font-medium text-[#0F766E] focus:outline-none placeholder:text-slate-300"
+                  className="w-full bg-transparent border-none text-[15px] font-medium text-[#111d3a] focus:outline-none placeholder:text-slate-300"
                 />
                 {pickup.length > 0 && (
                   <button onClick={() => setPickup('')} className="ml-2 shrink-0">
@@ -958,16 +962,16 @@ const SelectLocation = () => {
                 >
                   <div className="flex items-center gap-3">
                     <div className="flex flex-col items-center gap-0.5 shrink-0">
-                      <div className="w-5 h-5 rounded-full border-2 border-indigo-500 bg-white/70 flex items-center justify-center">
-                        <div className="w-1.5 h-1.5 rounded-full bg-indigo-500" />
+                      <div className="w-5 h-5 rounded-full border-2 border-sky-500 bg-white/70 flex items-center justify-center">
+                        <div className="w-1.5 h-1.5 rounded-full bg-sky-500" />
                       </div>
                     </div>
                     <div
                       className={`flex-1 flex items-center rounded-xl px-3 py-2.5 transition-all ${
                         stop.trim().length > 0
-                          ? 'bg-white/90 border border-indigo-200 shadow-[0_10px_24px_rgba(99,102,241,0.10)]'
-                          : 'bg-indigo-50/70 border border-indigo-100/70'
-                      } ${activeInput === idx ? 'ring-2 ring-indigo-200' : ''}`}
+                          ? 'bg-white/90 border border-sky-200 shadow-[0_10px_24px_rgba(99,102,241,0.10)]'
+                          : 'bg-sky-50/70 border border-sky-100/70'
+                      } ${activeInput === idx ? 'ring-2 ring-sky-200' : ''}`}
                       onClick={() => setActiveInput(idx)}
                     >
                       <input
@@ -977,13 +981,13 @@ const SelectLocation = () => {
                         placeholder={`Stop ${idx + 1} location...`}
                         onFocus={() => setActiveInput(idx)}
                         onChange={(e) => updateStop(idx, sanitizeLocationInput(e.target.value))}
-                        className={`w-full bg-transparent border-none text-[15px] font-medium text-[#0F766E] focus:outline-none ${
-                          stop.trim().length > 0 ? 'placeholder:text-slate-300' : 'placeholder:text-indigo-300'
+                        className={`w-full bg-transparent border-none text-[15px] font-medium text-[#111d3a] focus:outline-none ${
+                          stop.trim().length > 0 ? 'placeholder:text-slate-300' : 'placeholder:text-sky-300'
                         }`}
                       />
                       {stop.length > 0 && (
                         <button onClick={() => updateStop(idx, '')} className="ml-2 shrink-0">
-                          <X size={16} className="text-indigo-300 hover:text-indigo-600 transition-colors" />
+                          <X size={16} className="text-sky-300 hover:text-sky-600 transition-colors" />
                         </button>
                       )}
                     </div>
@@ -1003,12 +1007,12 @@ const SelectLocation = () => {
             {/* Drop Row */}
             <div className="flex items-center gap-3">
               <div className="flex flex-col items-center gap-0.5 shrink-0">
-                <div className="w-5 h-5 rounded-full border-2 border-accent-orange bg-white/70 flex items-center justify-center">
-                  <div className="w-1.5 h-1.5 rounded-full bg-accent-orange" />
+                <div className="w-5 h-5 rounded-full border-2 border-blue-600 bg-white/70 flex items-center justify-center">
+                  <div className="w-1.5 h-1.5 rounded-full bg-blue-600" />
                 </div>
               </div>
               <div
-                className={`flex-1 flex items-center bg-white/70 border border-white/80 rounded-xl px-3 py-2.5 transition-all ${activeInput === 'drop' ? 'ring-2 ring-primary-orange/20' : ''}`}
+                className={`flex-1 flex items-center bg-white/70 border border-white/80 rounded-xl px-3 py-2.5 transition-all ${activeInput === 'drop' ? 'ring-2 ring-blue-600/20' : ''}`}
                 onClick={() => setActiveInput('drop')}
               >
                 <input
@@ -1018,7 +1022,7 @@ const SelectLocation = () => {
                   placeholder="Enter drop location..."
                   onFocus={() => setActiveInput('drop')}
                   onChange={(e) => setDrop(sanitizeLocationInput(e.target.value))}
-                  className="w-full bg-transparent border-none text-[15px] font-medium text-[#0F766E] focus:outline-none placeholder:text-slate-300"
+                  className="w-full bg-transparent border-none text-[15px] font-medium text-[#111d3a] focus:outline-none placeholder:text-slate-300"
                 />
                 {drop.length > 0 && (
                   <button onClick={() => setDrop('')} className="ml-2 shrink-0">
@@ -1035,22 +1039,26 @@ const SelectLocation = () => {
 
       {/* Action Pills */}
       <div className="relative z-10 flex gap-3 px-5 my-4">
-        <button
+        <motion.button
           onClick={showMapToast}
-          className="flex-1 flex items-center justify-center gap-2 bg-white/75 backdrop-blur-md border border-white/80 rounded-full py-2.5 shadow-[0_12px_26px_rgba(15,23,42,0.06)] active:scale-95 transition-all text-[13px] font-bold text-slate-800"
+          whileHover={{ scale: 1.03 }}
+          whileTap={{ scale: 0.97 }}
+          className="flex-1 flex items-center justify-center gap-2 bg-white/90 backdrop-blur-md border border-white/80 rounded-full py-3 shadow-[0_12px_26px_rgba(15,23,42,0.08)] hover:shadow-[0_16px_32px_rgba(15,23,42,0.12)] transition-shadow text-[13px] font-bold text-[#111d3a]"
         >
-          <MapPin size={16} className="text-[#0F766E]" />
+          <MapPin size={16} className="text-[#111d3a]" strokeWidth={2.5} />
           <span>Select on map</span>
-        </button>
-        <button
+        </motion.button>
+        <motion.button
           onClick={addStop}
-          className="flex-1 flex items-center justify-center gap-2 rounded-full py-2.5 shadow-[0_12px_26px_rgba(15,23,42,0.06)] active:scale-95 transition-all text-[13px] font-bold bg-white/75 backdrop-blur-md border border-white/80 text-slate-800"
+          whileHover={{ scale: 1.03 }}
+          whileTap={{ scale: 0.97 }}
+          className="flex-1 flex items-center justify-center gap-2 rounded-full py-3 shadow-[0_12px_26px_rgba(15,23,42,0.08)] hover:shadow-[0_16px_32px_rgba(15,23,42,0.12)] transition-shadow text-[13px] font-bold bg-white/90 backdrop-blur-md border border-white/80 text-[#4F46E5]"
         >
-          <div className="w-4 h-4 rounded bg-indigo-500 flex items-center justify-center">
+          <div className="w-4 h-4 rounded bg-[#4F46E5] flex items-center justify-center">
             <Plus size={12} className="text-white" strokeWidth={3} />
           </div>
           <span>Add stop {stops.length > 0 ? `(${stops.length})` : ''}</span>
-        </button>
+        </motion.button>
       </div>
 
       {/* Stop count chips */}
@@ -1059,7 +1067,7 @@ const SelectLocation = () => {
           <div className="flex gap-2 flex-wrap">
             {stops.map((s, idx) => (
               <div key={idx} className="flex items-center gap-1.5 bg-white/75 backdrop-blur-md border border-white/80 rounded-full px-3 py-1 shadow-sm">
-                <div className="w-2 h-2 rounded-full bg-indigo-400" />
+                <div className="w-2 h-2 rounded-full bg-sky-400" />
                 <span className="text-[12px] font-bold text-slate-700 truncate max-w-[110px]">
                   {s.trim() || `Stop ${idx + 1}`}
                 </span>
@@ -1096,17 +1104,17 @@ const SelectLocation = () => {
             <motion.button
               whileTap={{ scale: 0.99 }}
               onClick={handleUseCurrentLocationResult}
-              className="w-full text-left flex items-center gap-3 px-4 py-3.5 border-b border-white/70 bg-emerald-50/30 hover:bg-emerald-50/50 transition-colors group"
+              className="w-full text-left flex items-center gap-3 px-4 py-3.5 border-b border-white/70 bg-blue-50/30 hover:bg-blue-50/50 transition-colors group"
             >
-               <div className="w-10 h-10 rounded-2xl bg-white border border-emerald-100 shadow-sm flex items-center justify-center shrink-0">
+               <div className="w-10 h-10 rounded-2xl bg-white border border-blue-100 shadow-sm flex items-center justify-center shrink-0">
                   {isLocating ? (
-                     <LoaderCircle size={18} className="animate-spin text-emerald-500" />
+                     <LoaderCircle size={18} className="animate-spin text-blue-500" />
                   ) : (
-                     <Navigation size={18} className="text-emerald-500 fill-emerald-50" />
+                     <Navigation size={18} className="text-blue-500 fill-blue-50" />
                   )}
                </div>
                <div className="flex-1">
-                  <h4 className="text-[15px] font-bold text-[#0F766E] leading-tight group-hover:text-emerald-600 transition-colors">Use Current Location</h4>
+                  <h4 className="text-[15px] font-bold text-[#111d3a] leading-tight group-hover:text-blue-600 transition-colors">Use Current Location</h4>
                   <p className="text-[12px] text-slate-400 font-medium mt-0.5">Perfect for accurate pickup</p>
                </div>
                <ChevronRight size={16} className="text-slate-300" />
@@ -1124,7 +1132,7 @@ const SelectLocation = () => {
                   <MapPin size={18} strokeWidth={2.6} />
                 </div>
                 <div className="min-w-0">
-                  <h4 className="text-[15px] font-semibold text-[#0F766E] leading-tight">{result.title}</h4>
+                  <h4 className="text-[15px] font-semibold text-[#111d3a] leading-tight">{result.title}</h4>
                   <p className="text-[13px] text-slate-500 font-medium mt-1 line-clamp-1">{result.address}</p>
                 </div>
               </motion.button>
@@ -1136,17 +1144,17 @@ const SelectLocation = () => {
             <motion.button
               whileTap={{ scale: 0.99 }}
               onClick={handleUseCurrentLocationResult}
-              className="w-full text-left flex items-center gap-3 px-4 py-3.5 border-b border-white/70 bg-emerald-50/30 hover:bg-emerald-50/50 transition-colors group"
+              className="w-full text-left flex items-center gap-3 px-4 py-3.5 border-b border-white/70 bg-blue-50/30 hover:bg-blue-50/50 transition-colors group"
             >
-               <div className="w-10 h-10 rounded-2xl bg-white border border-emerald-100 shadow-sm flex items-center justify-center shrink-0">
+               <div className="w-10 h-10 rounded-2xl bg-white border border-blue-100 shadow-sm flex items-center justify-center shrink-0">
                   {isLocating ? (
-                     <LoaderCircle size={18} className="animate-spin text-emerald-500" />
+                     <LoaderCircle size={18} className="animate-spin text-blue-500" />
                   ) : (
-                     <Navigation size={18} className="text-emerald-500 fill-emerald-50" />
+                     <Navigation size={18} className="text-blue-500 fill-blue-50" />
                   )}
                </div>
                <div className="flex-1">
-                  <h4 className="text-[15px] font-bold text-[#0F766E] leading-tight group-hover:text-emerald-600 transition-colors">Use Current Location</h4>
+                  <h4 className="text-[15px] font-bold text-[#111d3a] leading-tight group-hover:text-blue-600 transition-colors">Use Current Location</h4>
                   <p className="text-[12px] text-slate-400 font-medium mt-0.5">Perfect for accurate pickup</p>
                </div>
                <ChevronRight size={16} className="text-slate-300" />
@@ -1169,7 +1177,7 @@ const SelectLocation = () => {
                   <MapPin size={18} strokeWidth={2.6} />
                 </div>
                 <div className="min-w-0">
-                  <h4 className="text-[15px] font-semibold text-[#0F766E] leading-tight">{result.title}</h4>
+                  <h4 className="text-[15px] font-semibold text-[#111d3a] leading-tight">{result.title}</h4>
                   <p className="text-[13px] text-slate-500 font-medium mt-1 line-clamp-1">{result.address}</p>
                 </div>
               </motion.button>
@@ -1181,7 +1189,7 @@ const SelectLocation = () => {
               —
             </div>
             <p className="mt-3 text-[15px] font-semibold text-slate-600">
-              No results for <span className="text-[#0F766E]">"{query}"</span>
+              No results for <span className="text-[#111d3a]">"{query}"</span>
             </p>
             <p className="text-[13px] font-medium text-slate-400 mt-1">Try a different search term</p>
           </div>
@@ -1217,7 +1225,7 @@ const SelectLocation = () => {
             <button
               onClick={() => handleConfirmNavigate()}
               disabled={isValidating}
-              className="w-full bg-emerald-600 py-4 rounded-3xl text-white font-bold text-[16px] shadow-[0_8px_30px_rgba(5,150,105,0.3)] flex items-center justify-center gap-2 active:scale-[0.98] transition-all disabled:opacity-50 disabled:active:scale-100"
+              className="w-full bg-blue-600 py-4 rounded-3xl text-white font-bold text-[16px] shadow-[0_8px_30px_rgba(5,150,105,0.3)] flex items-center justify-center gap-2 active:scale-[0.98] transition-all disabled:opacity-50 disabled:active:scale-100"
             >
               {isValidating ? (
                 <>

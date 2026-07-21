@@ -550,10 +550,9 @@ const Home = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[linear-gradient(180deg,#F8FAFC_0%,#F3F4F6_38%,#EEF2F7_100%)] pb-24 max-w-lg mx-auto relative overflow-hidden font-sans no-scrollbar">
-      <div className="absolute -top-16 right-[-40px] h-44 w-44 rounded-full bg-primary-orange/10/60 blur-3xl pointer-events-none" />
-      <div className="absolute top-52 left-[-60px] h-52 w-52 rounded-full bg-emerald-100/60 blur-3xl pointer-events-none" />
-      <div className="absolute bottom-28 right-[-40px] h-40 w-40 rounded-full bg-blue-100/60 blur-3xl pointer-events-none" />
+    <div className="min-h-screen bg-[#111d3a] pb-24 max-w-lg mx-auto relative overflow-hidden font-sans no-scrollbar">
+      <div className="absolute top-0 right-0 h-40 w-40 rounded-full bg-blue-900/10 blur-[80px] pointer-events-none" />
+      <div className="absolute bottom-20 left-0 h-40 w-40 rounded-full bg-indigo-900/10 blur-[80px] pointer-events-none" />
 
 
       <div className="relative z-10 space-y-4 pb-6">
