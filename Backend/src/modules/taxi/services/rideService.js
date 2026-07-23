@@ -1762,7 +1762,18 @@ export const acceptRideAssignment = async ({ rideId, driverId }) => {
         if (driver.activePoolGroupId) {
           const success = await addRideToPoolGroup(driver.activePoolGroupId, ride);
           if (!success) {
-            await createPoolGroup(driver._id, driver.vehicleTypeId, ride);
+            // ponytail: a driver runs exactly ONE pool group. If the ride can't join the existing
+            // group (full / detour violated), don't spin up a second group (that orphaned the first
+            // group + its passengers). The acceptance is already committed, so compensate: release
+            // the ride back to searching and free the driver, then surface the failure.
+            await Ride.findByIdAndUpdate(ride._id, {
+              $set: { status: RIDE_STATUS.SEARCHING, liveStatus: RIDE_LIVE_STATUS.SEARCHING, isPoolRide: true },
+              $unset: { driverId: '', acceptedAt: '' },
+            });
+            await Driver.findByIdAndUpdate(driver._id, { isOnRide: false });
+            const revertedRide = await Ride.findById(ride._id);
+            if (revertedRide) await syncDeliveryWithRide(revertedRide);
+            throw new ApiError(409, 'Ride cannot be added to the driver\'s active pool group');
           }
         } else {
           await createPoolGroup(driver._id, driver.vehicleTypeId, ride);
@@ -1808,7 +1819,9 @@ const rideStatusConfig = {
   },
   [RIDE_LIVE_STATUS.COMPLETED]: {
     persistedStatus: RIDE_STATUS.COMPLETED,
-    allowedCurrent: [RIDE_LIVE_STATUS.STARTED, RIDE_LIVE_STATUS.ARRIVED, RIDE_LIVE_STATUS.ARRIVING, RIDE_LIVE_STATUS.ACCEPTED],
+    // ponytail: a ride must be started (or arrived at destination) before it can complete;
+    // allowing ACCEPTED/ARRIVING here let a driver collect fare for a trip that never ran.
+    allowedCurrent: [RIDE_LIVE_STATUS.STARTED, RIDE_LIVE_STATUS.ARRIVED],
   },
 };
 
@@ -1833,15 +1846,15 @@ export const updateRideLifecycle = async ({ rideId, driverId, nextStatus, paymen
     throw new ApiError(409, `Ride cannot move from ${ride.liveStatus} to ${nextStatus}`);
   }
 
-  // Task 7: Verify OTP on ride start
-  if (nextStatus === RIDE_LIVE_STATUS.STARTED) {
-    if (ride.isPoolRide) {
-      if (!otp) {
-        throw new ApiError(400, 'OTP is required to start a pooled ride');
-      }
-      if (String(ride.otp) !== String(otp)) {
-        throw new ApiError(400, 'Invalid OTP code');
-      }
+  // Task 7: Verify OTP on ride start.
+  // ponytail: enforce for every ride that has an OTP (all rides get one at creation),
+  // not just pooled rides — otherwise a driver can start without the rider present.
+  if (nextStatus === RIDE_LIVE_STATUS.STARTED && ride.otp) {
+    if (!otp) {
+      throw new ApiError(400, 'OTP is required to start the ride');
+    }
+    if (String(ride.otp) !== String(otp)) {
+      throw new ApiError(400, 'Invalid OTP code');
     }
   }
 

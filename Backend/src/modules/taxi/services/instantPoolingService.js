@@ -82,12 +82,29 @@ export const addRideToPoolGroup = async (poolGroupId, newRide) => {
   const settings = await getInstantPoolingSettings();
 
   const requiredSeats = newRide.poolSeats || 1;
-  const currentOccupied = group.occupiedSeats || 0;
-  const maxCapacity = group.totalCapacity || 4;
 
-  if (currentOccupied + requiredSeats > maxCapacity) {
+  // ponytail: guard against a driver with no GPS fix before routing (would throw on .coordinates).
+  if (!driver?.location?.coordinates) {
     return false;
   }
+
+  // ponytail: claim seats atomically so two concurrent joins can't overbook the vehicle.
+  // The $expr guard rejects the update if occupiedSeats + requiredSeats would exceed capacity.
+  const claimed = await InstantPoolGroup.findOneAndUpdate(
+    {
+      _id: poolGroupId,
+      status: { $nin: ['completed', 'cancelled'] },
+      $expr: { $lte: [{ $add: ['$occupiedSeats', requiredSeats] }, '$totalCapacity'] },
+    },
+    { $inc: { occupiedSeats: requiredSeats } },
+    { new: true }
+  );
+  if (!claimed) {
+    return false; // full, or group gone
+  }
+
+  const releaseSeats = () =>
+    InstantPoolGroup.updateOne({ _id: poolGroupId }, { $inc: { occupiedSeats: -requiredSeats } });
 
   // Populate active rides with user details for sequence name rendering
   const populatedActiveRides = await Ride.find({
@@ -103,22 +120,27 @@ export const addRideToPoolGroup = async (poolGroupId, newRide) => {
     }
   );
 
-  // If sequence optimization returns empty, detour rules were violated
+  // If sequence optimization returns empty, detour rules were violated — give the seats back.
   if (optimalSeq.length === 0) {
+    await releaseSeats();
     return false;
   }
 
-  group.activeRides.push(newRide._id);
-  group.occupiedSeats += requiredSeats;
-  group.routeSequence = optimalSeq;
-  group.routeVersion += 1;
-  group.status = 'active';
-  await group.save();
+  // Atomically attach the ride + bump route version (avoids clobbering a concurrent join's array).
+  const updatedGroup = await InstantPoolGroup.findByIdAndUpdate(
+    poolGroupId,
+    {
+      $push: { activeRides: newRide._id },
+      $set: { routeSequence: optimalSeq, status: 'active' },
+      $inc: { routeVersion: 1 },
+    },
+    { new: true }
+  );
 
   // Update driver details
   await Driver.findByIdAndUpdate(group.driverId, {
-    poolOccupiedSeats: group.occupiedSeats,
-    activePoolRideCount: group.activeRides.length,
+    poolOccupiedSeats: updatedGroup.occupiedSeats,
+    activePoolRideCount: updatedGroup.activeRides.length,
   });
 
   // Link ride to pool group
@@ -126,13 +148,13 @@ export const addRideToPoolGroup = async (poolGroupId, newRide) => {
   newRide.status = 'accepted';
   newRide.liveStatus = 'accepted';
   newRide.driverId = group.driverId;
-  newRide.routeVersion = group.routeVersion;
+  newRide.routeVersion = updatedGroup.routeVersion;
   await newRide.save();
 
   // Increment route version on existing rides too
   await Ride.updateMany(
-    { _id: { $in: group.activeRides } },
-    { $set: { routeVersion: group.routeVersion } }
+    { _id: { $in: updatedGroup.activeRides } },
+    { $set: { routeVersion: updatedGroup.routeVersion } }
   );
 
   auditLog('Passenger Joined', { poolGroupId: group._id, rideId: newRide._id });
@@ -141,19 +163,19 @@ export const addRideToPoolGroup = async (poolGroupId, newRide) => {
   emitToRoom(getDriverRoom(group.driverId), 'pool.member.joined', {
     rideId: String(newRide._id),
     poolGroupId: String(group._id),
-    routeVersion: group.routeVersion,
+    routeVersion: updatedGroup.routeVersion,
   });
 
   for (const ride of group.activeRides) {
     if (String(ride._id) !== String(newRide._id)) {
       emitToRoom(getRideRoom(ride._id), 'pool.member.joined', {
         message: 'Another passenger has joined your shared ride.',
-        routeVersion: group.routeVersion,
+        routeVersion: updatedGroup.routeVersion,
       });
     }
   }
 
-  broadcastPoolUpdate(group);
+  broadcastPoolUpdate(updatedGroup);
   return true;
 };
 
@@ -311,13 +333,21 @@ export const completePassengerRide = async (rideId) => {
     ride.driverEarnings = driverEarnings;
     await ride.save({ session });
 
+    // ponytail: mirror the non-pool settlement (walletService) — for CASH rides the driver
+    // already collected the fare in hand, so the wallet must be DEBITED the commission, not
+    // credited the earnings (otherwise the driver is paid twice and the platform loses its cut).
+    const isCash = String(ride.paymentMethod || '').toLowerCase() === 'cash';
+    const walletAmount = isCash ? -adminCommission : driverEarnings;
+
     // Update driver wallet balance
     const walletRef = `pool-completion:${rideId}`;
     await applyDriverWalletAdjustmentByReference({
       driverId: ride.driverId,
-      amount: driverEarnings,
+      amount: walletAmount,
       rideId: ride._id,
-      description: `Earnings for pooled ride ${String(ride._id).slice(-6)}`,
+      description: isCash
+        ? `Commission for cash pooled ride ${String(ride._id).slice(-6)}`
+        : `Earnings for pooled ride ${String(ride._id).slice(-6)}`,
       referenceKey: walletRef,
       session,
     });

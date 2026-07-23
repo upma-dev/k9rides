@@ -7,6 +7,7 @@ import {
 } from "../../../../core/notifications/firebase.service.js";
 import { getIO, rooms } from '../../../../config/socket.js';
 import { addOrderJob } from '../../../../queues/producers/order.producer.js';
+import { STATUS_PRIORITY } from '../../../../constants/orderStatus.js';
 
 export function enqueueOrderEvent(action, payload = {}) {
   try {
@@ -325,19 +326,8 @@ export async function notifyRestaurantNewOrder(orderDoc) {
   }
 }
 
-export const STATUS_PRIORITY = {
-  created: 10,
-  confirmed: 20,
-  preparing: 30,
-  ready_for_pickup: 40,
-  reached_pickup: 50,
-  picked_up: 60,
-  reached_drop: 70,
-  delivered: 80,
-  cancelled_by_user: 100,
-  cancelled_by_restaurant: 100,
-  cancelled_by_admin: 100,
-};
+// Re-exported from the single source of truth (constants/orderStatus.js).
+export { STATUS_PRIORITY };
 
 /**
  * Returns true if the next status is a valid forward progression from the current status.

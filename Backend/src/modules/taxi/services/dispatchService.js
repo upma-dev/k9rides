@@ -499,7 +499,7 @@ export const restartRideDispatchWithLatestFare = async (rideId) => {
   await startDispatchFlow(ride);
 };
 
-const getDispatchState = (rideId) => {
+export const getDispatchState = (rideId) => {
   const rideKey = String(rideId);
   const state = activeDispatches.get(rideKey) || {};
 
@@ -806,9 +806,10 @@ export const cancelRideByUser = async ({ rideId, userId, reason = '' }) => {
     }
 
     await Promise.all([
-      User.findByIdAndUpdate(ride.userId, { 
-        $set: { currentRideId: null },
-        $inc: { pending_cancellation_due: totalCancellationFee }
+      // ponytail: settleUserCancellationFee already $inc'd pending_cancellation_due;
+      // do not add it a second time here or the rider is charged 2x the fee.
+      User.findByIdAndUpdate(ride.userId, {
+        $set: { currentRideId: null }
       }, { session }),
       (ride.driverId && !ride.isPoolRide) ? Driver.findByIdAndUpdate(ride.driverId, { isOnRide: false }, { session }) : Promise.resolve(),
     ]);
@@ -1065,6 +1066,121 @@ export const cancelScheduledRideByDriver = async ({ rideId, driverId }) => {
   });
 
   return ride;
+};
+
+/**
+ * Driver cancels a LIVE ride they've accepted but not yet driven to / started.
+ * Only allowed while liveStatus === ACCEPTED — once the driver is en route (arriving),
+ * has arrived, or the trip has started, cancellation is blocked. Applies the admin-configured
+ * driver cancellation penalty (debit driver, credit rider), then re-opens the request and
+ * re-dispatches to another driver (the canceller is excluded via rejectedDriverIds) so the
+ * rider isn't stranded. Pool rides are not handled here (different lifecycle).
+ * @returns {Promise<{ride: object, settlement: object|null}>}
+ */
+export const cancelActiveRideByDriver = async ({ rideId, driverId, reason = '' }) => {
+  const session = await mongoose.startSession();
+  let ride = null;
+  let cancellationSettlement = null;
+
+  try {
+    session.startTransaction();
+
+    ride = await Ride.findOne({ _id: rideId, driverId }).session(session);
+    if (!ride) {
+      await session.abortTransaction();
+      return { ride: null, settlement: null };
+    }
+
+    if (ride.isPoolRide) {
+      throw new ApiError(409, 'Pool rides cannot be cancelled from here.');
+    }
+
+    // Block cancellation once the driver is en route or beyond — only a freshly ACCEPTED ride
+    // (driver hasn't started moving to pickup) can be cancelled by the driver.
+    const liveStatus = String(ride.liveStatus || '').toLowerCase();
+    if (liveStatus !== RIDE_LIVE_STATUS.ACCEPTED) {
+      throw new ApiError(409, 'Ride can no longer be cancelled — the driver is already en route.');
+    }
+    if (ride.startedAt) {
+      throw new ApiError(409, 'Ride cannot be cancelled after the trip has started.');
+    }
+
+    // Apply the admin-configured driver cancellation penalty (idempotent by reference key).
+    cancellationSettlement = await settleDriverCancellationFee(ride, session);
+
+    // Re-open the ride for dispatch and free the driver. currentRideId stays set — the rider
+    // keeps their active request while we search for a replacement driver.
+    const previousDriverId = ride.driverId;
+    ride.driverId = null;
+    ride.acceptedAt = null;
+    ride.status = RIDE_STATUS.SEARCHING;
+    ride.liveStatus = RIDE_LIVE_STATUS.SEARCHING;
+    if (ride.bookingMode === 'bidding') {
+      ride.biddingStatus = 'searching';
+    }
+    await ride.save({ session });
+
+    if (ride.deliveryId) {
+      await Delivery.findByIdAndUpdate(ride.deliveryId, {
+        driverId: null,
+        status: ride.status,
+        liveStatus: ride.liveStatus,
+      }, { session });
+    }
+
+    if (previousDriverId) {
+      await Driver.findByIdAndUpdate(previousDriverId, { isOnRide: false }, { session });
+    }
+
+    await session.commitTransaction();
+  } catch (error) {
+    await session.abortTransaction();
+    throw error;
+  } finally {
+    session.endSession();
+  }
+
+  // Exclude the cancelling driver from re-dispatch, then re-run the search.
+  markDriverRejectedFromDispatch(rideId, driverId);
+  stopDispatchFlow(rideId);
+
+  const cancelReason = String(reason || '').trim() || 'The assigned driver cancelled. Finding you another driver.';
+
+  emitToRoom(getRideRoom(ride._id), SOCKET_EVENTS.RIDE_STATUS_UPDATED, {
+    rideId: String(ride._id),
+    status: ride.status,
+    liveStatus: ride.liveStatus,
+  });
+  emitToRoom(getUserRoom(ride.userId), 'rideDriverCancelled', {
+    rideId: String(ride._id),
+    reason: cancelReason,
+  });
+  emitToDriver(driverId, 'rideRequestClosed', {
+    rideId: String(ride._id),
+    reason: 'self-cancelled',
+    message: 'You cancelled this ride. A cancellation fee may apply.',
+  });
+
+  if (cancellationSettlement?.driverWalletResult?.transaction) {
+    emitToDriver(driverId, 'driver:wallet:updated', {
+      wallet: cancellationSettlement.driverWalletResult.wallet,
+      transaction: cancellationSettlement.driverWalletResult.transaction,
+      notification: {
+        id: `ride-cancel-debit-${String(ride._id)}`,
+        title: 'Cancellation fee charged',
+        body: `Rs ${Number(cancellationSettlement.feeAmount || 0).toFixed(2)} deducted for cancelling the ride.`,
+        sentAt: new Date().toISOString(),
+      },
+    });
+  }
+
+  // Re-dispatch to a new driver so the rider keeps their request.
+  const rideForDispatch = await Ride.findById(ride._id).populate('userId', 'name phone countryCode');
+  if (rideForDispatch && rideForDispatch.status === RIDE_STATUS.SEARCHING) {
+    await startDispatchFlow(rideForDispatch);
+  }
+
+  return { ride, settlement: cancellationSettlement };
 };
 
 const scheduleNextAttempt = (rideId, nextAttemptIndex, retryDelayMs) => {
